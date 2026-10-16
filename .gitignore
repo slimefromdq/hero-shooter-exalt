@@ -1,0 +1,6 @@
+.godot/
+.tools/
+artifacts/
+*.tmp
+*.log
+export/

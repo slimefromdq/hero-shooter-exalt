@@ -1,0 +1,138 @@
+class_name HeroActor
+extends CharacterBody3D
+
+signal damaged(amount: float, head: bool)
+signal died
+
+@export var tuning: HeroTuning
+@export var team: int = 0
+@export var actor_id: String = "nimbus"
+var health: float = 250.0
+var shields: float = 0.0
+var invulnerable: bool = false
+var infinite_resources: bool = false
+var alive: bool = true
+var state: String = "ready"
+var state_time: float = 0.0
+var aim_direction: Vector3 = Vector3.FORWARD
+var intent: CombatIntent = CombatIntent.new()
+var resolver: CombatResolver
+var controller: Node
+var motor: HeroMotor
+var kit: NimbusKit
+var close: CloseCombat
+var presentation: HeroPresentation
+var spawn_position: Vector3
+var last_hit_age: float = 99.0
+
+func _ready() -> void:
+	if tuning == null:
+		tuning = load("res://resources/nimbus.tres") as HeroTuning
+	tuning = tuning.duplicate() as HeroTuning
+	add_to_group("actors")
+	collision_layer = 2
+	collision_mask = 3
+	floor_snap_length = 0.3
+	floor_max_angle = deg_to_rad(48.0)
+	spawn_position = position
+	var shape := CollisionShape3D.new()
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = 0.38
+	capsule.height = 1.9
+	shape.shape = capsule
+	shape.position.y = 0.95
+	add_child(shape)
+	resolver = get_tree().get_first_node_in_group("combat_resolver") as CombatResolver
+	motor = HeroMotor.new()
+	motor.actor = self
+	add_child(motor)
+	kit = NimbusKit.new()
+	kit.actor = self
+	add_child(kit)
+	close = CloseCombat.new()
+	close.actor = self
+	add_child(close)
+	presentation = HeroPresentation.new()
+	presentation.actor = self
+	add_child(presentation)
+	health = tuning.max_health
+
+func _physics_process(delta: float) -> void:
+	last_hit_age += delta
+	if controller != null and controller.has_method("gather_intent"):
+		intent = controller.gather_intent(delta)
+	if not alive:
+		return
+	aim_direction = intent.aim.normalized()
+	if Vector2(aim_direction.x, aim_direction.z).length() > 0.01:
+		rotation.y = atan2(-aim_direction.x, -aim_direction.z)
+	state_time = maxf(0.0, state_time - delta)
+	if state in ["stagger", "counterthrow", "throw_release"] and state_time <= 0.0:
+		state = "ready"
+	close.tick(delta, intent)
+	kit.tick(delta, intent)
+	motor.tick(delta, intent)
+	if global_position.y < -8.0:
+		die()
+
+# One authority boundary: controllers request actions; only components resolve them.
+func permits(action: String) -> bool:
+	if not alive or state in ["captured", "throw_pair", "stagger", "counterthrow", "throw_release"]:
+		return false
+	if action == "counter":
+		return state in ["ready", "guard", "throw_startup"]
+	if state == "ultimate":
+		return action in ["primary", "aim"]
+	if state != "ready":
+		return false
+	if motor.mode in ["dash", "dash_windup"]:
+		return false
+	return true
+
+func muzzle() -> Vector3:
+	return global_position + Vector3.UP * 1.36 + global_basis.x * 0.32 + aim_direction * 0.55
+
+func on_damage(amount: float, head: bool) -> void:
+	last_hit_age = 0.0
+	damaged.emit(amount, head)
+	if state == "throw_startup":
+		close.interrupt_startup()
+	if health <= 0.0:
+		die()
+
+func die() -> void:
+	if not alive:
+		return
+	alive = false
+	close.cancel()
+	kit.cancel(true)
+	motor.cancel()
+	state = "dead"
+	velocity = Vector3.ZERO
+	collision_layer = 0
+	resolver.record("death", self, "health")
+	died.emit()
+
+func reset_actor(at: Vector3 = Vector3.INF) -> void:
+	close.cancel()
+	kit.cancel(true)
+	motor.cancel()
+	alive = true
+	health = tuning.max_health
+	shields = 0.0
+	invulnerable = false
+	state = "ready"
+	state_time = 0.0
+	velocity = Vector3.ZERO
+	global_position = spawn_position if at == Vector3.INF else at
+	collision_layer = 2
+	kit.refill()
+	close.refill()
+	intent = CombatIntent.new()
+	if controller != null and controller.has_method("reset_controller"):
+		controller.reset_controller()
+	resolver.record("reset", self, "scenario")
+
+func _exit_tree() -> void:
+	if is_instance_valid(close):
+		close.cancel()
