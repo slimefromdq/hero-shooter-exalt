@@ -1,6 +1,6 @@
 # Hero Shooter Design and Prototype Plan
 
-Version 0.10 · Working draft · October 16, 2026
+Version 0.11 · Working draft · October 16, 2026
 
 Build a hero shooter around expressive characters whose weapons, movement, and utility create different ways to enter, shape, and finish a fight. This is a living design contract for Lucy and Codex: preserve the fantasy, prototype the uncertain interaction, and revise from play.
 
@@ -82,7 +82,7 @@ Compare two tuning presets on the same route. Record completion time, falls, ove
 
 ## Shared close combat
 
-**Playtest direction, October 16:** Melee must travel forward so it can serve as an engage or finisher. Increase throw reach and give successful throws an actual paired animation. The current experiment uses a 2.2 m committed lunge and 2.8 m grab, followed by a pull, hip lift, turn, slam, and get-up. These numerical defaults remain tunable; the forward movement and readable throw sequence implement Lucy's requested direction. Guard, counterthrow, startup interruption, paired mitigation and safe release still apply.
+**Playtest direction, October 16:** Melee must travel forward so it can serve as an engage or finisher. Increase throw reach and give successful throws an actual paired animation. After a further request for more travel, the current experiment uses a 3.6 m committed lunge and 2.8 m grab, followed by a pull, hip lift, turn, slam, and get-up. These numerical defaults remain tunable; the forward movement and readable throw sequence implement Lucy's requested direction. Guard, counterthrow, startup interruption, paired mitigation and safe release still apply.
 
 **Established for the initial build:** Include the melee, block, and throw concept alongside guns, movement, and hero abilities. Melee is a committed attack with meaningful windup and recovery, dealing substantial damage at close to midrange. Block primarily defends against melee. Holding it slows or immobilizes its user, draws on a regenerating meter, and blocks melee with an attacker-stagger response. Protection against gunfire is a separate tuning question, not the primary purpose of guard. Very-close-range throws threaten block; attacks can interrupt their startup, and a responding throw can counterthrow. Successful throws use a paired animation with heavy incoming damage mitigation for both participants.
 
@@ -310,6 +310,10 @@ tests/                      # Focused rule checks using the repo's test approach
 
 ### Training mode and bots
 
+**Additional user-requested guard drill:** A stationary melee bot attacks only inside a configurable range so held guard and attacker stagger can be practiced. The current default trigger is 2.4 m, with a visible range ring and 1.6 s strike cadence. This profile suppresses melee travel and all chase movement, while reusing the normal strike, guard, damage and reaction rules.
+
+**User control preference:** dash 3; Ability 1 / Hover Q; Ability 2 / Deflect E; Ability 3 / Pocket Bomb 1; ultimate 2; slide input Shift; melee 5; throw/counter 4; held shield/guard 6. Movement, jump, primary, aim, reload and training controls are unchanged.
+
 Use placeholder meshes with distinguishable umbrella/rifle states, clear effects, functional HUD, and basic sound/impact feedback. Production art is unnecessary, but every move must communicate startup, activity, and recovery. A launchable training scene offers reset and scenario selection.
 
 **Proposed bot profiles:** stationary target; strafing target; ranged attacker using reflectable projectiles; close-range attacker; and a defensive sparring bot that blocks, throws, and counterthrows with configurable reaction delay and error chance. Reuse the same actor actions, damage rules, cooldowns, and control restrictions as the player. Bots generate intent rather than directly applying damage. Start with one active opponent and allow a second for throw-interference tests.
@@ -404,6 +408,7 @@ Change one important variable at a time when isolating a failure. Keep the last 
 
 | Version | Change |
 | --- | --- |
+| 0.11 | Increased proposed melee travel to 3.6 m; added stationary, range-triggered guard trainer and the user's requested key bindings |
 | 0.10 | Playtest feedback establishes forward-traveling melee for engages/finishers, larger throw reach, and a fully animated paired throw; initial experiment is 2.2 m lunge / 2.8 m grab |
 | 0.9 | Nimbus rifle gains established 2× headshots; Pocket Bomb peak damage becomes 80; Final Notice base damage becomes 150 |
 | 0.8 | Established committed melee, melee-focused block, and crosshair-directed dash; updated prototype guard and action-commitment rules |

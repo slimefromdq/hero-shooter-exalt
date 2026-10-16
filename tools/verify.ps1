@@ -19,6 +19,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Combat/movement rule tests failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/close_combat_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Melee engagement / throw choreography tests failed.' }
+    & $taskEngine --headless --path $taskRoot --script res://tests/guard_drill_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Guard drill or personal key bindings failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/integration_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Training integration tests failed.' }
     if ($Capture) {

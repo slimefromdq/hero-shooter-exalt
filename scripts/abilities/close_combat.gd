@@ -16,6 +16,7 @@ var pair_progress: float = 0.0
 var melee_age: float = 0.0
 var melee_direction: Vector3 = Vector3.FORWARD
 var lunge_blocked: bool = false
+var melee_lunge_enabled: bool = true
 
 func tick(delta: float, input: CombatIntent) -> void:
 	var t: HeroTuning = actor.tuning
@@ -49,6 +50,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 			melee_direction = -actor.global_basis.z
 		melee_age = 0.0
 		lunge_blocked = false
+		melee_lunge_enabled = not input.stationary_melee
 		cast_id = actor.resolver.new_cast()
 		actor.resolver.record("cast", actor, "melee")
 	if actor.state.begins_with("melee_"):
@@ -91,7 +93,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 					release_pair()
 
 func lunge_displacement(delta: float) -> Vector3:
-	if lunge_blocked:
+	if lunge_blocked or not melee_lunge_enabled:
 		return Vector3.ZERO
 	var t: HeroTuning = actor.tuning
 	var end: float = t.melee_lunge_delay + maxf(0.01, t.melee_lunge_duration)

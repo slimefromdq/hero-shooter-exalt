@@ -68,6 +68,9 @@ func draw_hud() -> void:
 	label_at(TrainingManager.SCENARIOS[training.scenario].to_upper(), Vector2(32, 154), 25, ink, true)
 	label_at("%02d TARGETS    /    %02d ELIMINATIONS" % [training.bots.size(), training.eliminations], Vector2(32, 178), 12, ink)
 	label_at("%d HITS    ·    %d DAMAGE" % [training.hits, int(training.damage_total)], Vector2(32, 199), 12, ink)
+	if training.scenario == 6:
+		label_at("ENTER THE RING  /  HOLD %s TO BLOCK" % TrainingInputs.key_label("guard"),Vector2(32,238),13,ink,true)
+		label_at("STRIKE RANGE %.1f m   ·   INTERVAL %.1f s" % [minf(training.guard_test_range,p.tuning.melee_range),training.guard_test_interval],Vector2(32,260),12,ink)
 	if training.notice_time > 0.0:
 		var notice_width: float = font.get_string_size(training.notice, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x + 36
 		rect(Vector2(720 - notice_width / 2, 96), Vector2(notice_width, 35), Color(0.10, 0.20, 0.24, 0.88), 3)
@@ -114,21 +117,21 @@ func draw_hud() -> void:
 	label_at("%02d" % p.kit.ammo, Vector2(396, 811), 44, ink, true)
 	label_at("/ %02d" % p.tuning.magazine, Vector2(465, 808), 17, ink)
 	label_at("R  RELOAD" if p.state != "reload" else "RELOADING %.1f" % p.state_time, Vector2(396, 844), 11, ink)
-	ability_card(550, "SHIFT", "VECTOR", "DASH", p.motor.dash_cd, p.tuning.dash_cooldown)
-	ability_card(663, "E", "UMBRELLA", "HOVER", p.motor.hover_cd, p.tuning.hover_cooldown)
-	ability_card(776, "Q", "RETURN", "DEFLECT", p.kit.deflect_cd, p.tuning.deflect_cooldown)
-	ability_card(889, "G", "POCKET", "BOMB", p.kit.bomb_cd, p.tuning.bomb_cooldown)
+	ability_card(550, TrainingInputs.key_label("dash"), "VECTOR", "DASH", p.motor.dash_cd, p.tuning.dash_cooldown)
+	ability_card(663, TrainingInputs.key_label("hover"), "UMBRELLA", "HOVER", p.motor.hover_cd, p.tuning.hover_cooldown)
+	ability_card(776, TrainingInputs.key_label("deflect"), "RETURN", "DEFLECT", p.kit.deflect_cd, p.tuning.deflect_cooldown)
+	ability_card(889, TrainingInputs.key_label("bomb"), "POCKET", "BOMB", p.kit.bomb_cd, p.tuning.bomb_cooldown)
 	rect(Vector2(1014, 738), Vector2(190, 126), mint if p.kit.ultimate_charge >= 100.0 else Color("bdd5c5"), 4)
-	label_at("X    FINAL NOTICE", Vector2(1030, 763), 13, ink, true)
+	label_at("%s    FINAL NOTICE" % TrainingInputs.key_label("ultimate"), Vector2(1030, 763), 13, ink, true)
 	label_at("READY" if p.kit.ultimate_charge >= 100.0 else "%02d%%" % int(p.kit.ultimate_charge), Vector2(1030, 810), 29, ink, true)
 	label_at("EXECUTE  ≤20% HP", Vector2(1030, 844), 11, ink)
 	rect(Vector2(1216, 738), Vector2(194, 126), Color(0.10, 0.20, 0.24, 0.88), 4)
-	label_at("C   GUARD", Vector2(1231, 763), 12, paper, true)
+	label_at("%s   GUARD" % TrainingInputs.key_label("guard"), Vector2(1231, 763), 12, paper, true)
 	rect(Vector2(1231, 776), Vector2(164, 4), Color("4c6269"))
 	rect(Vector2(1231, 776), Vector2(164 * p.close.guard_meter / 100.0, 4), mint)
-	label_at("V   UMBRELLA STRIKE", Vector2(1231, 809), 11, paper)
-	label_at("F   THROW / COUNTER", Vector2(1231, 842), 11, paper)
-	label_at("W A S D  MOVE    SPACE  JUMP    CTRL  SLIDE    RMB  AIM", Vector2(32, 889), 11, ink, true)
+	label_at("%s   UMBRELLA STRIKE" % TrainingInputs.key_label("melee"), Vector2(1231, 809), 11, paper)
+	label_at("%s   THROW / COUNTER" % TrainingInputs.key_label("throw"), Vector2(1231, 842), 11, paper)
+	label_at("W A S D  MOVE    SPACE  JUMP    %s  SLIDE    RMB  AIM" % TrainingInputs.key_label("slide"), Vector2(32, 889), 11, ink, true)
 	label_at("F5  RESET    F6  REFILL    F3  TELEMETRY", Vector2(1098, 889), 10, ink)
 	if p.state != "ready" or p.motor.mode not in ["ground", "air"]:
 		label_at(p.state.to_upper().replace("_", " ") + "  /  " + p.motor.mode.to_upper(), Vector2(600, 721), 13, paper, true)
@@ -224,6 +227,7 @@ func build_menu() -> void:
 	for option: String in TrainingManager.SCENARIOS: scenarios.add_item(option)
 	left.add_child(scenarios)
 	scenarios.item_selected.connect(func(index: int) -> void: training.scenario = index; training.reset_scenario())
+	button(left,"Start guard drill  /  hold %s" % TrainingInputs.key_label("guard"),training.start_guard_drill)
 	var profile := OptionButton.new()
 	for option: String in TrainingManager.PROFILES: profile.add_item(option)
 	profile.select(2)
@@ -241,6 +245,9 @@ func build_menu() -> void:
 	spin(left, "Bot reaction delay (s)", 0.22, 0.05, 1.5, 0.01, func(value: float) -> void: training.reaction = value; training.apply_bot_settings())
 	spin(left, "Bot aggression", 1.0, 0.25, 2.0, 0.05, func(value: float) -> void: training.aggression = value; training.apply_bot_settings())
 	spin(left, "Bot error probability", 0.15, 0.0, 1.0, 0.05, func(value: float) -> void: training.error_chance = value; training.apply_bot_settings())
+	menu_label(left,"STATIONARY GUARD DRILL",16)
+	spin(left,"Strike trigger range (m)",2.4,.8,2.6,.1,func(value: float) -> void: training.guard_test_range = value; training.apply_bot_settings())
+	spin(left,"Strike interval (s)",1.6,1.0,4.0,.1,func(value: float) -> void: training.guard_test_interval = value; training.apply_bot_settings())
 	menu_label(right, "02  /  RULE LABORATORY", 18)
 	spin(right, "Player maximum HP (reset applies)", 250, 50, 500, 50, func(value: float) -> void: training.player_max_health = value)
 	spin(right, "Target maximum HP (reset applies)", 250, 50, 500, 50, func(value: float) -> void: training.bot_max_health = value)
@@ -253,7 +260,7 @@ func build_menu() -> void:
 	var fields: Array = [
 		["Melee damage", "melee_damage", 75.0, 10.0, 150.0, 5.0],
 		["Melee reach (m)", "melee_range", 2.6, 1.0, 4.0, 0.1],
-		["Melee lunge travel (m)", "melee_lunge_distance", 2.2, 0.0, 4.0, 0.1],
+		["Melee lunge travel (m)", "melee_lunge_distance", 3.6, 0.0, 5.0, 0.1],
 		["Throw reach (m)", "throw_range", 2.8, 1.0, 4.0, 0.1],
 		["Throw damage", "throw_damage", 95.0, 10.0, 200.0, 5.0],
 		["Counter window (s)", "counter_window", 0.24, 0.05, 0.4, 0.01],

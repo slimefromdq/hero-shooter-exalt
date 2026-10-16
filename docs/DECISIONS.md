@@ -20,7 +20,7 @@ All fields live in `HeroTuning`. Values can be changed through the Resource Insp
 | Slide | 5 m/s ordinary entry; slope entry at 8°; 3.6 m/s² friction; gravity acts on floor tangent; 26 m/s global speed cap; automatic continuation after ground dash |
 | Movement | 6 m/s ground; 30 m/s² acceleration; 24 braking; 7.5 air steering; 8 m/s jump; 22 m/s² gravity; 0.1 s edge forgiveness, 0.12 s jump buffer |
 | Hover | 8.5 m/s ascent for 0.3 s, then up to 2.5 s glide approaching 1.6 m/s descent; cooldown after end |
-| Melee | 75 HP; 2.6 m hit reach plus up to 2.2 m collision-limited travel; 0.24 s startup / 0.2 s active / 0.4 s recovery; no action cancels. Lunge starts at 0.06 s and lasts 0.28 s. Direction is fixed on input. |
+| Melee | 75 HP; 2.6 m hit reach plus up to 3.6 m collision-limited travel; 0.24 s startup / 0.2 s active / 0.4 s recovery; no action cancels. Lunge starts at 0.06 s and lasts 0.34 s. Direction is fixed on input. |
 | Guard | 100 meter; 24/s drain; 35/s immediate regen after release; 28 per blocked strike; 2 s re-block cooldown; 15% movement; 0 bullet reduction |
 | Throw | 2.8 m; 0.3 s startup; 0.65 s whiff; 0.24 s counter window; 1.1 s pair; 1.05 m lift; impact at 72% of the pair; 95 HP scripted damage; outside damage ×0.1 on both; 0.8 s re-grab grace |
 | Ultimate economy | Starts ready for training; +0.8%/s and +0.09% per HP damage. Consumed on stance entry, no cancellation refund. This economy is a sandbox assumption. |
@@ -66,3 +66,11 @@ All numerical balance, bullet guard reduction, future cancel windows, camera fee
 ## CQ-FEEL-02 · User-directed revision
 
 The user reported that melee and throws felt bad and requested forward-traveling melee, increased throw range and an actual throw animation. This establishes the new interaction direction, replacing the original in-place strike and simple paired tilts. The numbers above are the first proposed defaults for another feel pass. Melee damage, throw damage, guard rules and counterthrow are preserved.
+
+## CQ-FEEL-03 · Longer engagement and guarding practice
+
+The user requested more melee travel, a stationary bot that strikes at a specific range, and personal key bindings. Lunge travel increases from 2.2 to 3.6 m, with its duration extended from 0.28 to 0.34 s. A normal strike can finish an injured target initially 5.75 m away in the focused check; obstacles and frontal guard still stop travel.
+
+The Guard trainer profile issues zero movement intent and requests a stationary version of the shared melee action. This suppresses that cast's lunge without modifying shared tuning resources. It strikes inside the smaller of its configured trigger range and actual melee hit reach. Default range is 2.4 m; interval 1.6 s; both are editable. Normal windup, hit deduplication, facing, line of sight, damage, guard and stagger all apply. The range ring and bot/HUD prompts expose the exercise rules. The dedicated start button resets the exercise and enables AI.
+
+Saved bindings are now 3 dash; Q Hover; E Deflect; 1 bomb; 2 ultimate; Shift slide; 5 melee; 4 throw/counter; 6 guard. The old V/C/F/G/X/Ctrl combat bindings are removed. Runtime defaults and the persisted project map agree; ability cards, guard/counter prompts and preview labels derive their keys from the actual InputMap.

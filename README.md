@@ -19,23 +19,30 @@ powershell -ExecutionPolicy Bypass -File .\Launch.ps1
 | WASD / mouse | Move / look |
 | Left click / right hold | Semi-auto umbrella rifle / shoulder aim |
 | R / Space | Reload / jump |
-| Shift | Crosshair-directed 3D dash, after a short buildup |
-| Ctrl hold | Momentum slide; downhill entry works from low speed |
-| E | Hover: upward burst, then glide; press again to end |
-| Q / G | Frontal Deflect / bouncing Pocket Bomb |
-| X, then left click | Final Notice stance, then one shot after preparation; X cancels |
-| V / C hold / F | Forward lunging umbrella strike / melee guard / 2.8 m throw or timed counterthrow |
+| 3 | Crosshair-directed 3D dash, after a short buildup |
+| Shift hold | Momentum slide; downhill entry works from low speed |
+| Q | Ability 1 — Hover: upward burst, then glide; press again to end |
+| E | Ability 2 — frontal Deflect |
+| 1 | Ability 3 — bouncing Pocket Bomb |
+| 2, then left click | Final Notice stance, then one shot after preparation; 2 cancels |
+| 5 | Forward lunging umbrella strike |
+| 4 | 2.8 m throw or timed counterthrow |
+| 6 hold | Shield / frontal melee guard |
 | Tab or Esc | Paused training console / return to play |
 | F3 / F5 / F6 | State and hitbox telemetry / scenario reset / training refill |
 
-Bindings use named InputMap actions in `scripts/training/input_bindings.gd`. Existing editor-configured bindings take precedence. A downward dash automatically enters a momentum slide. Jump ends a slide; holding and then releasing Ctrl can also end an automatic dash slide. Guard limits movement and does **not** reduce bullets at the default setting.
+Bindings use named InputMap actions in `scripts/training/input_bindings.gd`; the saved project map contains the user's requested controls. Existing editor-configured bindings take precedence, and HUD prompts read the actual map. A downward dash automatically enters a momentum slide. Jump ends a slide; holding and then releasing Shift can also end an automatic dash slide. Guard limits movement and does **not** reduce bullets at the default setting.
+
+## Guard practice
+
+Press **Tab → Start guard drill**, walk inside the coral ring, face the stationary bot and hold **6**. The bot starts strikes within **2.4 m**, repeating at a **1.6 s** interval after its normal reaction/startup. It uses the shared melee and stagger rules but stays planted. Change **Strike trigger range** and **Strike interval** under **Stationary guard drill** in the training console. The same bot is available as the **Guard trainer** spawn profile. Starting the dedicated drill clears AI freeze.
 
 ## Included
 
 - Nimbus's complete prototype kit: 45/90 body/head rifle, upward Hover, timed projectile reflection and hitscan blocking, 80-peak bomb with falloff and cover checks, and 150-damage Final Notice with a pre-hit 20% execution check.
 - Shared acceleration, braking, air steering, jump buffering/coyote time, fixed-direction dash, both slide entries, and collision-aware shoulder camera.
-- A 2.2 m committed melee lunge for engages/finishers, finite frontal guard with attacker stagger, interruptible 2.8 m throws, counterthrows, and an articulated pull/hip-lift/turn/slam/get-up animation. Slam damage occurs at impact; both participants retain 90% outside-damage reduction during the pair.
-- Five bot profiles; six exercises; spawn/despawn; 250/500 HP experiments; 19/20/21% target presets; shield/invulnerability controls; AI settings; resource refills; movement presets; live combat tuning; route timer; event export.
+- A 3.6 m committed melee lunge for engages/finishers, finite frontal guard with attacker stagger, interruptible 2.8 m throws, counterthrows, and an articulated pull/hip-lift/turn/slam/get-up animation. Slam damage occurs at impact; both participants retain 90% outside-damage reduction during the pair.
+- Six bot profiles; seven exercises including the stationary guard drill; spawn/despawn; 250/500 HP experiments; 19/20/21% target presets; shield/invulnerability controls; AI settings; resource refills; movement presets; live combat tuning; route timer; event export.
 - Cover, firing lane, slope, elevated traversal platforms, and a ranged projectile-emitter opponent. The crossfire exercise uses a third-faction probe to test damage on **both** throw participants while preserving friendly-fire rules.
 - All gameplay components and per-actor resources are shared by player and bots. Multiplayer and the remaining roster are deferred.
 
@@ -52,6 +59,7 @@ Or use Godot directly:
 godot --headless --path . --editor --import --quit
 godot --headless --path . --script res://tests/rules_test.gd
 godot --headless --path . --script res://tests/close_combat_test.gd
+godot --headless --path . --script res://tests/guard_drill_test.gd
 godot --headless --path . --script res://tests/integration_test.gd
 ```
 

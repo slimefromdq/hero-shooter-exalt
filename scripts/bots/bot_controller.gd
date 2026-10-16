@@ -1,7 +1,7 @@
 class_name BotController
 extends Node
 
-enum Profile { STATIONARY, STRAFE, RANGED, BRAWLER, SPARRING }
+enum Profile { STATIONARY, STRAFE, RANGED, BRAWLER, SPARRING, GUARD_TRAINER }
 var actor: HeroActor
 var target: HeroActor
 var profile: int = Profile.RANGED
@@ -18,11 +18,37 @@ var home: Vector3
 var stuck_timer: float = 0.0
 var previous_position: Vector3
 var side: float = 1.0
+var guard_trigger_range: float = 2.4
+var guard_attack_interval: float = 1.6
+var guard_reaction_time: float = 0.0
+var guard_range_ring: MeshInstance3D
+var guard_range_label: Label3D
 
 func _ready() -> void:
 	home = actor.global_position
 	previous_position = home
 	side = 1.0 if actor.get_instance_id() % 2 == 0 else -1.0
+	if profile == Profile.GUARD_TRAINER:
+		action_timer = 0.0
+		var shape := ImmediateMesh.new()
+		var mat: StandardMaterial3D = Geometry.material(Color("f4947e"))
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		shape.surface_begin(Mesh.PRIMITIVE_LINE_STRIP, mat)
+		for index: int in 97:
+			var angle: float = TAU * index / 96.0
+			shape.surface_add_vertex(Vector3(cos(angle),0,sin(angle)))
+		shape.surface_end()
+		guard_range_ring = Geometry.mesh(actor,shape,Vector3(0,.035,0),mat)
+		guard_range_label = Geometry.text3d(actor,"",Vector3(0,3.2,0),28,Color("ffe0bd"))
+		guard_range_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+
+func _process(_delta: float) -> void:
+	if profile == Profile.GUARD_TRAINER and is_instance_valid(guard_range_ring):
+		var reach: float = minf(guard_trigger_range,actor.tuning.melee_range)
+		guard_range_ring.visible = actor.alive
+		guard_range_label.visible = actor.alive
+		guard_range_ring.scale = Vector3(reach,1,reach)
+		guard_range_label.text = "GUARD DRILL  /  %.1f m\nHOLD %s TO BLOCK" % [reach,TrainingInputs.key_label("guard")]
 
 func gather_intent(delta: float) -> CombatIntent:
 	var input := CombatIntent.new()
@@ -46,6 +72,19 @@ func gather_intent(delta: float) -> CombatIntent:
 	if profile == Profile.STRAFE:
 		var destination: Vector3 = home + Vector3(sin(time * 0.65) * 4.0, 0, 0)
 		input.move = (destination - actor.global_position).limit_length(1.0)
+		return input
+	if profile == Profile.GUARD_TRAINER:
+		input.stationary_melee = true
+		var reach: float = minf(guard_trigger_range,actor.tuning.melee_range)
+		if sees and distance <= reach and actor.permits("melee"):
+			guard_reaction_time += delta
+			if guard_reaction_time >= reaction_delay and action_timer <= 0.0:
+				input.melee = true
+				guard_reaction_time = 0.0
+				var commitment: float = actor.tuning.melee_windup + actor.tuning.melee_active + actor.tuning.melee_recovery
+				action_timer = maxf(guard_attack_interval,commitment + .15)
+		else:
+			guard_reaction_time = 0.0
 		return input
 	if profile == Profile.SPARRING and actor.close.incoming_throw() != null:
 		if counter_timer < 0.0:
@@ -109,6 +148,7 @@ func path_direction(offset: Vector3) -> Vector3:
 func reset_controller() -> void:
 	time = 0.0
 	think_timer = reaction_delay
-	action_timer = 0.8
+	action_timer = 0.0 if profile == Profile.GUARD_TRAINER else 0.8
 	counter_timer = -1.0
 	stuck_timer = 0.0
+	guard_reaction_time = 0.0

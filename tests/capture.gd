@@ -33,6 +33,24 @@ func capture() -> void:
 	await RenderingServer.frame_post_draw
 	root.get_texture().get_image().save_png("res://artifacts/hover.png")
 	print("HOVER CAPTURE MODE: ", arena.player.motor.mode)
+	arena.training.scenario = 6
+	arena.training.freeze_ai = false
+	arena.training.reset_scenario()
+	controller.pitch = -.12
+	controller.yaw = 0.0
+	for index: int in 5:
+		await physics_frame
+		await process_frame
+	await RenderingServer.frame_post_draw
+	root.get_texture().get_image().save_png("res://artifacts/guard-drill.png")
+	arena.player.reset_actor(arena.training.bots[0].global_position + Vector3(0,0,2.2))
+	arena.player.intent.guard = true
+	for index: int in 40:
+		await physics_frame
+		await process_frame
+	await RenderingServer.frame_post_draw
+	root.get_texture().get_image().save_png("res://artifacts/guard-block.png")
+	print("GUARD CAPTURE: player HP=",arena.player.health," bot state=",arena.training.bots[0].state)
 	print("CAPTURED: artifacts/training.png, training-console.png and hover.png")
 	arena.queue_free()
 	await process_frame

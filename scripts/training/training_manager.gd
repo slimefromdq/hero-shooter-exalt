@@ -1,8 +1,8 @@
 class_name TrainingManager
 extends Node
 
-const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring"]
-const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route"]
+const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring", "Guard trainer"]
+const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill"]
 var arena: Node3D
 var player: HeroActor
 var bots: Array[HeroActor] = []
@@ -18,6 +18,8 @@ var target_health_override: bool = false
 var reaction: float = 0.22
 var aggression: float = 1.0
 var error_chance: float = 0.15
+var guard_test_range: float = 2.4
+var guard_test_interval: float = 1.6
 var bot_max_health: float = 250.0
 var player_max_health: float = 250.0
 var scenario: int = 0
@@ -133,6 +135,8 @@ func spawn_bot(profile: int, at: Vector3 = Vector3.INF) -> HeroActor:
 	controller.error_chance = error_chance
 	controller.aggression = aggression
 	controller.frozen = freeze_ai
+	controller.guard_trigger_range = guard_test_range
+	controller.guard_attack_interval = guard_test_interval
 	bot.add_child(controller)
 	bot.controller = controller
 	bots.append(bot)
@@ -175,6 +179,8 @@ func reset_scenario() -> void:
 			probe.actor_id = "crossfire_probe"
 		5:
 			player.reset_actor(Vector3(18, 1.1, 4))
+		6:
+			spawn_bot(BotController.Profile.GUARD_TRAINER,Vector3(0,.1,7.2))
 	show_notice("EXERCISE %02d  /  %s" % [scenario + 1, SCENARIOS[scenario].to_upper()])
 
 func refill_all() -> void:
@@ -201,6 +207,8 @@ func apply_bot_settings() -> void:
 		controller.reaction_delay = reaction
 		controller.error_chance = error_chance
 		controller.aggression = aggression
+		controller.guard_trigger_range = guard_test_range
+		controller.guard_attack_interval = guard_test_interval
 		bot.invulnerable = target_invulnerable
 		bot.shields = target_shields
 
@@ -218,6 +226,13 @@ func start_route() -> void:
 	if menu_open:
 		toggle_menu()
 	show_notice("ROUTE STARTED · reach the raised finish deck")
+
+func start_guard_drill() -> void:
+	scenario = 6
+	freeze_ai = false
+	reset_scenario()
+	if menu_open:
+		toggle_menu()
 
 func export_events() -> void:
 	var file := FileAccess.open("user://combat_events.json", FileAccess.WRITE)

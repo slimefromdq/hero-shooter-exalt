@@ -47,13 +47,13 @@ func capture() -> void:
 	for frame: int in 100:
 		await physics_frame
 		await process_frame
-		label.text = "F  /  HIP THROW\nREACH → PULL → LIFT → SLAM → RELEASE"
+		label.text = "%s  /  HIP THROW\nREACH → PULL → LIFT → SLAM → RELEASE" % TrainingInputs.key_label("throw")
 		await RenderingServer.frame_post_draw
 		if frame % 2 == 0:
 			root.get_texture().get_image().save_png("res://artifacts/combat-frames/throw_%03d.png" % frame)
 	print("THROW PREVIEW: target HP=",target.health," final state=",target.state)
 	player.reset_actor(Vector3(0,.01,8))
-	target.reset_actor(Vector3(0,.01,3.75))
+	target.reset_actor(Vector3(0,.01,2.25))
 	target.health = 50
 	target.intent.aim = Vector3.BACK
 	for index: int in 3:
@@ -66,7 +66,7 @@ func capture() -> void:
 	for frame: int in 70:
 		await physics_frame
 		await process_frame
-		label.text = "V  /  STEP-IN UMBRELLA STRIKE\n2.2 m COMMITTED LUNGE  ·  ENGAGE / FINISH"
+		label.text = "%s  /  STEP-IN UMBRELLA STRIKE\n%.1f m COMMITTED LUNGE  ·  ENGAGE / FINISH" % [TrainingInputs.key_label("melee"),player.tuning.melee_lunge_distance]
 		await RenderingServer.frame_post_draw
 		if frame % 2 == 0:
 			root.get_texture().get_image().save_png("res://artifacts/combat-frames/melee_%03d.png" % frame)

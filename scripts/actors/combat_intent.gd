@@ -12,6 +12,7 @@ var dash: bool = false
 var slide: bool = false
 var reload: bool = false
 var melee: bool = false
+var stationary_melee: bool = false
 var guard: bool = false
 var throw_action: bool = false
 var hover: bool = false

@@ -168,7 +168,7 @@ func _process(delta: float) -> void:
 	if actor.team != 0:
 		var marker: String = ""
 		if actor.state == "melee_windup": marker = "  /  STRIKE"
-		elif actor.state == "throw_startup": marker = "  /  GRAB!  [F]"
+		elif actor.state == "throw_startup": marker = "  /  GRAB!  [%s]" % TrainingInputs.key_label("throw")
 		elif actor.state == "guard": marker = "  /  GUARD"
 		nameplate.text = "%s    %d HP%s" % [actor.actor_id.to_upper(), ceili(actor.health), marker]
 		nameplate.modulate = Color("ffd096") if marker != "" else Color("fff1db")
