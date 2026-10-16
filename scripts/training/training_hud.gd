@@ -253,6 +253,8 @@ func build_menu() -> void:
 	var fields: Array = [
 		["Melee damage", "melee_damage", 75.0, 10.0, 150.0, 5.0],
 		["Melee reach (m)", "melee_range", 2.6, 1.0, 4.0, 0.1],
+		["Melee lunge travel (m)", "melee_lunge_distance", 2.2, 0.0, 4.0, 0.1],
+		["Throw reach (m)", "throw_range", 2.8, 1.0, 4.0, 0.1],
 		["Throw damage", "throw_damage", 95.0, 10.0, 200.0, 5.0],
 		["Counter window (s)", "counter_window", 0.24, 0.05, 0.4, 0.01],
 		["Throw outside damage multiplier", "throw_outside_multiplier", 0.1, 0.05, 1.0, 0.05],

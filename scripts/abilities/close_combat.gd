@@ -11,6 +11,11 @@ var pair: HeroActor
 var pair_owner: bool = false
 var pair_damage_done: bool = false
 var throw_target: HeroActor
+var sequence: ThrowSequence
+var pair_progress: float = 0.0
+var melee_age: float = 0.0
+var melee_direction: Vector3 = Vector3.FORWARD
+var lunge_blocked: bool = false
 
 func tick(delta: float, input: CombatIntent) -> void:
 	var t: HeroTuning = actor.tuning
@@ -35,10 +40,19 @@ func tick(delta: float, input: CombatIntent) -> void:
 		actor.state = "guard"
 		actor.resolver.record("cast", actor, "guard")
 	if input.melee and actor.permits("melee"):
+		actor.motor.end_hover()
+		actor.motor.transition("ground" if actor.is_on_floor() else "air")
 		actor.state = "melee_windup"
 		actor.state_time = t.melee_windup
+		melee_direction = Vector3(actor.aim_direction.x, 0, actor.aim_direction.z).normalized()
+		if melee_direction.length_squared() < 0.1:
+			melee_direction = -actor.global_basis.z
+		melee_age = 0.0
+		lunge_blocked = false
 		cast_id = actor.resolver.new_cast()
 		actor.resolver.record("cast", actor, "melee")
+	if actor.state.begins_with("melee_"):
+		melee_age += delta
 	match actor.state:
 		"melee_windup":
 			if actor.state_time <= 0.0:
@@ -60,13 +74,34 @@ func tick(delta: float, input: CombatIntent) -> void:
 			if actor.state_time <= 0.0:
 				resolve_throw()
 		"throw_pair":
-			if not is_instance_valid(pair) or not pair.alive:
+			if not is_instance_valid(pair) or not pair.alive or sequence == null:
 				release_pair()
-			elif not pair_damage_done and actor.state_time <= t.throw_duration * 0.35:
-				pair_damage_done = true
-				actor.resolver.damage(actor, pair, t.throw_damage, "throw", cast_id)
-			if actor.state_time <= 0.0:
-				release_pair()
+			else:
+				pair_progress = clampf(1.0 - actor.state_time / t.throw_duration, 0.0, 1.0)
+				pair.close.pair_progress = pair_progress
+				if not sequence.advance(pair_progress):
+					actor.resolver.record("interrupt", actor, "throw", "path obstructed")
+					release_pair()
+					return
+				if not pair_damage_done and pair_progress >= sequence.impact:
+					pair_damage_done = true
+					actor.presentation.slam_impact(sequence.landing)
+					actor.resolver.damage(actor, pair, t.throw_damage, "throw", cast_id)
+				if actor.state == "throw_pair" and actor.state_time <= 0.0:
+					release_pair()
+
+func lunge_displacement(delta: float) -> Vector3:
+	if lunge_blocked:
+		return Vector3.ZERO
+	var t: HeroTuning = actor.tuning
+	var end: float = t.melee_lunge_delay + maxf(0.01, t.melee_lunge_duration)
+	var current: float = smoothstep(t.melee_lunge_delay, end, melee_age)
+	var previous: float = smoothstep(t.melee_lunge_delay, end, maxf(0.0, melee_age - delta))
+	return melee_direction * (current - previous) * t.melee_lunge_distance
+
+func melee_progress() -> float:
+	var t: HeroTuning = actor.tuning
+	return clampf(melee_age / (t.melee_windup + t.melee_active + t.melee_recovery), 0, 1)
 
 func valid_target(target: HeroActor, reach: float, facing: float) -> bool:
 	if target == actor or not target.alive or target.team == actor.team:
@@ -111,11 +146,8 @@ func resolve_throw() -> void:
 	if simultaneous or now - target.close.last_throw_time <= actor.tuning.counter_window:
 		counter_break(target)
 		return
-	# Test a full capsule path to the paired position before granting mitigation.
-	var offset: Vector3 = target.global_position - actor.global_position
-	offset.y = 0.0
-	var desired: Vector3 = actor.global_position + offset.normalized() * 1.05
-	if target.test_move(target.global_transform, desired - target.global_position):
+	var path := ThrowSequence.new()
+	if not path.configure(actor, target):
 		actor.state = "throw_whiff"
 		actor.state_time = actor.tuning.throw_recovery
 		return
@@ -123,7 +155,13 @@ func resolve_throw() -> void:
 	target.kit.cancel()
 	target.motor.end_hover()
 	actor.motor.end_hover()
-	target.global_position = desired
+	actor.motor.transition("ground" if actor.is_on_floor() else "air")
+	target.motor.transition("ground" if target.is_on_floor() else "air")
+	sequence = path
+	actor.aim_direction = path.forward
+	target.aim_direction = -path.forward
+	actor.rotation.y = atan2(-path.forward.x, -path.forward.z)
+	target.rotation.y = atan2(path.forward.x, path.forward.z)
 	actor.state = "throw_pair"
 	target.state = "captured"
 	actor.state_time = actor.tuning.throw_duration
@@ -132,6 +170,8 @@ func resolve_throw() -> void:
 	pair_owner = true
 	target.close.pair_owner = false
 	pair_damage_done = false
+	pair_progress = 0.0
+	target.close.pair_progress = 0.0
 	actor.velocity = Vector3.ZERO
 	target.velocity = Vector3.ZERO
 	actor.resolver.record("capture", actor, "throw", "target=" + target.actor_id)
@@ -160,10 +200,16 @@ func stagger() -> void:
 	actor.motor.end_hover()
 	actor.state = "stagger"
 	actor.state_time = actor.tuning.stagger_duration
+	actor.velocity.x = 0.0
+	actor.velocity.z = 0.0
 	actor.resolver.record("status", actor, "stagger")
 
 func release_pair() -> void:
 	var other: HeroActor = pair
+	if sequence != null:
+		sequence.separate_on_release()
+		sequence.cleanup()
+		sequence = null
 	pair = null
 	pair_owner = false
 	grace = actor.tuning.throw_grace
@@ -173,16 +219,23 @@ func release_pair() -> void:
 	if is_instance_valid(other):
 		other.close.pair = null
 		other.close.pair_owner = false
+		if other.close.sequence != null:
+			other.close.sequence.separate_on_release()
+			other.close.sequence.cleanup()
+			other.close.sequence = null
 		other.close.grace = other.tuning.throw_grace
+		other.close.pair_progress = 0.0
 		if other.alive and other.state in ["captured", "throw_pair"]:
 			other.state = "throw_release"
 			other.state_time = 0.0
-	# Both capsules stay at their last validated, non-overlapping positions.
+	pair_progress = 0.0
 
 func cancel() -> void:
 	if is_instance_valid(pair):
 		release_pair()
 	throw_target = null
+	lunge_blocked = true
+	melee_age = 0.0
 	if actor.state == "guard":
 		guard_cd = actor.tuning.guard_cooldown
 	if actor.alive:

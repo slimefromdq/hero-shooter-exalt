@@ -185,7 +185,7 @@ func close_tests() -> void:
 	resolver.damage(c,a,100,"projectile",resolver.new_cast())
 	resolver.damage(c,b,100,"projectile",resolver.new_cast())
 	check(a.health == 240 and b.health == 240, "both throw participants take only 10% outside damage")
-	await step(55)
+	await step(ceili(a.tuning.throw_duration * Engine.physics_ticks_per_second) + 2)
 	check(b.health == 145, "scripted throw damage bypasses paired mitigation")
 	check(a.state == "ready" and b.state == "ready", "throw releases with no additional post-throw stun")
 	check(a.close.pair == null and b.close.pair == null and b.close.grace > 0, "release clears pairing and grants short grab grace")

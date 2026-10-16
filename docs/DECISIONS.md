@@ -20,9 +20,9 @@ All fields live in `HeroTuning`. Values can be changed through the Resource Insp
 | Slide | 5 m/s ordinary entry; slope entry at 8°; 3.6 m/s² friction; gravity acts on floor tangent; 26 m/s global speed cap; automatic continuation after ground dash |
 | Movement | 6 m/s ground; 30 m/s² acceleration; 24 braking; 7.5 air steering; 8 m/s jump; 22 m/s² gravity; 0.1 s edge forgiveness, 0.12 s jump buffer |
 | Hover | 8.5 m/s ascent for 0.3 s, then up to 2.5 s glide approaching 1.6 m/s descent; cooldown after end |
-| Melee | 75 HP; 2.6 m; 0.32 s startup / 0.13 s active / 0.5 s recovery; no action cancels |
+| Melee | 75 HP; 2.6 m hit reach plus up to 2.2 m collision-limited travel; 0.24 s startup / 0.2 s active / 0.4 s recovery; no action cancels. Lunge starts at 0.06 s and lasts 0.28 s. Direction is fixed on input. |
 | Guard | 100 meter; 24/s drain; 35/s immediate regen after release; 28 per blocked strike; 2 s re-block cooldown; 15% movement; 0 bullet reduction |
-| Throw | 1.8 m; 0.3 s startup; 0.65 s whiff; 0.24 s counter window; 0.85 s pair; 95 HP scripted damage; outside damage ×0.1 on both; 0.8 s re-grab grace |
+| Throw | 2.8 m; 0.3 s startup; 0.65 s whiff; 0.24 s counter window; 1.1 s pair; 1.05 m lift; impact at 72% of the pair; 95 HP scripted damage; outside damage ×0.1 on both; 0.8 s re-grab grace |
 | Ultimate economy | Starts ready for training; +0.8%/s and +0.09% per HP damage. Consumed on stance entry, no cancellation refund. This economy is a sandbox assumption. |
 | Rifle head region | One capsule ray hit; upper 1.5–1.9 m is head, lower section body. A single hit record prevents overlapping head/body duplicate damage. |
 | Bot response | 0.22 s default, adjustable 0.05–1.5 s; 15% configured counter error; local ray avoidance and stuck recovery. No full navigation mesh or parkour planner. |
@@ -35,7 +35,7 @@ The actor state table is authoritative; procedural animation never applies damag
 | --- | --- |
 | Ready, ground/air/slide/Hover | Rifle, aim, reload, kit, jump, shared combat; dash additionally requires cooldown |
 | Dash buildup / dash | Steering intent is suppressed during the burst; no other combat casts |
-| Melee startup / active / recovery | Limited translation; no rifle, guard, throw, dash or abilities |
+| Melee startup / active / recovery | Swept, committed forward lunge during startup/active; limited normal translation in recovery; no rifle, guard, throw, dash or ability cancels |
 | Guard | Slow translation, release; responding counterthrow input; no gun/kit casts |
 | Throw startup / whiff | Limited translation, no new casts; damage interrupts startup |
 | Captured / throw pair | No translation or unrelated actions; outside damage ×0.1; scripted throw damage bypasses only pair mitigation |
@@ -52,7 +52,8 @@ The actor state table is authoritative; procedural animation never applies damag
 - Friendly fire is off. Explosions do not damage their owner in this prototype. Bombs bounce only on environment geometry; detonation does radial falloff and line-of-sight checks.
 - Executions inspect pre-shot HP and require shields already at zero. A shot that depletes shields is ordinary damage. Invulnerability rejects the hit. Pair damage mitigation also applies to Final Notice; it cannot bypass the protected sequence.
 - Reflections transfer source/team and aim along the defender's aim; one reflection per Deflect cast per projectile, with two total reflections maximum to bound loops. Hitscan blocks without reflection. Melee and explosions bypass Deflect.
-- Throws require facing, range, clear line, non-overlapping swept capsule placement, and valid actor state. A mutual startup is a single counter break. During the paired presentation, authoritative capsule positions remain separated at validated locations; animation supplies lift and rotation. Release never teleports into new geometry.
+- Throws require facing, range, clear line, a validated full capsule trajectory and a supported landing. A mutual startup is a single counter break. Capture starts at the victim's real position, draws them to the hip, lifts and carries their capsule, then lands them to the attacker's forward right. Only the paired capsules ignore one another during the sequence; environment and other actors still collide. New obstacles abort at the last swept position. An interrupted lift retraces safe travel to separate the pair before restoring normal capsule collision.
+- The actual AnimationPlayer library has separate reach, thrower, victim and melee clips with keyed torso, shoulder, elbow, hip, knee and weapon tracks. Physics supplies normalized progress, positioning and the single slam damage event. Keyframes cannot grant damage, mitigation or control. Impact timing stays aligned with the configurable slam point. The victim's keyed get-up completes inside the paired sequence, with no additional release stun.
 - Stagger/capture cancels a live stance but does not delete already thrown bombs. Death, despawn and scenario reset remove owned bombs/projectiles. Reset releases both ends of any pair, clears effects and AI state, and restores selected scenario health/resources.
 - Crossfire laboratory deliberately adds a **third team** probe that alternates aim between the two participants; ordinary enemy friendly-fire rejection remains intact.
 - Bot corpses remain as non-colliding meshes, then respawn after 3.5 s. Player death waits for F5 or F6. AI freeze stops intent; opening the console pauses the simulation.
@@ -61,3 +62,7 @@ The actor state table is authoritative; procedural animation never applies damag
 ## Remaining design choices
 
 All numerical balance, bullet guard reduction, future cancel windows, camera feel, team sizes, long-term ultimate economy, full bot navigation and multiplayer prediction remain open. A human playtest is required before accepting the movement presets or combat timings.
+
+## CQ-FEEL-02 · User-directed revision
+
+The user reported that melee and throws felt bad and requested forward-traveling melee, increased throw range and an actual throw animation. This establishes the new interaction direction, replacing the original in-place strike and simple paired tilts. The numbers above are the first proposed defaults for another feel pass. Melee damage, throw damage, guard rules and counterthrow are preserved.

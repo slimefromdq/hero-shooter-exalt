@@ -17,6 +17,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Godot import failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/rules_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Combat/movement rule tests failed.' }
+    & $taskEngine --headless --path $taskRoot --script res://tests/close_combat_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Melee engagement / throw choreography tests failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/integration_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Training integration tests failed.' }
     if ($Capture) {

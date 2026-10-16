@@ -24,7 +24,7 @@ powershell -ExecutionPolicy Bypass -File .\Launch.ps1
 | E | Hover: upward burst, then glide; press again to end |
 | Q / G | Frontal Deflect / bouncing Pocket Bomb |
 | X, then left click | Final Notice stance, then one shot after preparation; X cancels |
-| V / C hold / F | Committed umbrella strike / melee guard / throw or timed counterthrow |
+| V / C hold / F | Forward lunging umbrella strike / melee guard / 2.8 m throw or timed counterthrow |
 | Tab or Esc | Paused training console / return to play |
 | F3 / F5 / F6 | State and hitbox telemetry / scenario reset / training refill |
 
@@ -34,7 +34,7 @@ Bindings use named InputMap actions in `scripts/training/input_bindings.gd`. Exi
 
 - Nimbus's complete prototype kit: 45/90 body/head rifle, upward Hover, timed projectile reflection and hitscan blocking, 80-peak bomb with falloff and cover checks, and 150-damage Final Notice with a pre-hit 20% execution check.
 - Shared acceleration, braking, air steering, jump buffering/coyote time, fixed-direction dash, both slide entries, and collision-aware shoulder camera.
-- Committed melee, finite frontal guard with attacker stagger, interruptible throws, counterthrows, paired animation/90% outside-damage reduction, and safe release.
+- A 2.2 m committed melee lunge for engages/finishers, finite frontal guard with attacker stagger, interruptible 2.8 m throws, counterthrows, and an articulated pull/hip-lift/turn/slam/get-up animation. Slam damage occurs at impact; both participants retain 90% outside-damage reduction during the pair.
 - Five bot profiles; six exercises; spawn/despawn; 250/500 HP experiments; 19/20/21% target presets; shield/invulnerability controls; AI settings; resource refills; movement presets; live combat tuning; route timer; event export.
 - Cover, firing lane, slope, elevated traversal platforms, and a ranged projectile-emitter opponent. The crossfire exercise uses a third-faction probe to test damage on **both** throw participants while preserving friendly-fire rules.
 - All gameplay components and per-actor resources are shared by player and bots. Multiplayer and the remaining roster are deferred.
@@ -51,6 +51,7 @@ Or use Godot directly:
 ```text
 godot --headless --path . --editor --import --quit
 godot --headless --path . --script res://tests/rules_test.gd
+godot --headless --path . --script res://tests/close_combat_test.gd
 godot --headless --path . --script res://tests/integration_test.gd
 ```
 
@@ -61,3 +62,5 @@ Results are written to `artifacts/`. See `docs/PLAYTESTS.md` for performed check
 `scenes/actors` composes the common actor. `scripts/actors` owns intent, actor state, movement and camera. `scripts/abilities` owns Nimbus and close-combat lifecycles. `scripts/combat` is the offline authority boundary for damage, cover and projectiles. `scripts/presentation` owns geometry, animation and sound. `scripts/training` owns exercises, bots/debug control and HUD. All dimensions are meters, times seconds, health/damage HP.
 
 The prototype uses deliberately simple geometry, local obstacle avoidance and procedural animation. It requires human keyboard/mouse playtesting for responsiveness, camera comfort, route difficulty and combat readability. See `docs/DECISIONS.md` and `docs/TASKS.md` before extending it.
+
+To render the revised combat choreography for review, run `godot --path . --script res://tests/capture_close_combat.gd --fixed-fps 60 --resolution 1100x720`. It writes actual engine frames under `artifacts/combat-frames/`.

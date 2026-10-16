@@ -63,9 +63,10 @@ func _physics_process(delta: float) -> void:
 		intent = controller.gather_intent(delta)
 	if not alive:
 		return
-	aim_direction = intent.aim.normalized()
-	if Vector2(aim_direction.x, aim_direction.z).length() > 0.01:
-		rotation.y = atan2(-aim_direction.x, -aim_direction.z)
+	if state not in ["captured", "throw_pair"]:
+		aim_direction = close.melee_direction if state.begins_with("melee_") else intent.aim.normalized()
+		if Vector2(aim_direction.x, aim_direction.z).length() > 0.01:
+			rotation.y = atan2(-aim_direction.x, -aim_direction.z)
 	state_time = maxf(0.0, state_time - delta)
 	if state in ["stagger", "counterthrow", "throw_release"] and state_time <= 0.0:
 		state = "ready"

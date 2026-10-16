@@ -23,6 +23,18 @@ func tick(delta: float, input: CombatIntent) -> void:
 	if actor.state in ["captured", "throw_pair"]:
 		actor.velocity = Vector3.ZERO
 		return
+	if actor.state in ["melee_windup", "melee_active"]:
+		var lunge: Vector3 = actor.close.lunge_displacement(delta)
+		actor.velocity.x = lunge.x / delta
+		actor.velocity.z = lunge.z / delta
+		actor.velocity.y -= t.gravity * delta
+		actor.velocity = actor.velocity.limit_length(t.speed_limit)
+		actor.move_and_slide()
+		for index: int in actor.get_slide_collision_count():
+			var normal: Vector3 = actor.get_slide_collision(index).get_normal()
+			if normal.dot(actor.close.melee_direction) < -0.25 and normal.y < cos(actor.floor_max_angle):
+				actor.close.lunge_blocked = true
+		return
 	var was_floor: bool = actor.is_on_floor()
 	coyote = 0.1 if was_floor else maxf(0.0, coyote - delta)
 	jump_buffer = 0.12 if input.jump else maxf(0.0, jump_buffer - delta)

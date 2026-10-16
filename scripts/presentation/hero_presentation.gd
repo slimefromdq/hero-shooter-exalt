@@ -3,6 +3,7 @@ extends Node3D
 
 var actor: HeroActor
 var model: Node3D
+var body: Node3D
 var umbrella: Node3D
 var canopy: MeshInstance3D
 var shield: MeshInstance3D
@@ -11,45 +12,52 @@ var nameplate: Label3D
 var debug_label: Label3D
 var fire_flash: float = 0.0
 var walk_phase: float = 0.0
-var left_leg: MeshInstance3D
-var right_leg: MeshInstance3D
+var left_leg: Node3D
+var right_leg: Node3D
+var left_arm: Node3D
+var right_arm: Node3D
+var animator: AnimationPlayer
 var sound: ProceduralSound
 var was_grounded: bool = false
 
 func _ready() -> void:
 	model = Node3D.new()
+	model.name = "Model"
+	model.position.y = 1.0
 	add_child(model)
+	body = Node3D.new()
+	body.name = "Geometry"
+	body.position.y = -1.0
+	model.add_child(body)
 	var suit: Color = Color("253d4b") if actor.team == 0 else Color("aa534a")
 	var trim: Color = Color("80e1d0") if actor.team == 0 else Color("ffd4b4")
 	var torso := CapsuleMesh.new()
 	torso.radius = 0.3
 	torso.height = 0.84
-	Geometry.mesh(model, torso, Vector3(0, 1.12, 0), Geometry.material(suit))
-	Geometry.box(model, Vector3(0.13, 0.42, 0.05), Vector3(0, 1.26, -0.27), Color("f2ebd9"), false)
-	Geometry.box(model, Vector3(0.065, 0.32, 0.055), Vector3(0, 1.22, -0.3), trim, false)
+	Geometry.mesh(body, torso, Vector3(0, 1.12, 0), Geometry.material(suit))
+	Geometry.box(body, Vector3(0.13, 0.42, 0.05), Vector3(0, 1.26, -0.27), Color("f2ebd9"), false)
+	Geometry.box(body, Vector3(0.065, 0.32, 0.055), Vector3(0, 1.22, -0.3), trim, false)
 	var head := SphereMesh.new()
 	head.radius = 0.22
 	head.height = 0.44
-	Geometry.mesh(model, head, Vector3(0, 1.73, 0), Geometry.material(Color("d8b698")))
-	Geometry.box(model, Vector3(0.42, 0.1, 0.28), Vector3(0, 1.76, -0.13), Color("1a3038"), false)
-	Geometry.cylinder(model, 0.24, 0.12, Vector3(0, 1.94, 0), suit)
-	Geometry.cylinder(model, 0.3, 0.04, Vector3(0, 1.89, 0), suit)
-	var limb := CapsuleMesh.new()
-	limb.radius = 0.115
-	limb.height = 0.7
-	left_leg = Geometry.mesh(model, limb, Vector3(-0.15, 0.43, 0), Geometry.material(suit))
-	right_leg = Geometry.mesh(model, limb, Vector3(0.15, 0.43, 0), Geometry.material(suit))
-	Geometry.box(model, Vector3(0.2, 0.14, 0.35), Vector3(-0.15, 0.1, -0.07), Color("142e38"), false)
-	Geometry.box(model, Vector3(0.2, 0.14, 0.35), Vector3(0.15, 0.1, -0.07), Color("142e38"), false)
-	var arm := CapsuleMesh.new()
-	arm.radius = 0.105
-	arm.height = 0.6
-	var arm_visual := Geometry.mesh(model, arm, Vector3(0.34, 1.28, -0.17), Geometry.material(suit))
-	arm_visual.rotation_degrees.x = -70
-	arm_visual = Geometry.mesh(model, arm, Vector3(-0.3, 1.2, -0.12), Geometry.material(suit))
-	arm_visual.rotation_degrees.z = -25
+	Geometry.mesh(body, head, Vector3(0, 1.73, 0), Geometry.material(Color("d8b698")))
+	Geometry.box(body, Vector3(0.42, 0.1, 0.28), Vector3(0, 1.76, -0.13), Color("1a3038"), false)
+	Geometry.cylinder(body, 0.24, 0.12, Vector3(0, 1.94, 0), suit)
+	Geometry.cylinder(body, 0.3, 0.04, Vector3(0, 1.89, 0), suit)
+	left_leg = make_limb("LeftLeg", Vector3(-.15,.8,0), .34, .34, .105, suit)
+	right_leg = make_limb("RightLeg", Vector3(.15,.8,0), .34, .34, .105, suit)
+	for leg: Node3D in [left_leg, right_leg]:
+		Geometry.box(leg.get_node("Joint"), Vector3(.2,.14,.35), Vector3(0,-.3,-.07), Color("142e38"), false)
+	left_arm = make_limb("LeftArm", Vector3(-.34,1.43,0), .28, .27, .09, suit)
+	right_arm = make_limb("RightArm", Vector3(.34,1.43,0), .28, .27, .09, suit)
+	for arm: Node3D in [left_arm,right_arm]:
+		var hand := SphereMesh.new()
+		hand.radius = .095
+		hand.height = .19
+		Geometry.mesh(arm.get_node("Joint"), hand, Vector3(0,-.27,0), Geometry.material(Color("d8b698")))
 	rifle = Node3D.new()
-	model.add_child(rifle)
+	rifle.name = "Rifle"
+	body.add_child(rifle)
 	rifle.position = Vector3(0.34, 1.38, -0.25)
 	var barrel: MeshInstance3D = Geometry.cylinder(rifle, 0.035, 1.15, Vector3(0, 0, -0.32), Color("e9d9aa"))
 	barrel.rotation_degrees.x = 90
@@ -61,7 +69,7 @@ func _ready() -> void:
 	cloth.rotation_degrees.x = -90
 	Geometry.box(rifle, Vector3(0.1, 0.2, 0.2), Vector3(0, -0.1, 0.22), Color("c4a56f"), false)
 	umbrella = Node3D.new()
-	model.add_child(umbrella)
+	body.add_child(umbrella)
 	umbrella.position = Vector3(0, 2.3, 0)
 	var cap := CylinderMesh.new()
 	cap.top_radius = 0.06
@@ -78,7 +86,7 @@ func _ready() -> void:
 	var mat: StandardMaterial3D = Geometry.material(trim, 0.5)
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.albedo_color.a = 0.55
-	shield = Geometry.mesh(model, disc, Vector3(0, 1.3, -0.65), mat)
+	shield = Geometry.mesh(body, disc, Vector3(0, 1.3, -0.65), mat)
 	shield.rotation_degrees.x = 90
 	nameplate = Geometry.text3d(self, actor.actor_id.to_upper(), Vector3(0, 2.65, 0), 28, Color("fff0da"))
 	nameplate.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -87,32 +95,76 @@ func _ready() -> void:
 	debug_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	sound = ProceduralSound.new()
 	add_child(sound)
+	animator = AnimationPlayer.new()
+	animator.name = "CloseCombatAnimation"
+	animator.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
+	add_child(animator)
+	animator.add_animation_library("", CloseCombatAnimations.library())
+
+func make_limb(caption: String, at: Vector3, upper: float, lower: float, radius: float, color: Color) -> Node3D:
+	var pivot := Node3D.new()
+	pivot.name = caption
+	pivot.position = at
+	body.add_child(pivot)
+	var top := CapsuleMesh.new()
+	top.radius = radius
+	top.height = upper + radius
+	Geometry.mesh(pivot, top, Vector3(0,-upper / 2,0), Geometry.material(color))
+	var joint := Node3D.new()
+	joint.name = "Joint"
+	joint.position.y = -upper
+	pivot.add_child(joint)
+	var bottom := CapsuleMesh.new()
+	bottom.radius = radius * .9
+	bottom.height = lower + radius
+	Geometry.mesh(joint, bottom, Vector3(0,-lower / 2,0), Geometry.material(color))
+	return pivot
 
 func _process(delta: float) -> void:
 	fire_flash = maxf(0.0, fire_flash - delta)
 	walk_phase += Vector2(actor.velocity.x, actor.velocity.z).length() * delta * 1.8
-	left_leg.rotation.x = sin(walk_phase) * 0.4 if actor.is_on_floor() else -0.25
-	right_leg.rotation.x = -left_leg.rotation.x
-	model.rotation.z = lerp_angle(model.rotation.z, -0.85 if not actor.alive else 0.0, delta * 8.0)
-	model.position.y = lerpf(model.position.y, -0.5 if actor.motor.mode == "slide" else 0.0, delta * 12.0)
-	model.rotation.x = lerp_angle(model.rotation.x, -0.28 if actor.motor.mode == "slide" else 0.0, delta * 10.0)
+	left_leg.rotation = Vector3(sin(walk_phase) * .4 if actor.is_on_floor() else -.25,0,0)
+	right_leg.rotation = Vector3(-left_leg.rotation.x,0,0)
+	left_arm.rotation = Vector3(.1,0,-.15)
+	right_arm.rotation = Vector3(1.1,0,0)
+	for limb: Node3D in [left_arm,right_arm,left_leg,right_leg]:
+		(limb.get_node("Joint") as Node3D).rotation = Vector3.ZERO
+	model.position = Vector3(0,.5 if actor.motor.mode == "slide" else 1.0,0)
+	model.rotation = Vector3(-.28 if actor.motor.mode == "slide" else 0,0,-.85 if not actor.alive else 0)
 	umbrella.visible = actor.motor.mode in ["hover", "hover_ascent"]
 	shield.visible = actor.state in ["guard", "deflect"]
 	shield.scale = Vector3.ONE * (1.0 if actor.state == "deflect" else 0.7)
 	rifle.rotation = Vector3.ZERO
-	if actor.state == "melee_windup":
-		rifle.rotation.y = 1.3
-	elif actor.state in ["melee_active", "melee_recovery"]:
-		rifle.rotation.y = -1.5
-	elif actor.state == "reload":
+	rifle.position = Vector3(.34,1.38,-.25)
+	if actor.state == "reload":
 		rifle.rotation.x = -0.7
-	elif actor.state in ["throw_startup", "throw_pair", "captured"]:
-		rifle.rotation.z = -0.8
-		model.rotation.x = sin(actor.state_time * 9.0) * 0.25
-		if actor.state == "captured" and is_instance_valid(actor.close.pair):
-			var progress: float = 1.0 - actor.close.pair.state_time / actor.tuning.throw_duration
-			model.position.y = sin(clampf(progress, 0.0, 1.0) * PI) * 0.65
-			model.rotation.z = sin(clampf(progress, 0.0, 1.0) * PI) * -0.85
+	var animation: String = ""
+	var progress: float = 0.0
+	if actor.state.begins_with("melee_"):
+		animation = "melee"
+		progress = actor.close.melee_progress()
+	elif actor.state == "throw_startup":
+		animation = "grab"
+		progress = 1.0 - actor.state_time / actor.tuning.throw_startup
+	elif actor.state in ["throw_pair","captured"]:
+		animation = "thrower" if actor.state == "throw_pair" else "victim"
+		progress = actor.close.pair_progress
+		var owner: HeroActor = actor if actor.close.pair_owner else actor.close.pair
+		if is_instance_valid(owner) and owner.close.sequence != null:
+			var impact: float = owner.close.sequence.impact
+			if progress >= impact:
+				progress = lerpf(.72,1.0,(progress - impact) / (1.0 - impact))
+			elif progress > .46:
+				progress = lerpf(.46,.72,(progress - .46) / (impact - .46))
+	if animation != "":
+		if animator.current_animation != animation:
+			animator.play(animation)
+		animator.seek(clampf(progress,0,.9999), true)
+	else:
+		animator.stop(true)
+	if actor.state in ["throw_startup","throw_pair","captured"]:
+		rifle.position = Vector3(.22,1.12,.32)
+		rifle.rotation = Vector3(-.4,0,-.6)
 	if actor.team != 0:
 		var marker: String = ""
 		if actor.state == "melee_windup": marker = "  /  STRIKE"
@@ -128,3 +180,7 @@ func _process(delta: float) -> void:
 	if actor.is_on_floor() and not was_grounded and actor.velocity.length() > 1.0:
 		sound.play_tone(70.0, 0.07, 0.1)
 	was_grounded = actor.is_on_floor()
+
+func slam_impact(at: Vector3) -> void:
+	CombatEffect.pulse(actor.get_parent(), at + Vector3.UP * .1, Color("f8d3a0"), .9)
+	sound.play_tone(65, .18, .5)
