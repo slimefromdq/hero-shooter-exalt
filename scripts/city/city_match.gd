@@ -115,7 +115,7 @@ func _spawn_teams() -> void:
 			var actor := preload("res://scenes/actors/hero_actor.tscn").instantiate() as HeroActor
 			actor.team = team
 			actor.actor_id = "%s_%02d" % ["lantern" if team == 0 else "crown", slot + 1]
-			actor.tuning = player.tuning.duplicate() as HeroTuning
+			actor.tuning = HeroRoster.tuning_for("slayer" if HeroRoster.selected == "slayer" and slot in [1,3] else "nimbus")
 			actor.position = positions[slot]
 			arena.add_child(actor)
 			var controller_script: Script = load("res://scripts/city/city_bot_controller.gd")
@@ -290,6 +290,16 @@ func return_to_training() -> void:
 
 func return_training() -> void:
 	return_to_training()
+
+func select_hero(id: String) -> void:
+	HeroRoster.selected = id
+	player.select_hero(id)
+	player.actor_id = id.capitalize()
+	for bot: HeroActor in bots:
+		var slot: int = int(_spawn_indices.get(bot.get_instance_id(),0))
+		bot.select_hero("slayer" if id == "slayer" and slot in [1,3] else "nimbus")
+	restart_match()
+	show_notice(id.to_upper() + " SELECTED / MATCH RESTARTED")
 
 func show_notice(message: String, seconds: float = 3.0) -> void:
 	notice = message

@@ -73,9 +73,9 @@ func _process(delta: float) -> void:
 		_sync_visual()
 
 func try_collect(actor: HeroActor) -> bool:
-	if not available or not is_instance_valid(actor) or not actor.alive or actor.health >= actor.tuning.max_health:
+	if not available or not is_instance_valid(actor) or not actor.alive or actor.health >= actor.effective_max_health():
 		return false
-	var restored: float = minf(heal_amount, maxf(0.0, actor.tuning.max_health - actor.health))
+	var restored: float = minf(heal_amount, maxf(0.0, actor.effective_max_health() - actor.health))
 	if restored <= 0.0:
 		return false
 	actor.health += restored

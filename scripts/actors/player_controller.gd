@@ -12,6 +12,7 @@ var pitch: float = -0.12
 @export var shoulder_offset: float = 0.65
 @export var camera_height: float = 1.65
 var active: bool = true
+var recoil: float = 0.0
 
 func _ready() -> void:
 	rig = Node3D.new()
@@ -45,7 +46,8 @@ func _process(delta: float) -> void:
 	if rig == null:
 		return
 	rig.global_position = actor.global_position + Vector3.UP * camera_height
-	rig.rotation = Vector3(pitch, yaw, 0.0)
+	recoil = move_toward(recoil,0,delta * .22)
+	rig.rotation = Vector3(pitch + recoil, yaw, 0.0)
 	arm.position.x = shoulder_offset
 	var aiming: bool = actor.intent.aim_held or actor.state == "ultimate"
 	camera.fov = lerpf(camera.fov, 34.0 if actor.state == "ultimate" else (55.0 if aiming else 76.0), minf(1.0, delta * 12.0))
@@ -80,8 +82,12 @@ func gather_intent(_delta: float) -> CombatIntent:
 	return input
 
 func reset_controller() -> void:
+	recoil = 0.0
 	yaw = 0.0
 	pitch = -0.12
+
+func add_recoil(amount: float) -> void:
+	recoil = minf(recoil + amount, .1)
 
 func _exit_tree() -> void:
 	if is_instance_valid(rig):

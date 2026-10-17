@@ -1,6 +1,7 @@
 class_name HeroTuning
 extends Resource
 
+@export var hero_id: String = "nimbus"
 @export_category("Movement · meters / seconds")
 @export var ground_speed: float = 6.0
 @export var acceleration: float = 30.0

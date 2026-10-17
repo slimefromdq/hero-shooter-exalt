@@ -2,6 +2,7 @@ class_name ProceduralSound
 extends AudioStreamPlayer
 
 static var guard_wave: AudioStreamWAV
+static var slayer_waves: Dictionary = {}
 var spatial_owner: Node3D
 
 func distance_gain() -> float:
@@ -47,6 +48,36 @@ func play_guard_clang() -> void:
 func _exit_tree() -> void:
 	stop()
 	stream = null
+
+func play_slayer(cue: String) -> void:
+	stop()
+	stream = null
+	stream = slayer_wave(cue)
+	volume_db = -5.0 + distance_gain()
+	if DisplayServer.get_name() != "headless": play()
+
+static func slayer_wave(cue: String) -> AudioStreamWAV:
+	if slayer_waves.has(cue): return slayer_waves[cue]
+	var seconds: float = .28 if cue == "shotgun" else (.45 if cue.begins_with("axe") else .16)
+	var hz: float = 85.0 if cue in ["shotgun","boot_hit","axe_hit"] else (460.0 if cue in ["shell","knife_hit","snare_hit"] else 210.0)
+	var rate: int = 22050
+	var frames: int = int(seconds * rate)
+	var bytes := PackedByteArray()
+	bytes.resize(frames * 2)
+	var noise := RandomNumberGenerator.new()
+	noise.seed = cue.hash()
+	for index: int in frames:
+		var time: float = float(index) / rate
+		var envelope: float = exp(-time * (17.0 if cue == "shotgun" else 12.0)) * minf(1.0,(seconds - time) / .015)
+		var transient: float = noise.randf_range(-1,1) * (.55 if cue == "shotgun" else .22) * exp(-time * 38)
+		var sample: float = (sin(TAU * hz * time) * .5 + sin(TAU * hz * 2.7 * time) * .15) * envelope + transient
+		bytes.encode_s16(index * 2,int(clampf(sample,-.95,.95) * 32767))
+	var wave := AudioStreamWAV.new()
+	wave.format = AudioStreamWAV.FORMAT_16_BITS
+	wave.mix_rate = rate
+	wave.data = bytes
+	slayer_waves[cue] = wave
+	return wave
 
 # Short original synth cues. Finite WAV streams avoid an always-running generator.
 func play_tone(hz: float, seconds: float, loudness: float) -> void:

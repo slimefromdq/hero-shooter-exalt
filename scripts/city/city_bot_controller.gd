@@ -124,6 +124,14 @@ func gather_intent(delta: float) -> CombatIntent:
 				intent.deflect = true
 			if actor.kit.ultimate_charge >= 100 and target.health / target.tuning.max_health <= .20:
 				intent.ultimate = true
+			if actor.kit is SlayerKit:
+				var hunter := actor.kit as SlayerKit
+				intent.primary = distance < 15.0
+				intent.hover = distance > 10 and distance < 25 and hunter.knives > 0
+				intent.deflect = distance > 4 and distance < 9 and hunter.deflect_cd <= 0
+				intent.bomb = distance < 13 and hunter.snares > 0 and rng.randf() < .22
+				intent.aim_held = intent.bomb
+				intent.ultimate = distance < 14 and hunter.ultimate_charge >= 100
 	else:
 		if move.length_squared() > .03:
 			intent.aim = move.normalized()
@@ -159,7 +167,7 @@ func decide() -> void:
 	if elapsed < detour_until:
 		return
 	seeking_health = false
-	if actor.health / actor.tuning.max_health < .4:
+	if actor.health / actor.effective_max_health() < .4:
 		health_target = match_controller.available_health_pack(actor)
 		if is_instance_valid(health_target):
 			seeking_health = true

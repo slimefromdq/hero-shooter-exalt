@@ -21,7 +21,8 @@ func _ready() -> void:
 	add_child(ambience)
 	navigation_region = builder.navigation_region
 	player = preload("res://scenes/actors/hero_actor.tscn").instantiate() as HeroActor
-	player.actor_id = "Nimbus"
+	player.tuning = HeroRoster.tuning_for(HeroRoster.selected)
+	player.actor_id = HeroRoster.selected.capitalize()
 	player.position = definition.team_spawns(0)[0]
 	add_child(player)
 	var controller := PlayerController.new()

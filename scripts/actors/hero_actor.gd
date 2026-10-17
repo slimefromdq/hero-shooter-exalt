@@ -20,7 +20,8 @@ var intent: CombatIntent = CombatIntent.new()
 var resolver: CombatResolver
 var controller: Node
 var motor: HeroMotor
-var kit: NimbusKit
+var kit: HeroKit
+var statuses: CombatStatuses
 var close: CloseCombat
 var presentation: HeroPresentation
 var spawn_position: Vector3
@@ -48,7 +49,9 @@ func _ready() -> void:
 	motor = HeroMotor.new()
 	motor.actor = self
 	add_child(motor)
-	kit = NimbusKit.new()
+	statuses = CombatStatuses.new()
+	statuses.actor = self
+	kit = HeroRoster.kit_for(tuning.hero_id)
 	kit.actor = self
 	add_child(kit)
 	close = CloseCombat.new()
@@ -65,8 +68,14 @@ func _physics_process(delta: float) -> void:
 		intent = controller.gather_intent(delta)
 	if not alive:
 		return
+	statuses.tick(delta)
+	if not alive:
+		return
 	if state not in ["captured", "throw_pair", "mantle"]:
-		aim_direction = close.melee_direction if state.begins_with("melee_") else intent.aim.normalized()
+		if state.begins_with("slayer_boot") and state != "slayer_boot_recovery":
+			aim_direction = (kit as SlayerKit).boot_direction
+		else:
+			aim_direction = close.melee_direction if state.begins_with("melee_") else intent.aim.normalized()
 		if Vector2(aim_direction.x, aim_direction.z).length() > 0.01:
 			rotation.y = atan2(-aim_direction.x, -aim_direction.z)
 	state_time = maxf(0.0, state_time - delta)
@@ -80,12 +89,18 @@ func _physics_process(delta: float) -> void:
 
 # One authority boundary: controllers request actions; only components resolve them.
 func permits(action: String) -> bool:
-	if action in ["primary", "melee", "throw", "counter", "bomb", "ultimate"] and resolver.protected_room(self):
+	if action in ["primary", "melee", "throw", "counter", "bomb", "ultimate", "knife", "boot", "snare"] and resolver.protected_room(self):
+		return false
+	if statuses.movement_disabled() and action in ["dash", "hover", "boot", "jump"]:
+		return false
+	if tuning.hero_id == "slayer" and action == "hover":
 		return false
 	if not alive or state in ["captured", "throw_pair", "stagger", "counterthrow", "throw_release"]:
 		return false
 	if action == "counter":
 		return state in ["ready", "guard", "throw_startup"]
+	if tuning.hero_id == "slayer" and state == "reload":
+		return action in ["primary", "knife", "boot", "snare", "ultimate", "melee", "throw"]
 	if state == "ultimate":
 		return action in ["primary", "aim"]
 	if state != "ready":
@@ -109,6 +124,7 @@ func die() -> void:
 	if not alive:
 		return
 	alive = false
+	statuses.clear()
 	presentation.clear_feedback()
 	close.cancel()
 	kit.cancel(true)
@@ -120,6 +136,7 @@ func die() -> void:
 	died.emit()
 
 func reset_actor(at: Vector3 = Vector3.INF) -> void:
+	statuses.clear()
 	presentation.clear_feedback()
 	close.cancel()
 	kit.cancel(true)
@@ -143,3 +160,23 @@ func reset_actor(at: Vector3 = Vector3.INF) -> void:
 func _exit_tree() -> void:
 	if is_instance_valid(close):
 		close.cancel()
+
+func effective_max_health() -> float:
+	return statuses.effective_max() if statuses != null else tuning.max_health
+
+func select_hero(id: String) -> void:
+	reset_actor(global_position)
+	kit.cancel(true)
+	remove_child(kit)
+	kit.queue_free()
+	remove_child(presentation)
+	presentation.queue_free()
+	tuning = HeroRoster.tuning_for(id)
+	kit = HeroRoster.kit_for(id)
+	kit.actor = self
+	add_child(kit)
+	kit.refill()
+	presentation = HeroPresentation.new()
+	presentation.actor = self
+	add_child(presentation)
+	health = tuning.max_health

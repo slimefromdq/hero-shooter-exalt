@@ -1,8 +1,8 @@
 class_name TrainingManager
 extends Node
 
-const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring", "Guard trainer"]
-const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill"]
+const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring", "Guard trainer", "Slayer hunter"]
+const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt"]
 var arena: Node3D
 var player: HeroActor
 var bots: Array[HeroActor] = []
@@ -124,7 +124,7 @@ func spawn_bot(profile: int, at: Vector3 = Vector3.INF) -> HeroActor:
 	spawn_serial += 1
 	var bot := preload("res://scenes/actors/hero_actor.tscn").instantiate() as HeroActor
 	bot.team = 1
-	bot.tuning = player.tuning.duplicate() as HeroTuning
+	bot.tuning = HeroRoster.tuning_for("slayer") if profile == 6 else (HeroRoster.tuning_for("nimbus") if player.tuning is SlayerTuning else player.tuning.duplicate() as HeroTuning)
 	bot.actor_id = "%s_%02d" % [PROFILES[profile].to_lower().replace(" ", "_"), spawn_serial]
 	bot.position = Vector3(-4 + bots.size() * 3, 0.1, -7 - bots.size() * 2) if at == Vector3.INF else at
 	arena.add_child(bot)
@@ -186,12 +186,17 @@ func reset_scenario() -> void:
 			player.reset_actor(Vector3(18, 1.1, 4))
 		6:
 			spawn_bot(BotController.Profile.GUARD_TRAINER,Vector3(0,.1,7.2))
+		7:
+			spawn_bot(BotController.Profile.STATIONARY,Vector3(0,.1,4))
+			spawn_bot(BotController.Profile.STRAFE,Vector3(4,.1,-4))
+			spawn_bot(6,Vector3(-5,.1,-8))
 	show_notice("EXERCISE %02d  /  %s" % [scenario + 1, SCENARIOS[scenario].to_upper()])
 
 func refill_all() -> void:
 	if not player.alive:
 		player.reset_actor()
-	player.health = player.tuning.max_health
+	player.statuses.cleanse()
+	player.health = player.effective_max_health()
 	player.kit.refill()
 	player.motor.dash_cd = 0.0
 	player.motor.hover_cd = 0.0
@@ -203,7 +208,7 @@ func set_targets_health(fraction: float) -> void:
 	target_health_override = fraction != 1.0
 	for bot: HeroActor in bots:
 		if bot.alive:
-			bot.health = bot.tuning.max_health * fraction
+			bot.health = bot.effective_max_health() * fraction
 	show_notice("TARGET HEALTH  /  %d%%" % int(fraction * 100))
 
 func apply_bot_settings() -> void:
@@ -254,8 +259,24 @@ func on_hit(source: HeroActor, _target: HeroActor, amount: float, head: bool, ex
 		hud.hit_text = "FINAL NOTICE" if executed else ("%d  HEADSHOT" % int(amount) if head else str(int(amount)))
 
 func on_event(entry: Dictionary) -> void:
-	if entry["event"] == "death" and entry["actor"] != "nimbus":
+	if entry["event"] == "death" and entry["actor"] != player.actor_id:
 		eliminations += 1
 		show_notice("TARGET NEUTRALIZED  /  " + str(entry["actor"]).to_upper())
 	elif entry["event"] in ["counterthrow", "block", "deflect"]:
 		show_notice(str(entry["event"]).to_upper() + "  /  " + str(entry["actor"]).to_upper())
+
+func select_hero(id: String) -> void:
+	HeroRoster.selected = id
+	player.select_hero(id)
+	player.actor_id = id
+	player_max_health = player.tuning.max_health
+	reset_scenario()
+	hud.rebuild_menu()
+	show_notice(id.to_upper() + " SELECTED")
+
+func start_slayer_hunt() -> void:
+	select_hero("slayer")
+	scenario = 7
+	freeze_ai = false
+	reset_scenario()
+	if menu_open: toggle_menu()

@@ -163,8 +163,9 @@ func draw_crosshair(p: HeroActor) -> void:
 	var center := Vector2(800,450)
 	var color: Color = paper if p.permits("primary") else brass
 	for direction: Vector2 in [Vector2.LEFT,Vector2.RIGHT,Vector2.UP,Vector2.DOWN]:
-		canvas.draw_line(center + direction * 7,center + direction * 13,Color(0,0,0,.6),4)
-		canvas.draw_line(center + direction * 7,center + direction * 13,color,1.5)
+		var bloom: float = p.presentation.fire_flash * 40 + p.velocity.length() * .35 if p.kit is SlayerKit else 0.0
+		canvas.draw_line(center + direction * (7+bloom),center + direction * (13+bloom),Color(0,0,0,.6),4)
+		canvas.draw_line(center + direction * (7+bloom),center + direction * (13+bloom),color,1.5)
 	canvas.draw_circle(center,1.3,color)
 	if hit_timer > 0:
 		for direction: Vector2 in [Vector2(-1,-1),Vector2(1,-1),Vector2(-1,1),Vector2(1,1)]:
@@ -176,23 +177,30 @@ func draw_crosshair(p: HeroActor) -> void:
 
 func draw_player_rail(p: HeroActor) -> void:
 	panel(Vector2(28,760),Vector2(310,108))
-	text("NIMBUS",Vector2(46,789),22,paper,true)
+	text(p.tuning.hero_id.to_upper(),Vector2(46,789),22,paper,true)
 	text("LANTERN DIVISION",Vector2(167,787),10,mint)
 	text("%03d" % ceili(p.health),Vector2(46,829),30,paper,true)
 	text("/ %d HP" % int(p.tuning.max_health),Vector2(113,827),12,muted)
 	box(Vector2(46,846),Vector2(274,5),Color("3a4853"))
 	box(Vector2(46,846),Vector2(274 * clampf(p.health / p.tuning.max_health,0,1),5),mint if p.health > p.tuning.max_health * .25 else coral)
 	panel(Vector2(350,760),Vector2(150,108))
-	text("UMBRELLA RIFLE",Vector2(364,784),10,muted,true)
+	text("STREET SWEEPER" if p.kit is SlayerKit else "UMBRELLA RIFLE",Vector2(364,784),10,muted,true)
 	text("%02d" % p.kit.ammo,Vector2(364,826),34,paper,true)
 	text("/ %02d" % p.tuning.magazine,Vector2(423,822),15,muted)
 	text("R  RELOAD" if p.state != "reload" else "RELOADING %.1f" % p.state_time,Vector2(364,849),10,brass)
 	ability(512,"3","VECTOR DASH",p.motor.dash_cd,p.tuning.dash_cooldown)
-	ability(644,"Q","UMBRELLA VAULT",p.motor.hover_cd,p.tuning.hover_cooldown)
-	ability(776,"E","DEFLECT",p.kit.deflect_cd,p.tuning.deflect_cooldown)
-	ability(908,"1","POCKET BOMB",p.kit.bomb_cd,p.tuning.bomb_cooldown)
+	if p.kit is SlayerKit:
+		var hunter := p.kit as SlayerKit
+		var t := p.tuning as SlayerTuning
+		ability(644,TrainingInputs.key_label("hover"),"SILVER KNIVES %d/%d" % [hunter.knives,t.knife_charges],0 if hunter.knives > 0 else hunter.knife_timer,t.knife_recharge)
+		ability(776,TrainingInputs.key_label("deflect"),"BOOT RUSH",hunter.deflect_cd,t.boot_cooldown)
+		ability(908,TrainingInputs.key_label("bomb"),"SNARE %d/%d / RMB THROW" % [hunter.snares,t.trap_limit],0 if hunter.snares > 0 else hunter.snare_timer,t.trap_recharge)
+	else:
+		ability(644,"Q","UMBRELLA VAULT",p.motor.hover_cd,p.tuning.hover_cooldown)
+		ability(776,"E","DEFLECT",p.kit.deflect_cd,p.tuning.deflect_cooldown)
+		ability(908,"1","POCKET BOMB",p.kit.bomb_cd,p.tuning.bomb_cooldown)
 	panel(Vector2(1040,760),Vector2(186,108))
-	text("2  FINAL NOTICE",Vector2(1054,784),11,brass,true)
+	text("2  HEADS WILL ROLL" if p.kit is SlayerKit else "2  FINAL NOTICE",Vector2(1054,784),11,brass,true)
 	text("READY" if p.kit.ultimate_charge >= 100 else "%02d%%" % int(p.kit.ultimate_charge),Vector2(1054,824),28,mint if p.kit.ultimate_charge >= 100 else paper,true)
 	box(Vector2(1054,846),Vector2(158,4),Color("3a4853"))
 	box(Vector2(1054,846),Vector2(158 * p.kit.ultimate_charge / 100.0,4),brass)
@@ -205,6 +213,16 @@ func draw_player_rail(p: HeroActor) -> void:
 	text("SHIFT  CROUCH / SLIDE",Vector2(1252,849),11,brass)
 	text("WASD  MOVE    SPACE  JUMP / WALL KICK    HOLD SPACE + MOVE  AUTO MANTLE",Vector2(30,889),10,muted)
 	text("F5  RESTART     M  MAP     F3  DEBUG",Vector2(1327,889),10,muted)
+	var status_text: String = ""
+	for kind: String in p.statuses.effects:
+		status_text += "%s %.1fs   " % [kind.replace("max_health","MAX HP WOUND").to_upper(),p.statuses.effects[kind].remaining]
+	if status_text != "": centered(status_text,Vector2(800,690),15,coral,true)
+	if p.effective_max_health() < p.tuning.max_health:
+		var ratio: float = p.effective_max_health() / p.tuning.max_health
+		box(Vector2(46 + 274 * ratio,846),Vector2(274 * (1-ratio),5),Color("b076c8"))
+		text("MAX %d" % p.effective_max_health(),Vector2(235,828),11,Color("e3b8ff"))
+	if p.kit is SlayerKit:
+		centered("HUNTER'S INSTINCT   /   1 PLACE SNARE   ·   RMB + 1 THROW",Vector2(800,730),11,muted)
 
 func ability(x: float, key: String, caption: String, cd: float, total: float) -> void:
 	panel(Vector2(x,760),Vector2(120,108))
@@ -212,7 +230,7 @@ func ability(x: float, key: String, caption: String, cd: float, total: float) ->
 	text(caption,Vector2(x + 13,815),9,muted)
 	text("READY" if cd <= 0 else "%.1f s" % cd,Vector2(x + 13,837),11,mint if cd <= 0 else brass,true)
 	box(Vector2(x + 13,847),Vector2(94,3),Color("3a4853"))
-	box(Vector2(x + 13,847),Vector2(94 * (1 - clampf(cd / total,0,1)),3),mint)
+	box(Vector2(x + 13,847),Vector2(94 * (1 - clampf(cd / maxf(.01,total),0,1)),3),mint)
 
 func map_point(point: Vector3, bounds: Rect2) -> Vector2:
 	return bounds.position + Vector2((point.x + 72.0) / 144.0,(point.z + 66.0) / 132.0) * bounds.size
@@ -419,14 +437,19 @@ func build_menu() -> void:
 	frame.add_child(root)
 	menu_label(root,"MERIDIAN GARDENS",28,paper)
 	menu_label(root,"MATCH CONSOLE  /  SESSION PAUSED",12,brass)
-	menu_label(root,"6 v 6  ·  Nimbus  ·  First to 100%",15,muted)
+	menu_label(root,"6 v 6  ·  Nimbus / Slayer  ·  First to 100%",15,muted)
+	var hero_row := HBoxContainer.new()
+	hero_row.add_theme_constant_override("separation",10)
+	root.add_child(hero_row)
+	menu_button(hero_row,"PLAY SLAYER / RESTART",func() -> void: match_controller.select_hero("slayer")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	menu_button(hero_row,"PLAY NIMBUS / RESTART",func() -> void: match_controller.select_hero("nimbus")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	menu_button(root,"RETURN TO THE CITY  /  TAB",func() -> void: match_controller.toggle_menu())
 	display_button = menu_button(root,display_settings.button_text(),display_settings.toggle_fullscreen)
 	display_settings.display_mode_changed.connect(refresh_display_button)
 	menu_button(root,"DISTRICT ATLAS  /  ROUTES & HEALTH",func() -> void: overview_open = true; match_controller.toggle_menu())
 	menu_button(root,"RESTART MATCH  /  F5",func() -> void: match_controller.restart_match())
 	menu_button(root,"TOGGLE EXPLORATION  /  FREEZE CITY BOTS",func() -> void: match_controller.toggle_exploration())
-	menu_button(root,"RETURN TO NIMBUS TRAINING",func() -> void: match_controller.return_to_training())
+	menu_button(root,"ENTER HERO TRAINING",func() -> void: match_controller.return_to_training())
 	menu_label(root,"20 s unlock  ·  5 s capture  ·  8 s respawn",13,muted)
 	menu_label(root,"Enemy presence pauses scoring. Empty owned hills keep scoring.",12,muted)
 	menu_label(root,"F3  field telemetry & route overlay    M  district atlas",12,brass)

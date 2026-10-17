@@ -1,4 +1,4 @@
-param([switch]$Editor, [switch]$Training, [switch]$Windowed, [switch]$Fullscreen)
+param([switch]$Editor, [switch]$Training, [switch]$Slayer, [switch]$Windowed, [switch]$Fullscreen)
 $ErrorActionPreference = 'Stop'
 $taskEngine = & (Join-Path $PSScriptRoot 'tools/find_godot.ps1')
 if ($Windowed -and $Fullscreen) { throw 'Choose either -Windowed or -Fullscreen.' }
@@ -8,5 +8,6 @@ else {
     if ($Windowed) { $taskGameArgs += '--windowed' }
     elseif ($Fullscreen) { $taskGameArgs += '--fullscreen' }
     if ($Training) { $taskGameArgs += 'res://scenes/training/combat_sandbox.tscn' }
+    if ($Slayer) { $taskGameArgs += @('--', '--hero=slayer') }
 }
 & $taskEngine @taskGameArgs

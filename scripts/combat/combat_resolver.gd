@@ -48,13 +48,13 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 		return "duplicate"
 	var source_position: Vector3 = source.global_position if incoming_from == Vector3.INF else incoming_from
 	var frontal: bool = is_front(target, source_position)
-	if target.state == "deflect" and frontal and tag in ["rifle", "ultimate", "projectile"]:
+	if target.state == "deflect" and frontal and tag in ["rifle", "ultimate", "projectile", "shotgun", "knife", "axe"]:
 		record("deflect", target, tag)
 		return "deflect"
 	resolved[key] = true
 	if resolved.size() > 4096:
 		resolved.clear()
-	if target.state == "guard" and frontal and tag == "melee":
+	if target.state == "guard" and frontal and tag in ["melee", "boot"]:
 		target.close.guard_meter = maxf(0.0, target.close.guard_meter - target.tuning.guard_cost)
 		source.close.stagger()
 		record("block", target, tag)
@@ -70,7 +70,7 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 		amount *= target.tuning.throw_outside_multiplier
 		# Execution is still subject to the paired sequence's ordinary mitigation.
 		executed = false
-	if target.state == "guard" and frontal and tag in ["rifle", "projectile"]:
+	if target.state == "guard" and frontal and tag in ["rifle", "projectile", "shotgun", "knife", "axe"]:
 		amount *= 1.0 - target.tuning.bullet_guard_reduction
 	var absorbed: float = minf(target.shields, amount)
 	target.shields -= absorbed
@@ -78,6 +78,8 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 	target.health = maxf(0.0, target.health - hp_damage)
 	source.kit.ultimate_charge = minf(100.0, source.kit.ultimate_charge + (hp_damage + absorbed) * 0.09)
 	target.on_damage(hp_damage + absorbed, head)
+	if source.tuning is SlayerTuning and hp_damage + absorbed > 0.0:
+		target.statuses.mark(source,(source.tuning as SlayerTuning).mark_duration)
 	record("execution" if executed else "damage", source, tag,
 		"target=%s cast=%d base=%.1f applied=%.1f head=%s" % [target.actor_id, cast_id, base, hp_damage + absorbed, head])
 	confirmed_hit.emit(source, target, hp_damage + absorbed, head, executed)

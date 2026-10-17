@@ -1,14 +1,5 @@
 class_name NimbusKit
-extends Node
-
-var actor: HeroActor
-var ammo: int = 8
-var shot_cd: float = 0.0
-var deflect_cd: float = 0.0
-var bomb_cd: float = 0.0
-var ultimate_charge: float = 100.0
-var ultimate_age: float = 0.0
-var cast_id: int = 0
+extends HeroKit
 
 func tick(delta: float, input: CombatIntent) -> void:
 	var t: HeroTuning = actor.tuning
@@ -87,6 +78,8 @@ func fire(ultimate: bool) -> void:
 		var head: bool = not ultimate and endpoint.y - target.global_position.y >= 1.5
 		var amount: float = t.ultimate_damage if ultimate else t.rifle_damage * (t.head_multiplier if head else 1.0)
 		actor.resolver.damage(actor, target, amount, "ultimate" if ultimate else "rifle", cast_id, head, ultimate)
+	elif hit.get("collider") is HunterSnare:
+		(hit.collider as HunterSnare).receive_damage(actor,t.ultimate_damage if ultimate else t.rifle_damage,cast_id)
 	CombatEffect.line(actor.get_parent(), muzzle, endpoint, Color("fce7ab") if not ultimate else Color("9dfbe2"), 0.04 if not ultimate else 0.09)
 	actor.presentation.fire_flash = 0.18
 	actor.presentation.sound.play_tone(220.0 if not ultimate else 90.0, 0.11, 0.22)
@@ -96,39 +89,3 @@ func fire(ultimate: bool) -> void:
 		ammo -= 1
 	shot_cd = t.shot_interval
 	actor.resolver.record("cast", actor, "ultimate_shot" if ultimate else "rifle", "cast=%d" % cast_id)
-
-func fire_projectile(direction: Vector3) -> void:
-	if not actor.permits("primary") or shot_cd > 0.0:
-		return
-	var projectile := CombatProjectile.new()
-	projectile.source = actor
-	projectile.direction = direction
-	projectile.cast_id = actor.resolver.new_cast()
-	actor.get_parent().add_child(projectile)
-	projectile.global_position = safe_muzzle()
-	shot_cd = 1.1
-	actor.resolver.record("cast", actor, "projectile")
-
-func safe_muzzle() -> Vector3:
-	var shoulder: Vector3 = actor.global_position + Vector3.UP * 1.36
-	var obstruction: Dictionary = actor.resolver.ray(shoulder, actor.muzzle(), [actor.get_rid()], 1)
-	if not obstruction.is_empty():
-		return obstruction["position"] + obstruction["normal"] * 0.16
-	return actor.muzzle()
-
-func cancel(clear_owned: bool = false) -> void:
-	if actor.state in ["reload", "deflect", "ultimate"]:
-		actor.state = "ready"
-	ultimate_age = 0.0
-	# Owned persistent attacks are removed on death/reset, including armed bombs.
-	if clear_owned:
-		for effect: Node in actor.get_tree().get_nodes_in_group("owned_attacks"):
-			if effect.get("source") == actor:
-				effect.queue_free()
-
-func refill() -> void:
-	ammo = actor.tuning.magazine
-	shot_cd = 0.0
-	deflect_cd = 0.0
-	bomb_cd = 0.0
-	ultimate_charge = 100.0

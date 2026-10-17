@@ -63,7 +63,7 @@ func draw_hud() -> void:
 	canvas.draw_line(Vector2(54, 38), Vector2(54, 65), mint, 2.0, true)
 	canvas.draw_arc(Vector2(50, 65), 4.0, 0, PI, 12, mint, 2.0, true)
 	label_at("FIELD DIVISION", Vector2(92, 49), 21, ink, true)
-	label_at("COMBAT RESEARCH  /  NIMBUS", Vector2(92, 71), 11, ink)
+	label_at("COMBAT RESEARCH  /  " + p.tuning.hero_id.to_upper(), Vector2(92, 71), 11, ink)
 	rect(Vector2(574, 28), Vector2(292, 37), Color(0.10, 0.20, 0.24, 0.92), 3)
 	canvas.draw_circle(Vector2(593, 46), 3.5, mint)
 	label_at("LIVE TRAINING", Vector2(607, 51), 13, paper, true)
@@ -96,8 +96,9 @@ func draw_hud() -> void:
 	if p.alive and not training.menu_open:
 		var cross_color: Color = paper if p.permits("primary") else coral
 		for direction: Vector2 in [Vector2.LEFT, Vector2.RIGHT, Vector2.UP, Vector2.DOWN]:
-			canvas.draw_line(center + direction * 7, center + direction * 14, Color(0, 0, 0, 0.35), 4)
-			canvas.draw_line(center + direction * 7, center + direction * 14, cross_color, 2)
+			var bloom: float = (p.presentation.fire_flash * 40.0 + p.velocity.length() * .35) if p.kit is SlayerKit else 0.0
+			canvas.draw_line(center + direction * (7 + bloom), center + direction * (14 + bloom), Color(0, 0, 0, 0.35), 4)
+			canvas.draw_line(center + direction * (7 + bloom), center + direction * (14 + bloom), cross_color, 2)
 		canvas.draw_circle(center, 1.3, cross_color)
 		if p.state == "ultimate":
 			canvas.draw_arc(center, 250, 0, TAU, 100, Color(0.65, 0.95, 0.85, 0.7), 1, true)
@@ -110,8 +111,8 @@ func draw_hud() -> void:
 	# Health / magazine / ability rail.
 	rect(Vector2(30, 738), Vector2(340, 126), ink, 4)
 	label_at("01", Vector2(48, 773), 15, mint, true)
-	label_at("NIMBUS", Vector2(87, 777), 30, paper, true)
-	label_at("FIELD AGENT", Vector2(87, 796), 10, Color("9ab9bb"))
+	label_at(p.tuning.hero_id.to_upper(), Vector2(87, 777), 30, paper, true)
+	label_at("MONSTER HUNTER" if p.kit is SlayerKit else "FIELD AGENT", Vector2(87, 796), 10, Color("9ab9bb"))
 	label_at("%03d" % ceili(p.health), Vector2(48, 833), 29, paper, true)
 	label_at("/ %d HP" % int(p.tuning.max_health), Vector2(111, 832), 12, Color("9ab9bb"))
 	if p.shields > 0:
@@ -119,23 +120,30 @@ func draw_hud() -> void:
 	rect(Vector2(48, 844), Vector2(303, 5), Color("4c6269"))
 	rect(Vector2(48, 844), Vector2(303 * p.health / p.tuning.max_health, 5), mint if p.health > 50 else coral)
 	rect(Vector2(382, 738), Vector2(156, 126), paper, 4)
-	label_at("UMBRELLA RIFLE", Vector2(396, 763), 11, ink, true)
+	label_at("STREET SWEEPER" if p.kit is SlayerKit else "UMBRELLA RIFLE", Vector2(396, 763), 11, ink, true)
 	label_at("%02d" % p.kit.ammo, Vector2(396, 811), 44, ink, true)
 	label_at("/ %02d" % p.tuning.magazine, Vector2(465, 808), 17, ink)
 	label_at("R  RELOAD" if p.state != "reload" else "RELOADING %.1f" % p.state_time, Vector2(396, 844), 11, ink)
 	ability_card(550, TrainingInputs.key_label("dash"), "VECTOR", "DASH", p.motor.dash_cd, p.tuning.dash_cooldown)
-	ability_card(663, TrainingInputs.key_label("hover"), "UMBRELLA", "HOVER", p.motor.hover_cd, p.tuning.hover_cooldown)
-	ability_card(776, TrainingInputs.key_label("deflect"), "RETURN", "DEFLECT", p.kit.deflect_cd, p.tuning.deflect_cooldown)
-	ability_card(889, TrainingInputs.key_label("bomb"), "POCKET", "BOMB", p.kit.bomb_cd, p.tuning.bomb_cooldown)
+	if p.kit is SlayerKit:
+		var hunter := p.kit as SlayerKit
+		var t := p.tuning as SlayerTuning
+		ability_card(663,TrainingInputs.key_label("hover"),"SILVER KNIVES","%d / %d" % [hunter.knives,t.knife_charges],0 if hunter.knives > 0 else hunter.knife_timer,t.knife_recharge)
+		ability_card(776,TrainingInputs.key_label("deflect"),"BOOT","RUSH",hunter.deflect_cd,t.boot_cooldown)
+		ability_card(889,TrainingInputs.key_label("bomb"),"SNARE / RMB","%d / %d" % [hunter.snares,t.trap_limit],0 if hunter.snares > 0 else hunter.snare_timer,t.trap_recharge)
+	else:
+		ability_card(663, TrainingInputs.key_label("hover"), "UMBRELLA", "HOVER", p.motor.hover_cd, p.tuning.hover_cooldown)
+		ability_card(776, TrainingInputs.key_label("deflect"), "RETURN", "DEFLECT", p.kit.deflect_cd, p.tuning.deflect_cooldown)
+		ability_card(889, TrainingInputs.key_label("bomb"), "POCKET", "BOMB", p.kit.bomb_cd, p.tuning.bomb_cooldown)
 	rect(Vector2(1014, 738), Vector2(190, 126), mint if p.kit.ultimate_charge >= 100.0 else Color("bdd5c5"), 4)
-	label_at("%s    FINAL NOTICE" % TrainingInputs.key_label("ultimate"), Vector2(1030, 763), 13, ink, true)
+	label_at("%s    %s" % [TrainingInputs.key_label("ultimate"),"HEADS WILL ROLL" if p.kit is SlayerKit else "FINAL NOTICE"], Vector2(1030, 763), 11, ink, true)
 	label_at("READY" if p.kit.ultimate_charge >= 100.0 else "%02d%%" % int(p.kit.ultimate_charge), Vector2(1030, 810), 29, ink, true)
-	label_at("EXECUTE  ≤20% HP", Vector2(1030, 844), 11, ink)
+	label_at("AXE / MAX HP WOUND" if p.kit is SlayerKit else "EXECUTE  ≤20% HP", Vector2(1030, 844), 11, ink)
 	rect(Vector2(1216, 738), Vector2(194, 126), Color(0.10, 0.20, 0.24, 0.88), 4)
 	label_at("%s   GUARD" % TrainingInputs.key_label("guard"), Vector2(1231, 763), 12, paper, true)
 	rect(Vector2(1231, 776), Vector2(164, 4), Color("4c6269"))
 	rect(Vector2(1231, 776), Vector2(164 * p.close.guard_meter / 100.0, 4), mint)
-	label_at("%s   UMBRELLA STRIKE" % TrainingInputs.key_label("melee"), Vector2(1231, 809), 11, paper)
+	label_at("%s   MELEE ENGAGE" % TrainingInputs.key_label("melee"), Vector2(1231, 809), 11, paper)
 	label_at("%s   THROW / COUNTER" % TrainingInputs.key_label("throw"), Vector2(1231, 842), 11, paper)
 	label_at("W A S D  MOVE    SPACE  JUMP / WALL KICK    HOLD SPACE + MOVE  MANTLE    %s  SLIDE    RMB  AIM" % TrainingInputs.key_label("slide"), Vector2(32, 889), 11, ink, true)
 	label_at("F5  RESET    F6  REFILL    F3  TELEMETRY", Vector2(1098, 889), 10, ink)
@@ -147,6 +155,7 @@ func draw_hud() -> void:
 		label_at("HOLD SPACE + MOVE into a ledge: MANTLE   /   PRESS SPACE in air by a wall: WALL KICK   /   %s: UMBRELLA VAULT" % TrainingInputs.key_label("hover"),Vector2(32,288),11,ink)
 	if training.debug_view:
 		draw_debug(p)
+	draw_statuses(p)
 	if p.last_hit_age < 0.3:
 		canvas.draw_rect(Rect2(3, 3, 1434, 894), Color(0.95, 0.3, 0.22, (0.3 - p.last_hit_age) * 2), false, 6)
 	if not p.alive:
@@ -160,7 +169,31 @@ func ability_card(x: float, key: String, top: String, bottom: String, cd: float,
 	label_at(top, Vector2(x + 12, 803), 10, ink)
 	label_at(bottom if cd <= 0.0 else "%.1f s" % cd, Vector2(x + 12, 827), 15, ink, true)
 	rect(Vector2(x + 12, 844), Vector2(77, 4), Color("adbcb5"))
-	rect(Vector2(x + 12, 844), Vector2(77 * (1 - clampf(cd / total, 0, 1)), 4), Color("428d80"))
+	rect(Vector2(x + 12, 844), Vector2(77 * (1 - clampf(cd / maxf(.01,total), 0, 1)), 4), Color("428d80"))
+
+func draw_statuses(p: HeroActor) -> void:
+	var status: String = ""
+	for kind: String in p.statuses.effects:
+		status += "%s %.1fs   " % [kind.replace("max_health","MAX HP WOUND").to_upper(),p.statuses.effects[kind].remaining]
+	if status != "": label_at(status,Vector2(475,675),16,coral,true)
+	if p.effective_max_health() < p.tuning.max_health:
+		var ratio: float = p.effective_max_health() / p.tuning.max_health
+		rect(Vector2(48 + 303 * ratio,844),Vector2(303 * (1-ratio),5),Color("b076c8"))
+		label_at("MAX %d / %d" % [p.effective_max_health(),p.tuning.max_health],Vector2(215,815),12,Color("e3b8ff"))
+	if p.kit is SlayerKit:
+		label_at("HUNTER'S INSTINCT   ·   Q KNIVES   ·   E BOOT   ·   1 PLACE / RMB + 1 THROW",Vector2(430,706),11,paper,true)
+		if training.debug_view:
+			var hunter := p.kit as SlayerKit
+			label_at("SHOT %.1f HP / %d PELLETS   ·   KNIFE %.1fs   SNARE %.1fs" % [hunter.last_shot_damage,hunter.last_shot_pellets,hunter.knife_timer,hunter.snare_timer],Vector2(430,650),12,paper)
+
+func rebuild_menu() -> void:
+	if display_settings.display_mode_changed.is_connected(refresh_display_button):
+		display_settings.display_mode_changed.disconnect(refresh_display_button)
+	remove_child(menu)
+	menu.queue_free()
+	check_controls.clear()
+	build_menu()
+	menu.visible = training.menu_open
 
 func draw_debug(p: HeroActor) -> void:
 	rect(Vector2(30, 300), Vector2(335, 227), Color(0.09, 0.19, 0.23, 0.91), 4)
@@ -232,6 +265,10 @@ func build_menu() -> void:
 	right.add_theme_constant_override("separation", 9)
 	columns.add_child(right)
 	menu_label(left, "01  /  EXERCISE & TARGETS", 18)
+	button(left,"Play Slayer  /  monster hunter",training.select_hero.bind("slayer"))
+	button(left,"Play Nimbus  /  field agent",training.select_hero.bind("nimbus"))
+	button(left,"Start Slayer hunt  /  full kit practice",training.start_slayer_hunt)
+	button(left,"Cleanse player statuses",func() -> void: training.player.statuses.cleanse())
 	var scenarios := OptionButton.new()
 	scenario_control = scenarios
 	for option: String in TrainingManager.SCENARIOS: scenarios.add_item(option)
@@ -282,7 +319,7 @@ func build_menu() -> void:
 		["Hover ascent (m/s)", "hover_ascent", 8.5, 4.0, 14.0, 0.5]
 	]
 	for field: Array in fields:
-		spin(right, field[0], field[2], field[3], field[4], field[5], change_tuning.bind(field[1]))
+		spin(right, field[0], float(training.player.tuning.get(field[1])), field[3], field[4], field[5], change_tuning.bind(field[1]))
 	button(right, "Start timed traversal route", training.start_route)
 	button(right, "Movement preset · responsive", func() -> void: training.set_tuning("acceleration", 42); training.set_tuning("braking", 34); training.set_tuning("air_steering", 11))
 	button(right, "Movement preset · weighty (default)", func() -> void: training.set_tuning("acceleration", 30); training.set_tuning("braking", 24); training.set_tuning("air_steering", 7.5))
@@ -301,13 +338,13 @@ func build_menu() -> void:
 	for field: Array in fields: exposed.append(field[1])
 	for property: Dictionary in training.player.tuning.get_property_list():
 		var field: String = property.name
-		if field in exposed or not (property.usage & PROPERTY_USAGE_EDITOR) or property.type != TYPE_FLOAT:
+		if field in exposed or not (property.usage & PROPERTY_USAGE_EDITOR) or property.type not in [TYPE_FLOAT, TYPE_INT]:
 			continue
 		var initial: float = training.player.tuning.get(field)
 		var maximum: float = maxf(initial * 4.0, 2.0)
-		var increment: float = 0.01 if initial < 3 else (0.1 if initial < 30 else 1.0)
+		var increment: float = 1.0 if property.type == TYPE_INT else (0.01 if initial < 3 else (0.1 if initial < 30 else 1.0))
 		if field == "execute_threshold": maximum = 1.0
-		spin(advanced, field.replace("_", " ").capitalize(), initial, 0.01, maximum, increment, change_tuning.bind(field))
+		spin(advanced, field.replace("_", " ").capitalize(), initial, 1.0 if property.type == TYPE_INT else 0.01, maximum, increment, change_tuning.bind(field))
 	button(right, "Export recent combat events (JSON)", training.export_events)
 	button(root, "RETURN TO FIELD   /   TAB", training.toggle_menu)
 

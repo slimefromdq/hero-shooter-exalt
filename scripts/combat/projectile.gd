@@ -42,4 +42,6 @@ func _physics_process(delta: float) -> void:
 				global_position = hit["position"] + direction * 0.25
 				return
 	CombatEffect.pulse(get_parent(), hit["position"], Color("ffae81"), 0.28)
+	if hit.get("collider") is HunterSnare:
+		(hit.collider as HunterSnare).receive_damage(source,damage_amount,cast_id)
 	queue_free()

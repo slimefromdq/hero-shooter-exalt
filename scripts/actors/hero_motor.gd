@@ -13,6 +13,7 @@ var jump_buffer: float = 0.0
 var dash_slide: bool = false
 var slide_velocity: Vector3 = Vector3.ZERO
 var traversal: TraversalMotion
+var external_velocity: Vector3 = Vector3.ZERO
 
 func _ready() -> void:
 	traversal = TraversalMotion.new()
@@ -37,6 +38,12 @@ func tick(delta: float, input: CombatIntent) -> void:
 		return
 	if actor.state in ["captured", "throw_pair"]:
 		actor.velocity = Vector3.ZERO
+		return
+	if actor.kit.move_override(delta):
+		return
+	if actor.statuses.effects.has("root"):
+		actor.velocity = Vector3(0,actor.velocity.y - t.gravity * delta,0)
+		actor.move_and_slide()
 		return
 	if actor.state in ["melee_windup", "melee_active"]:
 		var lunge: Vector3 = actor.close.lunge_displacement(delta)
@@ -109,7 +116,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 		var acceleration: float = t.acceleration if was_floor else t.air_steering
 		if wish.length_squared() < 0.01 and was_floor:
 			acceleration = t.braking
-		current = current.move_toward(wish * t.ground_speed * scale, acceleration * delta)
+		current = current.move_toward(wish * t.ground_speed * scale * actor.statuses.movement_scale(), acceleration * delta)
 		actor.velocity.x = current.x
 		actor.velocity.z = current.z
 		if mode == "hover_ascent":
@@ -152,6 +159,10 @@ func tick(delta: float, input: CombatIntent) -> void:
 	var before: Vector3 = actor.velocity
 	actor.floor_stop_on_slope = mode != "slide"
 	actor.move_and_slide()
+	if not external_velocity.is_zero_approx():
+		# External impulses are swept displacement, never added repeatedly to velocity.
+		actor.move_and_collide(external_velocity * delta)
+		external_velocity = external_velocity.move_toward(Vector3.ZERO,delta * t.braking)
 	if mode == "slide":
 		for index: int in actor.get_slide_collision_count():
 			var normal: Vector3 = actor.get_slide_collision(index).get_normal()
@@ -210,6 +221,7 @@ func end_hover() -> void:
 		transition("air")
 
 func cancel() -> void:
+	external_velocity = Vector3.ZERO
 	if traversal != null:
 		traversal.reset()
 	mode = "ground"
@@ -220,3 +232,13 @@ func cancel() -> void:
 	jump_buffer = 0.0
 	dash_slide = false
 	slide_velocity = Vector3.ZERO
+
+func interrupt_mobility() -> void:
+	if traversal != null and traversal.active: traversal.abort()
+	end_hover()
+	transition("ground" if actor.is_on_floor() else "air")
+	if actor.state.begins_with("slayer_boot"):
+		actor.kit.cancel()
+	actor.velocity.x = 0.0
+	actor.velocity.z = 0.0
+	external_velocity = Vector3.ZERO

@@ -17,6 +17,10 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Godot import failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/rules_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Combat/movement rule tests failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/slayer_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Slayer combat, status or collision rules failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/slayer_integration_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Slayer hero selection, AI or scene integration failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/close_combat_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Melee engagement / throw choreography tests failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/guard_drill_test.gd
@@ -46,6 +50,8 @@ try {
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_navigation_regression.gd
     if ($LASTEXITCODE -ne 0) { throw 'City navigation recovery or healing route failed.' }
     if ($Capture) {
+        & $taskEngine --path $taskRoot --script res://tests/capture_slayer.gd --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Slayer rendered capture failed.' }
         & $taskEngine --path $taskRoot --script res://tests/fullscreen_test.gd --resolution 1280x800 --audio-driver Dummy
         if ($LASTEXITCODE -ne 0) { throw 'Native fullscreen, paused shortcuts or display transitions failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture.gd --resolution 1440x900 --audio-driver Dummy

@@ -11,7 +11,8 @@ func _ready() -> void:
 	build_environment()
 	player = preload("res://scenes/actors/hero_actor.tscn").instantiate() as HeroActor
 	player.position = Vector3(0, 0.1, 11)
-	player.actor_id = "nimbus"
+	player.tuning = HeroRoster.tuning_for(HeroRoster.selected)
+	player.actor_id = HeroRoster.selected
 	add_child(player)
 	var controller := PlayerController.new()
 	controller.actor = player
@@ -46,7 +47,7 @@ func build_environment() -> void:
 	Geometry.box(self, Vector3(56, 8, 1), Vector3(0, 3.5, -31), Color("293f4a"))
 	Geometry.box(self, Vector3(56, 3, 1), Vector3(0, 1, 31), Color("384e57"))
 	Geometry.text3d(self, "FIELD DIVISION", Vector3(0, 5.3, -30.4), 150, Color("dce8dc"))
-	Geometry.text3d(self, "01   /   NIMBUS     •     LIVE EXERCISE", Vector3(0, 3.7, -30.35), 42, Color("72d2c5"))
+	Geometry.text3d(self, "01   /   HEROES     •     LIVE EXERCISE", Vector3(0, 3.7, -30.35), 42, Color("72d2c5"))
 	for x: float in [-9.0, 9.0]:
 		Geometry.box(self, Vector3(0.07, 0.015, 47), Vector3(x, 0.012, -3), Color("f4e7bf"), false)
 	for z: float in [8.0, 0.0, -8.0, -16.0, -24.0]:

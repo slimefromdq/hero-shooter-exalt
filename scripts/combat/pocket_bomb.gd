@@ -37,6 +37,11 @@ func _physics_process(delta: float) -> void:
 
 func explode() -> void:
 	var t: HeroTuning = source.tuning
+	for trap: HunterSnare in get_tree().get_nodes_in_group("traps"):
+		var distance: float = global_position.distance_to(trap.global_position)
+		var hit: Dictionary = source.resolver.ray(global_position,trap.global_position,[get_rid()])
+		if distance < t.bomb_radius and (hit.is_empty() or hit.get("collider") == trap):
+			trap.receive_damage(source,t.bomb_damage * (1.0 - distance / t.bomb_radius),cast_id)
 	for target: HeroActor in get_tree().get_nodes_in_group("actors"):
 		if target == source or not target.alive or target.team == source.team:
 			continue

@@ -23,6 +23,10 @@ var block_flash: float = 0.0
 var block_effect: BlockImpact
 var stagger_marks: Node3D
 var was_grounded: bool = false
+var slayer_axe: Node3D
+var muzzle_flash: MeshInstance3D
+var status_label: Label3D
+var status_ring: MeshInstance3D
 
 func _ready() -> void:
 	model = Node3D.new()
@@ -123,6 +127,16 @@ func _ready() -> void:
 	animator.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
 	add_child(animator)
 	animator.add_animation_library("", CloseCombatAnimations.library())
+	if actor.tuning is SlayerTuning: SlayerVisuals.remodel(self)
+	status_label = Geometry.text3d(self,"",Vector3(0,2.3,0),23,Color("e3b8ff"))
+	status_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	status_label.no_depth_test = false
+	status_label.pixel_size = .0045
+	var ring := TorusMesh.new()
+	ring.inner_radius = .47
+	ring.outer_radius = .52
+	status_ring = Geometry.mesh(self,ring,Vector3(0,.15,0),Geometry.material(Color("c79aef"),.8))
+	status_ring.visible = false
 
 func make_limb(caption: String, at: Vector3, upper: float, lower: float, radius: float, color: Color) -> Node3D:
 	var pivot := Node3D.new()
@@ -235,6 +249,19 @@ func _process(delta: float) -> void:
 	if actor.is_on_floor() and not was_grounded and actor.velocity.length() > 1.0:
 		sound.play_tone(70.0, 0.07, 0.1)
 	was_grounded = actor.is_on_floor()
+	if actor.tuning is SlayerTuning: SlayerVisuals.animate(self)
+	var status_text: String = ""
+	for effect: String in actor.statuses.effects:
+		status_text += "%s %.1f  " % [effect.replace("max_health","MAX HP WOUND").to_upper(),actor.statuses.effects[effect].remaining]
+	var viewer: HeroActor = session.player if session != null else null
+	if is_instance_valid(viewer) and viewer.tuning is SlayerTuning and actor.statuses.marked_for(viewer):
+		var slayer_data := viewer.tuning as SlayerTuning
+		if viewer.global_position.distance_to(actor.global_position) <= slayer_data.mark_range and actor.resolver.visible(viewer.global_position + Vector3.UP * 1.5,actor,[viewer.get_rid()]):
+			status_text += "WOUNDED ◆" if actor.health / actor.effective_max_health() <= slayer_data.wounded_threshold else "HUNTED ◇"
+	status_label.text = status_text
+	status_label.visible = actor.alive and status_text != "" and actor != viewer
+	status_ring.visible = actor.alive and (actor.statuses.effects.has("max_health") or actor.statuses.effects.has("root"))
+	status_ring.rotation.y += delta
 
 func on_block(attacker: HeroActor, defender: HeroActor) -> void:
 	if defender != actor:

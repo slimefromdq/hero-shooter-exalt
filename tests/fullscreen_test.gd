@@ -77,7 +77,7 @@ func run() -> void:
 		Input.parse_input_event(echo)
 		await settle()
 		check(not display.is_fullscreen(), "key repeat cannot repeatedly toggle display mode")
-		var toggle: Button = city.hud.menu.find_children("*", "Button", true, false)[1]
+		var toggle: Button = city.hud.display_button
 		toggle.pressed.emit()
 		await settle()
 		check(display.is_fullscreen() and toggle.text.begins_with("WINDOWED"), "city menu display button changes mode and refreshes its label")
