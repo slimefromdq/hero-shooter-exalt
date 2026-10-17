@@ -37,12 +37,34 @@ func capture() -> void:
 		await step(1)
 		if player.state == "mantle": break
 	print("AUTO MANTLE INPUT: held=",player.intent.jump_held," press=",player.intent.jump)
-	await step(12)
+	await step(6)
 	await shot("mantle-pull")
 	print("MANTLE CAPTURE: ",player.state," progress=",player.motor.traversal.progress," height=",player.global_position.y)
-	await step(27)
+	for frame: int in 30:
+		if not player.motor.traversal.active: break
+		await step(1)
 	await shot("mantle-top")
-	print("MANTLE LANDING: ",player.global_position," state=",player.state)
+	print("MANTLE LANDING: ",player.global_position," state=",player.state," velocity=",player.velocity," duration=",player.motor.traversal.elapsed)
+	await step(6)
+	await shot("mantle-run")
+	player.reset_actor(Vector3(12,.01,9.7))
+	await step(4)
+	player.intent.jump_held = true
+	player.intent.move = Vector3.FORWARD
+	for frame: int in 60:
+		await step(1)
+		if player.state == "mantle": break
+	while player.motor.traversal.active and player.motor.traversal.progress < .72:
+		await step(1)
+	player.intent.jump = true
+	await step(1)
+	player.intent.jump = false
+	for frame: int in 20:
+		if not player.motor.traversal.active: break
+		await step(1)
+	print("MANTLE EXIT JUMP: velocity=",player.velocity," height=",player.global_position.y)
+	await step(3)
+	await shot("mantle-exit-jump")
 	player.reset_actor(Vector3(11.9,.01,-.3))
 	player.intent.aim = Vector3.FORWARD
 	player.intent.move = Vector3.FORWARD

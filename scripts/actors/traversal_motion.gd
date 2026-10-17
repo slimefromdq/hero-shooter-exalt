@@ -9,8 +9,9 @@ var origin: Vector3
 var raised: Vector3
 var landing: Vector3
 var elapsed: float = 0.0
-var duration: float = 0.55
+var duration: float = 0.32
 var progress: float = 0.0
+var carried_velocity: Vector3 = Vector3.ZERO
 var last_wall_normal: Vector3 = Vector3.ZERO
 var wall_cooldown: float = 0.0
 var wall_pose: float = 0.0
@@ -73,6 +74,7 @@ func try_mantle(wish: Vector3) -> bool:
 	actor.state = "mantle"
 	actor.aim_direction = forward
 	actor.rotation.y = atan2(-forward.x,-forward.z)
+	carried_velocity = (actor.velocity * Vector3(1,0,1)).limit_length(t.speed_limit)
 	actor.velocity = Vector3.ZERO
 	active = true
 	elapsed = 0
@@ -94,10 +96,24 @@ func sample(p: float) -> Vector3:
 		return origin.lerp(raised,smoothstep(0,.6,p))
 	return raised.lerp(landing,smoothstep(.6,1,p))
 
-func advance(delta: float) -> void:
+func carry_running_input(delta: float, wish: Vector3) -> void:
+	var flat: Vector3 = wish * Vector3(1,0,1)
+	if flat.length_squared() < .01:
+		return
+	var speed: float = carried_velocity.length()
+	var direction: Vector3 = carried_velocity.normalized() if speed > .01 else actor.aim_direction
+	if flat.normalized().dot(direction) < .65:
+		return
+	# Continuing into the climb can build a slow approach up to running speed;
+	# faster incoming motion and its direction remain intact.
+	var desired: float = actor.tuning.ground_speed * minf(1,flat.length())
+	if speed < desired:
+		carried_velocity = direction * move_toward(speed,desired,actor.tuning.acceleration * delta)
+
+func advance(delta: float) -> bool:
 	if not supported(landing):
 		abort()
-		return
+		return false
 	elapsed += delta
 	progress = clampf(elapsed / duration,0,1)
 	var desired: Vector3 = sample(progress)
@@ -109,14 +125,18 @@ func advance(delta: float) -> void:
 		var next: Vector3 = from.lerp(desired,float(index) / steps)
 		if actor.move_and_collide(next - actor.global_position) != null:
 			abort()
-			return
+			return false
 	actor.velocity = Vector3.ZERO
 	if progress >= 1:
 		active = false
 		actor.state = "ready"
 		actor.state_time = 0
+		actor.velocity = carried_velocity
+		carried_velocity = Vector3.ZERO
 		actor.motor.transition("air")
 		actor.resolver.record("land",actor,"mantle")
+		return true
+	return false
 
 func try_wall_jump(wish: Vector3) -> bool:
 	if wall_cooldown > 0:
@@ -162,6 +182,7 @@ func try_wall_jump(wish: Vector3) -> bool:
 
 func abort() -> void:
 	active = false
+	carried_velocity = Vector3.ZERO
 	progress = 0
 	elapsed = 0
 	if actor.state == "mantle":

@@ -79,7 +79,9 @@ func run() -> void:
 		await step()
 		if actor.state == "mantle": break
 	check(actor.state == "mantle" and not actor.intent.jump, "holding Space before reaching a ledge automatically catches it without another press")
-	await step(115)
+	for frame: int in 115:
+		await step()
+		if casts("mantle") == 2 and actor.state == "ready": break
 	check(casts("mantle") == 2 and actor.global_position.y >= 3.79, "one continuous Space hold and forward movement climb two successive tower ledges")
 	check(casts("wall_jump") == 0, "automatic mantling does not generate wall kicks")
 	await reset(Vector3(0,.01,.2))

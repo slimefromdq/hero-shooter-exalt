@@ -93,7 +93,7 @@ func run() -> void:
 	roof.queue_free()
 	await reset()
 	await jump()
-	await step(5)
+	await step(2)
 	roof = Geometry.box(world,Vector3(5,.2,6),Vector3(0,3,-1),Color.GRAY)
 	await step(28)
 	check(not actor.motor.traversal.active and actor.state == "ready" and actor.global_position.y < 1.1, "a new obstacle aborts the climb at a swept safe position")

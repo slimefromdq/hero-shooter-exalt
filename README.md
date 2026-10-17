@@ -40,7 +40,7 @@ Press **Tab → Start guard drill**, walk inside the coral ring, face the statio
 
 ## Climbing and wall jumps
 
-**Hold Space and move into a wall or tower** to mantle automatically when a ledge comes within about **0.95 m** and **2.2 m above your feet**, provided the top has room to stand. Keep holding through a jump, umbrella ascent or successive ledges; you do not need another press at each lip. The climb takes about **0.55 s**, with continuous collision checks and a two-arm pull-up pose. Holding Space while standing still or moving away does not start an automatic climb.
+**Hold Space and move into a wall or tower** to mantle automatically when a ledge comes within about **0.95 m** and **2.2 m above your feet**, provided the top has room to stand. Keep holding through a jump, umbrella ascent or successive ledges; you do not need another press at each lip. The climb takes about **0.32 s**, with continuous collision checks and a two-arm pull-up pose. Your incoming horizontal momentum carries through the finish straight into running. **Press Space during the last 0.12 s** to jump immediately off the top with that momentum. Holding Space while standing still or moving away does not start an automatic climb; holding alone does not jump on completion.
 
 While airborne within **0.72 m** of a wall, press **Space** to kick upward and away while keeping your momentum along the wall. Moving forward beside a left wall carries you forward and right; a right wall carries you forward and left. Camera direction does not replace your existing velocity. Wall kicks still need a new press, and landing or reaching a differently facing wall enables another kick. Try the marked ledge and kick wall beside the east-side traversal route. Q launches at **12 m/s for 0.4 s** and reaches roughly **8 m** above its starting point in open space before descending into the glide; ceilings stop the ascent safely.
 
@@ -71,6 +71,7 @@ godot --headless --path . --script res://tests/guard_drill_test.gd
 godot --headless --path . --script res://tests/block_feedback_test.gd
 godot --headless --path . --script res://tests/traversal_test.gd
 godot --headless --path . --script res://tests/traversal_flow_test.gd
+godot --headless --path . --script res://tests/mantle_exit_test.gd
 godot --headless --path . --script res://tests/integration_test.gd
 ```
 

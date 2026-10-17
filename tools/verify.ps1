@@ -27,6 +27,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Mantle, wall jump or umbrella vault checks failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/traversal_flow_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Held mantle input or wall-kick momentum checks failed.' }
+    & $taskEngine --headless --path $taskRoot --script res://tests/mantle_exit_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Mantle speed, momentum handoff or exit jump checks failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/integration_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Training integration tests failed.' }
     if ($Capture) {

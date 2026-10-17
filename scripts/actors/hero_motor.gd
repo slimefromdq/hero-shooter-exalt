@@ -28,7 +28,12 @@ func tick(delta: float, input: CombatIntent) -> void:
 		dash_cd = 0.0
 		hover_cd = 0.0
 	if traversal.active:
-		traversal.advance(delta)
+		# Keep a short press buffer through the finish without turning the held
+		# auto-mantle input into an automatic jump on every rooftop.
+		jump_buffer = .12 if input.jump else maxf(0,jump_buffer - delta)
+		traversal.carry_running_input(delta,input.move)
+		if traversal.advance(delta):
+			finish_mantle(delta)
 		return
 	if actor.state in ["captured", "throw_pair"]:
 		actor.velocity = Vector3.ZERO
@@ -130,7 +135,8 @@ func tick(delta: float, input: CombatIntent) -> void:
 		if traversal.try_mantle(wish):
 			jump_buffer = 0
 			coyote = 0
-			traversal.advance(delta)
+			if traversal.advance(delta):
+				finish_mantle(delta)
 			return
 	# Holding Space keeps ledge detection alive, but jumps and wall kicks still
 	# require a fresh press (or its short buffer), avoiding automatic kick loops.
@@ -166,6 +172,19 @@ func tick(delta: float, input: CombatIntent) -> void:
 				break
 	if mode == "hover_ascent" and actor.is_on_ceiling():
 		transition("hover", t.hover_duration)
+
+func finish_mantle(delta: float) -> void:
+	# The checked landing supplies ground permission immediately. Continue the
+	# carried motion in this same tick, or launch a buffered jump off the top.
+	coyote = .1
+	actor.velocity.y = -actor.tuning.gravity * delta
+	if jump_buffer > 0:
+		actor.velocity.y = actor.tuning.jump_impulse
+		jump_buffer = 0
+		coyote = 0
+	actor.velocity = actor.velocity.limit_length(actor.tuning.speed_limit)
+	actor.move_and_slide()
+	transition("ground" if actor.is_on_floor() else "air")
 
 func grounded() -> bool:
 	if not actor.is_on_floor():
