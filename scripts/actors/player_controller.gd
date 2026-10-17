@@ -37,8 +37,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		yaw -= event.relative.x * sensitivity
 		pitch = clampf(pitch - event.relative.y * sensitivity, -1.3, 1.15)
 	if event is InputEventMouseButton and event.pressed and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
-		var training: Node = get_tree().get_first_node_in_group("training")
-		if training != null and not training.menu_open:
+		var session: Node = get_tree().get_first_node_in_group("game_session")
+		if session != null and not session.menu_open:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _process(delta: float) -> void:

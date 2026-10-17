@@ -31,8 +31,18 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Mantle speed, momentum handoff or exit jump checks failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/integration_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Training integration tests failed.' }
+    & $taskEngine --headless --path $taskRoot --script res://tests/city_rules_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'City capture, health pickup or protection checks failed.' }
+    & $taskEngine --headless --path $taskRoot --script res://tests/city_integration_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'City navigation, respawn or reset checks failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_traversal_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'City physical stair, subway or camera traversal failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_transition_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'City/training scene transitions or cleanup failed.' }
     if ($Capture) {
         & $taskEngine --path $taskRoot --script res://tests/capture.gd --resolution 1440x900 --audio-driver Dummy
         if ($LASTEXITCODE -ne 0) { throw 'Rendered capture failed.' }
+        & $taskEngine --path $taskRoot --script res://tests/capture_city.gd --resolution 1920x1080 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Rendered city capture failed.' }
     }
 } finally { Pop-Location }

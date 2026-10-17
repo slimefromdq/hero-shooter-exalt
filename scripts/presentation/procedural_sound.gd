@@ -2,6 +2,16 @@ class_name ProceduralSound
 extends AudioStreamPlayer
 
 static var guard_wave: AudioStreamWAV
+var spatial_owner: Node3D
+
+func distance_gain() -> float:
+	if not is_instance_valid(spatial_owner):
+		return 0.0
+	var camera: Camera3D = get_viewport().get_camera_3d()
+	if camera == null:
+		return 0.0
+	var distance: float = camera.global_position.distance_to(spatial_owner.global_position)
+	return -minf(45.0, maxf(0.0, distance - 6.0) * 1.1)
 
 # A sharp contact transient, low body hit and decaying inharmonic metal partials.
 # Cached PCM uses local noise so presentation never changes gameplay's random seed.
@@ -30,7 +40,7 @@ static func guard_clang() -> AudioStreamWAV:
 
 func play_guard_clang() -> void:
 	stream = guard_clang()
-	volume_db = -2.0
+	volume_db = -2.0 + distance_gain()
 	if DisplayServer.get_name() != "headless":
 		play()
 
@@ -57,5 +67,5 @@ func play_tone(hz: float, seconds: float, loudness: float) -> void:
 	wave.mix_rate = rate
 	wave.data = bytes
 	stream = wave
-	volume_db = -10.0
+	volume_db = -10.0 + distance_gain()
 	play()

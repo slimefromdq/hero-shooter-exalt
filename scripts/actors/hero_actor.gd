@@ -10,6 +10,7 @@ signal died
 var health: float = 250.0
 var shields: float = 0.0
 var invulnerable: bool = false
+var spawn_protected: bool = false
 var infinite_resources: bool = false
 var alive: bool = true
 var state: String = "ready"
@@ -79,6 +80,8 @@ func _physics_process(delta: float) -> void:
 
 # One authority boundary: controllers request actions; only components resolve them.
 func permits(action: String) -> bool:
+	if action in ["primary", "melee", "throw", "counter", "bomb", "ultimate"] and resolver.protected_room(self):
+		return false
 	if not alive or state in ["captured", "throw_pair", "stagger", "counterthrow", "throw_release"]:
 		return false
 	if action == "counter":

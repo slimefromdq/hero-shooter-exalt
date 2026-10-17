@@ -1,16 +1,18 @@
-# Nimbus · Field Training
+# EXALT · Meridian Gardens
 
-A playable offline third-person hero shooter prototype built from `docs/DESIGN.md`, using original geometry and synth sound cues. **Godot 4.7.2 stable** is the verified engine (`4.7.2.stable.official.ed1daf0bf`).
+A playable offline **6v6 King of the Hill** hero shooter in a modern fantasy city, with a separate Nimbus training arena. Built with original modular geometry and synthesized sound. **Godot 4.7.2 stable** is the verified engine (`4.7.2.stable.official.ed1daf0bf`).
+
+The city includes a celestial conservatory, garden and market flanks, subway loop, accessible balconies and wizard's study, elevated promenades, monumental railway arches and moving scenic trains. Six small packs heal **75 HP**; two large packs heal **400 HP**, capped at maximum health. See [Meridian Gardens field guide and validation](docs/MERIDIAN_GARDENS.md).
 
 ## Play
 
-Import **project.godot** in Godot 4.7.2 and press **F6** to run the training scene, or **F5** to run the project. On Windows, run:
+Import **project.godot** in Godot 4.7.2 and press **F5** to enter Meridian Gardens. On Windows, run:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\Launch.ps1
 ```
 
-`Launch.ps1 -Editor` opens the editor. The launcher finds the installed 4.7.2 console executable in Downloads or `GODOT_BIN`. It does not download an engine. Click the game to capture the mouse; **Tab** opens the paused training console, **Esc** also toggles it. An ordinary-rule live-fire scenario launches immediately.
+`Launch.ps1 -Editor` opens the editor; `Launch.ps1 -Training` starts the original arena directly. The launcher finds the installed 4.7.2 console executable in Downloads or `GODOT_BIN`. Click the game to capture the mouse. **Tab / Esc** opens the pause menu, including exploration, match restart and return to training. **M** opens the tactical atlas; **F3** adds route/resource debugging.
 
 ## Controls
 
@@ -29,8 +31,9 @@ powershell -ExecutionPolicy Bypass -File .\Launch.ps1
 | 5 | Forward lunging umbrella strike |
 | 4 | 2.8 m throw or timed counterthrow |
 | 6 hold | Shield / frontal melee guard |
-| Tab or Esc | Paused training console / return to play |
-| F3 / F5 / F6 | State and hitbox telemetry / scenario reset / training refill |
+| Tab or Esc | Pause menu / training console / return to play |
+| M | City district atlas with routes, levels and shared health locations |
+| F3 / F5 / F6 | Telemetry / match or exercise restart / training-only refill |
 
 Bindings use named InputMap actions in `scripts/training/input_bindings.gd`; the saved project map contains the user's requested controls. Existing editor-configured bindings take precedence, and HUD prompts read the actual map. A downward dash automatically enters a momentum slide. Jump ends a slide; holding and then releasing Shift can also end an automatic dash slide. Guard limits movement and does **not** reduce bullets at the default setting.
 
@@ -46,6 +49,7 @@ While airborne within **0.72 m** of a wall, press **Space** to kick upward and a
 
 ## Included
 
+- Meridian Gardens: one player and eleven Nimbus bots, navigation across five elevations, fixed-hill capture/contest/scoring, team-only safe rooms, eight-second respawns, ultimate retention, shared health pickups, match HUD, exploration mode and tactical atlas. First to 100% wins after the 20-second unlock and five-second uncontested capture.
 - Nimbus's complete prototype kit: 45/90 body/head rifle, upward Hover, timed projectile reflection and hitscan blocking, 80-peak bomb with falloff and cover checks, and 150-damage Final Notice with a pre-hit 20% execution check.
 - Shared acceleration, braking, air steering, jump buffering/coyote time, collision-checked mantling, wall jumps, fixed-direction dash, both slide entries, and collision-aware shoulder camera.
 - A 4.8 m committed melee lunge for engages/finishers, finite frontal guard with attacker stagger, interruptible 2.8 m throws, counterthrows, and an articulated pull/hip-lift/turn/slam/get-up animation. Slam damage occurs at impact; both participants retain 90% outside-damage reduction during the pair.
@@ -75,12 +79,12 @@ godot --headless --path . --script res://tests/mantle_exit_test.gd
 godot --headless --path . --script res://tests/integration_test.gd
 ```
 
-Results are written to `artifacts/`. See `docs/PLAYTESTS.md` for performed checks and the remaining human playtest. These automated checks do not establish game feel or final balance. Tune the Resource in `resources/nimbus.tres` through the Inspector; the training console edits isolated runtime copies.
+Results are written to `artifacts/`. City checks cover healing, objective heights, spawn protection, respawns, complete resets, route timings, physical stairs/subway traversal and camera clearance. The field guide includes ten-minute simulation and real-time 1080p benchmark commands. See `docs/PLAYTESTS.md` for performed checks; competitive balance and game feel still need human playtesting. Tune `resources/nimbus.tres` or the map definition through the Inspector.
 
 ## Layout
 
 `scenes/actors` composes the common actor. `scripts/actors` owns intent, actor state, movement and camera. `scripts/abilities` owns Nimbus and close-combat lifecycles. `scripts/combat` is the offline authority boundary for damage, cover and projectiles. `scripts/presentation` owns geometry, animation and sound. `scripts/training` owns exercises, bots/debug control and HUD. All dimensions are meters, times seconds, health/damage HP.
 
-The prototype uses deliberately simple geometry, local obstacle avoidance and procedural animation. It requires human keyboard/mouse playtesting for responsiveness, camera comfort, route difficulty and combat readability. See `docs/DECISIONS.md` and `docs/TASKS.md` before extending it.
+The city uses a reusable batched architecture kit, a baked pedestrian navigation mesh, original material shaders and static indirect lamp illumination. Nimbus retains the existing prototype character art and procedural animation. Human keyboard/mouse playtesting remains useful for responsiveness, route difficulty and combat balance. See `docs/DECISIONS.md` and `docs/TASKS.md` before extending it.
 
 To render the revised combat choreography for review, run `godot --path . --script res://tests/capture_close_combat.gd --fixed-fps 60 --resolution 1100x720`. It writes actual engine frames under `artifacts/combat-frames/`.

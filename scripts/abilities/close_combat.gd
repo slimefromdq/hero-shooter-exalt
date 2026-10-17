@@ -108,6 +108,8 @@ func melee_progress() -> float:
 func valid_target(target: HeroActor, reach: float, facing: float) -> bool:
 	if target == actor or not target.alive or target.team == actor.team:
 		return false
+	if actor.resolver.protected_room(actor) or actor.resolver.protected_room(target):
+		return false
 	var offset: Vector3 = target.global_position - actor.global_position
 	if offset.length() > reach or absf(offset.y) > 1.5:
 		return false

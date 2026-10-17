@@ -1,0 +1,13 @@
+{
+	"alive_actors": 12,
+	"average_draw_calls": 1541.28634199927,
+	"average_fps": 136.517693087931,
+	"device": "NVIDIA GeForce RTX 3080",
+	"frames": 2731,
+	"p95_frame_ms": 8.975,
+	"p99_frame_ms": 9.335,
+	"physics_hz": 60,
+	"renderer": "forward_plus",
+	"resolution": "(1920, 1080)",
+	"seconds": 20.004733
+}

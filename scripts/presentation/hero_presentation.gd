@@ -112,8 +112,10 @@ func _ready() -> void:
 			Geometry.mesh(star,shape,Vector3.ZERO,star_mat).rotation.z = angle
 	stagger_marks.visible = false
 	sound = ProceduralSound.new()
+	sound.spatial_owner = actor
 	add_child(sound)
 	block_sound = ProceduralSound.new()
+	block_sound.spatial_owner = actor
 	add_child(block_sound)
 	actor.resolver.confirmed_block.connect(on_block)
 	animator = AnimationPlayer.new()
@@ -206,17 +208,28 @@ func _process(delta: float) -> void:
 	if actor.state in ["throw_startup","throw_pair","captured","mantle"]:
 		rifle.position = Vector3(.22,1.12,.32)
 		rifle.rotation = Vector3(-.4,0,-.6)
-	if actor.team != 0:
+	var session: Node = get_tree().get_first_node_in_group("game_session")
+	var city_play: bool = get_tree().get_first_node_in_group("city_match") != null
+	model.visible = actor.alive if city_play else true
+	nameplate.visibility_range_end = 40.0 if city_play else 0.0
+	if actor.team != 0 or (city_play and session.player != actor):
 		var marker: String = ""
 		if actor.state == "melee_windup": marker = "  /  STRIKE"
 		elif actor.state == "throw_startup": marker = "  /  GRAB!  [%s]" % TrainingInputs.key_label("throw")
 		elif actor.state == "guard": marker = "  /  GUARD"
 		elif actor.state == "stagger": marker = "  /  STAGGERED"
 		nameplate.text = "%s    %d HP%s" % [actor.actor_id.to_upper(), ceili(actor.health), marker]
-		nameplate.modulate = Color("ffd096") if marker != "" else Color("fff1db")
+		if city_play:
+			nameplate.text = "%s%s   %d%s" % ["L" if actor.team == 0 else "C", actor.actor_id.get_slice("_", 1), ceili(actor.health), marker]
+			nameplate.font_size = 24
+			nameplate.pixel_size = .0045
+			nameplate.outline_size = 4
+			nameplate.outline_modulate = Color("152333")
+		nameplate.modulate = Color("8ee7ed") if actor.team == 0 else (Color("ffd096") if marker != "" else Color("ffb5a3"))
+		nameplate.visible = actor.alive
 	else:
 		nameplate.visible = false
-	var debug: bool = bool(get_tree().get_first_node_in_group("training").get("debug_view")) if get_tree().get_first_node_in_group("training") != null else false
+	var debug: bool = bool(session.get("debug_view")) if session != null else false
 	debug_label.visible = debug
 	debug_label.text = "%s • %s\n%.1f m/s" % [actor.state, actor.motor.mode, actor.velocity.length()]
 	if actor.is_on_floor() and not was_grounded and actor.velocity.length() > 1.0:

@@ -30,11 +30,18 @@ func is_front(target: HeroActor, source_position: Vector3) -> bool:
 	var facing := Vector3(target.aim_direction.x, 0.0, target.aim_direction.z).normalized()
 	return facing.dot(toward.normalized()) > 0.35
 
+func protected_room(actor: HeroActor) -> bool:
+	var city: Node = get_tree().get_first_node_in_group("city_match")
+	return actor.spawn_protected or (city != null and city.is_protected(actor))
+
 func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast_id: int,
 		head: bool = false, execute: bool = false, incoming_from: Vector3 = Vector3.INF) -> String:
 	if not is_instance_valid(source) or not is_instance_valid(target) or not target.alive:
 		return "invalid"
 	if source.team == target.team or target.invulnerable:
+		return "immune"
+	# Query positions at the authority boundary, including attacks already in flight.
+	if protected_room(source) or protected_room(target):
 		return "immune"
 	var key: String = "%d:%d" % [cast_id, target.get_instance_id()]
 	if resolved.has(key):

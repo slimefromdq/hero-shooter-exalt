@@ -229,6 +229,7 @@ func build_menu() -> void:
 	left.add_child(scenarios)
 	scenarios.item_selected.connect(func(index: int) -> void: training.scenario = index; training.reset_scenario())
 	button(left,"Start guard drill  /  hold %s" % TrainingInputs.key_label("guard"),training.start_guard_drill)
+	button(left,"Play Meridian Gardens  /  6v6 King of the Hill",training.enter_city)
 	var profile := OptionButton.new()
 	for option: String in TrainingManager.PROFILES: profile.add_item(option)
 	profile.select(2)

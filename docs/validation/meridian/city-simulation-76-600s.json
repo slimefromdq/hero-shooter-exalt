@@ -1,0 +1,153 @@
+{
+	"bots": [
+		{
+			"active_seconds": 446.083333333256,
+			"actor": "Nimbus",
+			"detours": 0,
+			"distance_m": 2012.74528908788,
+			"path_updates": 896,
+			"role": "frontline",
+			"tactical_decisions": 2241,
+			"warps": 0
+		},
+		{
+			"active_seconds": 478.383333333227,
+			"actor": "lantern_02",
+			"detours": 0,
+			"distance_m": 1799.21746482109,
+			"path_updates": 961,
+			"role": "frontline",
+			"tactical_decisions": 2397,
+			"warps": 0
+		},
+		{
+			"active_seconds": 510.383333333198,
+			"actor": "lantern_03",
+			"detours": 0,
+			"distance_m": 2269.16040545143,
+			"path_updates": 1025,
+			"role": "frontline",
+			"tactical_decisions": 2554,
+			"warps": 0
+		},
+		{
+			"active_seconds": 478.383333333227,
+			"actor": "lantern_04",
+			"detours": 1,
+			"distance_m": 2187.81840740959,
+			"path_updates": 960,
+			"role": "flank_left",
+			"tactical_decisions": 2388,
+			"warps": 0
+		},
+		{
+			"active_seconds": 470.383333333234,
+			"actor": "lantern_05",
+			"detours": 0,
+			"distance_m": 1971.3326351282,
+			"path_updates": 944,
+			"role": "flank_right",
+			"tactical_decisions": 2346,
+			"warps": 0
+		},
+		{
+			"active_seconds": 506.166666666535,
+			"actor": "lantern_06",
+			"detours": 0,
+			"distance_m": 2771.91604284185,
+			"path_updates": 1014,
+			"role": "high_ground",
+			"tactical_decisions": 2539,
+			"warps": 0
+		},
+		{
+			"active_seconds": 502.216666666539,
+			"actor": "crown_01",
+			"detours": 1,
+			"distance_m": 1854.26221227094,
+			"path_updates": 1006,
+			"role": "frontline",
+			"tactical_decisions": 2520,
+			"warps": 0
+		},
+		{
+			"active_seconds": 452.916666666583,
+			"actor": "crown_02",
+			"detours": 0,
+			"distance_m": 2105.47619270167,
+			"path_updates": 911,
+			"role": "frontline",
+			"tactical_decisions": 2270,
+			"warps": 0
+		},
+		{
+			"active_seconds": 550.299999999828,
+			"actor": "crown_03",
+			"detours": 0,
+			"distance_m": 1882.86359818582,
+			"path_updates": 1102,
+			"role": "frontline",
+			"tactical_decisions": 2752,
+			"warps": 0
+		},
+		{
+			"active_seconds": 504.04999999987,
+			"actor": "crown_04",
+			"detours": 1,
+			"distance_m": 1696.55366334721,
+			"path_updates": 1011,
+			"role": "flank_left",
+			"tactical_decisions": 2519,
+			"warps": 0
+		},
+		{
+			"active_seconds": 470.183333333234,
+			"actor": "crown_05",
+			"detours": 0,
+			"distance_m": 1959.98461154726,
+			"path_updates": 943,
+			"role": "flank_right",
+			"tactical_decisions": 2345,
+			"warps": 0
+		},
+		{
+			"active_seconds": 510.233333333198,
+			"actor": "crown_06",
+			"detours": 0,
+			"distance_m": 2759.10784944746,
+			"path_updates": 1023,
+			"role": "high_ground",
+			"tactical_decisions": 2557,
+			"warps": 0
+		}
+	],
+	"captures": [
+		6,
+		6
+	],
+	"checks": 14,
+	"contest_seconds": 235.0,
+	"deaths": 164,
+	"failures": [],
+	"falls": [],
+	"health_collections": 100,
+	"high_ground_teams": [
+		true,
+		true
+	],
+	"lowest_y": -5.00517654418945,
+	"max_heights": [
+		6.51155567169189,
+		6.5115385055542
+	],
+	"persistent_stalls": [],
+	"rounds": 2,
+	"seconds": 600,
+	"seed": 76,
+	"subway_teams": [
+		true,
+		true
+	],
+	"total_metres_travelled": 25270.4383722404,
+	"worst_stall": 2.0
+}

@@ -42,12 +42,17 @@ var previous_route_position: Vector3
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	add_to_group("training")
+	add_to_group("game_session")
 	hud = TrainingHUD.new()
 	hud.training = self
 	add_child(hud)
 	player.resolver.confirmed_hit.connect(on_hit)
 	player.resolver.event_logged.connect(on_event)
 	reset_scenario()
+
+func enter_city() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file.call_deferred("res://scenes/city/meridian_gardens.tscn")
 
 func _process(delta: float) -> void:
 	if menu_open:
