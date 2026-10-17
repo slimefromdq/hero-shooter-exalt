@@ -27,27 +27,32 @@ func capture() -> void:
 	controller.active = false
 	player.controller = null
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://artifacts"))
-	player.reset_actor(Vector3(12,.01,8.2))
+	player.reset_actor(Vector3(12,.01,9.7))
 	controller.pitch = -.15
 	await step(4)
 	await shot("mantle-approach")
-	player.intent.jump = true
-	await step(1)
-	player.intent.jump = false
+	player.intent.jump_held = true
+	player.intent.move = Vector3.FORWARD
+	for frame: int in 60:
+		await step(1)
+		if player.state == "mantle": break
+	print("AUTO MANTLE INPUT: held=",player.intent.jump_held," press=",player.intent.jump)
 	await step(12)
 	await shot("mantle-pull")
 	print("MANTLE CAPTURE: ",player.state," progress=",player.motor.traversal.progress," height=",player.global_position.y)
 	await step(27)
 	await shot("mantle-top")
 	print("MANTLE LANDING: ",player.global_position," state=",player.state)
-	player.reset_actor(Vector3(11.9,.01,-2))
-	player.intent.aim = Vector3.LEFT
-	controller.yaw = PI / 2
+	player.reset_actor(Vector3(11.9,.01,-.3))
+	player.intent.aim = Vector3.FORWARD
+	player.intent.move = Vector3.FORWARD
+	controller.yaw = 0
 	await step(4)
 	player.intent.jump = true
 	await step(1)
 	player.intent.jump = false
 	await step(10)
+	player.velocity.z = -6
 	player.intent.jump = true
 	await step(1)
 	player.intent.jump = false

@@ -66,6 +66,7 @@ func gather_intent(_delta: float) -> CombatIntent:
 	input.primary = Input.is_action_just_pressed("primary")
 	input.aim_held = Input.is_action_pressed("aim")
 	input.jump = Input.is_action_just_pressed("jump")
+	input.jump_held = Input.is_action_pressed("jump")
 	input.dash = Input.is_action_just_pressed("dash")
 	input.slide = Input.is_action_pressed("slide")
 	input.reload = Input.is_action_just_pressed("reload")

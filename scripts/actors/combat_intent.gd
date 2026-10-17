@@ -8,6 +8,7 @@ var primary: bool = false
 var projectile_fire: bool = false
 var aim_held: bool = false
 var jump: bool = false
+var jump_held: bool = false
 var dash: bool = false
 var slide: bool = false
 var reload: bool = false

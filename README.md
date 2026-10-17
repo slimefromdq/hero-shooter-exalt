@@ -19,7 +19,7 @@ powershell -ExecutionPolicy Bypass -File .\Launch.ps1
 | WASD / mouse | Move / look |
 | Left click / right hold | Semi-auto umbrella rifle / shoulder aim |
 | R | Reload |
-| Space | Jump; mantle toward a nearby ledge; wall jump while airborne beside a wall |
+| Space | Press to jump / wall kick; hold while moving into a ledge to mantle automatically |
 | 3 | Crosshair-directed 3D dash, after a short buildup |
 | Shift hold | Momentum slide; downhill entry works from low speed |
 | Q | Ability 1 — Hover: higher umbrella vault, then glide; press again to end |
@@ -40,9 +40,9 @@ Press **Tab → Start guard drill**, walk inside the coral ring, face the statio
 
 ## Climbing and wall jumps
 
-Face a wall or tower within about **0.95 m** and press **Space** to mantle a ledge up to **2.2 m above your feet**, provided the top has room to stand. You can mantle from the ground, a jump or umbrella ascent. Higher towers need a jump or Q first; press Space again near the lip. The climb takes about **0.55 s**, with continuous collision checks and a two-arm pull-up pose.
+**Hold Space and move into a wall or tower** to mantle automatically when a ledge comes within about **0.95 m** and **2.2 m above your feet**, provided the top has room to stand. Keep holding through a jump, umbrella ascent or successive ledges; you do not need another press at each lip. The climb takes about **0.55 s**, with continuous collision checks and a two-arm pull-up pose. Holding Space while standing still or moving away does not start an automatic climb.
 
-While airborne within **0.72 m** of a wall, press **Space** to kick upward and away. Landing or reaching a differently facing wall enables another wall jump. Try the marked ledge and kick wall beside the east-side traversal route. Q now launches at **12 m/s for 0.4 s** and reaches roughly **8 m** above its starting point in open space before descending into the glide; ceilings stop the ascent safely.
+While airborne within **0.72 m** of a wall, press **Space** to kick upward and away while keeping your momentum along the wall. Moving forward beside a left wall carries you forward and right; a right wall carries you forward and left. Camera direction does not replace your existing velocity. Wall kicks still need a new press, and landing or reaching a differently facing wall enables another kick. Try the marked ledge and kick wall beside the east-side traversal route. Q launches at **12 m/s for 0.4 s** and reaches roughly **8 m** above its starting point in open space before descending into the glide; ceilings stop the ascent safely.
 
 ## Included
 
@@ -70,6 +70,7 @@ godot --headless --path . --script res://tests/close_combat_test.gd
 godot --headless --path . --script res://tests/guard_drill_test.gd
 godot --headless --path . --script res://tests/block_feedback_test.gd
 godot --headless --path . --script res://tests/traversal_test.gd
+godot --headless --path . --script res://tests/traversal_flow_test.gd
 godot --headless --path . --script res://tests/integration_test.gd
 ```
 

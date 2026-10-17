@@ -67,7 +67,7 @@ func build_environment() -> void:
 	# A reachable ledge and a taller kick wall beside the existing tower route.
 	Geometry.box(self,Vector3(3,2,3),Vector3(12,1,6),Color("617d80"))
 	Geometry.box(self,Vector3(3.08,.06,3.08),Vector3(12,2.03,6),Color("8be0c4"),false)
-	Geometry.text3d(self,"SPACE / MANTLE",Vector3(12,2.8,6),24,Color("d7f4dc"))
+	Geometry.text3d(self,"HOLD SPACE + MOVE\nMANTLE",Vector3(12,2.8,6),24,Color("d7f4dc"))
 	Geometry.box(self,Vector3(.5,5.5,5),Vector3(11,2.75,-2),Color("506b73"))
 	var kick_sign := Geometry.text3d(self,"AIR + SPACE\nWALL JUMP",Vector3(11.3,4,-2),23,Color("d7f4dc"))
 	kick_sign.rotation_degrees.y = 90

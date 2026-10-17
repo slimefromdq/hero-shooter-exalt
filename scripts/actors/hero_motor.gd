@@ -124,13 +124,18 @@ func tick(delta: float, input: CombatIntent) -> void:
 			var slope: float = rad_to_deg(actor.get_floor_angle())
 			if current.length() >= t.slide_entry_speed or slope >= t.slide_slope:
 				transition("slide")
-	if jump_buffer > 0.0 and can_move and actor.permits("jump") and mode not in ["dash", "dash_windup"]:
+	var can_traverse: bool = can_move and actor.permits("jump") and mode not in ["dash", "dash_windup"]
+	var mantle_request: bool = jump_buffer > 0.0 or (input.jump_held and (wish * Vector3(1,0,1)).length_squared() >= .1)
+	if mantle_request and can_traverse:
 		if traversal.try_mantle(wish):
 			jump_buffer = 0
 			coyote = 0
 			traversal.advance(delta)
 			return
-		elif not was_floor and coyote <= 0 and traversal.try_wall_jump(wish):
+	# Holding Space keeps ledge detection alive, but jumps and wall kicks still
+	# require a fresh press (or its short buffer), avoiding automatic kick loops.
+	if jump_buffer > 0.0 and can_traverse:
+		if not was_floor and coyote <= 0 and traversal.try_wall_jump(wish):
 			jump_buffer = 0
 		elif coyote > 0 and mode not in ["hover", "hover_ascent"]:
 			actor.velocity.y = t.jump_impulse

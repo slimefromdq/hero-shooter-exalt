@@ -143,9 +143,16 @@ func try_wall_jump(wish: Vector3) -> bool:
 			normal = candidate
 	if normal.is_zero_approx():
 		return false
+	normal = (normal * Vector3(1,0,1)).normalized()
+	var horizontal: Vector3 = actor.velocity * Vector3(1,0,1)
+	var parallel: Vector3 = horizontal.slide(normal)
+	var outward: float = maxf(actor.tuning.wall_jump_out,horizontal.dot(normal))
+	var upward: float = maxf(actor.tuning.wall_jump_up,actor.velocity.y)
 	actor.motor.end_hover()
 	actor.motor.transition("air")
-	actor.velocity = normal * actor.tuning.wall_jump_out + Vector3.UP * actor.tuning.wall_jump_up + wish.slide(normal).limit_length(1) * 2
+	# Preserve actual travel along the wall; camera direction and movement keys
+	# locate a wall but never replace the actor's existing momentum.
+	actor.velocity = parallel + normal * outward + Vector3.UP * upward
 	last_wall_normal = normal
 	wall_cooldown = actor.tuning.wall_jump_cooldown
 	wall_pose = .28
