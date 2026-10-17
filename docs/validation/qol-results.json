@@ -1,0 +1,99 @@
+{
+  "date": "2026-10-17",
+  "engine": "4.7.2.stable.official.ed1daf0bf",
+  "regression": {
+    "command": "tools/verify.ps1",
+    "checks": 1460,
+    "groups": 26,
+    "failures": 0
+  },
+  "expanded_menu_flow": {
+    "checks": 17,
+    "failures": 0,
+    "covers": [
+      "startup mode and hero choice",
+      "settings callbacks",
+      "spawn hero switch",
+      "queued respawn switch",
+      "match preservation",
+      "one-time direct-launch shortcuts",
+      "return to main menu"
+    ]
+  },
+  "native": {
+    "wheel_interaction_umbrella_audio_checks": 14,
+    "slayer_checks": 47,
+    "fullscreen_checks": 20,
+    "failures": 0,
+    "wheel_render_rates": [
+      30,
+      60,
+      144
+    ]
+  },
+  "render_review": {
+    "captures": 42,
+    "resolutions": [
+      [
+        1440,
+        900
+      ],
+      [
+        1600,
+        900
+      ],
+      [
+        2160,
+        900
+      ]
+    ],
+    "directory": "artifacts/qol",
+    "subjects": [
+      "main menu",
+      "hero select",
+      "settings",
+      "all five heroes",
+      "umbrella",
+      "crowd control",
+      "pause",
+      "boot attachment and release",
+      "three-shot ultimate"
+    ]
+  },
+  "simulation": {
+    "seed": 76,
+    "seconds": 600,
+    "checks": 17,
+    "failures": [],
+    "rounds": 1,
+    "captures": [
+      4,
+      3
+    ],
+    "contest_seconds": 401.0,
+    "deaths": 110,
+    "persistent_stalls": [],
+    "falls": [],
+    "health_collections": 49
+  },
+  "simulation_restart_policy": "Natural round completion is recorded in rounds. After the soak, ordinary scoring and restart are also exercised explicitly without imposing a fixed natural match length.",
+  "human_acceptance": "Balance and feel remain editable playtest defaults; human playtesting required.",
+  "health_visibility_followup": {
+    "headless_checks": 318,
+    "test_groups": 7,
+    "failures": 0,
+    "focused_health_bar_checks": 20,
+    "render_captures": 4,
+    "render_directory": "artifacts/health-bars",
+    "coverage": [
+      "enemy and ally overhead bars in city and training",
+      "live health and shield amounts",
+      "effective maximum health wounds",
+      "death and respawn",
+      "cover depth and distance culling",
+      "enemy roster health",
+      "allied ultimate information preserved",
+      "training ally colors"
+    ]
+  }
+}

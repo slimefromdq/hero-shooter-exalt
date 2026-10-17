@@ -146,8 +146,8 @@ static func animate(p: HeroPresentation) -> void:
 	p.slayer_axe.visible = not a.state.begins_with("slayer_axe") or a.state == "slayer_axe_windup"
 	p.slayer_axe.position = Vector3(-.1,1.04,.3)
 	p.slayer_axe.rotation = Vector3(0,0,-.6)
-	if a.state == "reload":
-		p.left_arm.rotation.x = .8 + sin(a.state_time / t.shell_time * TAU) * .35
+	if a.kit.reloading and a.state == "ready":
+		p.left_arm.rotation.x = .8 + sin(a.kit.reload_remaining / t.shell_time * TAU) * .35
 	elif a.state in ["slayer_knife", "slayer_trap"]:
 		p.rifle.position = Vector3(-.22,1.12,.32)
 		p.rifle.rotation = Vector3(-.4,0,.6)

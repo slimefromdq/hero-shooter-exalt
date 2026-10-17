@@ -9,5 +9,5 @@ max_health = 550.0
 ground_speed = 5.5
 shot_interval = 0.65
 magazine = 8
-reload_time = 2.0
+reload_time = 1.0
 head_multiplier = 1.5

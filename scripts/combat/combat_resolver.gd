@@ -130,6 +130,7 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 
 func knockback(source: HeroActor, target: HeroActor, impulse: Vector3, tag: String) -> void:
 	if not target.alive or target.invulnerable or source.team == target.team or protected_room(source) or protected_room(target): return
+	if target.boot_pair != null: target.boot_pair.release(false)
 	if target.state in ["captured", "throw_pair"]: return
 	if target.motor.traversal.active: target.motor.traversal.abort()
 	if impulse.y > 0:
@@ -185,6 +186,14 @@ func attack_ray(source: HeroActor, from: Vector3, to: Vector3, exclude: Array[RI
 	var hit: Dictionary = ray(from,to,exclude,mask)
 	var end: Vector3 = hit.get("position",to)
 	var shield: Dictionary = barrier_ray(source,from,end)
+	return shield if not shield.is_empty() else hit
+
+func weapon_ray(source: HeroActor, from: Vector3, to: Vector3, exclude: Array[RID] = []) -> Dictionary:
+	var ignored: Array[RID] = exclude.duplicate()
+	for bomb: Node in get_tree().get_nodes_in_group("pocket_bombs"):
+		if bomb.source != source or not bomb.airborne: ignored.append(bomb.get_rid())
+	var hit: Dictionary = ray(from,to,ignored,51)
+	var shield: Dictionary = barrier_ray(source,from,hit.get("position",to))
 	return shield if not shield.is_empty() else hit
 
 func splash(source: HeroActor, origin: Vector3, radius: float, amount: float, tag: String, id: int, falloff: bool = false) -> void:

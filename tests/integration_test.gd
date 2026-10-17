@@ -37,9 +37,9 @@ func run() -> void:
 	player.controller.active = false
 	player.controller = null # Feed deterministic intent through the same actor pipeline.
 	await step(3)
-	check(training.bots.size() == 1 and player.alive, "main scene launches into a live Nimbus encounter")
+	check(training.bots.size() == 15 and player.alive, "training launches into the persistent practice range")
 	check(not training.infinite and not training.god_mode and not training.freeze_ai, "ordinary rules are the launch defaults")
-	var camera_wall: Node3D = Geometry.box(arena, Vector3(5,5,0.35), Vector3(0,2.5,12.5), Color.GRAY)
+	var camera_wall: Node3D = Geometry.box(arena, Vector3(5,5,0.35), player.global_position + Vector3(0,2.5,1.5), Color.GRAY)
 	await step(4)
 	check(camera_controller.arm.get_hit_length() < 2.0, "third-person camera pulls forward before entering nearby geometry")
 	camera_wall.queue_free()

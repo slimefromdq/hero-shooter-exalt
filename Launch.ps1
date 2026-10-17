@@ -9,9 +9,9 @@ else {
     elseif ($Fullscreen) { $taskGameArgs += '--fullscreen' }
     if ($Training) { $taskGameArgs += 'res://scenes/training/combat_sandbox.tscn' }
     if ((@($Slayer, $Marshal, $Doctor, $Huddle) | Where-Object { $_ }).Count -gt 1) { throw 'Choose one hero switch.' }
-    if ($Huddle) { $taskGameArgs += @("--", "--hero=huddle") }
-    elseif ($Slayer) { $taskGameArgs += @('--', '--hero=slayer') }
-    elseif ($Marshal) { $taskGameArgs += @('--', '--hero=marshal') }
-    elseif ($Doctor) { $taskGameArgs += @('--', '--hero=doctor') }
+    if ($Huddle) { $taskGameArgs += @("--", "--hero=huddle", "--direct") }
+    elseif ($Slayer) { $taskGameArgs += @('--', '--hero=slayer', '--direct') }
+    elseif ($Marshal) { $taskGameArgs += @('--', '--hero=marshal', '--direct') }
+    elseif ($Doctor) { $taskGameArgs += @('--', '--hero=doctor', '--direct') }
 }
 & $taskEngine @taskGameArgs

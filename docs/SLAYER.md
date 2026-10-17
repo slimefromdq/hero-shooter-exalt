@@ -4,19 +4,19 @@ Slayer is playable in Meridian Gardens and the training arena. Both heroes use `
 
 ## Play
 
-Run `Launch.ps1 -Slayer` for the city or `Launch.ps1 -Training -Slayer` for the sandbox. Both pause menus offer **Play Slayer**. City selection restarts the match with zero ultimate charge; training selection resets the exercise. Selection survives scene transitions. Nimbus remains the default on ordinary launch.
+Run `Launch.ps1 -Slayer` for the city or `Launch.ps1 -Training -Slayer` for the sandbox. Both pause menus offer **Play Slayer**. City selection applies in spawn or queues for respawn, without restarting the match, and resets the player's ultimate charge; training selection resets the exercise. Selection survives scene transitions. Ordinary launch opens the main menu and dedicated hero selection.
 
 **Tab → Start Slayer hunt** selects Slayer and provides stationary, moving and attacking Slayer targets. F6 restores resources and cleanses statuses; F5 resets; F3 shows state, velocity, actual shot damage, pellet count and recharge timers. The advanced tuning panel exposes Slayer's numeric fields. Reset after changing capacities or base health.
 
 | Input | Action |
 | --- | --- |
 | Left click / right hold | Street Sweeper / shoulder aim |
-| R | Load individual shells; offensive actions interrupt |
+| R | Load individual shells concurrently with movement and abilities; firing waits until completion |
 | Q | Silver Knife |
 | E | Boot Rush |
 | 1 | Aim and toss Hunter's Snare; arms on a timer in flight or on the ground; RMB does not change deployment |
 | 2 | Heads Will Roll; automatic release after windup |
-| 3 / Shift / Space | Shared dash / slide / jump, mantle and wall kick |
+| Wheel up / Shift / Space | Shared dash / slide / jump, mantle and wall kick |
 | 5 / 6 / 4 | Shared melee / guard / throw and counterthrow |
 
 Internal `hover`, `deflect` and `bomb` action names remain Q/E/1 slots. Slayer's Q cannot activate Nimbus's Hover. Sprint remains undecided in the design; both heroes retain the same 6 m/s baseline and shared traversal.

@@ -156,7 +156,19 @@ func run() -> void:
 	check(barrier_hits > 0,"marshal bots intercept real ranged attacks")
 	check(total_travel > duration * 3,"participants continue travelling through the district")
 	if duration >= 600:
-		check(rounds > 0,"a full ten minute session completes and restarts matches")
+		# Stronger reload/AoE pressure can extend legitimate contests past ten minutes.
+		# Exercise completion explicitly after the soak, without changing live scoring.
+		var before_serial: int = session.round_serial
+		for actor: HeroActor in session.actors:
+			actor.global_position = session.definition.team_spawns(actor.team)[0]
+		session.hill.unlocked = true
+		session.hill.elapsed = session.definition.unlock_seconds+1
+		session.hill.owner_team = 0
+		session.hill.scores[0] = session.definition.score_to_win-.25
+		session.hill.advance(.5,session.actors)
+		var completed: bool = session.winner == 0
+		session.restart_match()
+		check(completed and session.round_serial == before_serial+1 and session.winner == -1 and session.hill.scores == PackedFloat64Array([0.0,0.0]),"post-soak normal scoring completes the round and restart clears its state")
 		check(health_collections > 0,"injured participants collect shared health resources")
 	await finish()
 

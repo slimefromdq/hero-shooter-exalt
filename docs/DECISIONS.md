@@ -1,5 +1,9 @@
 # Implementation decisions · Nimbus training slice
 
+## QOL-01 · Current user-directed balance and usability pass
+
+October 17, 2026: [QOL.md](QOL.md) records the implemented movement, concurrent reload, hero, camera, training and menu revision. It supersedes historical numeric defaults and exclusive reload permissions below. Dash is wheel up; slide stays Shift. City hero changes preserve the match and queue outside spawn. Numerical buffs remain editable playtest defaults.
+
 2026-10-16. The attached design remains the source of established creative decisions. This record distinguishes implementation assumptions from accepted balance. No proposed tuning is promoted to an accepted design decision by this build.
 
 ## Foundation

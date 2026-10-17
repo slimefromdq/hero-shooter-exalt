@@ -15,22 +15,16 @@ func tick_common(delta: float) -> void:
 		deflect_cd = 0
 		bomb_cd = 0
 		ultimate_charge = 100
-	if actor.state == "reload" and actor.state_time <= 0:
-		ammo = actor.tuning.magazine
-		actor.state = "ready"
 
 func reload_weapon() -> void:
-	if actor.permits("reload") and ammo < actor.tuning.magazine:
-		actor.state = "reload"
-		actor.state_time = actor.tuning.reload_time
-		actor.resolver.record("cast",actor,"reload")
+	start_reload()
 
 func weapon(amount: float, spread: float = 0.0, pellets: int = 1) -> void:
 	if not actor.permits("primary") or shot_cd > 0: return
 	if ammo <= 0:
 		reload_weapon()
 		return
-	ammo -= 1
+	consume_ammo()
 	shot_cd = actor.tuning.shot_interval
 	var origin: Vector3 = actor.intent.aim_origin
 	if origin == Vector3.ZERO: origin = actor.global_position + Vector3.UP * 1.6

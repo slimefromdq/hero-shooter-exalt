@@ -5,6 +5,9 @@ static var marshal_wave: AudioStreamWAV
 static var guard_wave: AudioStreamWAV
 static var slayer_waves: Dictionary = {}
 var spatial_owner: Node3D
+
+func _ready() -> void:
+	bus = "Combat"
 static var reward_waves: Dictionary = {}
 
 static func reward_wave(kind: String, level: int) -> AudioStreamWAV:
@@ -121,10 +124,12 @@ func play_tone(hz: float, seconds: float, loudness: float) -> void:
 	var bytes := PackedByteArray()
 	bytes.resize(frames * 2)
 	var phase: float = 0.0
+	var noise := RandomNumberGenerator.new()
+	noise.seed = int(hz*1000 + seconds*10000)
 	for index: int in frames:
 		var progress: float = float(index) / frames
 		phase += hz * (1.0 - progress * 0.55) / rate
-		var sample: float = (sin(phase * TAU) * 0.7 + randf_range(-0.3,0.3)) * loudness * (1.0 - progress)
+		var sample: float = (sin(phase * TAU) * 0.7 + noise.randf_range(-0.3,0.3)) * loudness * (1.0 - progress)
 		bytes.encode_s16(index * 2, int(clampf(sample, -1.0, 1.0) * 32767.0))
 	var wave := AudioStreamWAV.new()
 	wave.format = AudioStreamWAV.FORMAT_16_BITS

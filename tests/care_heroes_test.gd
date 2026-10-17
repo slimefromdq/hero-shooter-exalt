@@ -588,7 +588,7 @@ func scene_tests() -> void:
 		check(counts == {"marshal":1,"huddle":1,"doctor":1,"nimbus":1,"slayer":2},"live city team %d has the intended five-hero composition" % team)
 	city.toggle_menu()
 	city.select_hero("doctor")
-	check(not paused and not city.menu_open and city.player.kit is DoctorKit,"city selection from pause restarts into doctor and resumes play")
+	check(not paused and not city.menu_open and city.player.kit is DoctorKit,"city selection in spawn switches to doctor and resumes play")
 	check(city.player.kit.ultimate_charge == 0,"city selection does not grant a free ultimate")
 	city.player.kit.ultimate_charge = 73
 	city.player.die()
@@ -615,7 +615,7 @@ func marshal_revision_tests() -> void:
 	marshal.state = "marshal_shield"
 	for i: int in 45: camera_driver._process(1.0/60)
 	near(camera_driver.arm.spring_length,4.2,"shielding smoothly pulls the camera back")
-	near(camera_driver.camera.fov,76,"shield camera retains normal field of view")
+	near(camera_driver.camera.fov,82,"shield camera retains normal field of view")
 	var wall: Node3D = Geometry.box(world,Vector3(8,6,.5),Vector3(0,3,2.5),Color.GRAY)
 	await step(4)
 	check(camera_driver.arm.get_hit_length() < camera_driver.arm.spring_length,"shield camera still retracts against nearby cover")

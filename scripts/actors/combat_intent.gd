@@ -13,6 +13,7 @@ var jump: bool = false
 var jump_held: bool = false
 var dash: bool = false
 var slide: bool = false
+var slide_pressed: bool = false
 var reload: bool = false
 var melee: bool = false
 var stationary_melee: bool = false

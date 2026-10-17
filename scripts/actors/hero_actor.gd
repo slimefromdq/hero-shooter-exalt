@@ -27,6 +27,7 @@ var close: CloseCombat
 var presentation: HeroPresentation
 var spawn_position: Vector3
 var last_hit_age: float = 99.0
+var boot_pair: BootAttachment
 
 func _ready() -> void:
 	if tuning == null:
@@ -75,7 +76,7 @@ func _physics_process(delta: float) -> void:
 	statuses.tick(delta)
 	if not alive:
 		return
-	if state not in ["captured", "throw_pair", "mantle"]:
+	if state not in ["captured", "throw_pair", "mantle", "boot_captured"]:
 		if state in ["huddle_wave","huddle_scatter"]:
 			aim_direction = (kit as HuddleKit).travel_direction
 		elif state == "marshal_verdict":
@@ -87,6 +88,8 @@ func _physics_process(delta: float) -> void:
 		if Vector2(aim_direction.x, aim_direction.z).length() > 0.01:
 			rotation.y = atan2(-aim_direction.x, -aim_direction.z)
 	state_time = maxf(0.0, state_time - delta)
+	kit.tick_reload(delta)
+	if boot_pair != null and boot_pair.attacker == self: boot_pair.tick(delta)
 	if state in ["stagger", "counterthrow", "throw_release"] and state_time <= 0.0:
 		state = "ready"
 	if state == "marshal_shield" and (intent.melee or intent.throw_action or intent.guard): (kit as MarshalKit).lower_barrier()
@@ -99,6 +102,8 @@ func _physics_process(delta: float) -> void:
 
 # One authority boundary: controllers request actions; only components resolve them.
 func permits(action: String) -> bool:
+	if state in ["boot_attached","boot_captured"]: return false
+	if action == "primary" and kit != null and kit.reloading: return false
 	if tuning.hero_id == "huddle" and action in ["scatter","screen","regroup","wave"]:
 		if resolver.protected_room(self): return false
 		if action in ["scatter","wave"] and statuses.movement_disabled(): return false
@@ -112,8 +117,6 @@ func permits(action: String) -> bool:
 		return false
 	if action == "counter":
 		return state in ["ready", "guard", "throw_startup"]
-	if tuning.hero_id == "slayer" and state == "reload":
-		return action in ["primary", "knife", "boot", "snare", "ultimate", "melee", "throw"]
 	if state == "ultimate":
 		return action in ["primary", "aim"]
 	if state == "huddle_regroup":
@@ -139,6 +142,7 @@ func die() -> void:
 	if not alive:
 		return
 	alive = false
+	if boot_pair != null: boot_pair.release(false)
 	benefits.clear_owned()
 	benefits.clear()
 	statuses.clear()
@@ -154,6 +158,7 @@ func die() -> void:
 	died.emit()
 
 func reset_actor(at: Vector3 = Vector3.INF) -> void:
+	if boot_pair != null: boot_pair.release(false)
 	resolver.contributions.erase(get_instance_id())
 
 	for barrier: CombatBarrier in get_tree().get_nodes_in_group("barriers"):
@@ -182,6 +187,7 @@ func reset_actor(at: Vector3 = Vector3.INF) -> void:
 	resolver.record("reset", self, "scenario")
 
 func _exit_tree() -> void:
+	if boot_pair != null: boot_pair.release(false)
 	if benefits != null: benefits.clear_owned()
 	if is_instance_valid(close):
 		close.cancel()

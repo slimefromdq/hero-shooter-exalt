@@ -142,7 +142,7 @@ func fire(_ultimate: bool = false) -> void:
 	if ammo <= 0:
 		reload_weapon()
 		return
-	ammo -= 1
+	consume_ammo()
 	shot_cd = actor.tuning.shot_interval
 	var muzzle: Vector3 = safe_muzzle()
 	var origin: Vector3 = actor.intent.aim_origin

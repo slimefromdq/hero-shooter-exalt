@@ -47,7 +47,7 @@ func check_session(city: bool) -> void:
 	check(get_nodes_in_group("game_session").size() == 1, "exactly one game session survives the transition")
 	check(get_nodes_in_group("combat_resolver").size() == 1, "exactly one combat resolver belongs to the active scene")
 	check(get_nodes_in_group("city_match").size() == (1 if city else 0) and get_nodes_in_group("training").size() == (0 if city else 1), "active scene exposes only its own session groups")
-	check(get_nodes_in_group("actors").size() == (12 if city else 2), "active scene owns exactly %d actors" % (12 if city else 2))
+	check(get_nodes_in_group("actors").size() == (12 if city else 16), "active scene owns exactly %d actors" % (12 if city else 16))
 	check(get_nodes_in_group("transient").is_empty(), "old combat transients do not survive a scene transition")
 
 func run() -> void:
@@ -82,7 +82,7 @@ func run() -> void:
 	check(await wait_for_scene("res://scripts/city/city_arena.gd"), "TrainingManager.enter_city loads Meridian Gardens from pause")
 	city = get_first_node_in_group("city_match") as CityMatch
 	check_session(true)
-	check(previous_scene.get_ref() == null and all_released(previous_actors), "old training arena and both training actors are released")
+	check(previous_scene.get_ref() == null and all_released(previous_actors), "old training arena and all sixteen training actors are released")
 	check(previous_transient.get_ref() == null, "old training transient is released")
 	check(not city.navigation_ready and city.arena.navigation_region.navigation_mesh.get_polygon_count() == 0, "fresh city can be left before its asynchronous navigation bake finishes")
 	previous_scene = weakref(current_scene)

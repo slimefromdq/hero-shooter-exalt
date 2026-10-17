@@ -8,14 +8,20 @@ var camera: Camera3D
 var yaw: float = 0.0
 var pitch: float = -0.12
 @export var sensitivity: float = 0.0025
-# Close shoulder framing enlarges the hero without narrowing the normal 76-degree FOV.
-@export var camera_distance: float = 1.85
+# Wider collision-aware shoulder framing leaves room for combat awareness.
+@export var camera_distance: float = 3.0
 @export var shoulder_offset: float = 0.65
 @export var camera_height: float = 1.75
 var active: bool = true
 var recoil: float = 0.0
+var dash_queued: bool = false
+var slide_queued: bool = false
+@export var normal_fov: float = 82.0
+@export var aim_fov: float = 60.0
 
 func _ready() -> void:
+	get_node("/root/GameSettings").apply_controller(self)
+	get_node("/root/GameSettings").changed.connect(func() -> void: get_node("/root/GameSettings").apply_controller(self))
 	rig = Node3D.new()
 	actor.get_parent().add_child(rig)
 	arm = SpringArm3D.new()
@@ -28,13 +34,16 @@ func _ready() -> void:
 	rig.add_child(arm)
 	arm.position.x = shoulder_offset
 	camera = Camera3D.new()
-	camera.fov = 76.0
+	camera.fov = normal_fov
 	camera.near = 0.08
 	arm.add_child(camera)
 	camera.current = true
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _unhandled_input(event: InputEvent) -> void:
+	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not get_tree().paused:
+		if event.is_action_pressed("dash"): dash_queued = true
+		if event.is_action_pressed("slide"): slide_queued = true
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		yaw -= event.relative.x * sensitivity
 		pitch = clampf(pitch - event.relative.y * sensitivity, -1.3, 1.15)
@@ -51,7 +60,7 @@ func _process(delta: float) -> void:
 	rig.rotation = Vector3(pitch + recoil, yaw, 0.0)
 	arm.position.x = shoulder_offset
 	var aiming: bool = actor.intent.aim_held or actor.state == "ultimate"
-	camera.fov = lerpf(camera.fov, 34.0 if actor.state == "ultimate" else (55.0 if aiming else 76.0), minf(1.0, delta * 12.0))
+	camera.fov = lerpf(camera.fov, 34.0 if actor.state == "ultimate" else (aim_fov if aiming else normal_fov), minf(1.0, delta * 12.0))
 	var desired_distance: float = camera_distance * (0.8 if aiming else 1.0)
 	if actor.state == "marshal_shield" and actor.tuning is MarshalTuning:
 		desired_distance = (actor.tuning as MarshalTuning).shield_camera_distance
@@ -63,6 +72,8 @@ func gather_intent(_delta: float) -> CombatIntent:
 	input.aim = -camera.global_basis.z
 	input.aim_origin = camera.global_position
 	if not active or Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		dash_queued = false
+		slide_queued = false
 		return input
 	var axes: Vector2 = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var forward: Vector3 = -camera.global_basis.z
@@ -76,7 +87,10 @@ func gather_intent(_delta: float) -> CombatIntent:
 	input.aim_held = input.secondary_held and actor.tuning.hero_id in ["nimbus","slayer"]
 	input.jump = Input.is_action_just_pressed("jump")
 	input.jump_held = Input.is_action_pressed("jump")
-	input.dash = Input.is_action_just_pressed("dash")
+	input.dash = dash_queued
+	dash_queued = false
+	input.slide_pressed = slide_queued
+	slide_queued = false
 	input.slide = Input.is_action_pressed("slide")
 	input.reload = Input.is_action_just_pressed("reload")
 	input.melee = Input.is_action_just_pressed("melee")
@@ -88,7 +102,12 @@ func gather_intent(_delta: float) -> CombatIntent:
 	input.ultimate = Input.is_action_just_pressed("ultimate")
 	return input
 
+func clear_action_queue() -> void:
+	dash_queued = false
+	slide_queued = false
+
 func reset_controller() -> void:
+	clear_action_queue()
 	recoil = 0.0
 	yaw = 0.0
 	pitch = -0.12

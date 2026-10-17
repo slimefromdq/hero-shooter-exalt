@@ -40,7 +40,7 @@ func run() -> void:
 	await step(4)
 	bot = training.bots[0]
 	check(training.bots.size() == 1 and (bot.controller as BotController).profile == BotController.Profile.GUARD_TRAINER,"guard drill spawns the stationary melee profile")
-	var requested: Dictionary = {"dash":KEY_3,"hover":KEY_Q,"deflect":KEY_E,"bomb":KEY_1,"ultimate":KEY_2,"slide":KEY_SHIFT,"melee":KEY_5,"throw":KEY_4,"guard":KEY_6}
+	var requested: Dictionary = {"hover":KEY_Q,"deflect":KEY_E,"bomb":KEY_1,"ultimate":KEY_2,"slide":KEY_SHIFT,"melee":KEY_5,"throw":KEY_4,"guard":KEY_6}
 	for action: String in requested:
 		var key := InputEventKey.new()
 		key.device = 0

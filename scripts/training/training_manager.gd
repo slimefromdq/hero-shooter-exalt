@@ -2,7 +2,7 @@ class_name TrainingManager
 extends Node
 
 const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring", "Guard trainer", "Slayer hunter", "Marshal", "Doctor", "Huddle"]
-const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt", "Doctor rounds", "Marshal drill", "Huddle rescue"]
+const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt", "Doctor rounds", "Marshal drill", "Huddle rescue", "Practice range"]
 var arena: Node3D
 var player: HeroActor
 var bots: Array[HeroActor] = []
@@ -22,7 +22,9 @@ var guard_test_range: float = 2.4
 var guard_test_interval: float = 1.6
 var bot_max_health: float = 250.0
 var player_max_health: float = 250.0
-var scenario: int = 0
+var scenario: int = 11
+var feedback: MatchFeedback
+var practice_range: PracticeRange
 var spawn_serial: int = 0
 var hits: int = 0
 var eliminations: int = 0
@@ -45,6 +47,10 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	add_to_group("training")
 	add_to_group("game_session")
+	feedback = MatchFeedback.new()
+	feedback.player = player
+	add_child(feedback)
+	player.resolver.elimination.connect(feedback.on_elimination)
 	hud = TrainingHUD.new()
 	hud.training = self
 	add_child(hud)
@@ -79,6 +85,7 @@ func _process(delta: float) -> void:
 				bot.reset_actor()
 				bot.shields = target_shields
 				bot.invulnerable = target_invulnerable
+				if bot.get_meta("station","") == "allies": bot.health = bot.tuning.max_health*.5
 				death_timers.erase(key)
 	if scenario == 8 and bots.size() >= 4:
 		care_drill_clock += delta
@@ -117,6 +124,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		debug_view = not debug_view
 
 func toggle_menu() -> void:
+	if player.controller is PlayerController: (player.controller as PlayerController).clear_action_queue()
 	menu_open = not menu_open
 	get_tree().paused = menu_open
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if menu_open else Input.MOUSE_MODE_CAPTURED
@@ -128,13 +136,17 @@ func show_notice(message: String) -> void:
 	notice = message
 	notice_time = 3.0
 
-func spawn_bot(profile: int, at: Vector3 = Vector3.INF) -> HeroActor:
-	if bots.size() >= 8:
+func spawn_bot(profile: int, at: Vector3 = Vector3.INF, built_in: bool = false, team_id: int = 1) -> HeroActor:
+	var manual_count: int = 0
+	for existing: HeroActor in bots:
+		if not existing.get_meta("built_in",false): manual_count += 1
+	if not built_in and manual_count >= 8:
 		show_notice("MAXIMUM 8 ACTIVE TARGETS")
 		return null
 	spawn_serial += 1
 	var bot := preload("res://scenes/actors/hero_actor.tscn").instantiate() as HeroActor
-	bot.team = 1
+	bot.set_meta("built_in",built_in)
+	bot.team = team_id
 	bot.tuning = HeroRoster.tuning_for({6:"slayer",7:"marshal",8:"doctor",9:"huddle"}.get(profile,"nimbus"))
 	bot.actor_id = "%s_%02d" % [PROFILES[profile].to_lower().replace(" ", "_"), spawn_serial]
 	bot.position = Vector3(-4 + bots.size() * 3, 0.1, -7 - bots.size() * 2) if at == Vector3.INF else at
@@ -168,6 +180,7 @@ func despawn_bots() -> void:
 	death_timers.clear()
 
 func reset_scenario() -> void:
+	if is_instance_valid(practice_range): practice_range.queue_free()
 	if is_instance_valid(hud): hud.hit_timer = 0.0
 	despawn_bots()
 	for transient: Node in get_tree().get_nodes_in_group("transient"):
@@ -177,6 +190,8 @@ func reset_scenario() -> void:
 	player.invulnerable = god_mode
 	player.infinite_resources = infinite
 	player.resolver.clear_round()
+	feedback.reset()
+	practice_range = null
 	spawn_serial = 0
 	hits = 0
 	eliminations = 0
@@ -185,6 +200,11 @@ func reset_scenario() -> void:
 	route_running = false
 	target_health_override = false
 	match scenario:
+		11:
+			player.reset_actor(Vector3(0,.1,-28))
+			practice_range = PracticeRange.new()
+			practice_range.training = self
+			arena.add_child(practice_range)
 		0: spawn_bot(BotController.Profile.RANGED, Vector3(1, 0.1, -6))
 		1: spawn_bot(BotController.Profile.STATIONARY, Vector3(0, 0.1, -5))
 		2: spawn_bot(BotController.Profile.STRAFE, Vector3(0, 0.1, -8))

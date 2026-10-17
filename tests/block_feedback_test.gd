@@ -113,7 +113,7 @@ func run() -> void:
 	await step()
 	attacker.intent.reload = false
 	await step(20)
-	check(attacker.state == "reload" and is_equal_approx(attacker.velocity.x,5.1), "reload allows 85 percent ground movement: 5.1 m/s")
+	check(attacker.kit.reloading and attacker.state == "ready" and is_equal_approx(attacker.velocity.x,6.0), "reload progresses independently at full 6 m/s movement")
 	attacker.intent.primary = true
 	await step(3)
 	check(attacker.kit.ammo == 3, "faster reload movement does not permit early shooting")

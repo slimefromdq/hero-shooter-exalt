@@ -57,12 +57,6 @@ func tick(delta: float, input: CombatIntent) -> void:
 		ammo = t.magazine
 		deflect_cd = 0.0
 		ultimate_charge = 100.0
-	if actor.state == "reload" and actor.state_time <= 0.0:
-		ammo = mini(ammo + 1, t.magazine)
-		cue("shell")
-		actor.state_time += t.shell_time
-		if ammo >= t.magazine:
-			actor.state = "ready"
 	if actor.state == "slayer_boot_start" and actor.state_time <= 0.0:
 		actor.state = "slayer_boot_active"
 		actor.resolver.record("active", actor, "boot")
@@ -132,13 +126,6 @@ func hint(message: String) -> void:
 func movement_scale() -> float:
 	return lerpf(1.0,data().boot_recovery_speed,clampf(boot_slow_time / maxf(.01,boot_slow_duration),0,1))
 
-func start_reload() -> void:
-	if ammo >= actor.tuning.magazine or actor.state == "reload":
-		return
-	actor.state = "reload"
-	actor.state_time = data().reload_start + data().shell_time
-	actor.resolver.record("cast", actor, "shell_reload")
-
 func aim_point(distance: float) -> Vector3:
 	var origin: Vector3 = actor.intent.aim_origin
 	if origin == Vector3.ZERO:
@@ -155,7 +142,7 @@ func fire(_ultimate: bool = false) -> void:
 	if ammo <= 0 or shot_cd > 0.0 or not actor.permits("primary"):
 		return
 	actor.state = "ready"
-	ammo -= 1
+	consume_ammo()
 	shot_cd = t.shot_interval
 	var muzzle: Vector3 = actor.muzzle()
 	var direction: Vector3 = (aim_point(t.weapon_range) - muzzle).normalized()
@@ -253,16 +240,21 @@ func start_boot() -> void:
 	cue("boot_start")
 
 func boot_targets() -> bool:
-	for target: HeroActor in actor.get_tree().get_nodes_in_group("actors"):
+	var candidates: Array[Node] = actor.get_tree().get_nodes_in_group("actors")
+	candidates.sort_custom(func(a: Node, b: Node) -> bool: return actor.global_position.distance_squared_to(a.global_position) < actor.global_position.distance_squared_to(b.global_position))
+	for target: HeroActor in candidates:
 		var offset: Vector3 = target.global_position + Vector3.UP * .95 - (actor.global_position + Vector3.UP * .95)
-		if not target.alive or target.team == actor.team or offset.length() > data().boot_reach or offset.normalized().dot(boot_direction) < .2:
+		var along: float = offset.dot(boot_direction)
+		var perpendicular: float = (offset - boot_direction * clampf(along,0,data().boot_reach)).length()
+		if not target.alive or target.team == actor.team or target.boot_pair != null or target.state in ["captured","throw_pair"] or along < 0 or along > data().boot_reach or perpendicular > data().boot_radius + .38:
 			continue
 		if not actor.resolver.visible(actor.global_position + Vector3.UP,target,[actor.get_rid()]): continue
 		var result: String = actor.resolver.damage(actor,target,data().boot_damage,"boot",cast_id,false,false,actor.global_position)
 		if result in ["hit", "blocked"]:
 			boot_connected = true
-			if result == "hit":
-				actor.resolver.knockback(actor,target,boot_direction * data().boot_knockback,"boot")
+			if result == "hit" and target.alive:
+				var attachment := BootAttachment.new()
+				attachment.configure(actor,target)
 			CombatEffect.pulse(actor.get_parent(),target.global_position + Vector3.UP,Color("f7bb65"),.9)
 			cue("boot_hit")
 			return true
@@ -281,10 +273,23 @@ func move_override(delta: float) -> bool:
 		if absf(boot_direction.y) < .1:
 			boot_fall_velocity -= t.gravity * delta
 			actor.velocity.y = boot_fall_velocity
-		actor.move_and_slide()
+		# Split the requested motion while refreshing floor/wall contacts each sweep.
+		var step_count: int = maxi(1,int(ceil(travel / .35)))
+		var requested_velocity: Vector3 = actor.velocity
+		for step_index: int in step_count:
+			actor.velocity = requested_velocity / step_count
+			actor.move_and_slide()
+			if boot_targets():
+				connected = true
+				break
+			for collision_index: int in actor.get_slide_collision_count():
+				var wall_normal: Vector3 = actor.get_slide_collision(collision_index).get_normal()
+				if wall_normal.dot(boot_direction) < -.2 and wall_normal.y < cos(actor.floor_max_angle): boot_remaining = 0
+			if boot_remaining <= 0: break
+		if actor.state == "slayer_boot_active": actor.velocity *= step_count
 		if actor.is_on_floor(): boot_fall_velocity = 0.0
 		boot_remaining -= travel
-		connected = boot_targets()
+		if not connected: connected = boot_targets()
 		for index: int in actor.get_slide_collision_count():
 			var normal: Vector3 = actor.get_slide_collision(index).get_normal()
 			if normal.dot(boot_direction) < -.2 and normal.y < cos(actor.floor_max_angle):
@@ -357,6 +362,7 @@ func cue(id: String) -> void:
 	actor.presentation.sound.play_slayer(id)
 
 func cancel(clear_owned: bool = false) -> void:
+	if actor.boot_pair != null: actor.boot_pair.release(false)
 	super.cancel(clear_owned)
 	if clear_owned: traps.clear()
 	boot_remaining = 0.0

@@ -50,7 +50,7 @@ func run() -> void:
 	await reset(9)
 	await strike()
 	await step(28)
-	check(is_equal_approx(-a.global_position.z,4.8), "unobstructed melee advances 4.8 m through swept actor movement")
+	check(is_equal_approx(-a.global_position.z,6.0), "unobstructed melee advances 6 m through swept actor movement")
 	check(a.velocity.length() < .1, "lunge ends without a residual free speed boost")
 	await reset(7.0)
 	b.health = 50

@@ -100,7 +100,7 @@ func rifle_tests() -> void:
 	a.intent.reload = true
 	await step()
 	a.intent.reload = false
-	check(a.state == "reload", "reload has an explicit state")
+	check(a.kit.reloading and a.state == "ready", "reload has an independent lifecycle")
 	await step(100)
 	check(a.kit.ammo == 8 and a.state == "ready", "reload completes and restores magazine")
 	check(b.kit.ammo == 8 and b.kit.shot_cd == 0.0, "actors have independent ammunition and cooldowns")
@@ -243,7 +243,7 @@ func ability_tests() -> void:
 	world.add_child(bomb)
 	bomb.global_position = b.global_position + Vector3.UP * 0.9
 	bomb.explode()
-	check(is_equal_approx(b.health,170), "Pocket Bomb peak damage is 80 without head multiplier")
+	check(is_equal_approx(b.health,110), "Pocket Bomb peak damage is 140 without head multiplier")
 	await step()
 	b.health = 250
 	var cover: Node3D = Geometry.box(world, Vector3(3,3,0.3), Vector3(0,1.5,-3.1), Color.GRAY)
@@ -290,9 +290,9 @@ func movement_tests() -> void:
 	check(a.motor.mode == "dash_windup" and a.motor.dash_cd > 4, "dash consumes one cooldown at buildup")
 	a.intent.slide = false
 	await step(12)
-	check(a.motor.mode == "slide" and a.velocity.length() <= a.tuning.dash_speed, "downward dash projects into valid floor slide without extra speed")
+	check(a.motor.mode == "dash" and not a.motor.dash_airborne and a.motor.dash_direction.y == 0, "ground dash stays horizontal without automatic slide")
 	await step(3)
-	check(a.motor.mode == "slide", "dash-to-ground slide continues without a held crouch key")
+	check(a.motor.mode != "slide", "ground dash never creates automatic slide")
 	var cooldown: float = a.motor.dash_cd
 	a.intent.slide = false
 	await step()

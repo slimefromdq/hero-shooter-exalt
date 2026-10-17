@@ -39,4 +39,15 @@ static func library() -> AnimationLibrary:
 		CloseCombatAnimations.track(slam,"Model/Geometry/%sArm/Joint:rotation" % side,keys,[Vector3(-.2,0,0),Vector3(-1.1,0,0),Vector3(-.75,0,0),Vector3(-.3,0,0),Vector3(.15,0,0),Vector3.ZERO,Vector3.ZERO])
 		CloseCombatAnimations.track(slam,"Model/Geometry/%sLeg/Joint:rotation" % side,keys,[Vector3.ZERO,Vector3(.75,0,0),Vector3(.1,0,0),Vector3(.3,0,0),Vector3(.85,0,0),Vector3(.4,0,0),Vector3.ZERO])
 	result.add_animation("thrower",slam)
+	var attach := Animation.new()
+	attach.length = 1
+	CloseCombatAnimations.track(attach,"Model:rotation",[0,.2,1],[Vector3(-.1,0,0),Vector3(-.18,0,.05),Vector3(-.18,0,.05)])
+	CloseCombatAnimations.track(attach,"Model/Geometry/RightLeg:rotation",[0,.2,1],[Vector3(.7,0,0),Vector3(1.6,0,0),Vector3(1.6,0,0)])
+	CloseCombatAnimations.track(attach,"Model/Geometry/RightLeg/Joint:rotation",[0,.2,1],[Vector3(-.7,0,0),Vector3(-.15,0,0),Vector3(-.15,0,0)])
+	result.add_animation("boot_attach",attach)
+	var release := Animation.new()
+	release.length = 1
+	CloseCombatAnimations.track(release,"Model/Geometry/RightLeg:rotation",[0,.3,1],[Vector3(1.6,0,0),Vector3(1.95,0,0),Vector3.ZERO])
+	CloseCombatAnimations.track(release,"Model:rotation",[0,.3,1],[Vector3(-.18,0,0),Vector3(.15,0,0),Vector3.ZERO])
+	result.add_animation("boot_release",release)
 	return result

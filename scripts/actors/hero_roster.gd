@@ -3,6 +3,12 @@ extends RefCounted
 
 const IDS: Array[String] = ["nimbus", "slayer", "marshal", "doctor", "huddle"]
 static var selected: String = initial_selection()
+static var direct_entry_pending: bool = OS.get_cmdline_user_args().has("--direct")
+
+static func consume_direct_entry() -> bool:
+	var requested: bool = direct_entry_pending
+	direct_entry_pending = false
+	return requested
 
 static func initial_selection() -> String:
 	for id: String in IDS:

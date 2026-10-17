@@ -199,6 +199,7 @@ func interrupt_startup() -> void:
 	actor.resolver.record("interrupt", actor, "throw")
 
 func stagger() -> void:
+	if actor.boot_pair != null: actor.boot_pair.release(false)
 	cancel()
 	actor.kit.cancel()
 	actor.motor.end_hover()

@@ -18,7 +18,7 @@ func _ready() -> void:
 	cast_id = source.resolver.new_cast(source)
 	var collider := CollisionShape3D.new()
 	var shape := SphereShape3D.new()
-	shape.radius = .07 if kind == "knife" else (source.tuning as SlayerTuning).axe_radius
+	shape.radius = (source.tuning as SlayerTuning).knife_radius if kind == "knife" else (source.tuning as SlayerTuning).axe_radius
 	collider.shape = shape
 	add_child(collider)
 	visual = Node3D.new()

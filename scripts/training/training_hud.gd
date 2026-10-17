@@ -120,7 +120,7 @@ func draw_hud() -> void:
 	label_at(CareHUD.weapon_label(p), Vector2(460, 763), 11, ink, true)
 	label_at("%02d" % p.kit.ammo, Vector2(460, 811), 37, ink, true)
 	label_at("/ %02d" % p.tuning.magazine, Vector2(503, 808), 13, ink)
-	label_at("R  LOAD" if p.state != "reload" else "LOAD %.1f" % p.state_time, Vector2(460, 844), 10, ink)
+	label_at("R  LOAD" if not p.kit.reloading else "LOAD %.1f" % p.kit.reload_remaining, Vector2(460, 844), 10, ink)
 	ability_card(550, TrainingInputs.key_label("dash"), "VECTOR", "DASH", p.motor.dash_cd, p.tuning.dash_cooldown)
 	if p.kit is CareKit:
 		var labels: Array[String] = CareHUD.labels(p)
@@ -158,6 +158,13 @@ func draw_hud() -> void:
 	if training.debug_view:
 		draw_debug(p)
 	draw_statuses(p)
+	ControlFeedback.draw(canvas,p,bold,Vector2(32,320))
+	if is_instance_valid(training.practice_range) and training.practice_range.prompt != "": label_at(training.practice_range.prompt,Vector2(490,610),19,mint,true)
+	if training.feedback != null:
+		rect(Vector2(25,263),Vector2(260,31),Color(.02,.05,.07,.86))
+		label_at("%d KILLS / %d STREAK" % [training.feedback.kills,training.feedback.streaks.get(p.get_instance_id(),0)],Vector2(32,285),15,paper,true)
+		if training.feedback.banner_time > 0:
+			label_at(training.feedback.banner.replace("\n"," / "),Vector2(400,210),18,paper,true)
 	if p.last_hit_age < 0.3:
 		canvas.draw_rect(Rect2(3, 3, 1434, 894), Color(0.95, 0.3, 0.22, (0.3 - p.last_hit_age) * 2), false, 6)
 	if not p.alive:
@@ -176,6 +183,7 @@ func ability_card(x: float, key: String, top: String, bottom: String, cd: float,
 func draw_statuses(p: HeroActor) -> void:
 	var status: String = ""
 	for kind: String in p.statuses.effects:
+		if kind in ["root","slow"]: continue
 		status += "%s %.1fs   " % [kind.replace("max_health","MAX HP WOUND").to_upper(),p.statuses.effects[kind].remaining]
 	if status != "": label_at(status,Vector2(475,675),16,coral,true)
 	if p.kit is SlayerKit:
@@ -221,7 +229,7 @@ func draw_debug(p: HeroActor) -> void:
 		canvas.draw_rect(Rect2(head.x - height * 0.22, head.y, height * 0.44, height), coral, false, 1)
 		canvas.draw_line(Vector2(head.x - height * 0.22, head.y + height * 0.21), Vector2(head.x + height * 0.22, head.y + height * 0.21), mint, 1)
 
-func build_menu() -> void:
+func build_advanced_menu() -> void:
 	menu = Control.new()
 	menu.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(menu)
@@ -316,7 +324,7 @@ func build_menu() -> void:
 	var fields: Array = [
 		["Melee damage", "melee_damage", 75.0, 10.0, 150.0, 5.0],
 		["Melee reach (m)", "melee_range", 2.6, 1.0, 4.0, 0.1],
-		["Melee lunge travel (m)", "melee_lunge_distance", 3.6, 0.0, 5.0, 0.1],
+		["Melee lunge travel (m)", "melee_lunge_distance", 6.0, 0.0, 10.0, 0.1],
 		["Throw reach (m)", "throw_range", 3.2, 1.0, 4.0, 0.1],
 		["Throw damage", "throw_damage", 95.0, 10.0, 200.0, 5.0],
 		["Counter window (s)", "counter_window", 0.24, 0.05, 0.4, 0.01],
@@ -335,9 +343,9 @@ func build_menu() -> void:
 	right.add_child(camera_controls)
 	var camera_controller: PlayerController = training.player.controller as PlayerController
 	spin(camera_controls, "Camera distance (m)", camera_controller.camera_distance, 2.0, 8.0, 0.1, func(value: float) -> void: camera_controller.camera_distance = value)
-	spin(camera_controls, "Camera shoulder offset (m)", 0.65, -1.2, 1.2, 0.05, func(value: float) -> void: camera_controller.shoulder_offset = value)
-	spin(camera_controls, "Camera height (m)", 1.65, 1.0, 2.4, 0.05, func(value: float) -> void: camera_controller.camera_height = value)
-	spin(camera_controls, "Mouse sensitivity", 0.0025, 0.0005, 0.008, 0.0005, func(value: float) -> void: camera_controller.sensitivity = value)
+	spin(camera_controls, "Camera shoulder offset (m)", camera_controller.shoulder_offset, -1.2, 1.2, 0.05, func(value: float) -> void: camera_controller.shoulder_offset = value)
+	spin(camera_controls, "Camera height (m)", camera_controller.camera_height, 1.0, 2.4, 0.05, func(value: float) -> void: camera_controller.camera_height = value)
+	spin(camera_controls, "Mouse sensitivity", camera_controller.sensitivity, 0.0005, 0.008, 0.0005, func(value: float) -> void: camera_controller.sensitivity = value)
 	var advanced := VBoxContainer.new()
 	advanced.visible = false
 	button(right, "Show / hide all remaining tuning values", func() -> void: advanced.visible = not advanced.visible)
@@ -419,3 +427,23 @@ func spin(parent: Node, caption: String, value: float, minimum: float, maximum: 
 	spinner.custom_minimum_size.x = 100
 	row.add_child(spinner)
 	spinner.value_changed.connect(callback)
+
+func build_menu() -> void:
+	build_advanced_menu()
+	var advanced_panel: Control = menu
+	remove_child(advanced_panel)
+	menu = Control.new()
+	menu.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(menu)
+	menu.add_child(advanced_panel)
+	advanced_panel.visible = false
+	var common := GameMenu.new()
+	common.session = training
+	common.advanced = advanced_panel
+	menu.add_child(common)
+	menu.visible = false
+	menu.visibility_changed.connect(func() -> void:
+		if menu.visible:
+			advanced_panel.visible = false
+			common.visible = true
+			common.show_home())

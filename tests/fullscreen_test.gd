@@ -77,10 +77,12 @@ func run() -> void:
 		Input.parse_input_event(echo)
 		await settle()
 		check(not display.is_fullscreen(), "key repeat cannot repeatedly toggle display mode")
-		var toggle: Button = city.hud.display_button
+		var city_menu: GameMenu = city.hud.menu
+		city_menu.show_settings()
+		var toggle: Button = city_menu.find_child("DisplayMode",true,false)
 		toggle.pressed.emit()
 		await settle()
-		check(display.is_fullscreen() and toggle.text.begins_with("WINDOWED"), "city menu display button changes mode and refreshes its label")
+		check(display.is_fullscreen() and (city_menu.find_child("DisplayMode",true,false) as Button).text.begins_with("WINDOWED"), "city menu display button changes mode and refreshes its label")
 		city.toggle_menu()
 		check(Input.mouse_mode == Input.MOUSE_MODE_CAPTURED, "resuming fullscreen play restores captured mouse aiming")
 		await capture("city-fullscreen-play")
@@ -91,13 +93,13 @@ func run() -> void:
 		training.toggle_menu()
 		await press(KEY_F11)
 		check(not display.is_fullscreen() and paused and training.menu_open, "fullscreen shortcut also works in the paused training console")
-		var training_toggle: Button
-		for button: Node in training.hud.menu.find_children("*", "Button", true, false):
-			if button.text.contains("ALT+ENTER"): training_toggle = button
+		var training_menu: GameMenu = training.hud.menu.get_child(1)
+		training_menu.show_settings()
+		var training_toggle: Button = training_menu.find_child("DisplayMode",true,false)
 		check(training_toggle != null and training_toggle.text.begins_with("FULLSCREEN"), "training console exposes the current display toggle")
 		training_toggle.pressed.emit()
 		await settle()
-		check(display.is_fullscreen() and paused and training_toggle.text.begins_with("WINDOWED"), "training menu display button toggles mode without closing the console")
+		check(display.is_fullscreen() and paused and (training_menu.find_child("DisplayMode",true,false) as Button).text.begins_with("WINDOWED"), "training menu display button toggles mode without closing the console")
 		await press(KEY_ENTER, true)
 		training.toggle_menu()
 		root.size = Vector2i(1600,675)

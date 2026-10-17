@@ -9,5 +9,5 @@ max_health = 250.0
 rifle_damage = 24.0
 shot_interval = 0.3
 magazine = 12
-reload_time = 1.4
+reload_time = 0.7
 head_multiplier = 1.5

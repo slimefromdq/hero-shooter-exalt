@@ -26,6 +26,7 @@ var _spawn_indices: Dictionary = {}
 var _nav_check_timer: float = 0.0
 var _pickup_order: int = 0
 const SPAWN_HEAL_PER_SECOND: float = 200.0
+var pending_hero: String = ""
 var feedback: MatchFeedback
 
 func _ready() -> void:
@@ -222,6 +223,8 @@ func restart_match() -> void:
 	show_notice("MERIDIAN GARDENS  /  HILL UNLOCKS IN %d SECONDS" % int(definition.unlock_seconds), 5.0)
 
 func respawn_actor(actor: HeroActor) -> void:
+	var switched: bool = actor == player and pending_hero != ""
+	if switched: apply_pending_hero()
 	var earned_charge: float = actor.kit.ultimate_charge
 	actor.reset_actor(actor.spawn_position)
 	actor.kit.ultimate_charge = earned_charge
@@ -231,7 +234,7 @@ func respawn_actor(actor: HeroActor) -> void:
 	actor.rotation.y = 0.0 if actor.team == 0 else PI
 	death_timers.erase(actor.get_instance_id())
 	if actor == player:
-		show_notice("BACK IN THE FIGHT  /  ULTIMATE CHARGE RETAINED")
+		show_notice("BACK IN THE FIGHT  /  NEW HERO, ULTIMATE RESET" if switched else "BACK IN THE FIGHT  /  ULTIMATE CHARGE RETAINED")
 
 func respawn_remaining(actor: HeroActor) -> float:
 	if actor.alive:
@@ -277,6 +280,7 @@ func team_alive(team: int) -> int:
 	return team_count(team)
 
 func toggle_menu() -> void:
+	if player.controller is PlayerController: (player.controller as PlayerController).clear_action_queue()
 	menu_open = not menu_open
 	get_tree().paused = menu_open
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if menu_open else Input.MOUSE_MODE_CAPTURED
@@ -304,15 +308,22 @@ func return_training() -> void:
 	return_to_training()
 
 func select_hero(id: String) -> void:
+	if id not in HeroRoster.IDS: return
+	pending_hero = id
 	HeroRoster.selected = id
-	player.select_hero(id)
-	player.actor_id = id.capitalize()
-	for bot: HeroActor in bots:
-		var slot: int = int(_spawn_indices.get(bot.get_instance_id(),0))
-		bot.select_hero(HeroRoster.team_hero(slot,id))
-		bot.controller.role = HeroRoster.bot_role(slot,id)
-	restart_match()
-	show_notice(id.to_upper() + " SELECTED / MATCH RESTARTED")
+	if player.alive and spawn_contains(player.global_position,player.team):
+		apply_pending_hero()
+		show_notice(id.to_upper()+" SELECTED")
+	else: show_notice(id.to_upper()+" QUEUED FOR NEXT RESPAWN")
+	if menu_open: toggle_menu()
+
+func apply_pending_hero() -> void:
+	if pending_hero == "": return
+	player.select_hero(pending_hero)
+	player.actor_id = pending_hero.capitalize()
+	player.kit.ultimate_charge = 0
+	player.spawn_protected = is_protected(player)
+	pending_hero = ""
 
 func show_notice(message: String, seconds: float = 3.0) -> void:
 	notice = message

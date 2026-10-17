@@ -11,6 +11,9 @@ var dash_current_speed: float = 0.0
 var coyote: float = 0.0
 var jump_buffer: float = 0.0
 var dash_slide: bool = false
+var dash_airborne: bool = false
+var slide_press_age: float = 99.0
+var slide_rearmed: bool = true
 var slide_velocity: Vector3 = Vector3.ZERO
 var traversal: TraversalMotion
 var external_velocity: Vector3 = Vector3.ZERO
@@ -23,7 +26,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 	tick_motion(delta,input)
 	# Root, melee and mobility branches must not silently swallow a hit impulse.
 	# Move separately so knockback cannot turn into stored player momentum.
-	if actor.state in ["captured", "throw_pair"]:
+	if actor.state in ["captured", "throw_pair", "boot_attached", "boot_captured"]:
 		external_velocity = Vector3.ZERO
 	elif not external_velocity.is_zero_approx():
 		var motion: Vector3 = external_velocity * delta
@@ -37,6 +40,9 @@ func tick(delta: float, input: CombatIntent) -> void:
 func tick_motion(delta: float, input: CombatIntent) -> void:
 	var t: HeroTuning = actor.tuning
 	var was_floor: bool = grounded()
+	slide_press_age += delta
+	if input.slide_pressed: slide_press_age = 0.0
+	if not input.slide and mode not in ["dash","dash_windup"]: slide_rearmed = true
 	traversal.tick(delta,was_floor)
 	dash_cd = maxf(0.0, dash_cd - delta)
 	hover_cd = maxf(0.0, hover_cd - delta)
@@ -51,7 +57,7 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 		if traversal.advance(delta):
 			finish_mantle(delta)
 		return
-	if actor.state in ["captured", "throw_pair"]:
+	if actor.state in ["captured", "throw_pair", "boot_attached", "boot_captured"]:
 		actor.velocity = Vector3.ZERO
 		return
 	if actor.kit.move_override(delta):
@@ -60,7 +66,7 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 		actor.velocity = Vector3(0,actor.velocity.y - t.gravity * delta,0)
 		actor.move_and_slide()
 		return
-	if actor.state in ["melee_windup", "melee_active"]:
+	if actor.state in ["melee_windup", "melee_active"] or (actor.state == "melee_recovery" and actor.close.melee_age - delta < t.melee_lunge_delay + t.melee_lunge_duration):
 		var lunge: Vector3 = actor.close.lunge_displacement(delta)
 		actor.velocity.x = lunge.x / delta
 		actor.velocity.z = lunge.z / delta
@@ -71,6 +77,9 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			var normal: Vector3 = actor.get_slide_collision(index).get_normal()
 			if normal.dot(actor.close.melee_direction) < -0.25 and normal.y < cos(actor.floor_max_angle):
 				actor.close.lunge_blocked = true
+		if actor.close.melee_age >= t.melee_lunge_delay + t.melee_lunge_duration:
+			actor.velocity.x = 0
+			actor.velocity.z = 0
 		return
 	coyote = 0.1 if was_floor else maxf(0.0, coyote - delta)
 	jump_buffer = 0.12 if input.jump else maxf(0.0, jump_buffer - delta)
@@ -78,6 +87,9 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 	var wish: Vector3 = input.move if can_move else Vector3.ZERO
 	if input.dash and dash_cd <= 0.0 and actor.permits("dash"):
 		end_hover()
+		dash_airborne = not was_floor
+		slide_rearmed = false
+		slide_press_age = 99.0
 		transition("dash_windup", t.dash_buildup)
 		dash_cd = t.dash_cooldown
 		actor.resolver.record("cast", actor, "dash")
@@ -95,6 +107,9 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 		actor.velocity.y -= t.gravity * delta
 		if timer <= 0.0:
 			dash_direction = actor.aim_direction
+			if not dash_airborne:
+				dash_direction = Vector3(dash_direction.x,0,dash_direction.z).normalized()
+				if dash_direction.is_zero_approx(): dash_direction = -actor.global_basis.z
 			dash_current_speed = t.dash_speed
 			transition("dash", t.dash_duration)
 	elif mode == "dash":
@@ -113,9 +128,7 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			tangent = tangent.move_toward(Vector3.ZERO, t.slide_friction * delta)
 			slide_velocity = tangent.limit_length(t.speed_limit)
 			actor.velocity = slide_velocity + Vector3.DOWN * 0.1
-			if dash_slide and input.slide:
-				dash_slide = false
-			if (tangent.length() < 2.0 and rad_to_deg(actor.get_floor_angle()) < t.slide_slope) or (not input.slide and not dash_slide):
+			if (tangent.length() < 2.0 and rad_to_deg(actor.get_floor_angle()) < t.slide_slope) or not input.slide:
 				transition("ground")
 	else:
 		var scale: float = 1.0
@@ -123,8 +136,6 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			scale = 0.6
 		if actor.state == "guard":
 			scale = 0.15
-		elif actor.state == "reload":
-			scale = minf(scale, t.reload_move_multiplier)
 		elif actor.state not in ["ready", "slayer_knife", "slayer_trap", "marshal_shield", "huddle_regroup"]:
 			scale = minf(scale, 0.35)
 		var current := Vector3(actor.velocity.x, 0.0, actor.velocity.z)
@@ -147,7 +158,7 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 		else:
 			actor.velocity.y -= t.gravity * delta
 			mode = "ground" if was_floor else "air"
-		if input.slide and was_floor and can_move and actor.state == "ready":
+		if input.slide and slide_rearmed and was_floor and can_move and actor.state == "ready":
 			var slope: float = rad_to_deg(actor.get_floor_angle())
 			if current.length() >= t.slide_entry_speed or slope >= t.slide_slope:
 				transition("slide")
@@ -185,8 +196,12 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			if normal.dot(Vector3.UP) >= cos(actor.floor_max_angle) and before.dot(normal) < -0.5:
 				# Project once. No new impulse, no charge/cooldown reset.
 				actor.velocity = before.slide(normal)
-				transition("slide")
-				dash_slide = true
+				if dash_airborne and input.slide and slide_press_age <= t.dash_slide_window + .000001 and actor.velocity.length() >= t.slide_entry_speed:
+					transition("slide")
+					dash_slide = true
+					slide_rearmed = true
+				else:
+					transition("ground")
 				break
 			elif absf(normal.y) < 0.7 or normal.y < -0.7:
 				actor.velocity = before.slide(normal)
@@ -242,6 +257,9 @@ func cancel() -> void:
 	coyote = 0.0
 	jump_buffer = 0.0
 	dash_slide = false
+	dash_airborne = false
+	slide_press_age = 99.0
+	slide_rearmed = true
 	slide_velocity = Vector3.ZERO
 
 func interrupt_mobility() -> void:

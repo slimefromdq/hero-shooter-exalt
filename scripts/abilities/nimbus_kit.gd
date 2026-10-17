@@ -1,6 +1,8 @@
 class_name NimbusKit
 extends HeroKit
 
+var ultimate_remaining: int = 0
+
 func tick(delta: float, input: CombatIntent) -> void:
 	var t: HeroTuning = actor.tuning
 	shot_cd = maxf(0.0, shot_cd - delta)
@@ -14,10 +16,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 		ultimate_charge = 100.0
 	if input.projectile_fire:
 		fire_projectile(input.aim)
-	if actor.state == "reload" and actor.state_time <= 0.0:
-		ammo = t.magazine
-		actor.state = "ready"
-	elif actor.state == "deflect" and actor.state_time <= 0.0:
+	if actor.state == "deflect" and actor.state_time <= 0.0:
 		actor.state = "ready"
 	elif actor.state == "ultimate":
 		ultimate_age += delta
@@ -25,9 +24,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 			actor.state = "ready"
 			return
 	if input.reload and actor.permits("reload") and ammo < t.magazine:
-		actor.state = "reload"
-		actor.state_time = t.reload_time
-		actor.resolver.record("cast", actor, "reload")
+		start_reload()
 	if input.deflect and deflect_cd <= 0.0 and actor.permits("deflect"):
 		actor.state = "deflect"
 		actor.state_time = t.deflect_duration
@@ -40,11 +37,12 @@ func tick(delta: float, input: CombatIntent) -> void:
 		grenade.cast_id = actor.resolver.new_cast(actor)
 		actor.get_parent().add_child(grenade)
 		grenade.global_position = safe_muzzle()
-		grenade.velocity = actor.aim_direction * 13.0 + Vector3.UP * 3.8
+		grenade.velocity = actor.aim_direction * t.bomb_throw_speed + Vector3.UP * 3.8
 		bomb_cd = t.bomb_cooldown
 		actor.resolver.record("cast", actor, "bomb")
 	if input.ultimate and ultimate_charge >= 100.0 and actor.permits("ultimate"):
 		ultimate_charge = 0.0
+		ultimate_remaining = t.ultimate_shots
 		ultimate_age = 0.0
 		actor.state = "ultimate"
 		actor.state_time = t.ultimate_duration
@@ -56,21 +54,21 @@ func tick(delta: float, input: CombatIntent) -> void:
 		elif ammo > 0:
 			fire(false)
 		elif actor.permits("reload"):
-			actor.state = "reload"
-			actor.state_time = t.reload_time
+			start_reload()
 
 func fire(ultimate: bool) -> void:
+	if reloading or (not ultimate and ammo <= 0): return
 	var t: HeroTuning = actor.tuning
 	var origin: Vector3 = actor.intent.aim_origin
 	if origin == Vector3.ZERO:
 		origin = actor.global_position + Vector3.UP * 1.6
-	var view_hit: Dictionary = actor.resolver.ray(origin, origin + actor.aim_direction * 100.0, [actor.get_rid()])
+	var view_hit: Dictionary = actor.resolver.weapon_ray(actor, origin, origin + actor.aim_direction * 100.0, [actor.get_rid()])
 	var aim_point: Vector3 = view_hit.get("position", origin + actor.aim_direction * 100.0)
 	var muzzle: Vector3 = actor.muzzle()
 	# Reject a muzzle already poked through a thin wall before tracing to the aim point.
 	var shoulder: Vector3 = actor.global_position + Vector3.UP * 1.36
 	var blocked: Dictionary = actor.resolver.ray(shoulder, muzzle, [actor.get_rid()], 1)
-	var hit: Dictionary = blocked if not blocked.is_empty() else actor.resolver.attack_ray(actor, muzzle, aim_point + (aim_point - muzzle).normalized() * 0.05, [actor.get_rid()])
+	var hit: Dictionary = blocked if not blocked.is_empty() else actor.resolver.weapon_ray(actor, muzzle, aim_point + (aim_point - muzzle).normalized() * 0.05, [actor.get_rid()])
 	var endpoint: Vector3 = hit.get("position", aim_point)
 	cast_id = actor.resolver.new_cast(actor)
 	if not hit.is_empty() and hit.get("collider") is HeroActor:
@@ -80,14 +78,17 @@ func fire(ultimate: bool) -> void:
 		actor.resolver.damage(actor, target, amount, "ultimate" if ultimate else "rifle", cast_id, head, ultimate)
 	elif hit.get("collider") is CombatBarrier:
 		hit.collider.receive_damage(actor,t.ultimate_damage if ultimate else t.rifle_damage,cast_id)
+	elif hit.get("collider") is PocketBomb:
+		hit.collider.receive_shot(actor)
 	elif hit.get("collider") is HunterSnare:
 		(hit.collider as HunterSnare).receive_damage(actor,t.ultimate_damage if ultimate else t.rifle_damage,cast_id)
 	CombatEffect.line(actor.get_parent(), muzzle, endpoint, Color("fce7ab") if not ultimate else Color("9dfbe2"), 0.04 if not ultimate else 0.09)
 	actor.presentation.fire_flash = 0.18
 	actor.presentation.sound.play_tone(220.0 if not ultimate else 90.0, 0.11, 0.22)
 	if ultimate:
-		actor.state = "ready"
+		ultimate_remaining -= 1
+		if ultimate_remaining <= 0: actor.state = "ready"
 	else:
-		ammo -= 1
+		consume_ammo()
 	shot_cd = t.shot_interval
 	actor.resolver.record("cast", actor, "ultimate_shot" if ultimate else "rifle", "cast=%d" % cast_id)

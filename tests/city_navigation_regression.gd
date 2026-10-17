@@ -66,6 +66,17 @@ func run() -> void:
 	results["stair recovery chooses a checked ordinary jump onto the street"] = driver.recovery_jump and driver.destination.y > pocket.y+.8
 	await step(180)
 	results["ordinary movement escapes the recorded stair pocket"] = session.player.position.distance_to(pocket) > 2.0
+	# Faster fights can push Huddle onto the low market parapet.
+	session.player.select_hero("huddle")
+	driver.slot = 1
+	driver.role = "flank_left"
+	session.player.reset_actor(Vector3(27.8983,1.35083,-9.60856))
+	driver.entered_hill = true
+	driver.destination = Vector3(6,.05,5)
+	await step(3)
+	var parapet: Vector3 = session.player.position
+	await step(360)
+	results["Huddle escapes the recorded low market parapet without teleporting"] = session.player.position.distance_to(parapet) > 2 and driver.recovery_warps == 0
 	for caption: String in results:
 		print("PASS  " if results[caption] else "FAIL  ",caption)
 		if not results[caption]: failures.append(caption)

@@ -61,7 +61,7 @@ func _ready() -> void:
 	build_menu()
 
 func refresh_display_button() -> void:
-	display_button.text = display_settings.button_text()
+	if is_instance_valid(display_button): display_button.text = display_settings.button_text()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("city_map") and not event.is_echo():
@@ -121,6 +121,7 @@ func draw_hud() -> void:
 		centered("F5  PLAY AGAIN     ·     TAB  MATCH CONSOLE",Vector2(800,450),12,paper)
 	if p.last_hit_age < .25:
 		canvas.draw_rect(Rect2(4,4,1592,892),Color(1,.28,.16,(.25 - p.last_hit_age) * 2),false,5)
+	ControlFeedback.draw(canvas,p,bold,Vector2(32,280))
 	if overview_open:
 		draw_overview()
 	elif m.debug_view:
@@ -201,7 +202,7 @@ func draw_topbar(p: HeroActor) -> void:
 	text("M  MAP   /   TAB  PAUSE",Vector2(1393,161),10,muted)
 
 func draw_team_slot(actor: HeroActor, at: Vector2, friendly: bool, accent: Color, local: bool) -> void:
-	panel(at,Vector2(71,143 if friendly else 82))
+	panel(at,Vector2(71,143 if friendly else 112))
 	var portrait: Texture2D = portraits.get(actor.tuning.hero_id)
 	if portrait != null:
 		var source_size: Vector2 = portrait.get_size()
@@ -214,11 +215,11 @@ func draw_team_slot(actor: HeroActor, at: Vector2, friendly: bool, accent: Color
 		box(at + Vector2(0,3),Vector2(71,78),Color(0.025,0.04,0.06,.78))
 		centered("%d" % ceili(match_controller.respawn_remaining(actor)),at + Vector2(35,40),25,coral,true)
 		centered("RESPAWN",at + Vector2(35,60),9,paper,true)
+	var hp: float = clampf(actor.health / maxf(1,actor.effective_max_health()),0,1) if actor.alive else 0.0
+	box(at + Vector2(4,85),Vector2(63,7),Color("394550"))
+	box(at + Vector2(4,85),Vector2(63 * hp,7),health_green if friendly and hp >= .3 else coral)
+	centered("%d HP" % ceili(actor.health if actor.alive else 0),at + Vector2(35,108),14,paper,true)
 	if friendly:
-		var hp: float = clampf(actor.health / maxf(1,actor.effective_max_health()),0,1) if actor.alive else 0.0
-		box(at + Vector2(4,85),Vector2(63,7),Color("394550"))
-		box(at + Vector2(4,85),Vector2(63 * hp,7),coral if hp < .3 else health_green)
-		centered("%d HP" % ceili(actor.health if actor.alive else 0),at + Vector2(35,108),14,paper,true)
 		var charge: float = clampf(actor.kit.ultimate_charge,0,100)
 		box(at + Vector2(4,115),Vector2(63,4),Color("394550"))
 		box(at + Vector2(4,115),Vector2(63 * charge / 100,4),brass)
@@ -298,6 +299,7 @@ func draw_player_rail(p: HeroActor) -> void:
 	ability(912,TrainingInputs.key_label("ultimate"),CareHUD.ultimate_label(p),100-charge,100,"axe" if p.kit is SlayerKit else "scope","READY" if charge >= 100 else "%d%%" % floori(charge),true)
 	var status_text: String = CareHUD.detail(p) + "  " + CareHUD.status(p)
 	for kind: String in p.statuses.effects:
+		if kind in ["root","slow"]: continue
 		status_text += "%s %.1fs   " % [kind.replace("max_health","MAX HP WOUND").to_upper(),p.statuses.effects[kind].remaining]
 	if status_text != "": centered(status_text,Vector2(800,704),15,coral,true)
 	if p.kit is SlayerKit:
@@ -534,50 +536,13 @@ func draw_debug(p: HeroActor) -> void:
 		text(lines[index],Vector2(43,227 + index * 23),11,muted)
 
 func build_menu() -> void:
-	menu = Control.new()
-	menu.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	menu.visible = false
+	var common := GameMenu.new()
+	common.session = match_controller
+	menu = common
 	add_child(menu)
-	var veil := ColorRect.new()
-	veil.color = Color(.025,.05,.08,.91)
-	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	menu.add_child(veil)
-	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	menu.add_child(center)
-	var frame := PanelContainer.new()
-	frame.custom_minimum_size = Vector2(600,0)
-	var style := panel_style.duplicate() as StyleBoxFlat
-	style.content_margin_left = 34
-	style.content_margin_right = 34
-	style.content_margin_top = 30
-	style.content_margin_bottom = 30
-	frame.add_theme_stylebox_override("panel",style)
-	center.add_child(frame)
-	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation",13)
-	frame.add_child(root)
-	menu_label(root,"MERIDIAN GARDENS",28,paper)
-	menu_label(root,"MATCH CONSOLE  /  SESSION PAUSED",12,brass)
-	menu_label(root,"6 v 6  ·  Marshal / Huddle / Doctor / Nimbus / Slayer  ·  First to 100%",15,muted)
-	var hero_row := HBoxContainer.new()
-	hero_row.add_theme_constant_override("separation",10)
-	root.add_child(hero_row)
-	menu_button(hero_row,"PLAY SLAYER / RESTART",func() -> void: match_controller.select_hero("slayer")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	menu_button(hero_row,"PLAY MARSHAL",func() -> void: match_controller.select_hero("marshal")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	menu_button(hero_row,"PLAY DOCTOR",func() -> void: match_controller.select_hero("doctor")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	menu_button(hero_row,"PLAY HUDDLE",func() -> void: match_controller.select_hero("huddle")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	menu_button(hero_row,"PLAY NIMBUS / RESTART",func() -> void: match_controller.select_hero("nimbus")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	menu_button(root,"RETURN TO THE CITY  /  TAB",func() -> void: match_controller.toggle_menu())
-	display_button = menu_button(root,display_settings.button_text(),display_settings.toggle_fullscreen)
-	display_settings.display_mode_changed.connect(refresh_display_button)
-	menu_button(root,"DISTRICT ATLAS  /  ROUTES & HEALTH",func() -> void: overview_open = true; match_controller.toggle_menu())
-	menu_button(root,"RESTART MATCH  /  F5",func() -> void: match_controller.restart_match())
-	menu_button(root,"TOGGLE EXPLORATION  /  FREEZE CITY BOTS",func() -> void: match_controller.toggle_exploration())
-	menu_button(root,"ENTER HERO TRAINING",func() -> void: match_controller.return_to_training())
-	menu_label(root,"20 s unlock  ·  5 s capture  ·  8 s respawn",13,muted)
-	menu_label(root,"Enemy presence pauses scoring. Empty owned hills keep scoring.",12,muted)
-	menu_label(root,"F3  field telemetry & route overlay    M  district atlas",12,brass)
+	menu.visible = false
+	menu.visibility_changed.connect(func() -> void:
+		if menu.visible: common.show_home())
 
 func menu_label(parent: Node, caption: String, size: int, color: Color) -> void:
 	var label := Label.new()

@@ -6,7 +6,7 @@ A playable offline **6v6 King of the Hill** hero shooter in a modern fantasy cit
 
 **Play the new tank/support:** run `Launch.ps1 -Marshal` or `Launch.ps1 -Doctor`; add `-Training` for practice. Marshal carries an 8 x 4.5 m / 1,200-durability shield, launches enemies with Forward March, fires a progressing explosion lane, and leaps into a slam covering a 16 m cone. Doctor heals with **right hold**, shoots with **left hold**, leaves lingering treatment, escapes to allies on a 4 s cooldown, cleanses with brief heavy resistance, and empowers one teammate with her ultimate. Both pause menus offer all five heroes; training adds Doctor rounds and Marshal drill. See [kits, controls and rules](docs/MARSHAL_DOCTOR.md).
 
-**Play Slayer:** run `Launch.ps1 -Slayer` for the city, or `Launch.ps1 -Training -Slayer`. Both pause menus offer hero selection; training includes **Start Slayer hunt**. Slayer has 275 HP. Q throws trailing silver knives at 75 m/s, E performs a 12 m Boot Rush at 32 m/s with enemy knockback and a fading recovery slow, 1 tosses a snare that arms after 0.75 s even in flight, and 2 launches Heads Will Roll after a 0.55 s windup. The shotgun deals 90 close-range body damage with tight spread and useful midrange reach. Health/shields use a broad lower-screen bar, ammunition also appears beside the crosshair, hits show larger outlined damage numbers, and 4 performs her two-handed lift and slam. See [Slayer controls, tuning and engine validation](docs/SLAYER.md).
+**Play Slayer:** run `Launch.ps1 -Slayer` for the city, or `Launch.ps1 -Training -Slayer`. Both pause menus offer hero selection; training includes **Start Slayer hunt**. Slayer has 275 HP. Q throws trailing silver knives at 110 m/s, E performs a 12 m Boot Rush at 32 m/s with a 0.45 s boot attachment, aimable automatic kick and fading recovery slow, 1 tosses a snare that arms after 0.75 s even in flight, and 2 launches Heads Will Roll after a 0.55 s windup. The shotgun deals 90 close-range body damage with tight spread and useful midrange reach. Health/shields use a broad lower-screen bar, ammunition also appears beside the crosshair, hits show larger outlined damage numbers, and 4 performs her two-handed lift and slam. See [Slayer controls, tuning and engine validation](docs/SLAYER.md).
 
 The city includes a celestial conservatory, garden and market flanks, an underground shopping arcade with six through-shops and cover, accessible balconies and wizard's study, elevated promenades, monumental railway arches and moving scenic trains. Six small packs heal **75 HP**; two large packs heal **400 HP**, capped at maximum health. See [Meridian Gardens field guide and validation](docs/MERIDIAN_GARDENS.md) and the [geometry revision](docs/GEOMETRY_AUDIT.md).
 
@@ -14,7 +14,7 @@ The city includes a celestial conservatory, garden and market flanks, an undergr
 
 Team spawn rooms rapidly restore **200 HP per second** to their own living players. Cyan shoulder/chest bands, ground rings and **[+] ALLY / LANTERN** labels identify your team; red bands and **[!] ENEMY / CROWN** labels identify opponents. The city HUD shows the five latest eliminations with weapon and assist credit, plus your kills, assists and current life streak. Damage within **8 seconds** earns an assist; the most recent enemy hit earns an environmental elimination. Final blows within **4 seconds** build double, triple, quadruple and higher multi-kills. Original synth cues rise with your streak, with separate multi-kill arpeggios and streak fanfares from three kills onward. Death resets streaks; restarting clears all combat feedback.
 
-Import **project.godot** in Godot 4.7.2 and press **F5** to enter Meridian Gardens. On Windows, run:
+Import **project.godot** in Godot 4.7.2 and press **F5** to open the main menu. On Windows, run:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\Launch.ps1
@@ -34,12 +34,12 @@ The table shows Nimbus's kit; [Marshal and Doctor](docs/MARSHAL_DOCTOR.md) and [
 | Left click / right hold | Semi-auto umbrella rifle / shoulder aim |
 | R | Reload |
 | Space | Press to jump / wall kick; hold while moving into a ledge to mantle automatically |
-| 3 | Crosshair-directed 3D dash, after a short buildup |
+| Scroll wheel up | Horizontal ground dash / crosshair-directed 3D air dash, after a short buildup |
 | Shift hold | Momentum slide; downhill entry works from low speed |
 | Q | Ability 1 — Hover: higher umbrella vault, then glide; press again to end |
 | E | Ability 2 — frontal Deflect |
 | 1 | Ability 3 — bouncing Pocket Bomb |
-| 2, then left click | Final Notice stance, then one shot after preparation; 2 cancels |
+| 2, then left click | Final Notice stance: three shots over 8 s after preparation; 2 cancels |
 | 5 | Forward lunging umbrella strike |
 | 4 | 3.2 m throw or timed counterthrow |
 | 6 hold | Shield / frontal melee guard |
@@ -49,7 +49,7 @@ The table shows Nimbus's kit; [Marshal and Doctor](docs/MARSHAL_DOCTOR.md) and [
 | F11 / Alt+Enter | Toggle borderless fullscreen / windowed; also available in pause menus |
 | F3 / F5 / F6 | Telemetry / match or exercise restart / training-only refill |
 
-Bindings use named InputMap actions in `scripts/training/input_bindings.gd`; the saved project map contains the user's requested controls. Existing editor-configured bindings take precedence, and HUD prompts read the actual map. A downward dash automatically enters a momentum slide. Jump ends a slide; holding and then releasing Shift can also end an automatic dash slide. Guard limits movement and does **not** reduce bullets at the default setting.
+Bindings use named InputMap actions in `scripts/training/input_bindings.gd`; the saved project map contains the user's requested controls. Existing editor-configured bindings take precedence, and HUD prompts read the actual map. Only a downward air dash with a fresh Shift press within 0.12 s before floor impact enters a momentum slide. Release Shift or jump to end sliding. Ground dashes remain horizontal and never slide automatically. Guard limits movement and does **not** reduce bullets at the default setting.
 
 ## Guard practice
 
@@ -64,13 +64,13 @@ While airborne within **0.72 m** of a wall, press **Space** to kick upward and a
 ## Included
 
 - Meridian Gardens: one player and eleven bots across five heroes, navigation across five elevations, fixed-hill capture/contest/scoring, team-only safe rooms, eight-second respawns, ultimate retention, shared health pickups, match HUD, exploration mode and tactical atlas. First to 100% wins after the 20-second unlock and five-second uncontested capture.
-- Nimbus's complete prototype kit: 45/90 body/head rifle, upward Hover, timed projectile reflection and hitscan blocking, 80-peak bomb with falloff and cover checks, and 150-damage Final Notice with a pre-hit 20% execution check.
+- Nimbus's complete prototype kit: 45/90 body/head rifle, upward Hover, timed projectile reflection and hitscan blocking, 140-peak / 5 m bomb with falloff, cover checks and owner-only airborne shoot detonation, and 150-damage Final Notice with a pre-hit 20% execution check.
 - Shared acceleration, braking, air steering, jump buffering/coyote time, collision-checked mantling, wall jumps, fixed-direction dash, both slide entries, and collision-aware shoulder camera.
-- A 4.8 m committed melee lunge for engages/finishers, finite frontal guard with attacker stagger, interruptible 3.2 m throws, counterthrows, and an articulated pull/hip-lift/turn/slam/get-up animation. Slam damage occurs at impact; both participants retain 90% outside-damage reduction during the pair.
-- Reload movement retains 85% of normal speed (5.1 m/s); shoulder aiming retains its usual 60% cap. Reload still takes 1.6 s and prevents firing until complete.
+- A 6 m committed melee lunge for engages/finishers, finite frontal guard with attacker stagger, interruptible 3.2 m throws, counterthrows, and an articulated pull/hip-lift/turn/slam/get-up animation. Slam damage occurs at impact; both participants retain 90% outside-damage reduction during the pair.
+- Reloads progress independently of action state with full movement speed; shoulder aiming retains its 60% cap. Nimbus/Huddle reload in 0.8 s, Marshal in 1 s, Doctor in 0.7 s; Slayer loads shells with 0.15 s startup and 0.22 s per shell. Firing waits until completion.
 - Six bot profiles; seven exercises including the stationary guard drill; spawn/despawn; 250/500 HP experiments; 19/20/21% target presets; shield/invulnerability controls; AI settings; resource refills; movement presets; live combat tuning; route timer; event export.
 - Cover, firing lane, slope, elevated traversal platforms, and a ranged projectile-emitter opponent. The crossfire exercise uses a third-faction probe to test damage on **both** throw participants while preserving friendly-fire rules.
-- Slayer's complete prototype kit: pellet shotgun and shell reload, bleeding knives with flight trails, swept Boot Rush with knockback, a single aimed snare toss with timed arming, private pursuit marks, and a piercing axe with temporary max-health wounds. Includes distinct geometric art, keyed throwing poses, effects, synth audio, AI, selection and HUD support. Both heroes use a close 1.85 m shoulder camera with the normal 76-degree field of view and crosshair ammunition display.
+- Slayer's complete prototype kit: pellet shotgun and shell reload, bleeding knives with flight trails, swept Boot Rush with knockback, a single aimed snare toss with timed arming, private pursuit marks, and a piercing axe with temporary max-health wounds. Includes distinct geometric art, keyed throwing poses, effects, synth audio, AI, selection and HUD support. All heroes use an adjustable 3 m shoulder camera with an 82-degree normal / 60-degree aiming field of view and crosshair ammunition display.
 - All gameplay components and per-actor resources are shared by player and bots. Marshal and Doctor add main-tank and main-support roles; multiplayer and the remaining reserved roster remain deferred.
 
 ## Verify

@@ -107,16 +107,12 @@ func shotgun_tests() -> void:
 	a.intent.reload = true
 	await step()
 	a.intent.reload = false
-	await step(53)
-	check(kit().ammo == 3 and a.state == "reload","reload inserts individual shells after startup")
+	await step(24)
+	check(kit().ammo == 3 and kit().reloading,"reload inserts first shell after fast startup")
 	kit().fire(false)
-	check(a.state == "ready" and kit().ammo == 2,"offensive fire interrupts reload retaining inserted shells")
-	kit().start_reload()
-	await step(10)
-	kit().fire(false)
-	check(kit().ammo == 2,"reload cancel cannot bypass original pump cooldown")
-	await step(300)
-	check(kit().ammo == 6 and a.state == "ready","shell reload completes and returns control")
+	check(a.state == "ready" and kit().ammo == 3 and kit().reloading,"fire cannot cancel concurrent shell loading")
+	await step(100)
+	check(kit().ammo == 6 and a.state == "ready" and not kit().reloading,"shell reload completes and restores firing")
 	await reset()
 	kit().fire(false)
 	a.intent.hover = true
@@ -183,9 +179,9 @@ func boot_tests() -> void:
 	await reset(Vector3(0,.01,-6))
 	a.motor.dash_cd = 3
 	kit().start_boot()
-	await step(4)
+	await step(2)
 	check(b.health == 250 and a.global_position.z > -.1,"Boot Rush has a damage-free readable startup")
-	await step(28)
+	await step(42)
 	check(b.health == 195 and b.position.z < -6,"boot connects once and displaces its target")
 	check(a.motor.dash_cd > 2 and kit().deflect_cd > 8,"boot does not reset universal dash or its own cooldown")
 	check(a.state == "ready","successful kick finishes its short recovery")
@@ -387,7 +383,7 @@ func edge_tests() -> void:
 	kit().ammo = 2
 	kit().start_reload()
 	a.statuses.apply("root",b,1.5)
-	check(a.state == "reload","root preserves a non-movement shell reload")
+	check(kit().reloading,"root preserves a concurrent shell reload")
 	await reset()
 	a.intent.ultimate = true
 	await step()
@@ -400,7 +396,7 @@ func edge_tests() -> void:
 	a.reset_actor()
 	await step(30)
 	check(a.state == "ready" and kit().boot_remaining == 0 and b.health == 250,"reset during boot clears pending damage and travel")
-	await reset(Vector3(0,.01,-8))
+	await reset(Vector3(1.2,.01,-8))
 	b.intent.move = Vector3.RIGHT
 	kit().start_boot()
 	await step(50)

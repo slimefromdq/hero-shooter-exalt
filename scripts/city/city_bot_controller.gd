@@ -158,7 +158,7 @@ func gather_intent(delta: float) -> CombatIntent:
 	if actor.kit is CareKit and care_request != null:
 		for action: String in ["aim","primary","primary_held","secondary_held","aim_held","reload","hover","deflect","bomb","ultimate","melee","guard","throw_action"]:
 			intent.set(action,care_request.get(action))
-		if not care_request.move.is_zero_approx(): intent.move = avoid_wall(care_request.move)
+		if not recovering and not care_request.move.is_zero_approx(): intent.move = avoid_wall(care_request.move)
 	watch_progress(delta, intent.move)
 	return intent
 
@@ -266,6 +266,7 @@ func watch_progress(delta: float, movement: Vector3) -> void:
 		# The nearest polygon can be on the street above a stair pocket. Reject
 		# physically blocked detours; prefer a checked ordinary jump back up.
 		var walking_detour: Vector3 = Vector3.INF
+		var jumping_detour: Vector3 = Vector3.INF
 		var selected_detour: Vector3 = Vector3.INF
 		recovery_jump = false
 		for direction: Vector3 in [tangent,-tangent,Vector3.FORWARD,Vector3.BACK,(tangent+Vector3.FORWARD).normalized(),(tangent+Vector3.BACK).normalized(),(-tangent+Vector3.FORWARD).normalized(),(-tangent+Vector3.BACK).normalized()]:
@@ -280,12 +281,16 @@ func watch_progress(delta: float, movement: Vector3) -> void:
 				var raised: Transform3D = actor.global_transform
 				raised.origin.y += clearance
 				if actor.test_move(raised,detour-raised.origin): continue
+			if needs_jump and jumping_detour == Vector3.INF: jumping_detour = detour
 			if needs_jump and detour.y-actor.global_position.y > .5:
 				selected_detour = detour
 				recovery_jump = true
 				break
 			if not needs_jump and walking_detour == Vector3.INF: walking_detour = detour
 		if selected_detour == Vector3.INF: selected_detour = walking_detour
+		if selected_detour == Vector3.INF and jumping_detour != Vector3.INF:
+			selected_detour = jumping_detour
+			recovery_jump = true
 		if selected_detour != Vector3.INF:
 			destination = selected_detour
 			detour_until = elapsed+1.5

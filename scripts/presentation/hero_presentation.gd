@@ -9,6 +9,7 @@ var canopy: MeshInstance3D
 var shield: MeshInstance3D
 var rifle: Node3D
 var nameplate: Label3D
+var health_bar: ActorHealthBar
 var debug_label: Label3D
 var fire_flash: float = 0.0
 var walk_phase: float = 0.0
@@ -24,6 +25,9 @@ var block_flash: float = 0.0
 var block_effect: BlockImpact
 var stagger_marks: Node3D
 var was_grounded: bool = false
+var boot_release: float = 0.0
+var cc_previous: String = ""
+var control_sound: ProceduralSound
 var slayer_axe: Node3D
 var muzzle_flash: MeshInstance3D
 var status_label: Label3D
@@ -85,7 +89,7 @@ func _ready() -> void:
 	Geometry.box(rifle, Vector3(0.1, 0.2, 0.2), Vector3(0, -0.1, 0.22), Color("c4a56f"), false)
 	umbrella = Node3D.new()
 	body.add_child(umbrella)
-	umbrella.position = Vector3(0, 2.3, 0)
+	umbrella.position = Vector3(-.45, 2.75, .4)
 	var cap := CylinderMesh.new()
 	cap.top_radius = 0.06
 	cap.bottom_radius = 1.15
@@ -103,7 +107,10 @@ func _ready() -> void:
 	mat.albedo_color.a = 0.55
 	shield = Geometry.mesh(body, disc, Vector3(0, 1.3, -0.65), mat)
 	shield.rotation_degrees.x = 90
-	nameplate = Geometry.text3d(self, actor.actor_id.to_upper(), Vector3(0, 2.65, 0), 28, Color("fff0da"))
+	health_bar = ActorHealthBar.new()
+	health_bar.actor = actor
+	add_child(health_bar)
+	nameplate = Geometry.text3d(self, actor.actor_id.to_upper(), Vector3(0, 3.15, 0), 28, Color("fff0da"))
 	nameplate.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	nameplate.no_depth_test = false
 	debug_label = Geometry.text3d(self, "", Vector3(0, 3.1, 0), 23, trim)
@@ -131,6 +138,9 @@ func _ready() -> void:
 	block_sound = ProceduralSound.new()
 	block_sound.spatial_owner = actor
 	add_child(block_sound)
+	control_sound = ProceduralSound.new()
+	control_sound.spatial_owner = actor
+	add_child(control_sound)
 	actor.resolver.confirmed_block.connect(on_block)
 	animator = AnimationPlayer.new()
 	animator.name = "CloseCombatAnimation"
@@ -194,6 +204,7 @@ func _process(delta: float) -> void:
 	walk_phase += Vector2(actor.velocity.x, actor.velocity.z).length() * delta * 1.8
 	left_leg.rotation = Vector3(sin(walk_phase) * .4 if actor.is_on_floor() else -.25,0,0)
 	right_leg.rotation = Vector3(-left_leg.rotation.x,0,0)
+	right_leg.scale = Vector3.ONE
 	left_arm.rotation = Vector3(.1,0,-.15)
 	right_arm.rotation = Vector3(1.1,0,0)
 	for limb: Node3D in [left_arm,right_arm,left_leg,right_leg]:
@@ -212,11 +223,17 @@ func _process(delta: float) -> void:
 	stagger_marks.rotation.y = (1.0 - actor.state_time / maxf(.01,actor.tuning.stagger_duration)) * TAU
 	rifle.rotation = Vector3.ZERO
 	rifle.position = Vector3(.34,1.38,-.25)
-	if actor.state == "reload":
+	if actor.kit.reloading and actor.state == "ready":
 		rifle.rotation.x = -0.7
 	var animation: String = ""
 	var progress: float = 0.0
-	if actor.state == "marshal_verdict":
+	if actor.state == "boot_attached":
+		animation = "slayer/boot_attach"
+		progress = 1.0 - actor.boot_pair.remaining / (actor.tuning as SlayerTuning).boot_hold
+	elif boot_release > 0:
+		animation = "slayer/boot_release"
+		progress = 1.0 - boot_release / .18
+	elif actor.state == "marshal_verdict":
 		animation = "care/verdict"
 		progress = (actor.kit as MarshalKit).verdict_progress()
 	elif actor.state == "doctor_ultimate":
@@ -270,21 +287,25 @@ func _process(delta: float) -> void:
 	model.visible = actor.alive if city_play else true
 	nameplate.visibility_range_end = 65.0 if city_play else 0.0
 	team_ring.visible = actor.alive and (not city_play or session.player != actor)
-	if actor.team != 0 or (city_play and session.player != actor):
+	health_bar.refresh()
+	if session == null or session.player != actor:
 		var marker: String = ""
 		if actor.state == "melee_windup": marker = "  /  STRIKE"
 		elif actor.state == "throw_startup": marker = "  /  GRAB!  [%s]" % TrainingInputs.key_label("throw")
 		elif actor.state == "guard": marker = "  /  GUARD"
 		elif actor.state == "stagger": marker = "  /  STAGGERED"
-		nameplate.text = "%s    %d HP%s" % [actor.actor_id.to_upper(), ceili(actor.health), marker]
+		nameplate.text = actor.actor_id.to_upper() + marker
 		if city_play:
 			var ally: bool = actor.team == session.player.team
-			nameplate.text = "%s / %s\n%s  %d HP%s" % ["[+] ALLY" if ally else "[!] ENEMY", "LANTERN" if actor.team == 0 else "CROWN", actor.actor_id.to_upper(), ceili(actor.health), marker]
+			nameplate.text = "%s / %s\n%s%s" % ["[+] ALLY" if ally else "[!] ENEMY", "LANTERN" if actor.team == 0 else "CROWN", actor.actor_id.to_upper(), marker]
 			nameplate.font_size = 28
 			nameplate.pixel_size = .0045
 			nameplate.outline_size = 4
 			nameplate.outline_modulate = Color("152333")
 		nameplate.modulate = Color("38dfff") if actor.team == 0 else Color("ff4f65")
+		if actor.get_meta("built_in",false):
+			nameplate.text = str(actor.get_meta("station","TARGET")).to_upper()
+			nameplate.font_size = 20
 		nameplate.visible = actor.alive
 	else:
 		nameplate.visible = false
@@ -297,8 +318,11 @@ func _process(delta: float) -> void:
 	if actor.tuning is SlayerTuning: SlayerVisuals.animate(self)
 	if actor.kit is HuddleKit: HuddleVisuals.animate(self)
 	elif actor.kit is CareKit: CareVisuals.animate(self)
-	var status_text: String = CareHUD.status(actor)
+	var status_text: String = ControlFeedback.caption(actor)
+	if status_text != "": status_text += "\n"
+	status_text += CareHUD.status(actor)
 	for effect: String in actor.statuses.effects:
+		if effect in ["root","slow"]: continue
 		status_text += "%s %.1f  " % [effect.replace("max_health","MAX HP WOUND").to_upper(),actor.statuses.effects[effect].remaining]
 	var viewer: HeroActor = session.player if session != null else null
 	if is_instance_valid(viewer) and viewer.tuning is SlayerTuning and actor.statuses.marked_for(viewer):
@@ -307,10 +331,61 @@ func _process(delta: float) -> void:
 			status_text += "WOUNDED ◆" if actor.health / actor.effective_max_health() <= slayer_data.wounded_threshold else "HUNTED ◇"
 	status_label.text = status_text
 	status_label.visible = actor.alive and status_text != "" and actor != viewer
-	status_ring.visible = actor.alive and (actor.statuses.effects.has("max_health") or actor.statuses.effects.has("root") or actor.benefits.has_kind("exemplary") or actor.benefits.has_kind("prescription"))
+	status_ring.visible = actor.alive and (not ControlFeedback.snapshot(actor).is_empty() or actor.statuses.effects.has("max_health") or actor.statuses.effects.has("root") or actor.benefits.has_kind("exemplary") or actor.benefits.has_kind("prescription"))
 	var ring_color := Color("ffda80") if actor.benefits.has_kind("exemplary") else (Color("b7f3ff") if actor.benefits.has_kind("prescription") else Color("c79aef"))
 	(status_ring.material_override as StandardMaterial3D).albedo_color = ring_color
 	status_ring.rotation.y += delta
+	var effects: Array[Dictionary] = ControlFeedback.snapshot(actor)
+	var signature := PackedStringArray()
+	for effect: Dictionary in effects: signature.append(effect.kind)
+	var current: String = ",".join(signature)
+	if current != cc_previous:
+		for effect: Dictionary in effects:
+			if str(effect.kind) in cc_previous.split(","): continue
+			control_sound.play_tone(effect.tone,.11,.13)
+			CombatEffect.pulse(actor.get_parent(),actor.global_position+Vector3.UP*.2,effect.color,.7 if effect.kind == "root" else 1.1)
+			break
+	cc_previous = current
+	if not effects.is_empty():
+		var kind: String = effects[0].kind
+		match kind:
+			"root":
+				status_ring.scale = Vector3.ONE
+				status_ring.rotation.y = 0
+			"slow": status_ring.scale = Vector3.ONE*(1.1+.15*sin(float(Time.get_ticks_msec())*.008))
+			"push":
+				status_ring.scale = Vector3(1.6,1,.45)
+				status_ring.rotation.y = atan2(actor.motor.external_velocity.x,actor.motor.external_velocity.z)
+			"counterthrow","throw_release":
+				status_ring.scale = Vector3(.6,1,1.5)
+				status_ring.rotation.y += delta*10
+			"boot": status_ring.scale = Vector3.ONE*.8
+			"throw": status_ring.scale = Vector3.ONE*1.4
+			_: status_ring.scale = Vector3.ONE
+		(status_ring.material_override as StandardMaterial3D).albedo_color = effects[0].color
+	boot_release = maxf(0,boot_release-delta)
+	if actor.boot_pair != null or boot_release > 0:
+		if actor.state == "boot_attached" or boot_release > 0:
+			right_leg.rotation.x = 1.6 if boot_release <= 0 else 1.9
+			if actor.boot_pair != null:
+				var contact: Vector3 = right_leg.to_local(actor.boot_pair.victim.global_position+Vector3.UP*.85)
+				var facing: Vector3 = actor.global_basis.inverse()*(actor.boot_pair.victim.global_position-actor.global_position)
+				right_leg.rotation.y = atan2(-facing.x,-facing.z)
+				right_leg.scale.y = clampf(contact.length()/.68,1,2.4)
+			(right_leg.get_node("Joint") as Node3D).rotation.x = -.15
+			model.rotation.x = -.15
+		else:
+			model.rotation.x = -.3
+			left_arm.rotation.z = -.65
+			right_arm.rotation.z = .65
+	if actor.tuning.hero_id == "nimbus" and actor.controller is PlayerController:
+		var camera: Camera3D = (actor.controller as PlayerController).camera
+		var to_canopy: Vector3 = canopy.global_position-camera.global_position
+		var screen_center: Vector2 = camera.get_viewport().get_visible_rect().size * .5
+		var obstructing: bool = to_canopy.dot(-camera.global_basis.z) > 0 and camera.unproject_position(canopy.global_position).distance_to(screen_center) < screen_center.y
+		var material := canopy.material_override as StandardMaterial3D
+		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA if obstructing else BaseMaterial3D.TRANSPARENCY_DISABLED
+		material.albedo_color.a = .2 if obstructing else 1.0
 
 func on_block(attacker: HeroActor, defender: HeroActor) -> void:
 	if defender != actor:
@@ -327,6 +402,9 @@ func on_block(attacker: HeroActor, defender: HeroActor) -> void:
 	block_effect = BlockImpact.spawn(actor.get_parent(), actor.global_position + Vector3.UP * 1.3 + toward * .72, toward)
 
 func clear_feedback() -> void:
+	boot_release = 0
+	cc_previous = ""
+	if is_instance_valid(control_sound): control_sound.stop()
 	block_flash = 0.0
 	if is_instance_valid(stagger_marks):
 		stagger_marks.visible = false

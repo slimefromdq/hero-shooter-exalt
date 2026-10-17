@@ -8,6 +8,7 @@ var player: HeroActor
 var match_controller: CityMatch
 
 func _ready() -> void:
+	HeroRoster.consume_direct_entry()
 	TrainingInputs.install()
 	definition = load("res://resources/maps/meridian_gardens.tres") as CityMapDefinition
 	resolver = CombatResolver.new()

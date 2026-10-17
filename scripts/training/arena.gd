@@ -5,6 +5,7 @@ var resolver: CombatResolver
 var training: TrainingManager
 
 func _ready() -> void:
+	HeroRoster.consume_direct_entry()
 	TrainingInputs.install()
 	resolver = CombatResolver.new()
 	add_child(resolver)
@@ -44,10 +45,13 @@ func build_environment() -> void:
 	Geometry.box(self, Vector3(18, 0.018, 49), Vector3(0, 0.01, -3), Color("8c9b93"), false)
 	for x: float in [-28.0, 28.0]:
 		Geometry.box(self, Vector3(1, 5, 62), Vector3(x, 2.0, 0), Color("384e57"))
-	Geometry.box(self, Vector3(56, 8, 1), Vector3(0, 3.5, -31), Color("293f4a"))
+	# Open gateway to four permanent practice stations north of the old range.
+	for x: float in [-17.0,17.0]: Geometry.box(self,Vector3(22,8,1),Vector3(x,3.5,-31),Color("293f4a"))
+	Geometry.box(self,Vector3(56,1,36),Vector3(0,-.5,-49),Color("879d96"))
+	Geometry.box(self,Vector3(56,6,1),Vector3(0,2.5,-67),Color("293f4a"))
+	for x: float in [-28.0,28.0]: Geometry.box(self,Vector3(1,6,36),Vector3(x,2.5,-49),Color("384e57"))
+	Geometry.text3d(self,"PRACTICE RANGE / F TO INTERACT",Vector3(0,4,-35),28,Color("dfefdb"))
 	Geometry.box(self, Vector3(56, 3, 1), Vector3(0, 1, 31), Color("384e57"))
-	Geometry.text3d(self, "FIELD DIVISION", Vector3(0, 5.3, -30.4), 150, Color("dce8dc"))
-	Geometry.text3d(self, "01   /   HEROES     •     LIVE EXERCISE", Vector3(0, 3.7, -30.35), 42, Color("72d2c5"))
 	for x: float in [-9.0, 9.0]:
 		Geometry.box(self, Vector3(0.07, 0.015, 47), Vector3(x, 0.012, -3), Color("f4e7bf"), false)
 	for z: float in [8.0, 0.0, -8.0, -16.0, -24.0]:

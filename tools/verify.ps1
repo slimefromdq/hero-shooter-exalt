@@ -15,6 +15,14 @@ Push-Location -LiteralPath $taskRoot
 try {
     & $taskEngine --headless --path $taskRoot --editor --import --quit
     if ($LASTEXITCODE -ne 0) { throw 'Godot import failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/health_bars_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Overhead or roster health bars failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/menu_flow_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Startup, settings or queued hero selection failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/qol_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'QoL movement, reload, hero, menus or training checks failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/camera_framing_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Wide camera framing failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/rules_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Combat/movement rule tests failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/match_feedback_test.gd
@@ -65,6 +73,12 @@ try {
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_navigation_regression.gd
     if ($LASTEXITCODE -ne 0) { throw 'City navigation recovery or healing route failed.' }
     if ($Capture) {
+        & $taskEngine --path $taskRoot --script res://tests/capture_health_bars.gd --windowed --resolution 1600x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Health bar rendered capture failed.' }
+        & $taskEngine --path $taskRoot --script res://tests/qol_input_test.gd --windowed --resolution 1440x900 --audio-driver Dummy
+        if ($LASTEXITCODE -ne 0) { throw 'Native wheel input, map interaction or local umbrella fade failed.' }
+        & $taskEngine --path $taskRoot --script res://tests/capture_qol.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'QoL rendered capture failed.' }
         & $taskEngine --path $taskRoot --script res://tests/huddle_test.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
         if ($LASTEXITCODE -ne 0) { throw 'Huddle native input failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_huddle.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60

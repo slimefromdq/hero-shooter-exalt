@@ -33,11 +33,18 @@ static func hit(canvas: Control, font: Font, caption: String, center: Vector2, h
 
 static func ammo(canvas: Control, actor: HeroActor, font: Font, center: Vector2) -> void:
 	var caption: String = "%d / %d" % [actor.kit.ammo,actor.tuning.magazine]
-	var color := Color("ffe080") if actor.kit.ammo == 0 or actor.state == "reload" else Color("fbfff4")
+	var color := Color("ffe080") if actor.kit.ammo == 0 or actor.kit.reloading else Color("fbfff4")
 	var at: Vector2 = center + Vector2(40,23)
 	canvas.draw_string_outline(font,at,caption,HORIZONTAL_ALIGNMENT_LEFT,-1,22,4,Color(.025,.04,.06,.95))
 	canvas.draw_string(font,at,caption,HORIZONTAL_ALIGNMENT_LEFT,-1,22,color)
-	if actor.state == "reload" or actor.kit.ammo == 0:
-		var prompt: String = "LOADING" if actor.state == "reload" else "R  RELOAD"
+	if actor.kit.reloading or actor.kit.ammo == 0:
+		var prompt: String = "LOADING %.1fs" % actor.kit.reload_remaining if actor.kit.reloading else "R  RELOAD"
 		canvas.draw_string_outline(font,at + Vector2(0,17),prompt,HORIZONTAL_ALIGNMENT_LEFT,-1,11,3,Color(.025,.04,.06,.95))
 		canvas.draw_string(font,at + Vector2(0,17),prompt,HORIZONTAL_ALIGNMENT_LEFT,-1,11,color)
+
+	if actor.kit.free_slide_ammo():
+		canvas.draw_string_outline(font,at+Vector2(0,18),"SLIDE / FREE AMMO",HORIZONTAL_ALIGNMENT_LEFT,-1,11,3,Color("10252e"))
+		canvas.draw_string(font,at+Vector2(0,18),"SLIDE / FREE AMMO",HORIZONTAL_ALIGNMENT_LEFT,-1,11,Color("9dfbe2"))
+	if actor.state == "ultimate" and actor.kit is NimbusKit:
+		canvas.draw_string_outline(font,center+Vector2(-130,100),"%d SHOTS / %.1fs" % [(actor.kit as NimbusKit).ultimate_remaining,actor.state_time],HORIZONTAL_ALIGNMENT_LEFT,-1,20,4,Color("10252e"))
+		canvas.draw_string(font,center+Vector2(-130,100),"%d SHOTS / %.1fs" % [(actor.kit as NimbusKit).ultimate_remaining,actor.state_time],HORIZONTAL_ALIGNMENT_LEFT,-1,20,Color("9dfbe2"))

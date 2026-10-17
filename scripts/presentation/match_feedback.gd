@@ -21,6 +21,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	for index: int in 3:
 		var voice := AudioStreamPlayer.new()
+		voice.bus = "Feedback"
 		voice.volume_db = -9.0
 		add_child(voice)
 		voices.append(voice)

@@ -62,4 +62,6 @@ func capture() -> void:
 	print("CAPTURED: artifacts/training.png, training-console.png and hover.png")
 	arena.queue_free()
 	await process_frame
+	# Let the audio thread release stopped one-shot playback before process exit.
+	await create_timer(.25).timeout
 	quit()

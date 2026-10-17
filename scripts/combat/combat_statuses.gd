@@ -14,6 +14,7 @@ func apply(kind: String, source: HeroActor, duration: float, strength: float = 0
 	if kind == "max_health":
 		actor.health = minf(actor.health, effective_max())
 	if kind in ["root", "slow"]:
+		if actor.boot_pair != null: actor.boot_pair.release(false)
 		actor.motor.interrupt_mobility()
 	actor.resolver.record("status", source, kind, "target=%s duration=%.2f strength=%.2f" % [actor.actor_id,duration,strength])
 	return true
@@ -59,6 +60,7 @@ func movement_scale() -> float:
 	return 0.0 if effects.has("root") else float(effects.get("slow", {}).get("strength", 1.0))
 
 func cleanse() -> void:
+	if actor.boot_pair != null and actor.boot_pair.victim == actor: actor.boot_pair.release(false)
 	effects.clear()
 
 func clear() -> void:

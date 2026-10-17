@@ -110,7 +110,7 @@ func run() -> void:
 	kit().ammo = 2
 	kit().start_reload()
 	await boot_press()
-	check(player.state == "slayer_boot_start" and kit().ammo == 2,"E interrupts shell loading without granting ammunition")
+	check(player.state == "slayer_boot_start" and kit().ammo == 2,"E coexists with shell loading without granting ammunition")
 	await reset()
 	player.spawn_protected = true
 	await boot_press()
@@ -207,16 +207,16 @@ func tuning_pass_tests() -> void:
 	await step(3)
 	var before: Vector3 = target.position
 	await boot_press()
-	await step(35)
+	await step(60)
 	check(target.health == 195 and before.z - target.position.z > 1.5,"Boot Rush visibly knocks a grounded enemy back over 1.5 metres")
-	check(player.resolver.events.any(func(entry: Dictionary) -> bool: return entry.event == "displacement" and entry.ability == "boot"),"boot displacement records attacker attribution")
+	check(player.resolver.events.any(func(entry: Dictionary) -> bool: return entry.event == "displacement" and entry.ability == "boot_release"),"boot displacement records attacker attribution")
 	await reset()
 	target = training.bots[0]
 	target.reset_actor(player.position + Vector3(0,0,-5))
 	target.statuses.apply("root",player,2)
 	before = target.position
 	await boot_press()
-	await step(35)
+	await step(60)
 	check(before.z - target.position.z > 1.5 and target.statuses.movement_disabled(),"root prevents walking but does not swallow the kick's knockback")
 	await reset()
 	target = training.bots[0]
@@ -228,14 +228,14 @@ func tuning_pass_tests() -> void:
 		await step()
 	target.statuses.apply("root",player,2)
 	await step(30)
-	check(before.z - target.position.z > 1.5,"a snare applied after boot contact also preserves the knockback")
+	check(target.boot_pair == null and player.boot_pair == null and target.health == 195 and before.z - target.position.z < .2,"new snare interrupts the boot hold without a delayed kick")
 	await reset()
 	target = training.bots[0]
 	target.reset_actor(player.position + Vector3(0,0,-5))
 	var wall: Node3D = Geometry.box(arena,Vector3(3,3,.08),target.position + Vector3(0,1.5,-.65),Color.GRAY)
 	await step(3)
 	await boot_press()
-	await step(35)
+	await step(60)
 	check(target.health == 195 and target.position.z > wall.position.z + .38,"boot knockback sweeps safely against thin cover")
 	wall.queue_free()
 	await reset()
