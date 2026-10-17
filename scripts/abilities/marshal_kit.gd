@@ -186,7 +186,7 @@ func breach_step() -> void:
 	actor.resolver.splash(actor,endpoint,t.breach_radius,t.breach_damage,"breach",breach_cast)
 	# A preceding blast can break a barrier before the lane's next segment reaches it.
 	# Retire this barrage when a hostile barrier absorbs any of its blasts.
-	for shield: MarshalBarrier in actor.get_tree().get_nodes_in_group("barriers"):
+	for shield: CombatBarrier in actor.get_tree().get_nodes_in_group("barriers"):
 		if shield.source.team != actor.team and shield.received.has(breach_cast): breach_index = t.breach_count
 
 func verdict() -> void:

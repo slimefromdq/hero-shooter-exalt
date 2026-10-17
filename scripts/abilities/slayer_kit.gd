@@ -185,7 +185,7 @@ func fire(_ultimate: bool = false) -> void:
 				if result == "hit":
 					last_shot_pellets += 1
 					last_shot_head = last_shot_head or head
-			elif hit.get("collider") is MarshalBarrier:
+			elif hit.get("collider") is CombatBarrier:
 				hit.collider.receive_damage(actor,amount,pellet_cast)
 			elif hit.get("collider") is HunterSnare:
 				(hit.collider as HunterSnare).receive_damage(actor,amount,pellet_cast)

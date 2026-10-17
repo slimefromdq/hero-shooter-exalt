@@ -135,3 +135,9 @@ The physical acceptance test covers ascent/descent of both new flights, station 
 ## ROSTER-02 - User-directed main tank and main support
 
 October 17, 2026. The user requested two new characters, separate from Annex/Ahab: a male arcane team leader with a magnificent moustache and large held shield, and a prim Edwardian female doctor with an accessible beam-healing role. The revised approved plan establishes a heavy short-range tank gun, 8 x 4.5 m / 1,200-durability barrier, enemy-launching advance, progressing 3D explosion line and 10 m slam. The doctor uses right-hold healing and left-hold shooting, lingering care plus team pulse, 4 s ally escape, cleanse plus brief heavy resistance, and an independent single-target damage/speed/resistance ultimate. Names and all tuning remain proposed defaults. Full behavior, integration and validation commands are in MARSHAL_DOCTOR.md.
+
+## ROSTER-03 · Huddle colony off-tank
+
+Implemented October 17, 2026 from the accepted revised kit: 600 health without personal shield HP; RMB Regroup healing; two 10 m Scatterbound charges with sequential five-second recharge; a short-lived ally/self screen; radial wingbeat; and Nobody Gets Squished!, a steerable ground-following wave. No resistance aura or ultimate flight refill. The shared barrier interface supports Marshal and Huddle; healing can opt out of charge awards. Full rules and controls are in [HUDDLE.md](HUDDLE.md).
+
+Teams now use Marshal/Huddle/Doctor/Nimbus/Slayer/Slayer. Keep a Nimbus subway runner when possible, with a Slayer fallback when Nimbus is the player. Huddle uses the existing actor, traversal and combat authority; scattering and transforming preserve its single hitbox and health pool.

@@ -125,7 +125,7 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			scale = 0.15
 		elif actor.state == "reload":
 			scale = minf(scale, t.reload_move_multiplier)
-		elif actor.state not in ["ready", "slayer_knife", "slayer_trap", "marshal_shield"]:
+		elif actor.state not in ["ready", "slayer_knife", "slayer_trap", "marshal_shield", "huddle_regroup"]:
 			scale = minf(scale, 0.35)
 		var current := Vector3(actor.velocity.x, 0.0, actor.velocity.z)
 		var acceleration: float = t.acceleration if was_floor else t.air_steering
@@ -248,7 +248,7 @@ func interrupt_mobility() -> void:
 	if traversal != null and traversal.active: traversal.abort()
 	end_hover()
 	transition("ground" if actor.is_on_floor() else "air")
-	if actor.state.begins_with("slayer_boot"):
+	if actor.state.begins_with("slayer_boot") or actor.state in ["huddle_scatter","huddle_wave","huddle_wave_start"]:
 		actor.kit.cancel()
 	actor.velocity.x = 0.0
 	actor.velocity.z = 0.0

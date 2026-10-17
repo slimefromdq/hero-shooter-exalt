@@ -35,6 +35,7 @@ var seeking_health: bool = false
 var health_target: Node3D
 var entered_hill: bool = false
 var detour_until: float = 0.0
+var recovery_jump: bool = false
 var care_request: CombatIntent
 var rng := RandomNumberGenerator.new()
 
@@ -99,8 +100,16 @@ func gather_intent(delta: float) -> CombatIntent:
 		navagent.target_position = destination
 		path_update_count += 1
 	var move := follow_path()
+	var recovering: bool = elapsed < detour_until and navagent.navigation_layers != 0
+	if recovering:
+		# Follow the validated short capsule path directly: navigation may still
+		# snap its starting polygon onto the inaccessible floor overhead.
+		move = ((destination-actor.global_position)*Vector3(1,0,1)).normalized()
+		if recovery_jump and actor.motor.grounded() and actor.permits("jump"):
+			intent.jump = true
+			recovery_jump = false
 	var horizontal_distance: float = Vector2(actor.global_position.x - destination.x, actor.global_position.z - destination.z).length()
-	if horizontal_distance < 1.25 and absf(actor.global_position.y - destination.y) < 1.0:
+	if horizontal_distance < (.5 if recovering else 1.25) and absf(actor.global_position.y - destination.y) < 1.0:
 		move = Vector3.ZERO
 	# Separation only steers locally; strategic paths remain on the baked pedestrian mesh.
 	if move.length_squared() > .01:
@@ -242,7 +251,7 @@ func watch_progress(delta: float, movement: Vector3) -> void:
 	var needs_travel: bool = actor.global_position.distance_to(destination) > 2.0
 	# Measure net progress from a stable anchor. Half-second back-and-forth motion
 	# used to reset the watchdog forever even when a crowded actor made no progress.
-	if (movement.length_squared() > .12 or needs_travel) and travelled < 1.0 and actor.state in ["ready","reload"]:
+	if (movement.length_squared() > .12 or needs_travel) and travelled < 1.0 and actor.state in ["ready","reload","slayer_knife","slayer_trap","marshal_shield","huddle_regroup"]:
 		stuck_time += movement_sample
 		longest_stuck = maxf(longest_stuck, stuck_time)
 	else:
@@ -251,13 +260,35 @@ func watch_progress(delta: float, movement: Vector3) -> void:
 	movement_sample = 0
 	if stuck_time >= 2.0:
 		stuck_events += 1
-		# Re-query a nearby navigable detour rather than granting teleport or parkour movement.
+		# Re-query a nearby navigable detour using ordinary walking or a checked jump.
 		var map: RID = navagent.get_navigation_map()
 		var tangent := Vector3(1,0,0) if slot % 2 == 0 else Vector3(-1,0,0)
-		var detour: Vector3 = NavigationServer3D.map_get_closest_point(map, actor.global_position + tangent * 3)
-		if actor.global_position.distance_to(detour) > .8:
-			destination = detour
-			detour_until = elapsed + 1.5
+		# The nearest polygon can be on the street above a stair pocket. Reject
+		# physically blocked detours; prefer a checked ordinary jump back up.
+		var walking_detour: Vector3 = Vector3.INF
+		var selected_detour: Vector3 = Vector3.INF
+		recovery_jump = false
+		for direction: Vector3 in [tangent,-tangent,Vector3.FORWARD,Vector3.BACK,(tangent+Vector3.FORWARD).normalized(),(tangent+Vector3.BACK).normalized(),(-tangent+Vector3.FORWARD).normalized(),(-tangent+Vector3.BACK).normalized()]:
+			var detour: Vector3 = NavigationServer3D.map_get_closest_point(map,actor.global_position+direction*3)
+			if actor.global_position.distance_to(detour) < 1.5: continue
+			var needs_jump: bool = actor.test_move(actor.global_transform,detour-actor.global_position)
+			if needs_jump:
+				if not actor.permits("jump"): continue
+				var clearance: float = maxf(.8,detour.y-actor.global_position.y+.15)
+				var apex: float = actor.tuning.jump_impulse*actor.tuning.jump_impulse/(2*actor.tuning.gravity)
+				if clearance > apex-.1 or actor.test_move(actor.global_transform,Vector3.UP*clearance): continue
+				var raised: Transform3D = actor.global_transform
+				raised.origin.y += clearance
+				if actor.test_move(raised,detour-raised.origin): continue
+			if needs_jump and detour.y-actor.global_position.y > .5:
+				selected_detour = detour
+				recovery_jump = true
+				break
+			if not needs_jump and walking_detour == Vector3.INF: walking_detour = detour
+		if selected_detour == Vector3.INF: selected_detour = walking_detour
+		if selected_detour != Vector3.INF:
+			destination = selected_detour
+			detour_until = elapsed+1.5
 		stuck_time = 0
 		sample_position = actor.global_position
 
@@ -268,6 +299,7 @@ func reset_controller() -> void:
 	sees_target = false
 	seeking_health = false
 	detour_until = 0
+	recovery_jump = false
 	stuck_time = 0
 	movement_sample = 0
 	previous_position = actor.global_position

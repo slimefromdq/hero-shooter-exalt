@@ -45,3 +45,7 @@ City follow-up: play the revised main approaches, inner stairs and underground s
 ## ROSTER-02 - Marshal and Doctor
 
 Implemented October 17, 2026: new shield main tank and beam main support, with distinct original procedural models, portraits, bot tactics, both selection menus, balanced 6v6 compositions and two practice exercises. See [Marshal and Doctor](MARSHAL_DOCTOR.md) for controls, editable values, authority rules and reproduction commands. Annex and Ahab remain separate reserved concepts. This supersedes the earlier two-hero roster deferral.
+
+## ROSTER-03 · Huddle
+
+Implemented the mobile colony off-tank, original procedural model/portrait, healing, charged flight, interception screen, wingbeat and wave ultimate. Includes bot tactics, both menus, launcher switch, training profile/exercise and automated focused/native verification. See [Huddle](HUDDLE.md). Competitive tuning remains a human playtest task.

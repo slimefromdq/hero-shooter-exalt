@@ -1,11 +1,6 @@
 class_name MarshalBarrier
-extends Node3D
+extends CombatBarrier
 ## Analytic rectangle: attacks query it explicitly, so friendly shots and actors pass freely.
-var source: HeroActor
-var received: Dictionary = {}
-var visual: Node3D
-var flash: float = 0.0
-
 func _ready() -> void:
 	add_to_group("barriers")
 	visual = Node3D.new()
@@ -35,19 +30,9 @@ func frame() -> Transform3D:
 	var center: Vector3 = source.global_position + Vector3.UP * (source.tuning as MarshalTuning).barrier_height * .5 + forward * (source.tuning as MarshalTuning).barrier_offset
 	return Transform3D(Basis(right,up,-forward),center)
 
-func intersection(from: Vector3, to: Vector3) -> Dictionary:
-	if not active(): return {}
-	var inverse: Transform3D = frame().affine_inverse()
-	var a: Vector3 = inverse * from
-	var b: Vector3 = inverse * to
-	var dz: float = b.z - a.z
-	if absf(dz) < .000001: return {}
-	var fraction: float = -a.z / dz
-	if fraction < 0 or fraction > 1: return {}
-	var at: Vector3 = a.lerp(b,fraction)
+func dimensions() -> Vector2:
 	var t := source.tuning as MarshalTuning
-	if absf(at.x) > t.barrier_width * .5 or absf(at.y) > t.barrier_height * .5: return {}
-	return {"position":from.lerp(to,fraction),"normal":frame().basis.z * (1.0 if a.z > 0 else -1.0),"collider":self}
+	return Vector2(t.barrier_width,t.barrier_height)
 
 func receive_damage(attacker: HeroActor, amount: float, id: int) -> void:
 	if not active() or attacker.team == source.team or received.has(id) or attacker.resolver.protected_room(attacker): return

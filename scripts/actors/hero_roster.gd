@@ -1,7 +1,7 @@
 class_name HeroRoster
 extends RefCounted
 
-const IDS: Array[String] = ["nimbus", "slayer", "marshal", "doctor"]
+const IDS: Array[String] = ["nimbus", "slayer", "marshal", "doctor", "huddle"]
 static var selected: String = initial_selection()
 
 static func initial_selection() -> String:
@@ -17,11 +17,12 @@ static func kit_for(id: String) -> HeroKit:
 		"slayer": return SlayerKit.new()
 		"marshal": return MarshalKit.new()
 		"doctor": return DoctorKit.new()
+		"huddle": return HuddleKit.new()
 	return NimbusKit.new()
 
 static func team_hero(slot: int, player_hero: String) -> String:
-	var composition: Array[String] = ["marshal","doctor","nimbus","nimbus","slayer","slayer"]
-	var player_slot: int = composition.find(player_hero)
+	var composition: Array[String] = ["marshal","huddle","doctor","nimbus","slayer","slayer"]
+	var player_slot: int = maxi(0,composition.find(player_hero))
 	var first: String = composition[0]
 	composition[0] = composition[player_slot]
 	composition[player_slot] = first
@@ -30,9 +31,17 @@ static func team_hero(slot: int, player_hero: String) -> String:
 static func bot_role(slot: int, player_hero: String) -> String:
 	var hero: String = team_hero(slot,player_hero)
 	if hero in ["marshal","doctor"]: return "frontline"
-	# Preserve one deliberate underground route without sending the main tank away.
+	if hero == "huddle": return "flank_left"
+	# Prefer Nimbus; when Nimbus is the player, a Slayer covers the same route.
+	var runner: int = -1
 	for candidate: int in range(1,6):
 		if team_hero(candidate,player_hero) == "nimbus":
-			if slot == candidate: return "frontline_subway"
+			runner = candidate
 			break
+	if runner < 0:
+		for candidate: int in range(1,6):
+			if team_hero(candidate,player_hero) == "slayer":
+				runner = candidate
+				break
+	if slot == runner: return "frontline_subway"
 	return ["frontline","frontline","frontline","flank_left","flank_right","high_ground"][slot]

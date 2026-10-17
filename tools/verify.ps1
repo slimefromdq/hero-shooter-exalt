@@ -17,6 +17,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Godot import failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/rules_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Combat/movement rule tests failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/huddle_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Huddle colony combat, mobility or lifecycle failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/care_heroes_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Marshal or Doctor combat/integration failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/slayer_test.gd
@@ -60,6 +62,10 @@ try {
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_navigation_regression.gd
     if ($LASTEXITCODE -ne 0) { throw 'City navigation recovery or healing route failed.' }
     if ($Capture) {
+        & $taskEngine --path $taskRoot --script res://tests/huddle_test.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Huddle native input failed.' }
+        & $taskEngine --path $taskRoot --script res://tests/capture_huddle.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Huddle rendered capture failed.' }
         & $taskEngine --path $taskRoot --script res://tests/care_heroes_test.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
         if ($LASTEXITCODE -ne 0) { throw 'Marshal and Doctor native input/integration failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_care_heroes.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60

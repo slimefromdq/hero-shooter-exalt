@@ -121,22 +121,22 @@ func clear_round() -> void:
 	cast_powers.clear()
 
 
-func heal(source: HeroActor, target: HeroActor, amount: float, tag: String) -> float:
+func heal(source: HeroActor, target: HeroActor, amount: float, tag: String, award_charge: bool = true) -> float:
 	if not is_instance_valid(source) or not is_instance_valid(target) or not source.alive or not target.alive or source.team != target.team or amount <= 0: return 0.0
 	if protected_room(source) or protected_room(target): return 0.0
 	var restored: float = minf(amount,maxf(0,target.effective_max_health() - target.health))
 	if restored <= 0: return 0.0
 	target.health += restored
-	source.kit.ultimate_charge = minf(100,source.kit.ultimate_charge + restored * .06)
+	if award_charge: source.kit.ultimate_charge = minf(100,source.kit.ultimate_charge + restored * .06)
 	confirmed_heal.emit(source,target,restored)
 	# Beam ticks would otherwise crowd out useful combat history every frame.
-	if tag not in ["attending_care","aftercare","ward"]: record("heal",source,tag,"target=%s applied=%.1f" % [target.actor_id,restored])
+	if tag not in ["attending_care","aftercare","ward","regroup"]: record("heal",source,tag,"target=%s applied=%.1f" % [target.actor_id,restored])
 	return restored
 
 func barrier_ray(source: HeroActor, from: Vector3, to: Vector3) -> Dictionary:
 	var result: Dictionary = {}
 	var distance: float = INF
-	for barrier: MarshalBarrier in get_tree().get_nodes_in_group("barriers"):
+	for barrier: CombatBarrier in get_tree().get_nodes_in_group("barriers"):
 		if not is_instance_valid(barrier.source) or barrier.source.team == source.team: continue
 		var hit: Dictionary = barrier.intersection(from,to)
 		if not hit.is_empty() and from.distance_squared_to(hit.position) < distance:
@@ -158,11 +158,9 @@ func splash(source: HeroActor, origin: Vector3, radius: float, amount: float, ta
 		var to: Vector3 = target.global_position + Vector3.UP * .9
 		if origin.distance_to(to) <= radius and attack_ray(source,origin,to,[],1).is_empty(): victims.append(target)
 	# Damage nearby barriers once even when nobody stands behind them.
-	for barrier: MarshalBarrier in get_tree().get_nodes_in_group("barriers"):
+	for barrier: CombatBarrier in get_tree().get_nodes_in_group("barriers"):
 		if not barrier.active() or barrier.source.team == source.team: continue
-		var local: Vector3 = barrier.frame().affine_inverse() * origin
-		var t := barrier.source.tuning as MarshalTuning
-		var nearest: Vector3 = barrier.frame() * Vector3(clampf(local.x,-t.barrier_width/2,t.barrier_width/2),clampf(local.y,-t.barrier_height/2,t.barrier_height/2),0)
+		var nearest: Vector3 = barrier.nearest_point(origin)
 		if origin.distance_to(nearest) <= radius and ray(origin,nearest,[],1).is_empty(): barrier.receive_damage(source,amount,id)
 	for target: HeroActor in victims:
 		var distance: float = origin.distance_to(target.global_position + Vector3.UP * .9)

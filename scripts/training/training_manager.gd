@@ -1,8 +1,8 @@
 class_name TrainingManager
 extends Node
 
-const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring", "Guard trainer", "Slayer hunter", "Marshal", "Doctor"]
-const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt", "Doctor rounds", "Marshal drill"]
+const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring", "Guard trainer", "Slayer hunter", "Marshal", "Doctor", "Huddle"]
+const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt", "Doctor rounds", "Marshal drill", "Huddle rescue"]
 var arena: Node3D
 var player: HeroActor
 var bots: Array[HeroActor] = []
@@ -135,7 +135,7 @@ func spawn_bot(profile: int, at: Vector3 = Vector3.INF) -> HeroActor:
 	spawn_serial += 1
 	var bot := preload("res://scenes/actors/hero_actor.tscn").instantiate() as HeroActor
 	bot.team = 1
-	bot.tuning = HeroRoster.tuning_for({6:"slayer",7:"marshal",8:"doctor"}.get(profile,"nimbus"))
+	bot.tuning = HeroRoster.tuning_for({6:"slayer",7:"marshal",8:"doctor",9:"huddle"}.get(profile,"nimbus"))
 	bot.actor_id = "%s_%02d" % [PROFILES[profile].to_lower().replace(" ", "_"), spawn_serial]
 	bot.position = Vector3(-4 + bots.size() * 3, 0.1, -7 - bots.size() * 2) if at == Vector3.INF else at
 	arena.add_child(bot)
@@ -218,6 +218,14 @@ func reset_scenario() -> void:
 			friend.actor_id = "Protected_ally"
 			for index: int in 3:
 				var attacker: HeroActor = spawn_bot(2,Vector3(-4+index*4,.1,-4-index*2))
+				attacker.controller.target = friend
+		10:
+			player.health = player.effective_max_health()*.6
+			var friend: HeroActor = spawn_bot(0,Vector3(0,.1,3))
+			friend.team = player.team
+			friend.actor_id = "Garden_neighbor"
+			for i: int in 3:
+				var attacker: HeroActor = spawn_bot(2,Vector3(-3+i*3,.1,-5))
 				attacker.controller.target = friend
 	show_notice("EXERCISE %02d  /  %s" % [scenario + 1, SCENARIOS[scenario].to_upper()])
 
@@ -315,4 +323,12 @@ func start_care_drill(id: String) -> void:
 	scenario = 8 if id == "doctor" else 9
 	freeze_ai = false
 	reset_scenario()
+	if menu_open: toggle_menu()
+
+func start_huddle_drill() -> void:
+	select_hero("huddle")
+	scenario = 10
+	freeze_ai = false
+	reset_scenario()
+	show_notice("RMB regroup / E shield the neighbor / Q reach the raised decks / 2 sweep attackers away")
 	if menu_open: toggle_menu()

@@ -76,7 +76,9 @@ func _physics_process(delta: float) -> void:
 	if not alive:
 		return
 	if state not in ["captured", "throw_pair", "mantle"]:
-		if state == "marshal_verdict":
+		if state in ["huddle_wave","huddle_scatter"]:
+			aim_direction = (kit as HuddleKit).travel_direction
+		elif state == "marshal_verdict":
 			aim_direction = (kit as MarshalKit).verdict_direction
 		elif state in ["slayer_boot_start", "slayer_boot_active"]:
 			aim_direction = (kit as SlayerKit).boot_direction
@@ -88,6 +90,7 @@ func _physics_process(delta: float) -> void:
 	if state in ["stagger", "counterthrow", "throw_release"] and state_time <= 0.0:
 		state = "ready"
 	if state == "marshal_shield" and (intent.melee or intent.throw_action or intent.guard): (kit as MarshalKit).lower_barrier()
+	if state == "huddle_regroup" and (intent.melee or intent.throw_action or intent.guard or intent.dash): state = "ready"
 	close.tick(delta, intent)
 	kit.tick(delta, intent)
 	motor.tick(delta, intent)
@@ -96,6 +99,9 @@ func _physics_process(delta: float) -> void:
 
 # One authority boundary: controllers request actions; only components resolve them.
 func permits(action: String) -> bool:
+	if tuning.hero_id == "huddle" and action in ["scatter","screen","regroup","wave"]:
+		if resolver.protected_room(self): return false
+		if action in ["scatter","wave"] and statuses.movement_disabled(): return false
 	if action in ["primary", "melee", "throw", "counter", "bomb", "ultimate", "knife", "boot", "snare", "march", "house_call", "barrier", "deflect"] and resolver.protected_room(self):
 		return false
 	if statuses.movement_disabled() and action in ["dash", "hover", "boot", "jump", "march", "house_call"]:
@@ -110,6 +116,8 @@ func permits(action: String) -> bool:
 		return action in ["primary", "knife", "boot", "snare", "ultimate", "melee", "throw"]
 	if state == "ultimate":
 		return action in ["primary", "aim"]
+	if state == "huddle_regroup":
+		return action in ["primary","reload","scatter","screen","bomb","wave","dash","melee","throw","counter","guard","jump"]
 	if state != "ready":
 		return false
 	if motor.mode in ["dash", "dash_windup"]:
@@ -145,6 +153,8 @@ func die() -> void:
 	died.emit()
 
 func reset_actor(at: Vector3 = Vector3.INF) -> void:
+	for barrier: CombatBarrier in get_tree().get_nodes_in_group("barriers"):
+		if barrier is HuddleScreen and barrier.recipient == self: barrier.retire()
 	benefits.clear_owned()
 	benefits.clear()
 	statuses.clear()

@@ -443,7 +443,7 @@ func lifecycle_tests() -> void:
 		for slot: int in 6:
 			var id: String = HeroRoster.team_hero(slot,hero)
 			counts[id] = counts.get(id,0)+1
-		check(counts == {"marshal":1,"doctor":1,"nimbus":2,"slayer":2} and HeroRoster.team_hero(0,hero) == hero,"balanced team composition for " + hero)
+		check(counts == {"marshal":1,"huddle":1,"doctor":1,"nimbus":1,"slayer":2} and HeroRoster.team_hero(0,hero) == hero,"balanced team composition for " + hero)
 		var runners: int = 0
 		var tank_frontline: bool = true
 		for slot: int in range(1,6):
@@ -585,7 +585,7 @@ func scene_tests() -> void:
 		var counts: Dictionary = {}
 		for actor: HeroActor in city.actors:
 			if actor.team == team: counts[actor.tuning.hero_id] = counts.get(actor.tuning.hero_id,0)+1
-		check(counts == {"marshal":1,"doctor":1,"nimbus":2,"slayer":2},"live city team %d has the intended four-hero composition" % team)
+		check(counts == {"marshal":1,"huddle":1,"doctor":1,"nimbus":1,"slayer":2},"live city team %d has the intended five-hero composition" % team)
 	city.toggle_menu()
 	city.select_hero("doctor")
 	check(not paused and not city.menu_open and city.player.kit is DoctorKit,"city selection from pause restarts into doctor and resumes play")

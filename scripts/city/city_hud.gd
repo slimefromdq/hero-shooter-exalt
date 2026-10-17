@@ -536,13 +536,14 @@ func build_menu() -> void:
 	frame.add_child(root)
 	menu_label(root,"MERIDIAN GARDENS",28,paper)
 	menu_label(root,"MATCH CONSOLE  /  SESSION PAUSED",12,brass)
-	menu_label(root,"6 v 6  ·  Marshal / Doctor / Nimbus / Slayer  ·  First to 100%",15,muted)
+	menu_label(root,"6 v 6  ·  Marshal / Huddle / Doctor / Nimbus / Slayer  ·  First to 100%",15,muted)
 	var hero_row := HBoxContainer.new()
 	hero_row.add_theme_constant_override("separation",10)
 	root.add_child(hero_row)
 	menu_button(hero_row,"PLAY SLAYER / RESTART",func() -> void: match_controller.select_hero("slayer")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	menu_button(hero_row,"PLAY MARSHAL",func() -> void: match_controller.select_hero("marshal")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	menu_button(hero_row,"PLAY DOCTOR",func() -> void: match_controller.select_hero("doctor")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	menu_button(hero_row,"PLAY HUDDLE",func() -> void: match_controller.select_hero("huddle")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	menu_button(hero_row,"PLAY NIMBUS / RESTART",func() -> void: match_controller.select_hero("nimbus")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	menu_button(root,"RETURN TO THE CITY  /  TAB",func() -> void: match_controller.toggle_menu())
 	display_button = menu_button(root,display_settings.button_text(),display_settings.toggle_fullscreen)

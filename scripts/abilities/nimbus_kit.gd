@@ -78,7 +78,7 @@ func fire(ultimate: bool) -> void:
 		var head: bool = not ultimate and endpoint.y - target.global_position.y >= 1.5
 		var amount: float = t.ultimate_damage if ultimate else t.rifle_damage * (t.head_multiplier if head else 1.0)
 		actor.resolver.damage(actor, target, amount, "ultimate" if ultimate else "rifle", cast_id, head, ultimate)
-	elif hit.get("collider") is MarshalBarrier:
+	elif hit.get("collider") is CombatBarrier:
 		hit.collider.receive_damage(actor,t.ultimate_damage if ultimate else t.rifle_damage,cast_id)
 	elif hit.get("collider") is HunterSnare:
 		(hit.collider as HunterSnare).receive_damage(actor,t.ultimate_damage if ultimate else t.rifle_damage,cast_id)

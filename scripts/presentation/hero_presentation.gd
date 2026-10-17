@@ -29,6 +29,8 @@ var muzzle_flash: MeshInstance3D
 var status_label: Label3D
 var status_ring: MeshInstance3D
 var held_knife: Node3D
+var huddle_colony: Node3D
+var huddle_bugs: Array[Node3D] = []
 var care_tool: Node3D
 var held_trap: Node3D
 
@@ -137,7 +139,8 @@ func _ready() -> void:
 	if actor.tuning is SlayerTuning:
 		SlayerVisuals.remodel(self)
 		animator.add_animation_library("slayer",SlayerAnimations.library())
-	if actor.kit is CareKit: CareVisuals.remodel(self)
+	if actor.kit is HuddleKit: HuddleVisuals.remodel(self)
+	elif actor.kit is CareKit: CareVisuals.remodel(self)
 	status_label = Geometry.text3d(self,"",Vector3(0,2.3,0),23,Color("e3b8ff"))
 	status_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	status_label.no_depth_test = false
@@ -272,7 +275,8 @@ func _process(delta: float) -> void:
 		sound.play_tone(70.0, 0.07, 0.1)
 	was_grounded = actor.is_on_floor()
 	if actor.tuning is SlayerTuning: SlayerVisuals.animate(self)
-	if actor.kit is CareKit: CareVisuals.animate(self)
+	if actor.kit is HuddleKit: HuddleVisuals.animate(self)
+	elif actor.kit is CareKit: CareVisuals.animate(self)
 	var status_text: String = CareHUD.status(actor)
 	for effect: String in actor.statuses.effects:
 		status_text += "%s %.1f  " % [effect.replace("max_health","MAX HP WOUND").to_upper(),actor.statuses.effects[effect].remaining]

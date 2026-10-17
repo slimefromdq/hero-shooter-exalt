@@ -68,7 +68,7 @@ func _physics_process(delta: float) -> void:
 	if flying:
 		velocity.y -= t.trap_gravity * delta
 		var barrier_hit: Dictionary = source.resolver.attack_ray(source,global_position,global_position + velocity * delta,[get_rid(),source.get_rid()],1)
-		if barrier_hit.get("collider") is MarshalBarrier:
+		if barrier_hit.get("collider") is CombatBarrier:
 			barrier_hit.collider.receive_damage(source,t.trap_damage,cast_id)
 			queue_free()
 			return

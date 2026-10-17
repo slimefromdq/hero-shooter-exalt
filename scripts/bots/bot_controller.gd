@@ -67,7 +67,7 @@ func gather_intent(delta: float) -> CombatIntent:
 		if sees:
 			remembered_aim = (target.global_position + Vector3.UP * 1.2 - input.aim_origin + Vector3(randf_range(-0.2, 0.2), 0.0, 0)).normalized()
 	input.aim = remembered_aim
-	if actor.kit is CareKit and profile in [7,8]:
+	if actor.kit is CareKit and profile in [7,8,9]:
 		if distance > 7: input.move = path_direction(offset)
 		CareTactics.apply(actor,input)
 		return input

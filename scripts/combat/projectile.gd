@@ -7,6 +7,9 @@ var speed: float = 17.0
 var damage_amount: float = 24.0
 var cast_id: int = 0
 var lifetime: float = 5.0
+var max_distance: float = INF
+var traveled: float = 0.0
+var color: Color = Color("ff765e")
 var reflections: int = 0
 var reflected_events: Dictionary = {}
 
@@ -16,14 +19,16 @@ func _ready() -> void:
 	var ball := SphereMesh.new()
 	ball.radius = 0.1
 	ball.height = 0.2
-	Geometry.mesh(self, ball, Vector3.ZERO, Geometry.material(Color("ff765e"), 1.5))
+	Geometry.mesh(self, ball, Vector3.ZERO, Geometry.material(color, 1.5))
 
 func _physics_process(delta: float) -> void:
 	lifetime -= delta
-	if lifetime <= 0.0 or not is_instance_valid(source) or not source.alive:
+	if lifetime <= 0.0 or traveled >= max_distance or not is_instance_valid(source) or not source.alive:
 		queue_free()
 		return
-	var next: Vector3 = global_position + direction * speed * delta
+	var distance: float = minf(speed*delta,max_distance-traveled)
+	traveled += distance
+	var next: Vector3 = global_position + direction * distance
 	var hit: Dictionary = source.resolver.attack_ray(source, global_position, next, [source.get_rid()])
 	if hit.is_empty():
 		global_position = next
@@ -42,7 +47,7 @@ func _physics_process(delta: float) -> void:
 				global_position = hit["position"] + direction * 0.25
 				return
 	CombatEffect.pulse(get_parent(), hit["position"], Color("ffae81"), 0.28)
-	if hit.get("collider") is MarshalBarrier:
+	if hit.get("collider") is CombatBarrier:
 		hit.collider.receive_damage(source,damage_amount,cast_id)
 	if hit.get("collider") is HunterSnare:
 		(hit.collider as HunterSnare).receive_damage(source,damage_amount,cast_id)

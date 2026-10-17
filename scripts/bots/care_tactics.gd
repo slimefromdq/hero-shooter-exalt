@@ -28,6 +28,9 @@ static func enemy(a: HeroActor) -> HeroActor:
 
 static func apply(a: HeroActor, input: CombatIntent) -> void:
 	if not a.kit is CareKit: return
+	if a.kit is HuddleKit:
+		HuddleTactics.apply(a,input)
+		return
 	input.aim_held = false
 	input.primary = false
 	input.primary_held = false

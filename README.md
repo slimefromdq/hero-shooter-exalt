@@ -1,8 +1,10 @@
 # EXALT · Meridian Gardens
 
-A playable offline **6v6 King of the Hill** hero shooter in a modern fantasy city, with **Nimbus, Slayer, Marshal and Doctor** and a separate hero training arena. Built with original modular geometry and synthesized sound. **Godot 4.7.2 stable** is the verified engine (`4.7.2.stable.official.ed1daf0bf`).
+A playable offline **6v6 King of the Hill** hero shooter in a modern fantasy city, with **Nimbus, Slayer, Marshal, Doctor and Huddle** and a separate hero training arena. Built with original modular geometry and synthesized sound. **Godot 4.7.2 stable** is the verified engine (`4.7.2.stable.official.ed1daf0bf`).
 
-**Play the new tank/support:** run `Launch.ps1 -Marshal` or `Launch.ps1 -Doctor`; add `-Training` for practice. Marshal carries an 8 x 4.5 m / 1,200-durability shield, launches enemies with Forward March, fires a progressing explosion lane, and leaps into a slam covering a 16 m cone. Doctor heals with **right hold**, shoots with **left hold**, leaves lingering treatment, escapes to allies on a 4 s cooldown, cleanses with brief heavy resistance, and empowers one teammate with her ultimate. Both pause menus offer all four heroes; training adds Doctor rounds and Marshal drill. See [kits, controls and rules](docs/MARSHAL_DOCTOR.md).
+**Play Huddle:** run `Launch.ps1 -Huddle`, adding `-Training` for practice. This 600-HP bug colony fires seeds, channels self-healing on RMB, flies in two quick Q bursts, screens an ally with E, pushes threats away with 1, and becomes an advancing enemy-displacing wave with 2. Both menus offer Huddle; training adds **Huddle rescue**. See [Huddle's kit and rules](docs/HUDDLE.md).
+
+**Play the new tank/support:** run `Launch.ps1 -Marshal` or `Launch.ps1 -Doctor`; add `-Training` for practice. Marshal carries an 8 x 4.5 m / 1,200-durability shield, launches enemies with Forward March, fires a progressing explosion lane, and leaps into a slam covering a 16 m cone. Doctor heals with **right hold**, shoots with **left hold**, leaves lingering treatment, escapes to allies on a 4 s cooldown, cleanses with brief heavy resistance, and empowers one teammate with her ultimate. Both pause menus offer all five heroes; training adds Doctor rounds and Marshal drill. See [kits, controls and rules](docs/MARSHAL_DOCTOR.md).
 
 **Play Slayer:** run `Launch.ps1 -Slayer` for the city, or `Launch.ps1 -Training -Slayer`. Both pause menus offer hero selection; training includes **Start Slayer hunt**. Slayer has 275 HP. Q throws trailing silver knives at 75 m/s, E performs a 12 m Boot Rush at 32 m/s with enemy knockback and a fading recovery slow, 1 tosses a snare that arms after 0.75 s even in flight, and 2 launches Heads Will Roll after a 0.55 s windup. The shotgun deals 90 close-range body damage with tight spread and useful midrange reach. Health/shields use a broad lower-screen bar, ammunition also appears beside the crosshair, hits show larger outlined damage numbers, and 4 performs her two-handed lift and slam. See [Slayer controls, tuning and engine validation](docs/SLAYER.md).
 
@@ -22,7 +24,7 @@ The game starts in **borderless fullscreen** at your monitor's native resolution
 
 ## Controls
 
-The table shows Nimbus's kit; [Marshal and Doctor](docs/MARSHAL_DOCTOR.md) use their own mouse and Q/E/1/2 abilities. Shared traversal and close-combat keys apply to every hero.
+The table shows Nimbus's kit; [Marshal and Doctor](docs/MARSHAL_DOCTOR.md) and [Huddle](docs/HUDDLE.md) use their own mouse and Q/E/1/2 abilities. Shared traversal and close-combat keys apply to every hero.
 
 | Input | Action |
 | --- | --- |
@@ -59,7 +61,7 @@ While airborne within **0.72 m** of a wall, press **Space** to kick upward and a
 
 ## Included
 
-- Meridian Gardens: one player and eleven bots across four heroes, navigation across five elevations, fixed-hill capture/contest/scoring, team-only safe rooms, eight-second respawns, ultimate retention, shared health pickups, match HUD, exploration mode and tactical atlas. First to 100% wins after the 20-second unlock and five-second uncontested capture.
+- Meridian Gardens: one player and eleven bots across five heroes, navigation across five elevations, fixed-hill capture/contest/scoring, team-only safe rooms, eight-second respawns, ultimate retention, shared health pickups, match HUD, exploration mode and tactical atlas. First to 100% wins after the 20-second unlock and five-second uncontested capture.
 - Nimbus's complete prototype kit: 45/90 body/head rifle, upward Hover, timed projectile reflection and hitscan blocking, 80-peak bomb with falloff and cover checks, and 150-damage Final Notice with a pre-hit 20% execution check.
 - Shared acceleration, braking, air steering, jump buffering/coyote time, collision-checked mantling, wall jumps, fixed-direction dash, both slide entries, and collision-aware shoulder camera.
 - A 4.8 m committed melee lunge for engages/finishers, finite frontal guard with attacker stagger, interruptible 3.2 m throws, counterthrows, and an articulated pull/hip-lift/turn/slam/get-up animation. Slam damage occurs at impact; both participants retain 90% outside-damage reduction during the pair.

@@ -56,7 +56,7 @@ func weapon(amount: float, spread: float = 0.0, pellets: int = 1) -> void:
 		if target != null:
 			var head: bool = endpoint.y - target.global_position.y >= 1.5
 			actor.resolver.damage(actor,target,damage * (actor.tuning.head_multiplier if head else 1.0),"cannon" if pellets > 1 else "sidearm",id,head,false,muzzle)
-		elif hit.get("collider") is MarshalBarrier or hit.get("collider") is HunterSnare:
+		elif hit.get("collider") is CombatBarrier or hit.get("collider") is HunterSnare:
 			hit.collider.receive_damage(actor,damage,id)
 		CombatEffect.line(actor.get_parent(),muzzle,endpoint,Color("f5cc88") if pellets > 1 else Color("b5f2e3"))
 	actor.presentation.fire_flash = .16

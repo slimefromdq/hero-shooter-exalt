@@ -30,7 +30,7 @@ func _physics_process(delta: float) -> void:
 	body.scale = Vector3.ONE * (1.0 + sin(fuse * 35.0) * 0.18)
 	velocity.y -= 15.0 * delta
 	var shield_hit: Dictionary = source.resolver.attack_ray(source,global_position,global_position + velocity * delta,[get_rid()],1)
-	if shield_hit.get("collider") is MarshalBarrier:
+	if shield_hit.get("collider") is CombatBarrier:
 		global_position = shield_hit.position + shield_hit.normal * .15
 		velocity = velocity.bounce(shield_hit.normal) * .58
 	var collision: KinematicCollision3D = move_and_collide(velocity * delta)
