@@ -59,7 +59,7 @@ func run() -> void:
 		await walk_route("Direct hill stair descent " + str(side),Vector3(0,0,side*26),Vector3(0,-5,side*9))
 		await walk_route("Mall cross-route below hill stair " + str(side),Vector3(0,-5,side*18),Vector3(8,-5,side*18))
 		await walk_route("Station passage below hill stair " + str(side),Vector3(0,-5,side*18),Vector3(0,-5,side*35))
-	await drop_to_roof("Closed apartment gable",Vector3(34,23,48),18.8)
+	await drop_to_roof("Closed apartment gable",Vector3(32.5,23,48),18.8)
 	await drop_to_roof("Garden pavilion vault",Vector3(-34,10,0),6.6)
 	for side: float in [-1.0,1.0]:
 		await walk_route("Flush inner stair landing "+str(side),Vector3(side*17.7,0,-side*17),Vector3(side*23,6.5,side*2.5))

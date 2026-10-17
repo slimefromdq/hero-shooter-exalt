@@ -79,13 +79,13 @@ static func _shop(kit: MeridianArchitecture, side: float, z: float, caption: Str
 	var center: float = side * 12.0
 	var key: String = "rose" if index % 2 == 0 else "blue"
 	kit.box(Vector3(5.7, .018, 6.7), Vector3(center, -4.99, z), "paving_light")
-	kit.box(Vector3(6.3, .24, 7.4), Vector3(center, -1.02, z), "slate", true)
+	kit.box(Vector3(6.3, .3, 7.4), Vector3(center, -1.05, z), "slate", true)
 	for end: float in [-1.0, 1.0]:
 		kit.box(Vector3(6.0, 3.8, .3), Vector3(center, -3.1, z + end * 3.5), key, true)
 		kit.box(Vector3(.55, 3.8, .55), Vector3(front, -3.1, z + end * 3.35), "ivory", true)
 		# Front displays leave a 3.4 m open doorway; rear doors create real through-shops.
 		kit.box(Vector3(.2, 2.6, 1.35), Vector3(front, -3.35, z + end * 2.5), "glass", true)
-		kit.box(Vector3(.35, 3.6, 1.7), Vector3(back, -3.2, z + end * 2.65), key, true)
+		kit.box(Vector3(.35, 3.8, 1.7), Vector3(back, -3.1, z + end * 2.65), key, true)
 	kit.box(Vector3(.5, .52, 7.2), Vector3(front, -1.24, z), "brass", true)
 	kit.box(Vector3(.4, .45, 3.6), Vector3(back, -1.3, z), "ivory", true)
 	kit.label(caption, Vector3(front - side * .29, -1.76, z), 19, Color("f1d4a3"), -side * PI * .5)

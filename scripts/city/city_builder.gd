@@ -155,6 +155,10 @@ func _build_ground_and_subway() -> void:
 		for side: float in [-1.0, 1.0]:
 			architecture.box(Vector3(.25, .7, 11), Vector3(side * 3.05, -.35, sign * 15.5), "stone_dark", true)
 			architecture.lamp(Vector3(side * 3.7, 0, sign * 24), 3.2)
+		for side: float in [-1.0, 1.0]:
+			architecture.box(Vector3(.32, .18, 14), Vector3(side * 3.05, -.09, sign * 17), "ivory", true)
+			architecture.railing(Vector3(side * 3.05, 0, sign * 10), Vector3(side * 3.05, 0, sign * 24))
+		architecture.box(Vector3(6.4, .7, .22), Vector3(0, -.35, sign * 10), "ivory", true)
 		architecture.label("EXCHANGE  /  HILL STAIRS", Vector3(0, 2.2, sign * 24.8), 23, Color("a7ccdb"), 0 if sign > 0 else PI)
 	MeridianShoppingArcade.build(architecture)
 	# Guard perimeter: the city continues visually beyond the actual combat district.
@@ -177,34 +181,59 @@ func _ramp(low: Vector3, high: Vector3, width: float, material_key: String, step
 	var collider := CollisionShape3D.new()
 	collider.shape = shape
 	architecture.collision_body.add_child(collider)
-	# Render the complete six-sided volume used by the convex collider. Previously
-	# only a backwards-wound top existed, leaving stairs invisible from below/sides.
-	var faces := PackedInt32Array([0,1,2, 1,3,2, 4,6,5, 5,6,7, 0,4,1, 1,4,5,
-		2,3,6, 3,7,6, 0,2,4, 2,6,4, 1,5,3, 3,5,7])
-	architecture.polyhedron(points, faces, Vector3.ZERO, material_key, false)
+	# Closed stair shell, with full treads and risers rather than floating stripes.
+	# Centre each tread on the smooth movement hull (maximum offset half a riser).
+	var run_length: float = run.length()
+	if steps:
+		var count: int = ceili(absf(high.y - low.y) / .23)
+		var outline := PackedVector2Array([Vector2(0, 0)])
+		for index: int in count:
+			var tread_height: float = (high.y - low.y) * (index + .5) / count
+			outline.append(Vector2(run_length * index / count, tread_height))
+			outline.append(Vector2(run_length * (index + 1) / count, tread_height))
+		outline.append(Vector2(run_length, high.y - low.y))
+		outline.append(Vector2(run_length, high.y - low.y - .35 if hollow else bottom - low.y))
+		outline.append(Vector2(0, -.35 if hollow else bottom - low.y))
+		var shell: MeshInstance3D = architecture.polygon_prism(outline, width, low, material_key, false)
+		shell.rotation.y = -atan2(run.z, run.x)
+		shell.set_meta("stair_shell", true)
+		shell.set_meta("low", low)
+		shell.set_meta("high", high)
+		shell.set_meta("width", width)
+		# Narrow stone nosings sit on the closed treads, never across an empty flight.
+		for index: int in count:
+			var at: Vector3 = low.lerp(high, (float(index) + .5) / count)
+			at -= run.normalized() * (run_length / count * .5 - .035)
+			architecture.box(Vector3(width, .018, .07), at + Vector3.UP * .009, "trim", false, Vector3(0, -atan2(run.z, run.x) + PI * .5, 0))
+	else:
+		var faces := PackedInt32Array([0,1,2, 1,3,2, 4,6,5, 5,6,7, 0,4,1, 1,4,5,
+			2,3,6, 3,7,6, 0,2,4, 2,6,4, 1,5,3, 3,5,7])
+		architecture.polyhedron(points, faces, Vector3.ZERO, material_key, false)
 	if hollow:
 		for fraction: float in [.35, .75]:
 			var support: Vector3 = low.lerp(high, fraction)
 			if support.y > .5:
 				architecture.box(Vector3(.6, support.y - .25, .6), Vector3(support.x, (support.y - .25) * .5, support.z), "ivory", true)
-	if steps:
-		var count := int(ceil(absf(high.y - low.y) / 0.23))
-		for i in count:
-			var at := low.lerp(high, (float(i) + 0.5) / count)
-			# Thin riser stripes suggest stairs over a smooth collision slope.
-			var rot := -atan2(run.z, run.x)
-			architecture.box(Vector3(width, 0.045, 0.11), at + Vector3(0, 0.025, 0), "trim", false, Vector3(0, rot + PI * 0.5, 0))
-	architecture.railing(low - sideways, high - sideways, 1.1, true)
-	architecture.railing(low + sideways, high + sideways, 1.1, true)
+	architecture.railing(low - sideways, high - sideways, 1.1, true, ceili(absf(high.y - low.y) / .23) if steps else 0)
+	architecture.railing(low + sideways, high + sideways, 1.1, true, ceili(absf(high.y - low.y) / .23) if steps else 0)
 
 func _subway_approach(sign_z: float) -> void:
 	architecture.box(Vector3(6, .4, 17.6), Vector3(0, -5.2, sign_z * 29.6), "paving", true)
 	architecture.box(Vector3(6.4, .3, 14), Vector3(0, -.85, sign_z * 31), "stone_dark", true)
 	for side: float in [-1.0, 1.0]:
 		architecture.box(Vector3(.35, 4.3, 17.6), Vector3(side * 3, -2.85, sign_z * 29.6), "blue", true)
+	# Station stair trenches need foundations as well as the thin street slab.
+	# Finish the rim at street level independently of the descending handrail.
+	for side: float in [-1.0, 1.0]:
+		architecture.box(Vector3(.25, 5.1, 20), Vector3(side * 3.05, -2.45, sign_z * 48), "stone_dark", true)
+		architecture.box(Vector3(.32, .18, 20), Vector3(side * 3.05, -.09, sign_z * 48), "ivory", true)
+		architecture.railing(Vector3(side * 3.05, 0, sign_z * 38), Vector3(side * 3.05, 0, sign_z * 58))
+	architecture.box(Vector3(6.4, .7, .22), Vector3(0, -.35, sign_z * 38), "ivory", true)
 	# Real retaining cheeks close the sides of each descending stair trench.
 	for x: float in [-21.05, -14.95, 14.95, 21.05]:
 		architecture.box(Vector3(.25, 5.1, 20), Vector3(x, -2.45, sign_z * 28), "stone_dark", true)
+		architecture.box(Vector3(.32, .18, 20), Vector3(x, -.09, sign_z * 28), "ivory", true)
+		architecture.railing(Vector3(x, 0, sign_z * 18), Vector3(x, 0, sign_z * 38))
 	for z: float in [24.0, 31.0, 37.0]:
 		architecture.arch(Vector3(0, -2, sign_z * z), 5.7, .8, .22, "ivory", 0, .18)
 		architecture.box(Vector3(.35, .07, 1.8), Vector3(0, -1.2, sign_z * z), "lamp")
@@ -308,6 +337,12 @@ func _build_gardens() -> void:
 		# Two-metre terraces can be climbed, or reached on ordinary short ramps.
 		architecture.box(Vector3(8, 2.0, 7), Vector3(-45, 1, sign * 21), "ivory", true)
 		_ramp(Vector3(-45, 0, sign * 33), Vector3(-45, 2, sign * 24.5), 5.0, "paving_light", true)
+		# Guard the terrace perimeter and leave the entire stair mouth open.
+		architecture.railing(Vector3(-49, 2, sign * 17.5), Vector3(-41, 2, sign * 17.5))
+		for x: float in [-49.0, -41.0]:
+			architecture.railing(Vector3(x, 2, sign * 17.5), Vector3(x, 2, sign * 24.5))
+		architecture.railing(Vector3(-49, 2, sign * 24.5), Vector3(-47.5, 2, sign * 24.5))
+		architecture.railing(Vector3(-42.5, 2, sign * 24.5), Vector3(-41, 2, sign * 24.5))
 		architecture.planter(Vector3(-47.5, 2, sign * 21), Vector3(1.6, 0.65, 5.5))
 		architecture.lamp(Vector3(-44, 2, sign * 20), 3.5)
 		architecture.tree(Vector3(-50, 0, sign * 10), 1.3, true)
@@ -320,7 +355,8 @@ func _build_districts() -> void:
 			_arcade(base, sx, sz)
 			_apartment(Vector3(sx * 57, 0, sz * 42), Vector3(15, 19 + (1 if sx > 0 else 0) * 5, 16), "rose" if sx > 0 else "blue", 3, true)
 			_apartment(Vector3(sx * 56, 0, sz * 15), Vector3(11, 15, 14), "brick" if sx > 0 else "ivory", 3, true)
-			_apartment(Vector3(sx * 34, 0, sz * 48), Vector3(13, 16, 8), "rose" if sz > 0 else "blue", 3, true)
+			# Set back the block so its base and balconies clear the full stair width.
+			_apartment(Vector3(sx * 32.5, 0, sz * 48), Vector3(13, 16, 8), "rose" if sz > 0 else "blue", 3, true)
 	# East shops face a full through arcade. The pack has an opaque streetward back.
 	for z: float in [-10.0, 10.0]:
 		architecture.box(Vector3(10, 4.3, 1.0), Vector3(38, 2.15, z), "rose", true)
@@ -349,7 +385,7 @@ func _arcade(at: Vector3, sx: float, sz: float) -> void:
 	architecture.box(Vector3(10, 0.05, 12), at + Vector3.UP * 0.04, "paving_light")
 	# Opaque outer side and open north/south ends make the pack a tactical pocket.
 	architecture.box(Vector3(0.7, 4.0, 12), at + Vector3(sx * 5, 2, 0), "ivory" if sx < 0 else "rose", true)
-	architecture.box(Vector3(10.7, 0.45, 12.6), at + Vector3.UP * 4.0, "trim")
+	architecture.box(Vector3(10.7, 0.55, 12.6), at + Vector3.UP * 4.05, "trim")
 	architecture.box(Vector3(10.4, 0.35, 12.4), at + Vector3.UP * 4.5, "slate")
 	for z: float in [-4.4, 4.4]:
 		architecture.cylinder(0.35, 3.8, at + Vector3(-sx * 4.2, 1.9, z), "ivory", true)
@@ -401,8 +437,9 @@ func _apartment(at: Vector3, size: Vector3, key: String, floors: int = 4, solid:
 func _build_wizard_study() -> void:
 	# A low, genuinely accessible study under the scenic wizard spire.
 	architecture.box(Vector3(8, 0.4, 11), Vector3(49, 4.0, 28), "ivory", true)
-	_ramp(Vector3(49, 0, 12), Vector3(49, 4.2, 22.5), 4.5, "paving_light", true)
-	_ramp(Vector3(49, 0, 44), Vector3(49, 4.2, 33.5), 4.5, "paving_light", true)
+	# Keep both flights west of the apartments; start beyond the cafe wall.
+	_ramp(Vector3(47, 0, 14), Vector3(47, 4.2, 22.5), 4.0, "paving_light", true)
+	_ramp(Vector3(47, 0, 44), Vector3(47, 4.2, 33.5), 4.0, "paving_light", true)
 	architecture.box(Vector3(0.55, 3.3, 11), Vector3(52.7, 5.85, 28), "ivory", true)
 	architecture.box(Vector3(8, 0.4, 11.7), Vector3(49, 7.7, 28), "slate")
 	for x: float in [45.4, 52.6]:
@@ -416,8 +453,11 @@ func _build_wizard_study() -> void:
 			architecture.box(Vector3(0.35, 0.32, 0.16), Vector3(51.65, 4.82 + shelf * 0.48, 25.5 + book * 0.44), "blue" if book % 2 == 0 else "rose")
 	architecture.cylinder(0.75, 1.1, Vector3(48.5, 4.75, 28), "brass", true)
 	architecture.piece("sphere", Vector3(0.65, 0.65, 0.65), Vector3(48.5, 5.7, 28), "violet")
-	architecture.railing(Vector3(45, 4.2, 23), Vector3(45, 4.2, 26), 1.1)
-	architecture.railing(Vector3(45, 4.2, 30), Vector3(45, 4.2, 33), 1.1)
+	architecture.railing(Vector3(45, 4.2, 22.5), Vector3(45, 4.2, 26), 1.1)
+	architecture.railing(Vector3(45, 4.2, 26), Vector3(45, 4.2, 30), .45)
+	architecture.railing(Vector3(45, 4.2, 30), Vector3(45, 4.2, 33.5), 1.1)
+	for z: float in [22.5, 33.5]:
+		architecture.railing(Vector3(49, 4.2, z), Vector3(52.7, 4.2, z))
 	architecture.label("THE ASTRONOMER’S STUDY", Vector3(44.7, 7.1, 28), 24, Color("c9b3e6"), -PI * 0.5)
 	_wizard_tower(Vector3(57, 0, 28), 26.0, 4.4)
 
@@ -449,7 +489,7 @@ func _build_spawns() -> void:
 		architecture.box(Vector3(9, 0.05, 12), Vector3(7.5, 0.035, z), "paving_light")
 		architecture.box(Vector3(6, 0.05, 8), Vector3(0, 0.035, sign * 62), "paving_light")
 		# Two separated front street exits and the central open subway stair.
-		architecture.box(Vector3(9.5, 1.9, 0.8), Vector3(0, 3.65, sign * 54), "ivory", true)
+		architecture.box(Vector3(9.5, 2.0, 0.8), Vector3(0, 3.7, sign * 54), "ivory", true)
 		for pier_x: float in [-4.4, 4.4]:
 			architecture.box(Vector3(0.7, 2.7, 0.8), Vector3(pier_x, 1.35, sign * 54), "ivory", true)
 		for x: float in [-12.0, 12.0]:
@@ -472,16 +512,17 @@ func _build_spawns() -> void:
 func _build_high_routes() -> void:
 	for sx: float in [-1.0, 1.0]:
 		# Parallel covered viaduct promenades, with two long approaches apiece.
-		architecture.box(Vector3(4.6, 0.45, 42), Vector3(sx * 23, 6.275, 0), "ivory", true)
+		architecture.box(Vector3(4.6, 0.45, 44.5), Vector3(sx * 23, 6.275, 0), "ivory", true)
 		for sz: float in [-1.0, 1.0]:
-			_ramp(Vector3(sx * 42, 0, sz * 46), Vector3(sx * 42, 6.5, sz * 22.25), 4.5, "ivory", true)
+			_ramp(Vector3(sx * 42, 0, sz * 46), Vector3(sx * 42, 6.5, sz * 22.25), 4.5, "ivory", true, true)
 			architecture.box(Vector3(21.5, 0.45, 4.5), Vector3(sx * 33.75, 6.275, sz * 20), "ivory", true)
 			architecture.box(Vector3(1.0, 6.05, 1.0), Vector3(sx * 37.5, 3.025, sz * 20), "ivory", true)
-			architecture.railing(Vector3(sx * 23, 6.5, sz * 22.1), Vector3(sx * 39.5, 6.5, sz * 22.1))
-			architecture.railing(Vector3(sx * 25.3, 6.5, sz * 17.9), Vector3(sx * 39.7, 6.5, sz * 17.9))
+			architecture.railing(Vector3(sx * 20.8, 6.5, sz * 22.25), Vector3(sx * 39.75, 6.5, sz * 22.25))
+			architecture.railing(Vector3(sx * 20.8, 6.5, sz * 18), Vector3(sx * 20.8, 6.5, sz * 22.25))
+			architecture.railing(Vector3(sx * 25.2, 6.5, sz * 17.9), Vector3(sx * 44.25, 6.5, sz * 17.9))
 			architecture.box(Vector3(2.0, 2.2, 1.1), Vector3(sx * 21.8, 7.6, sz * 10), "ivory", true)
 			architecture.planter(Vector3(sx * 30, 6.5, sz * 21.5), Vector3(3.0, 0.85, 0.65), true)
-			architecture.railing(Vector3(sx * 44.4, 6.5, sz * 17.8), Vector3(sx * 44.4, 6.5, sz * 22.25), 1.1)
+			architecture.railing(Vector3(sx * 44.25, 6.5, sz * 17.9), Vector3(sx * 44.25, 6.5, sz * 22.25), 1.1)
 			architecture.lamp(Vector3(sx * 40, 6.5, sz * 20), 3.3)
 		architecture.railing(Vector3(sx * 25.2, 6.5, -18), Vector3(sx * 25.2, 6.5, 18))
 		architecture.railing(Vector3(sx * 20.8, 6.5, -sx * 18), Vector3(sx * 20.8, 6.5, sx * .5))

@@ -2,6 +2,8 @@ extends SceneTree
 ## Compare rendered structural surfaces with physics, independent of their solid flags.
 var missing: Array[Dictionary] = []
 var checked: int = 0
+var winding_checked: int = 0
+var winding_errors: int = 0
 
 func _initialize() -> void:
 	call_deferred("run")
@@ -41,13 +43,33 @@ func inspect_batch(node: Node, world: World3D) -> void:
 	elif node is MeshInstance3D and node.has_meta("material_key"):
 		var mesh_node: MeshInstance3D = node
 		var faces: PackedVector3Array = mesh_node.mesh.get_faces()
+		var arrays: Array = mesh_node.mesh.surface_get_arrays(0)
+		var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+		for index: int in range(0, faces.size(), 3):
+			var geometric: Vector3 = (faces[index+1]-faces[index]).cross(faces[index+2]-faces[index])
+			if geometric.length_squared() < .000001: continue
+			winding_checked += 1
+			if geometric.normalized().dot(normals[index]) > -.99: winding_errors += 1
 		for index: int in range(0, faces.size(), 3):
 			var a: Vector3 = mesh_node.global_transform * faces[index]
 			var b: Vector3 = mesh_node.global_transform * faces[index+1]
 			var c: Vector3 = mesh_node.global_transform * faces[index+2]
 			var cross: Vector3 = (b-a).cross(c-a)
 			if cross.length() > .4:
-				probe(world, (a+b+c)/3, cross.normalized(), "closed_" + str(node.get_meta("material_key")), Vector3.ZERO)
+				var at: Vector3 = (a+b+c)/3
+				var normal: Vector3 = -cross.normalized()
+				if mesh_node.has_meta("stair_shell"):
+					var low: Vector3 = mesh_node.get_meta("low")
+					var high: Vector3 = mesh_node.get_meta("high")
+					var along := Vector3(high.x-low.x, 0, high.z-low.z)
+					var fraction: float = Vector3(at.x-low.x, 0, at.z-low.z).dot(along) / along.length_squared()
+					var slope_height: float = lerpf(low.y, high.y, fraction)
+					# Treads and risers share a smooth movement hull within half a
+					# riser. Measure their vertical support, not a horizontal ray
+					# whose error grows with the tread depth on shallow stairs.
+					if normal.y > -.1 and absf(at.y-slope_height) <= .13:
+						normal = Vector3.UP
+				probe(world, at, normal, "closed_" + str(node.get_meta("material_key")), Vector3.ZERO)
 	for child: Node in node.get_children(): inspect_batch(child, world)
 
 func run() -> void:
@@ -61,14 +83,14 @@ func run() -> void:
 	await physics_frame
 	await process_frame
 	inspect_batch(arena.builder, arena.get_world_3d())
-	print("STRUCTURAL SURFACE AUDIT checked=", checked, " missing=", missing.size())
+	print("STRUCTURAL SURFACE AUDIT checked=", checked, " missing=", missing.size(), " winding=", winding_checked, " winding_errors=", winding_errors)
 	for entry: Dictionary in missing: print(JSON.stringify(entry))
 	var file := FileAccess.open("res://artifacts/city-geometry-audit.json", FileAccess.WRITE)
-	file.store_string(JSON.stringify({"checked": checked, "missing": missing}, "\t"))
+	file.store_string(JSON.stringify({"checked": checked, "missing": missing, "winding_checked": winding_checked, "winding_errors": winding_errors}, "\t"))
 	# Let an outstanding asynchronous bake finish before freeing its source geometry.
 	var started: int = Time.get_ticks_msec()
 	while not arena.match_controller.navigation_ready and Time.get_ticks_msec() - started < 30000:
 		await process_frame
 	arena.queue_free()
 	await process_frame
-	quit(0 if missing.is_empty() else 1)
+	quit(0 if missing.is_empty() and winding_errors == 0 else 1)

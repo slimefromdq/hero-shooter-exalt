@@ -1,6 +1,34 @@
 # Meridian Gardens: geometry and Exchange revision
 
-This revision audits the physical city and rebuilds the space beneath the control point as **Lower Meridian Exchange**, a covered shopping concourse at Y = −5 m.
+The original revision audited the physical city and rebuilt the space beneath the control point as **Lower Meridian Exchange**, a covered shopping concourse at Y = −5 m.
+
+## Whole-district follow-up - 17 October 2026
+
+The wider pass covers all 18 authored flights, their approach lanes and landing exits, all four promenade corners, garden terraces, both study entries, approach arcades, shops, balconies and spawn thresholds.
+
+- Sloped railings now use vertical swept collision matching their posts; rotated boxes previously leaned across landing ends. Intermediate stair posts meet the actual treads, and low rails have distinct crossbars below the handrail.
+- Promenade decks extend to their corner bridges. Closing edge rails join the stair guards without crossing the stair mouths; all four inside corners have continuous floor support.
+- The four approach apartment blocks are set back 1.5 m to clear the outer stair edges. Both study flights move to X = 47 m with a 4 m width; the north flight starts at Z = 14 m to clear the cafe wall. The existing study deck remains at Y = 4.2 m.
+- Garden terraces and the study deck have perimeter guards with open stair mouths. The study keeps a low central firing rail.
+- Approach arcade roof layers, underground shop walls/ceilings and spawn lintels now meet without thin open seams.
+
+`city_route_audit.gd` checks standing-width clearance independently of navigation, walks each flight in both directions, crosses the four bridge corners and approach arcades, and traverses the study from both ends. `city_railing_test.gd` checks ascending, descending, horizontal and diagonal barriers against the visible vertical-post envelope, including empty space immediately beyond their ends. Both are included in `tools/verify.ps1`. Close renders now also cover the terraces, study entrances, promenade corners and shop joins (`geometry-05` through `geometry-10`).
+
+Validation: 166 full-map route checks and 14 railing checks pass. The structural audit reports 2,480 exposed probes and 4,348 triangle-winding checks, with no missing contacts or winding errors. City integration retains 70 passing checks and arcade acceptance passes 110 checks using the relocated apartment roof peak: 360 gameplay/route checks total, in addition to the structural and winding probes. Ten close engine views were inspected.
+
+## Screenshot follow-up - 17 October 2026
+
+The screenshot examples exposed a rendering defect that collision-only probes did not detect: the custom mesh triangles used counterclockwise visual winding with outward normals, so their outside faces were culled. The shared polyhedron builder now emits clockwise render triangles while preserving outward lighting normals and existing collision faces. This also corrects custom gable and railway surfaces.
+
+Every stair flight now has a closed tread-and-riser shell and narrow nosings attached to those treads. A smooth collision hull keeps movement continuous; each tread differs vertically from the hull by at most half a riser (less than 0.115 m). Outer promenade approaches use 0.35 m slabs and ground-supported columns instead of filled wedges. Station trenches now have full retaining cheeks. Station, corner and hill stair openings have stone rim edges and street-level guardrails in addition to their descending handrails.
+
+The updated audit checks render winding against lighting normals and samples the outward sides of custom meshes. Stair tread/riser support is measured vertically against the smooth hull. Final results: **2,440 surface probes, zero missing contacts; 4,348 triangle-winding checks, zero errors; 110 physical arcade acceptance checks pass**. Close engine renders were inspected from above the inner flight, down the station stairs, beside an outer flight and along a hill opening. Reproduce those views with:
+
+```text
+godot --path . --script res://tests/capture_city_geometry.gd --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+```
+
+Captures are saved as `artifacts/city-frames/geometry-01-inner-stair-top.png` through `geometry-04-hill-stair-rim.png`. The following sections describe the earlier revision; the conservatory roof has since been removed and two hill-approach stairs added as documented in the field guide.
 
 ## Structural corrections
 
