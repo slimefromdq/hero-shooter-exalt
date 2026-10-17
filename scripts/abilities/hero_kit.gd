@@ -28,7 +28,7 @@ func fire_projectile(direction: Vector3) -> void:
 	var projectile := CombatProjectile.new()
 	projectile.source = actor
 	projectile.direction = direction
-	projectile.cast_id = actor.resolver.new_cast()
+	projectile.cast_id = actor.resolver.new_cast(actor)
 	actor.get_parent().add_child(projectile)
 	projectile.global_position = safe_muzzle()
 	shot_cd = 1.1

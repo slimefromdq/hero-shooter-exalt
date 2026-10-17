@@ -22,6 +22,7 @@ var panel_style: StyleBoxFlat
 var light_style: StyleBoxFlat
 var display_settings: Node
 var display_button: Button
+var portraits: Dictionary = {}
 var numbers: DamageNumbers
 
 func show_hit(amount: float, head: bool, executed: bool = false) -> void:
@@ -55,6 +56,8 @@ func _ready() -> void:
 	numbers.font = bold
 	canvas.add_child(numbers)
 	display_settings = get_node("/root/DisplaySettings")
+	for hero: String in HeroRoster.IDS:
+		portraits[hero] = load("res://assets/portraits/" + hero + ".png") as Texture2D
 	build_menu()
 
 func refresh_display_button() -> void:
@@ -95,55 +98,13 @@ func draw_hud() -> void:
 	canvas.draw_set_transform_matrix(HUDLayout.fit(canvas.size, Vector2(1600,900)))
 	var m: Node = match_controller
 	var p: HeroActor = m.player
-	var hill: Node = m.hill
-	# The city title stays compact so the landmark and approach remain visible.
-	panel(Vector2(28,25),Vector2(278,64))
-	canvas.draw_line(Vector2(43,40),Vector2(43,73),brass,2,true)
-	text("MERIDIAN GARDENS",Vector2(57,51),20,paper,true)
-	text("EXALT  /  KING OF THE HILL",Vector2(58,72),10,brass)
-	panel(Vector2(579,25),Vector2(442,93))
-	box(Vector2(579,25),Vector2(5,93),mint)
-	box(Vector2(1016,25),Vector2(5,93),coral)
-	centered("LANTERN",Vector2(640,49),10,mint,true)
-	centered("CROWN",Vector2(960,49),10,coral,true)
-	centered("%02d%%" % floori(hill.scores[0]),Vector2(640,84),28,paper,true)
-	centered("%02d%%" % floori(hill.scores[1]),Vector2(960,84),28,paper,true)
-	var status: String = "CELESTIAL CONSERVATORY"
-	var state_color: Color = brass
-	if m.winner >= 0:
-		status = "LANTERN VICTORY" if m.winner == 0 else "CROWN VICTORY"
-		state_color = mint if m.winner == 0 else coral
-	elif m.exploration:
-		status = "EXPLORATION / AI PAUSED"
-	elif not hill.unlocked:
-		status = "UNLOCKS IN %02d" % ceili(hill.unlock_remaining)
-	elif hill.contested:
-		status = "CONTESTED"
-		state_color = coral
-	elif hill.capturing_team >= 0:
-		status = "CAPTURING" if hill.capturing_team == p.team else "ENEMY CAPTURING"
-		state_color = mint if hill.capturing_team == p.team else coral
-	elif hill.owner_team >= 0:
-		status = "LANTERN CONTROL" if hill.owner_team == 0 else "CROWN CONTROL"
-		state_color = mint if hill.owner_team == 0 else coral
-	centered("A",Vector2(800,55),27,state_color,true)
-	centered(status,Vector2(800,79),10,state_color,true)
-	box(Vector2(709,92),Vector2(182,4),Color("394550"))
-	box(Vector2(709,92),Vector2(182 * hill.capture_progress,4),state_color)
-	for team: int in 2:
-		for index: int in 6:
-			var at := Vector2(603 + index * 12,103) if team == 0 else Vector2(933 + index * 12,103)
-			canvas.draw_circle(at,2.5,(mint if team == 0 else coral) if index < m.team_count(team) else Color("45515b"))
-	panel(Vector2(1360,25),Vector2(212,37))
-	text("M  MAP     TAB  PAUSE",Vector2(1375,49),12,paper,true)
+	draw_topbar(p)
 	if m.debug_view:
-		panel(Vector2(1360,71),Vector2(212,63))
-		text("%d FPS  ·  %02d:%02d" % [Engine.get_frames_per_second(),int(m.elapsed) / 60,int(m.elapsed) % 60],Vector2(1374,96),13,mint)
-		text("F3  ROUTES / RESOURCES",Vector2(1374,118),10,muted)
+		text("%d FPS  /  F3 ROUTES & RESOURCES" % Engine.get_frames_per_second(),Vector2(28,177),11,mint)
 	if p.spawn_protected and p.alive:
-		centered("SPAWN / +200 HP PER SECOND / WEAPONS LOCKED" if m.spawn_contains(p.global_position,p.team) else "PROTECTED ARRIVAL / WEAPONS LOCKED",Vector2(800,154),13,mint,true)
+		centered("SPAWN / +200 HP PER SECOND / WEAPONS LOCKED" if m.spawn_contains(p.global_position,p.team) else "PROTECTED ARRIVAL / WEAPONS LOCKED",Vector2(800,190),13,mint,true)
 	elif m.notice_time > 0:
-		centered(m.notice,Vector2(800,154),14,brass,true)
+		centered(m.notice,Vector2(800,190),14,brass,true)
 	if p.alive and not m.menu_open and not overview_open:
 		draw_crosshair(p)
 	draw_player_rail(p)
@@ -168,9 +129,9 @@ func draw_hud() -> void:
 func draw_combat_feed(p: HeroActor) -> void:
 	var feedback: MatchFeedback = match_controller.feedback
 	if feedback == null: return
-	panel(Vector2(28,98),Vector2(500,48))
-	text("[+] CYAN: LANTERN / YOUR TEAM     [!] RED: CROWN / ENEMY",Vector2(32,114),11,paper,true)
-	text("%d KILLS   %d ASSISTS   /   %d STREAK" % [feedback.kills,feedback.assists,int(feedback.streaks.get(p.get_instance_id(),0))],Vector2(32,136),11,mint,true)
+	panel(Vector2(28,201),Vector2(500,48))
+	text("[+] CYAN: LANTERN / YOUR TEAM     [!] RED: CROWN / ENEMY",Vector2(32,217),11,paper,true)
+	text("%d KILLS   %d ASSISTS   /   %d STREAK" % [feedback.kills,feedback.assists,int(feedback.streaks.get(p.get_instance_id(),0))],Vector2(32,239),11,mint,true)
 	for index: int in feedback.feed.size():
 		var entry: Dictionary = feedback.feed[feedback.feed.size() - 1 - index]
 		var y: float = 175 + index * 68
@@ -187,6 +148,85 @@ func draw_combat_feed(p: HeroActor) -> void:
 		for index: int in lines.size():
 			centered(lines[index],Vector2(800,552+index*27),21 if index == 0 else 15,brass,true)
 
+# Six stable actor slots per side; deaths never reorder the roster.
+func draw_topbar(p: HeroActor) -> void:
+	var m: Node = match_controller
+	var hill: CityHill = m.hill
+	for side: int in 2:
+		var team: int = p.team if side == 0 else 1 - p.team
+		var accent: Color = mint if team == 0 else coral
+		var start: float = 28.0 if side == 0 else 1116.0
+		text(("LANTERN" if team == 0 else "CROWN") + (" / YOUR TEAM" if side == 0 else " / ENEMY TEAM"),Vector2(start,22),10,accent,true)
+		var slot: int = 0
+		for actor: HeroActor in m.actors:
+			if not is_instance_valid(actor) or actor.team != team:
+				continue
+			draw_team_slot(actor,Vector2(start + slot * 77,30),side == 0,accent,actor == p)
+			slot += 1
+			if slot == 6: break
+	panel(Vector2(510,24),Vector2(580,108))
+	centered("%02d:%02d" % [int(m.elapsed) / 60,int(m.elapsed) % 60],Vector2(800,55),27,paper,true)
+	centered("MERIDIAN GARDENS / KING OF THE HILL",Vector2(800,73),9,muted,true)
+	var status: String = "CELESTIAL CONSERVATORY"
+	var state_color: Color = brass
+	if m.winner >= 0:
+		status = "LANTERN VICTORY" if m.winner == 0 else "CROWN VICTORY"
+		state_color = mint if m.winner == 0 else coral
+	elif m.exploration:
+		status = "EXPLORATION / AI PAUSED"
+	elif not hill.unlocked:
+		status = "UNLOCKS IN %02d" % ceili(hill.unlock_remaining)
+	elif hill.contested:
+		status = "CONTESTED"
+		state_color = coral
+	elif hill.capturing_team >= 0:
+		status = "CAPTURING" if hill.capturing_team == p.team else "ENEMY CAPTURING"
+		state_color = mint if hill.capturing_team == 0 else coral
+	elif hill.owner_team >= 0:
+		status = "LANTERN CONTROL" if hill.owner_team == 0 else "CROWN CONTROL"
+		state_color = mint if hill.owner_team == 0 else coral
+	for side: int in 2:
+		var team: int = p.team if side == 0 else 1 - p.team
+		var accent: Color = mint if team == 0 else coral
+		var x: float = 528.0 if side == 0 else 910.0
+		centered("%d%%" % floori(hill.scores[team]),Vector2(x + 81,58),25,accent,true)
+		box(Vector2(x,81),Vector2(162,7),Color("394550"))
+		var fill: float = 162 * clampf(hill.scores[team] / m.definition.score_to_win,0,1)
+		box(Vector2(x if side == 0 else x + 162 - fill,81),Vector2(fill,7),accent)
+		if hill.owner_team == team:
+			centered("CONTROLLING",Vector2(x + 81,104),9,accent,true)
+	centered("A / " + status,Vector2(800,105),10,state_color,true)
+	box(Vector2(707,116),Vector2(186,4),Color("394550"))
+	box(Vector2(707,116),Vector2(186 * clampf(hill.capture_progress,0,1),4),state_color)
+	text("M  MAP   /   TAB  PAUSE",Vector2(1393,161),10,muted)
+
+func draw_team_slot(actor: HeroActor, at: Vector2, friendly: bool, accent: Color, local: bool) -> void:
+	panel(at,Vector2(71,143 if friendly else 82))
+	var portrait: Texture2D = portraits.get(actor.tuning.hero_id)
+	if portrait != null:
+		var source_size: Vector2 = portrait.get_size()
+		var source_width: float = source_size.y * 69.0 / 79.0
+		canvas.draw_texture_rect_region(portrait,Rect2(at + Vector2(1,1),Vector2(69,79)),Rect2(Vector2((source_size.x - source_width) * .5,0),Vector2(source_width,source_size.y)))
+	box(at,Vector2(71,3),paper if local else accent)
+	box(at + Vector2(1,65),Vector2(69,16),Color(.025,.04,.06,.9))
+	centered(actor.tuning.hero_id.to_upper(),at + Vector2(35,77),10,paper,true)
+	if not actor.alive:
+		box(at + Vector2(0,3),Vector2(71,78),Color(0.025,0.04,0.06,.78))
+		centered("%d" % ceili(match_controller.respawn_remaining(actor)),at + Vector2(35,40),25,coral,true)
+		centered("RESPAWN",at + Vector2(35,60),9,paper,true)
+	if friendly:
+		var hp: float = clampf(actor.health / maxf(1,actor.effective_max_health()),0,1) if actor.alive else 0.0
+		box(at + Vector2(4,85),Vector2(63,7),Color("394550"))
+		box(at + Vector2(4,85),Vector2(63 * hp,7),coral if hp < .3 else health_green)
+		centered("%d HP" % ceili(actor.health if actor.alive else 0),at + Vector2(35,108),14,paper,true)
+		var charge: float = clampf(actor.kit.ultimate_charge,0,100)
+		box(at + Vector2(4,115),Vector2(63,4),Color("394550"))
+		box(at + Vector2(4,115),Vector2(63 * charge / 100,4),brass)
+		centered("ULT READY" if charge >= 100 else "ULT %d%%" % floori(charge),at + Vector2(35,136),12 if charge >= 100 else 14,brass,true)
+	if local:
+		box(at + Vector2(3,5),Vector2(27,14),ink)
+		text("YOU",at + Vector2(6,16),10,paper,true)
+
 func draw_crosshair(p: HeroActor) -> void:
 	var center := Vector2(800,450)
 	var color: Color = paper if p.permits("primary") else brass
@@ -196,6 +236,7 @@ func draw_crosshair(p: HeroActor) -> void:
 		canvas.draw_line(center + direction * (7+bloom),center + direction * (13+bloom),color,1.5)
 	canvas.draw_circle(center,1.3,color)
 	if p.alive and not match_controller.menu_open: CombatHUD.ammo(canvas,p,bold,center)
+	draw_reticle_resources(p,center)
 	if hit_timer > 0:
 		for direction: Vector2 in [Vector2(-1,-1),Vector2(1,-1),Vector2(-1,1),Vector2(1,1)]:
 			canvas.draw_line(center + direction * 17,center + direction * 24,coral if hit_head else mint,2.5,true)
@@ -204,57 +245,109 @@ func draw_crosshair(p: HeroActor) -> void:
 		canvas.draw_arc(center,180,-PI/2,-PI/2 + TAU * minf(1,p.kit.ultimate_age / p.tuning.ultimate_preparation),72,mint,2,true)
 		centered("FINAL NOTICE / PREPARING" if p.kit.ultimate_age < p.tuning.ultimate_preparation else "FINAL NOTICE / ACQUIRED",Vector2(800,650),13,mint,true)
 
+# Dash sits below the ammunition, leaving room for its reload prompt.
+func draw_reticle_resources(p: HeroActor, center: Vector2) -> void:
+	var at: Vector2 = center + Vector2(68,53)
+	var ready: bool = p.motor.dash_cd <= 0
+	var accent: Color = mint if ready else muted
+	canvas.draw_circle(at,15,Color(.025,.05,.075,.9))
+	canvas.draw_arc(at,14,-PI/2,-PI/2 + TAU,40,Color("394550"),2,true)
+	var progress: float = 1 - clampf(p.motor.dash_cd / maxf(.01,p.tuning.dash_cooldown),0,1)
+	if progress > 0:
+		canvas.draw_arc(at,14,-PI/2,-PI/2 + TAU * progress,40,accent,2,true)
+	draw_ability_glyph("dash",at,accent,.55)
+	if p.state == "guard":
+		# The open right edge keeps the ammo counter clear; only the arc carries guard state.
+		var start: float = PI * .15
+		var sweep: float = PI * 1.7
+		var fraction: float = clampf(p.close.guard_meter / 100,0,1)
+		canvas.draw_arc(center,22,start,start + sweep,64,Color(.025,.05,.075,.85),4,true)
+		canvas.draw_arc(center,22,start,start + sweep,64,Color("394550"),2,true)
+		if fraction > 0:
+			canvas.draw_arc(center,22,start,start + sweep * fraction,64,mint if fraction > .25 else coral,2,true)
+
 func draw_player_rail(p: HeroActor) -> void:
-	CombatHUD.vitals(canvas,p,font,bold,Vector2(32,816))
-	panel(Vector2(450,760),Vector2(150,108))
-	text("STREET SWEEPER" if p.kit is SlayerKit else "UMBRELLA RIFLE",Vector2(464,784),10,muted,true)
-	text("%02d" % p.kit.ammo,Vector2(464,826),34,paper,true)
-	text("/ %02d" % p.tuning.magazine,Vector2(523,822),15,muted)
-	text("R  RELOAD" if p.state != "reload" else "RELOADING %.1f" % p.state_time,Vector2(464,849),10,brass)
-	ability(612,"3","VECTOR DASH",p.motor.dash_cd,p.tuning.dash_cooldown)
-	if p.kit is SlayerKit:
+	var origin := Vector2(600,764)
+	panel(origin - Vector2(8,30),Vector2(420,57))
+	text(p.tuning.hero_id.to_upper(),origin + Vector2(2,-12),12,paper,true)
+	text("%d / %d HP" % [ceili(p.health if p.alive else 0),p.effective_max_health()],origin + Vector2(263,-12),15,paper,true)
+	box(origin,Vector2(404,16),Color("25452d"))
+	var hp: float = clampf(p.health / p.tuning.max_health,0,1) if p.alive else 0.0
+	box(origin,Vector2(404 * hp,16),health_green if hp > .25 else coral)
+	var ceiling: float = p.effective_max_health() / p.tuning.max_health
+	if ceiling < 1:
+		box(origin + Vector2(404 * ceiling,0),Vector2(404 * (1 - ceiling),16),Color("a166cc"))
+	if p.shields > 0:
+		box(origin + Vector2(0,19),Vector2(404 * clampf(p.shields / p.tuning.max_health,0,1),4),mint)
+		text("+%d SHIELD" % ceili(p.shields),origin + Vector2(132,-12),11,mint,true)
+	if p.kit is CareKit:
+		var labels: Array[String] = CareHUD.labels(p)
+		var times: Array[float] = CareHUD.cooldowns(p)
+		for i: int in 3: ability(600+i*104,TrainingInputs.key_label(["hover","deflect","bomb"][i]),labels[i],times[i],CareHUD.durations(p)[i],["boot","shield","bomb"][i])
+	elif p.kit is SlayerKit:
 		var hunter := p.kit as SlayerKit
 		var t := p.tuning as SlayerTuning
-		ability(744,TrainingInputs.key_label("hover"),"SILVER KNIVES %d/%d" % [hunter.knives,t.knife_charges],0 if hunter.knives > 0 else hunter.knife_timer,t.knife_recharge)
-		ability(876,TrainingInputs.key_label("deflect"),"BOOT RUSH",hunter.deflect_cd,t.boot_cooldown)
-		ability(1008,TrainingInputs.key_label("bomb"),"TOSS SNARE %d/%d" % [hunter.snares,t.trap_limit],0 if hunter.snares > 0 else hunter.snare_timer,t.trap_recharge)
+		ability(600,TrainingInputs.key_label("hover"),"SILVER KNIVES",0 if hunter.knives > 0 else hunter.knife_timer,t.knife_recharge,"knife","%d/%d" % [hunter.knives,t.knife_charges])
+		ability(704,TrainingInputs.key_label("deflect"),"BOOT RUSH",hunter.deflect_cd,t.boot_cooldown,"boot")
+		ability(808,TrainingInputs.key_label("bomb"),"TOSS SNARE",0 if hunter.snares > 0 else hunter.snare_timer,t.trap_recharge,"trap","%d/%d" % [hunter.snares,t.trap_limit])
 	else:
-		ability(744,"Q","UMBRELLA VAULT",p.motor.hover_cd,p.tuning.hover_cooldown)
-		ability(876,"E","DEFLECT",p.kit.deflect_cd,p.tuning.deflect_cooldown)
-		ability(1008,"1","POCKET BOMB",p.kit.bomb_cd,p.tuning.bomb_cooldown)
-	panel(Vector2(1140,760),Vector2(186,108))
-	text("2  HEADS WILL ROLL" if p.kit is SlayerKit else "2  FINAL NOTICE",Vector2(1154,784),11,brass,true)
-	text("READY" if p.kit.ultimate_charge >= 100 else "%02d%%" % int(p.kit.ultimate_charge),Vector2(1154,824),28,mint if p.kit.ultimate_charge >= 100 else paper,true)
-	box(Vector2(1154,846),Vector2(158,4),Color("3a4853"))
-	box(Vector2(1154,846),Vector2(158 * p.kit.ultimate_charge / 100.0,4),brass)
-	panel(Vector2(1340,760),Vector2(232,108))
-	text("6  GUARD",Vector2(1352,786),12,paper,true)
-	box(Vector2(1450,778),Vector2(106,4),Color("3a4853"))
-	box(Vector2(1450,778),Vector2(106 * p.close.guard_meter / 100.0,4),mint)
-	text("5  MELEE",Vector2(1352,817),11,muted)
-	text("4  GRAB / SLAM",Vector2(1450,817),10,muted)
-	text("SHIFT  CROUCH / SLIDE",Vector2(1352,849),11,brass)
-	text("WASD  MOVE    SPACE  JUMP / WALL KICK    HOLD SPACE + MOVE  AUTO MANTLE",Vector2(30,889),10,muted)
-	text("F5  RESTART     M  MAP     F3  DEBUG",Vector2(1327,889),10,muted)
-	var status_text: String = ""
+		ability(600,TrainingInputs.key_label("hover"),"UMBRELLA VAULT",p.motor.hover_cd,p.tuning.hover_cooldown,"umbrella")
+		ability(704,TrainingInputs.key_label("deflect"),"DEFLECT",p.kit.deflect_cd,p.tuning.deflect_cooldown,"shield")
+		ability(808,TrainingInputs.key_label("bomb"),"POCKET BOMB",p.kit.bomb_cd,p.tuning.bomb_cooldown,"bomb")
+	var charge: float = clampf(p.kit.ultimate_charge,0,100)
+	ability(912,TrainingInputs.key_label("ultimate"),CareHUD.ultimate_label(p),100-charge,100,"axe" if p.kit is SlayerKit else "scope","READY" if charge >= 100 else "%d%%" % floori(charge),true)
+	var status_text: String = CareHUD.detail(p) + "  " + CareHUD.status(p)
 	for kind: String in p.statuses.effects:
 		status_text += "%s %.1fs   " % [kind.replace("max_health","MAX HP WOUND").to_upper(),p.statuses.effects[kind].remaining]
-	if status_text != "": centered(status_text,Vector2(800,690),15,coral,true)
+	if status_text != "": centered(status_text,Vector2(800,704),15,coral,true)
 	if p.kit is SlayerKit:
 		var hunter := p.kit as SlayerKit
-		centered("Q KNIVES   /   E BOOT RUSH   /   1 TOSS SNARE   /   4 GRAB AND SLAM",Vector2(800,730),11,muted)
 		if hunter.action_hint_time > 0:
 			centered(hunter.action_hint,Vector2(800,620),18,brass,true)
 		elif hunter.boot_slow_time > 0:
 			centered("BOOT RECOVERY / SPEED %d%%" % roundi(hunter.movement_scale() * 100),Vector2(800,690),14,paper,true)
 
-func ability(x: float, key: String, caption: String, cd: float, total: float) -> void:
-	panel(Vector2(x,760),Vector2(120,108))
-	text(key,Vector2(x + 13,790),20,paper,true)
-	text(caption,Vector2(x + 13,815),9,muted)
-	text("READY" if cd <= 0 else "%.1f s" % cd,Vector2(x + 13,837),11,mint if cd <= 0 else brass,true)
-	box(Vector2(x + 13,847),Vector2(94,3),Color("3a4853"))
-	box(Vector2(x + 13,847),Vector2(94 * (1 - clampf(cd / maxf(.01,total),0,1)),3),mint)
+func ability(x: float, key: String, caption: String, cd: float, total: float, glyph: String, detail: String = "", ultimate: bool = false) -> void:
+	var at := Vector2(x,804)
+	var accent: Color = brass if ultimate else (mint if cd <= 0 else muted)
+	panel(at,Vector2(92,67))
+	text(key,at + Vector2(7,15),12,paper,true)
+	draw_ability_glyph(glyph,at + Vector2(48,25),accent)
+	centered(detail if detail != "" else ("READY" if cd <= 0 else "%.1f s" % cd),at + Vector2(46,56),14,accent,true)
+	box(at + Vector2(6,62),Vector2(80,3),Color("394550"))
+	box(at + Vector2(6,62),Vector2(80 * (1 - clampf(cd / maxf(.01,total),0,1)),3),accent)
+	centered(caption,at + Vector2(46,81),9,paper,true)
+
+# Small, consistent line icons remain sharp at every HUD scale.
+func draw_ability_glyph(kind: String, at: Vector2, color: Color, scale: float = 1.0) -> void:
+	var strokes: Array[PackedVector2Array] = []
+	match kind:
+		"dash":
+			strokes = [PackedVector2Array([-Vector2(14,8),Vector2(-5,0),Vector2(-14,-8)]),PackedVector2Array([Vector2(-3,8),Vector2(6,0),Vector2(-3,-8)]),PackedVector2Array([Vector2(8,8),Vector2(17,0),Vector2(8,-8)])]
+		"knife":
+			strokes = [PackedVector2Array([Vector2(-10,13),Vector2(12,-14),Vector2(7,3),Vector2(-10,13)]),PackedVector2Array([Vector2(-13,6),Vector2(-3,14)]),PackedVector2Array([Vector2(-8,11),Vector2(-14,18)])]
+		"boot":
+			strokes = [PackedVector2Array([Vector2(-9,-14),Vector2(3,-14),Vector2(3,2),Vector2(14,7),Vector2(14,13),Vector2(-11,13),Vector2(-9,-14)]),PackedVector2Array([Vector2(-17,-3),Vector2(-12,-3)]),PackedVector2Array([Vector2(-19,4),Vector2(-14,4)])]
+		"trap":
+			strokes = [PackedVector2Array([Vector2(-17,3),Vector2(-10,14),Vector2(10,14),Vector2(17,3)]),PackedVector2Array([Vector2(-14,-7),Vector2(-8,2),Vector2(-4,-7),Vector2(0,2),Vector2(5,-7),Vector2(9,2),Vector2(14,-7)])]
+		"umbrella":
+			strokes = [PackedVector2Array([Vector2(-17,-1),Vector2(-12,-10),Vector2(0,-15),Vector2(12,-10),Vector2(17,-1),Vector2(-17,-1)]),PackedVector2Array([Vector2(0,-15),Vector2(0,13),Vector2(5,17),Vector2(10,13)])]
+		"shield":
+			strokes = [PackedVector2Array([Vector2(0,-16),Vector2(15,-10),Vector2(12,7),Vector2(0,17),Vector2(-12,7),Vector2(-15,-10),Vector2(0,-16)]),PackedVector2Array([Vector2(-6,0),Vector2(-1,5),Vector2(8,-5)])]
+		"bomb":
+			canvas.draw_arc(at + Vector2(0,4) * scale,12 * scale,0,TAU,24,color,2,true)
+			strokes = [PackedVector2Array([Vector2(0,-8),Vector2(4,-15),Vector2(11,-15)]),PackedVector2Array([Vector2(14,-19),Vector2(16,-15),Vector2(20,-13)])]
+		"axe":
+			strokes = [PackedVector2Array([Vector2(-11,17),Vector2(9,-15)]),PackedVector2Array([Vector2(-3,-9),Vector2(-12,-5),Vector2(-8,6),Vector2(3,3),Vector2(11,9),Vector2(18,-1),Vector2(10,-5)])]
+		"scope":
+			canvas.draw_arc(at,12 * scale,0,TAU,24,color,2,true)
+			strokes = [PackedVector2Array([Vector2(-18,0),Vector2(-6,0)]),PackedVector2Array([Vector2(6,0),Vector2(18,0)]),PackedVector2Array([Vector2(0,-18),Vector2(0,-6)]),PackedVector2Array([Vector2(0,6),Vector2(0,18)])]
+	for stroke: PackedVector2Array in strokes:
+		var points := PackedVector2Array()
+		for point: Vector2 in stroke:
+			points.append(at + point * scale)
+		canvas.draw_polyline(points,Color(.025,.04,.06,.9),4,true)
+		canvas.draw_polyline(points,color,2,true)
 
 func map_point(point: Vector3, bounds: Rect2) -> Vector2:
 	return bounds.position + Vector2((point.x + 72.0) / 144.0,(point.z + 66.0) / 132.0) * bounds.size
@@ -289,6 +382,8 @@ func draw_overview() -> void:
 	map_rect(Vector3.ZERO,Vector2(44,42),bounds,Color("334c4a"))
 	map_rect(Vector3.ZERO,Vector2(30,28),bounds,Color("475b5c"))
 	map_rect(Vector3.ZERO,Vector2(20,18),bounds,Color("b7b69b"),false)
+	for side: float in [-1.0, 1.0]:
+		map_rect(Vector3(0,0,side*17),Vector2(5.6,14),bounds,Color("547f91"))
 	canvas.draw_circle(map_point(Vector3.ZERO,bounds),10,brass)
 	for side: int in [-1,1]:
 		map_rect(Vector3(0,0,side * 60),Vector2(29,11),bounds,Color("294a5a") if side == -1 else Color("624439"))
@@ -298,7 +393,7 @@ func draw_overview() -> void:
 			map_rect(Vector3(wing * 24,0,side * 48),Vector2(16,12),bounds,Color("293a46"))
 			route_line([Vector3(wing*8,0,side*60),Vector3(wing*8,0,side*40),Vector3(wing*8,0,side*28),Vector3(wing*8,0,side*10)],bounds,Color(.8,.78,.66,.8),6)
 			route_line([Vector3(wing*34,0,side*40),Vector3(wing*34,0,0),Vector3(wing*15,0,0)],bounds,Color(.42,.64,.49,.8),5)
-			route_line([Vector3(wing*42,0,side*46),Vector3(wing*42,6.5,side*20),Vector3(wing*23,6.5,side*20),Vector3(wing*23,6.5,side*21)],bounds,Color(.73,.56,.86,.85),3)
+			route_line([Vector3(wing*37.5,0,side*24),Vector3(wing*37.5,3.25,side*36.25),Vector3(wing*42,3.25,side*36.25),Vector3(wing*42,6.5,side*20),Vector3(wing*23,6.5,side*20),Vector3(wing*23,6.5,side*21)],bounds,Color(.73,.56,.86,.85),3)
 			route_line([Vector3(wing*18,0,side*38),Vector3(wing*18,-5,side*18),Vector3(0,-5,side*18)],bounds,Color(.27,.76,.84,.8),2)
 			route_line([Vector3(wing*23,6.5,-21),Vector3(wing*23,6.5,21)],bounds,Color(.73,.56,.86,.85),3)
 		route_line([Vector3(-18,-5,side*18),Vector3(18,-5,side*18)],bounds,Color(.27,.76,.84,.8),2)
@@ -353,6 +448,9 @@ func draw_underground_overview() -> void:
 		for x: float in [-18.0, 0.0, 18.0]:
 			arcade_rect(Vector3(x,0,side*21), Vector2(4,3), Color("547f91"))
 			centered("STAIRS",arcade_point(Vector3(x,0,side*22.4)),9,mint,true)
+	for side: float in [-1.0, 1.0]:
+		arcade_rect(Vector3(0,0,side*15.5), Vector2(5.6,11), Color("547f91"))
+		centered("HILL STAIRS",arcade_point(Vector3(0,0,side*14)),10,mint,true)
 	for shop: Vector3 in match_controller.definition.shopping_arcade_shops:
 		arcade_rect(shop, Vector2(6,7), Color("b7aca0"))
 		for edge: float in [-1.0, 1.0]:
@@ -378,7 +476,7 @@ func draw_underground_overview() -> void:
 	text("N",Vector2(125,154),16,brass,true)
 	text("42 × 42 m",Vector2(650,820),12,muted)
 	text("SIX SHOPS. MULTIPLE WAYS THROUGH.",Vector2(850,180),22,paper,true)
-	var notes: Array[String] = ["Central drum and kiosks break long sightlines.", "Shop doors connect the gallery to both perimeter aisles.", "Four corner stairs return to the garden streets.", "North / south tunnels connect to team spawns.", "Two shared 75 HP caches remain in the entry recesses.", "The hill above cannot be captured from this floor."]
+	var notes: Array[String] = ["Central drum and kiosks break long sightlines.", "Shop doors connect the gallery to both perimeter aisles.", "Four corner stairs return to the garden streets.", "Two short hill stairs + two station tunnels.", "Two shared 75 HP caches remain in the entry recesses.", "The hill above cannot be captured from this floor."]
 	for index: int in notes.size():
 		text(notes[index],Vector2(850,240+index*46),15,muted)
 	text("WEST",Vector2(850,575),13,brass,true)
@@ -461,11 +559,14 @@ func build_menu() -> void:
 	frame.add_child(root)
 	menu_label(root,"MERIDIAN GARDENS",28,paper)
 	menu_label(root,"MATCH CONSOLE  /  SESSION PAUSED",12,brass)
-	menu_label(root,"6 v 6  ·  Nimbus / Slayer  ·  First to 100%",15,muted)
+	menu_label(root,"6 v 6  ·  Marshal / Huddle / Doctor / Nimbus / Slayer  ·  First to 100%",15,muted)
 	var hero_row := HBoxContainer.new()
 	hero_row.add_theme_constant_override("separation",10)
 	root.add_child(hero_row)
 	menu_button(hero_row,"PLAY SLAYER / RESTART",func() -> void: match_controller.select_hero("slayer")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	menu_button(hero_row,"PLAY MARSHAL",func() -> void: match_controller.select_hero("marshal")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	menu_button(hero_row,"PLAY DOCTOR",func() -> void: match_controller.select_hero("doctor")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	menu_button(hero_row,"PLAY HUDDLE",func() -> void: match_controller.select_hero("huddle")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	menu_button(hero_row,"PLAY NIMBUS / RESTART",func() -> void: match_controller.select_hero("nimbus")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	menu_button(root,"RETURN TO THE CITY  /  TAB",func() -> void: match_controller.toggle_menu())
 	display_button = menu_button(root,display_settings.button_text(),display_settings.toggle_fullscreen)

@@ -19,6 +19,11 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Combat/movement rule tests failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/match_feedback_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Spawn healing, elimination attribution or match feedback failed.' }
+
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/huddle_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Huddle colony combat, mobility or lifecycle failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/care_heroes_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Marshal or Doctor combat/integration failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/slayer_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Slayer combat, status or collision rules failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/slayer_integration_test.gd
@@ -47,6 +52,12 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'City physical stair, subway or camera traversal failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_transition_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'City/training scene transitions or cleanup failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_railing_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'City sloped railing or landing clearance failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_stair_openings_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Street paving overhangs an underground stair opening.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_route_audit.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Full-city stair width, traversal or route joins failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_geometry_audit.gd
     if ($LASTEXITCODE -ne 0) { throw 'Rendered city structural surfaces do not match collision.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_arcade_test.gd
@@ -54,6 +65,14 @@ try {
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_navigation_regression.gd
     if ($LASTEXITCODE -ne 0) { throw 'City navigation recovery or healing route failed.' }
     if ($Capture) {
+        & $taskEngine --path $taskRoot --script res://tests/huddle_test.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Huddle native input failed.' }
+        & $taskEngine --path $taskRoot --script res://tests/capture_huddle.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Huddle rendered capture failed.' }
+        & $taskEngine --path $taskRoot --script res://tests/care_heroes_test.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Marshal and Doctor native input/integration failed.' }
+        & $taskEngine --path $taskRoot --script res://tests/capture_care_heroes.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Marshal and Doctor rendered capture failed.' }
         & $taskEngine --path $taskRoot --script res://tests/slayer_revision_test.gd --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
         if ($LASTEXITCODE -ne 0) { throw 'Slayer native E / 4 input checks failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_slayer.gd --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
@@ -64,5 +83,7 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'Rendered capture failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_city.gd --resolution 1920x1080 --audio-driver Dummy --fixed-fps 60
         if ($LASTEXITCODE -ne 0) { throw 'Rendered city capture failed.' }
+        & $taskEngine --path $taskRoot --script res://tests/capture_city_geometry.gd --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Rendered city route and stair capture failed.' }
     }
 } finally { Pop-Location }

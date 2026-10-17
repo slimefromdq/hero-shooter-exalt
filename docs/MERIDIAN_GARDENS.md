@@ -22,7 +22,11 @@ The playable district measures 144 × 132 m. Crown Station sits north, Lantern C
 | Terrace / 2 m | Garden platforms with ordinary stairs and mantle shortcuts |
 | Balcony / 4 m | Market balconies and wizard’s study, reached by stairs |
 | Promenade / 6.5 m | Covered high ground with multiple stairs, opaque cover and retreat routes |
-| Lower Meridian Exchange / −5 m | Six through-shops, central gallery, perimeter aisles, four corner stairs and spawn connections; no hatch onto the hill |
+| Lower Meridian Exchange / −5 m | Six through-shops, central gallery, perimeter aisles, four corner stairs, two station connections and two short hill-approach stairs |
+
+The conservatory now has an open roof: glass panels and overhead ribs are removed, preserving the perimeter arches and orrery. Each side promenade has a four-metre section of low railing for downward fire onto the point, making its stairs useful for coordinated high-ground pushes. The plinth, planters and promenade shelter still break sightlines.
+
+Two 5.6 m wide stairs run from the gallery at `(0, -5, +/-10)` to the hill approaches at `(0, 0, +/-24)`. Their 14 m runs provide quick rotations between the mall and both ends of the fight. Four corner stairs and two station entrances remain, for eight surface connections total. The station passages continue beneath the upper flights. Underground cover, six through-shops and both health caches support retreats and regrouping; the hill still requires ground-level presence. Subway bots use an opposite-side hill stair to rejoin the fight, and both atlas layers mark the new routes.
 
 All eight health caches are shared between teams and sit outside the capture area. Full-health actors leave them available. Healing never exceeds maximum health or restores shields, ammunition, cooldowns or ultimate.
 
@@ -113,3 +117,7 @@ All twelve combatants remained active, using enlarged benchmark-only health pool
 ![Supported promenade landing](media/meridian/12-supported-promenade.png)
 
 ![Underground route and resource atlas](media/meridian/13-arcade-atlas.png)
+
+## Open-point revision validation - 17 October 2026
+
+The open roof, low promenade firing rails and two new hill stairs pass 110 arcade acceptance checks, 70 city integration checks, 17 city traversal checks and 33 objective/resource checks (230 total). The final structural audit reports 1,364 exposed surface probes with zero missing contacts. Physical walks cover both new flights in both directions, cross-aisle access beneath them, all six existing mall connections, all shops and both inner promenade stairs. Rays verify open sky and a standing firing lane from each promenade to the point. Rendered views were reviewed in `artifacts/city-frames/14-hill-stairs.png` and `15-promenade-pressure.png`. These checks establish connectivity and collision; increased fight frequency and balance await human playtesting.

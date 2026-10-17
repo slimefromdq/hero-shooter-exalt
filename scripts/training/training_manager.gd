@@ -1,8 +1,8 @@
 class_name TrainingManager
 extends Node
 
-const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring", "Guard trainer", "Slayer hunter"]
-const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt"]
+const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring", "Guard trainer", "Slayer hunter", "Marshal", "Doctor", "Huddle"]
+const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt", "Doctor rounds", "Marshal drill", "Huddle rescue"]
 var arena: Node3D
 var player: HeroActor
 var bots: Array[HeroActor] = []
@@ -28,6 +28,7 @@ var hits: int = 0
 var eliminations: int = 0
 var damage_total: float = 0.0
 var elapsed: float = 0.0
+var care_drill_clock: float = 0.0
 var notice: String = "WELCOME TO THE FIELD"
 var notice_time: float = 4.0
 var death_timers: Dictionary = {}
@@ -79,6 +80,15 @@ func _process(delta: float) -> void:
 				bot.shields = target_shields
 				bot.invulnerable = target_invulnerable
 				death_timers.erase(key)
+	if scenario == 8 and bots.size() >= 4:
+		care_drill_clock += delta
+		if care_drill_clock >= 1.0:
+			care_drill_clock = 0
+			for index: int in 3:
+				var friend: HeroActor = bots[index]
+				if friend.alive:
+					player.resolver.damage(bots[3],friend,12,"rifle",player.resolver.new_cast(bots[3]))
+					if index == 1 and friend.statuses.effects.is_empty(): friend.statuses.apply("bleed",bots[3],5,5)
 	if route_running:
 		route_time += delta
 		if not player.alive:
@@ -125,7 +135,7 @@ func spawn_bot(profile: int, at: Vector3 = Vector3.INF) -> HeroActor:
 	spawn_serial += 1
 	var bot := preload("res://scenes/actors/hero_actor.tscn").instantiate() as HeroActor
 	bot.team = 1
-	bot.tuning = HeroRoster.tuning_for("slayer") if profile == 6 else (HeroRoster.tuning_for("nimbus") if player.tuning is SlayerTuning else player.tuning.duplicate() as HeroTuning)
+	bot.tuning = HeroRoster.tuning_for({6:"slayer",7:"marshal",8:"doctor",9:"huddle"}.get(profile,"nimbus"))
 	bot.actor_id = "%s_%02d" % [PROFILES[profile].to_lower().replace(" ", "_"), spawn_serial]
 	bot.position = Vector3(-4 + bots.size() * 3, 0.1, -7 - bots.size() * 2) if at == Vector3.INF else at
 	arena.add_child(bot)
@@ -192,6 +202,31 @@ func reset_scenario() -> void:
 			spawn_bot(BotController.Profile.STATIONARY,Vector3(0,.1,4))
 			spawn_bot(BotController.Profile.STRAFE,Vector3(4,.1,-4))
 			spawn_bot(6,Vector3(-5,.1,-8))
+		8:
+			for index: int in 3:
+				var friend: HeroActor = spawn_bot(0,Vector3(-4+index*4,.1,2-index*2))
+				friend.team = player.team
+				friend.select_hero("nimbus")
+				friend.actor_id = "Patient_%d" % (index+1)
+				friend.health = 100
+			var attacker: HeroActor = spawn_bot(2,Vector3(7,.1,-10))
+			attacker.actor_id = "Flanker"
+		9:
+			var friend: HeroActor = spawn_bot(0,Vector3(0,.1,14))
+			friend.team = player.team
+			friend.select_hero("nimbus")
+			friend.actor_id = "Protected_ally"
+			for index: int in 3:
+				var attacker: HeroActor = spawn_bot(2,Vector3(-4+index*4,.1,-4-index*2))
+				attacker.controller.target = friend
+		10:
+			player.health = player.effective_max_health()*.6
+			var friend: HeroActor = spawn_bot(0,Vector3(0,.1,3))
+			friend.team = player.team
+			friend.actor_id = "Garden_neighbor"
+			for i: int in 3:
+				var attacker: HeroActor = spawn_bot(2,Vector3(-3+i*3,.1,-5))
+				attacker.controller.target = friend
 	show_notice("EXERCISE %02d  /  %s" % [scenario + 1, SCENARIOS[scenario].to_upper()])
 
 func refill_all() -> void:
@@ -281,4 +316,19 @@ func start_slayer_hunt() -> void:
 	scenario = 7
 	freeze_ai = false
 	reset_scenario()
+	if menu_open: toggle_menu()
+
+func start_care_drill(id: String) -> void:
+	select_hero(id)
+	scenario = 8 if id == "doctor" else 9
+	freeze_ai = false
+	reset_scenario()
+	if menu_open: toggle_menu()
+
+func start_huddle_drill() -> void:
+	select_hero("huddle")
+	scenario = 10
+	freeze_ai = false
+	reset_scenario()
+	show_notice("RMB regroup / E shield the neighbor / Q reach the raised decks / 2 sweep attackers away")
 	if menu_open: toggle_menu()

@@ -31,7 +31,7 @@ func tick(delta: float) -> void:
 				effect.clock -= 0.5
 				var source: HeroActor = effect.source.get_ref() as HeroActor
 				if is_instance_valid(source):
-					actor.resolver.damage(source, actor, effect.strength * 0.5, "bleed", actor.resolver.new_cast())
+					actor.resolver.damage(source, actor, effect.strength * 0.5, "bleed", actor.resolver.new_cast(actor))
 				if not actor.alive:
 					break
 		if float(effect.remaining) <= 0.00001:

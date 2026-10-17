@@ -22,6 +22,10 @@ Implementation date: 2026-10-16. The project is playable; completion of human ac
 | NIM-ACCEPT | Automated checks and rendered review; human playtest pending | See PLAYTESTS.md; no claim of completed feel evaluation |
 | MAP-01 | Implemented / integration, traversal, simulations and rendered benchmarks | Offline 6v6 Meridian Gardens, fixed-hill rules, protected spawns, health, respawns, nav roles, atlas, scenic railway and retained training |
 | MAP-02 | Implemented / structural audit, physical traversal and rendered review | Supported roof/arch/stair geometry, matching structural collision, six through-shops and cover beneath the hill, underground atlas and progress recovery; see GEOMETRY_AUDIT.md |
+| MAP-03 | Implemented / 230 city checks, 1,364 collision probes and rendered review | Open conservatory roof, low promenade firing rails, two direct hill-approach stairs, retained station underpasses, subway bot rotation and atlas updates |
+| MAP-04 | Implemented / 110 traversal checks, 2,440 surface probes, 4,348 winding checks and close rendered review | Correct custom mesh culling, closed stair treads/risers, supported outer flights, finished trench cheeks/rims and guardrails; see GEOMETRY_AUDIT.md |
+| MAP-05 | Implemented / 360 city/route checks, 2,480 surface probes, 4,348 winding checks and rendered review | All 18 flights in both directions; rail collision and tread support; complete promenade corners; clear study/outer stair widths; terrace guards and closed architectural seams |
+| MAP-06 | Implemented / 455 city/route checks, 2,516 surface probes, 4,420 winding checks and rendered review | Courtyard-facing switchbacks on all four outer approaches, clear entrance supports, clipped spawn paving and ground inlays, updated bot/atlas routes |
 | DISPLAY-01 | Implemented / 20 native display checks and rendered review | F11 / Alt+Enter, both pause menus, saved fullscreen preference, restored window geometry, proportional HUD and expanded widescreen/ultrawide viewport |
 | SLAYER-01 | Implemented / 108 focused checks, 28 scene checks and rendered review | Complete kit, statuses, selection, AI and training; see SLAYER.md |
 | SLAYER-FEEL-02 | Implemented / 32 focused + native input checks and rendered review | 12 m kick with fading recovery slow, E buffering/feedback, single downward snare toss, tighter 100-damage shotgun, knife trails, readable numbers, horizontal health strip and keyed throws |
@@ -36,3 +40,12 @@ Traversal follow-up: hold Space and move into the marked ledge, keep holding thr
 Mantle exit follow-up: approach at running or faster traversal speed, climb and continue forward; press Space near the end to launch straight into a jump. Check that the quicker climb still reads clearly and preserves the expected travel direction without a stop at the top.
 
 City follow-up: play the revised main approaches, inner stairs and underground shops using the shoulder camera. Evaluate hill pressure, flank commitment, health-pack contention and cover readability with human input. M opens the atlas; B switches its surface/underground layer. Automated simulations and rendered FPS samples establish functionality and a performance baseline; competitive balance remains a playtest decision.
+
+
+## ROSTER-02 - Marshal and Doctor
+
+Implemented October 17, 2026: new shield main tank and beam main support, with distinct original procedural models, portraits, bot tactics, both selection menus, balanced 6v6 compositions and two practice exercises. See [Marshal and Doctor](MARSHAL_DOCTOR.md) for controls, editable values, authority rules and reproduction commands. Annex and Ahab remain separate reserved concepts. This supersedes the earlier two-hero roster deferral.
+
+## ROSTER-03 · Huddle
+
+Implemented the mobile colony off-tank, original procedural model/portrait, healing, charged flight, interception screen, wingbeat and wave ultimate. Includes bot tactics, both menus, launcher switch, training profile/exercise and automated focused/native verification. See [Huddle](HUDDLE.md). Competitive tuning remains a human playtest task.

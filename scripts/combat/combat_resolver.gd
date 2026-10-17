@@ -3,6 +3,7 @@ extends Node
 
 signal event_logged(entry: Dictionary)
 signal confirmed_hit(source: HeroActor, target: HeroActor, amount: float, head: bool, executed: bool)
+signal confirmed_heal(source: HeroActor, target: HeroActor, amount: float)
 signal confirmed_block(attacker: HeroActor, defender: HeroActor)
 signal elimination(killer: HeroActor, victim: HeroActor, assistants: Array[HeroActor], ability: String)
 const ASSIST_WINDOW: float = 8.0
@@ -12,6 +13,7 @@ var damage_serial: int = 0
 var events: Array[Dictionary] = []
 var cast_serial: int = 0
 var resolved: Dictionary = {}
+var cast_powers: Dictionary = {}
 
 func _ready() -> void:
 	add_to_group("combat_resolver")
@@ -44,9 +46,14 @@ func resolve_death(victim: HeroActor) -> void:
 	contributions.erase(victim.get_instance_id())
 	elimination.emit(killer, victim, assistants, ability)
 
-func new_cast() -> int:
+func new_cast(source: HeroActor = null) -> int:
 	cast_serial += 1
+	cast_powers.erase(cast_serial - 16384)
+	cast_powers[cast_serial] = source.benefits.damage_multiplier() if is_instance_valid(source) and source.benefits != null else 1.0
 	return cast_serial
+
+func cast_multiplier(id: int, _source: HeroActor) -> float:
+	return float(cast_powers.get(id,1.0))
 
 func record(kind: String, actor: HeroActor, ability: String, details: String = "") -> void:
 	var entry: Dictionary = {"tick": Engine.get_physics_frames(), "event": kind,
@@ -81,13 +88,13 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 		return "duplicate"
 	var source_position: Vector3 = source.global_position if incoming_from == Vector3.INF else incoming_from
 	var frontal: bool = is_front(target, source_position)
-	if target.state == "deflect" and frontal and tag in ["rifle", "ultimate", "projectile", "shotgun", "knife", "axe"]:
+	if target.state == "deflect" and frontal and tag in ["rifle", "ultimate", "projectile", "shotgun", "knife", "axe", "cannon", "sidearm"]:
 		record("deflect", target, tag)
 		return "deflect"
 	resolved[key] = true
 	if resolved.size() > 4096:
 		resolved.clear()
-	if target.state == "guard" and frontal and tag in ["melee", "boot"]:
+	if target.state == "guard" and frontal and tag in ["melee", "boot", "march"]:
 		target.close.guard_meter = maxf(0.0, target.close.guard_meter - target.tuning.guard_cost)
 		source.close.stagger()
 		record("block", target, tag)
@@ -95,7 +102,7 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 			target.close.stagger()
 		confirmed_block.emit(source, target)
 		return "blocked"
-	var amount: float = base
+	var amount: float = base * (1.0 if tag == "bleed" else cast_multiplier(cast_id,source))
 	var executed: bool = execute and target.shields <= 0.0 and target.health / target.tuning.max_health <= source.tuning.execute_threshold
 	if executed:
 		amount = target.health
@@ -103,13 +110,15 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 		amount *= target.tuning.throw_outside_multiplier
 		# Execution is still subject to the paired sequence's ordinary mitigation.
 		executed = false
-	if target.state == "guard" and frontal and tag in ["rifle", "projectile", "shotgun", "knife", "axe"]:
+	if target.state == "guard" and frontal and tag in ["rifle", "projectile", "shotgun", "knife", "axe", "cannon", "sidearm"]:
 		amount *= 1.0 - target.tuning.bullet_guard_reduction
+	amount *= 1.0 - target.benefits.reduction()
+	if executed and amount < target.health: executed = false
 	var absorbed: float = minf(target.shields, amount)
 	target.shields -= absorbed
 	var hp_damage: float = minf(target.health, maxf(0.0, amount - absorbed))
 	target.health = maxf(0.0, target.health - hp_damage)
-	source.kit.ultimate_charge = minf(100.0, source.kit.ultimate_charge + (hp_damage + absorbed) * 0.09)
+	source.kit.ultimate_charge = minf(100.0, source.kit.ultimate_charge + minf(base,hp_damage + absorbed) * 0.09)
 	track_damage(source, target, hp_damage + absorbed, tag)
 	target.on_damage(hp_damage + absorbed, head)
 	if source.tuning is SlayerTuning and hp_damage + absorbed > 0.0:
@@ -123,6 +132,13 @@ func knockback(source: HeroActor, target: HeroActor, impulse: Vector3, tag: Stri
 	if not target.alive or target.invulnerable or source.team == target.team or protected_room(source) or protected_room(target): return
 	if target.state in ["captured", "throw_pair"]: return
 	if target.motor.traversal.active: target.motor.traversal.abort()
+	if impulse.y > 0:
+		# Upward launches use normal gravity, not the horizontal shove's braking.
+		# Interrupt a competing mobility override without adding a control lock.
+		target.motor.interrupt_mobility()
+		if target.state in ["doctor_call","marshal_march"]: target.kit.cancel()
+		target.velocity.y = maxf(target.velocity.y,impulse.y)
+		impulse.y = 0
 	target.motor.external_velocity += impulse
 	record("displacement",source,tag,"target=%s speed=%.1f" % [target.actor_id,impulse.length()])
 
@@ -138,3 +154,51 @@ func clear_round() -> void:
 	resolved.clear()
 	contributions.clear()
 	combat_time = 0.0
+
+	cast_powers.clear()
+
+
+func heal(source: HeroActor, target: HeroActor, amount: float, tag: String, award_charge: bool = true) -> float:
+	if not is_instance_valid(source) or not is_instance_valid(target) or not source.alive or not target.alive or source.team != target.team or amount <= 0: return 0.0
+	if protected_room(source) or protected_room(target): return 0.0
+	var restored: float = minf(amount,maxf(0,target.effective_max_health() - target.health))
+	if restored <= 0: return 0.0
+	target.health += restored
+	if award_charge: source.kit.ultimate_charge = minf(100,source.kit.ultimate_charge + restored * .06)
+	confirmed_heal.emit(source,target,restored)
+	# Beam ticks would otherwise crowd out useful combat history every frame.
+	if tag not in ["attending_care","aftercare","ward","regroup"]: record("heal",source,tag,"target=%s applied=%.1f" % [target.actor_id,restored])
+	return restored
+
+func barrier_ray(source: HeroActor, from: Vector3, to: Vector3) -> Dictionary:
+	var result: Dictionary = {}
+	var distance: float = INF
+	for barrier: CombatBarrier in get_tree().get_nodes_in_group("barriers"):
+		if not is_instance_valid(barrier.source) or barrier.source.team == source.team: continue
+		var hit: Dictionary = barrier.intersection(from,to)
+		if not hit.is_empty() and from.distance_squared_to(hit.position) < distance:
+			result = hit
+			distance = from.distance_squared_to(hit.position)
+	return result
+
+func attack_ray(source: HeroActor, from: Vector3, to: Vector3, exclude: Array[RID] = [], mask: int = 19) -> Dictionary:
+	var hit: Dictionary = ray(from,to,exclude,mask)
+	var end: Vector3 = hit.get("position",to)
+	var shield: Dictionary = barrier_ray(source,from,end)
+	return shield if not shield.is_empty() else hit
+
+func splash(source: HeroActor, origin: Vector3, radius: float, amount: float, tag: String, id: int, falloff: bool = false) -> void:
+	# Snapshot cover before changing any durability: a breaking shield still stops this blast.
+	var victims: Array[HeroActor] = []
+	for target: HeroActor in get_tree().get_nodes_in_group("actors"):
+		if not target.alive or target.team == source.team: continue
+		var to: Vector3 = target.global_position + Vector3.UP * .9
+		if origin.distance_to(to) <= radius and attack_ray(source,origin,to,[],1).is_empty(): victims.append(target)
+	# Damage nearby barriers once even when nobody stands behind them.
+	for barrier: CombatBarrier in get_tree().get_nodes_in_group("barriers"):
+		if not barrier.active() or barrier.source.team == source.team: continue
+		var nearest: Vector3 = barrier.nearest_point(origin)
+		if origin.distance_to(nearest) <= radius and ray(origin,nearest,[],1).is_empty(): barrier.receive_damage(source,amount,id)
+	for target: HeroActor in victims:
+		var distance: float = origin.distance_to(target.global_position + Vector3.UP * .9)
+		damage(source,target,amount * (maxf(0,1-distance/radius) if falloff else 1.0),tag,id,false,false,origin)

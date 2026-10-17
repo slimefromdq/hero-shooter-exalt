@@ -22,6 +22,8 @@ var windows: Dictionary = {}
 var worst_stall: float = 0
 var lowest_y: float = 100
 var total_travel: float = 0
+var healing_total: float = 0
+var barrier_hits: int = 0
 var bot_statistics: Array[Dictionary] = []
 var max_heights: Array[float] = [-100.0,-100.0]
 
@@ -60,7 +62,9 @@ func run() -> void:
 	camera_controller.active = false
 	session.hill.ownership_changed.connect(func(team: int) -> void: captures[team] += 1)
 	session.player.resolver.event_logged.connect(func(entry: Dictionary) -> void:
-		if entry.get("event","") == "death": deaths += 1)
+		if entry.get("event","") == "death": deaths += 1
+		if entry.get("event","") == "barrier_hit": barrier_hits += 1)
+	session.player.resolver.confirmed_heal.connect(func(_source: HeroActor, _target: HeroActor, amount: float) -> void: healing_total += amount)
 	for pickup: CityHealthPack in session.pickups:
 		pickup.collected.connect(func(_actor: HeroActor,_amount: float) -> void: health_collections += 1)
 	var bake_start: int = Time.get_ticks_msec()
@@ -102,6 +106,8 @@ func run() -> void:
 			var window: Dictionary = windows[actor.get_instance_id()]
 			var moved: float = actor.global_position.distance_to(window.position)
 			var expected_goal: Vector3 = controller.route[controller.route_index] if not controller.entered_hill and not controller.route.is_empty() and not controller.seeking_health else controller.destination
+			# Doctors deliberately follow patients rather than their initial authored route.
+			if actor.kit is DoctorKit: expected_goal = controller.destination
 			var expected_movement: bool = actor.alive and controller.active and not controller.frozen and actor.global_position.distance_to(expected_goal) > 2.5 and actor.state in ["ready","reload"] and not session.hill.contains(actor.global_position)
 			if expected_movement and moved < .65:
 				window.stall += 1.0
@@ -146,6 +152,8 @@ func run() -> void:
 	check(warps == 0,"bot recovery uses navigation detours without teleporting")
 	check(decisions_within_budget,"tactical decision counters stay within the five hertz budget")
 	check(paths_within_budget,"navigation retarget counters stay within the two hertz budget")
+	check(healing_total > 0,"doctor bots restore actual teammate health in ordinary combat")
+	check(barrier_hits > 0,"marshal bots intercept real ranged attacks")
 	check(total_travel > duration * 3,"participants continue travelling through the district")
 	if duration >= 600:
 		check(rounds > 0,"a full ten minute session completes and restarts matches")
@@ -156,7 +164,7 @@ func finish() -> void:
 	print("RESULT: ",checks," checks, ",failures.size()," failures")
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://artifacts"))
 	var file := FileAccess.open("res://artifacts/city-simulation-%d-%ds.json" % [simulation_seed,duration],FileAccess.WRITE)
-	file.store_string(JSON.stringify({"seed":simulation_seed,"seconds":duration,"checks":checks,"failures":failures,"captures":captures,"contest_seconds":contest_seconds,"deaths":deaths,"rounds":rounds,"health_collections":health_collections,"subway_teams":visited_subway,"arcade_teams":visited_arcade,"high_ground_teams":visited_high,"max_heights":max_heights,"lowest_y":lowest_y,"worst_stall":worst_stall,"persistent_stalls":persistent_stalls,"falls":falls,"total_metres_travelled":total_travel,"bots":bot_statistics},"\t"))
+	file.store_string(JSON.stringify({"seed":simulation_seed,"seconds":duration,"checks":checks,"failures":failures,"captures":captures,"contest_seconds":contest_seconds,"deaths":deaths,"rounds":rounds,"health_collections":health_collections,"subway_teams":visited_subway,"arcade_teams":visited_arcade,"high_ground_teams":visited_high,"max_heights":max_heights,"lowest_y":lowest_y,"worst_stall":worst_stall,"persistent_stalls":persistent_stalls,"falls":falls,"healing_total":healing_total,"barrier_hits":barrier_hits,"total_metres_travelled":total_travel,"bots":bot_statistics},"\t"))
 	arena.queue_free()
 	await process_frame
 	quit(0 if failures.is_empty() else 1)

@@ -35,6 +35,8 @@ var seeking_health: bool = false
 var health_target: Node3D
 var entered_hill: bool = false
 var detour_until: float = 0.0
+var recovery_jump: bool = false
+var care_request: CombatIntent
 var rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
@@ -60,7 +62,7 @@ func _ready() -> void:
 func load_route() -> void:
 	route.clear()
 	if is_instance_valid(match_controller) and match_controller.definition != null:
-		var route_role: String = "frontline_subway" if role == "frontline" and slot == 2 else role
+		var route_role: String = role
 		for point: Vector3 in match_controller.definition.route_points(actor.team, route_role):
 			route.append(point)
 	route_index = 0
@@ -84,13 +86,30 @@ func gather_intent(delta: float) -> CombatIntent:
 	if think_timer <= 0.0:
 		think_timer += .2
 		decide()
+		if actor.kit is CareKit:
+			care_request = CombatIntent.new()
+			care_request.aim_origin = actor.global_position + Vector3.UP * 1.45
+			CareTactics.apply(actor,care_request)
+		if actor.kit is DoctorKit:
+			var patient: HeroActor = CareTactics.ally(actor)
+			if is_instance_valid(patient):
+				var back: Vector3 = (actor.global_position - patient.global_position).normalized()
+				destination = patient.global_position + back * 5
 	if path_timer <= 0.0:
 		path_timer += .5
 		navagent.target_position = destination
 		path_update_count += 1
 	var move := follow_path()
+	var recovering: bool = elapsed < detour_until and navagent.navigation_layers != 0
+	if recovering:
+		# Follow the validated short capsule path directly: navigation may still
+		# snap its starting polygon onto the inaccessible floor overhead.
+		move = ((destination-actor.global_position)*Vector3(1,0,1)).normalized()
+		if recovery_jump and actor.motor.grounded() and actor.permits("jump"):
+			intent.jump = true
+			recovery_jump = false
 	var horizontal_distance: float = Vector2(actor.global_position.x - destination.x, actor.global_position.z - destination.z).length()
-	if horizontal_distance < 1.25 and absf(actor.global_position.y - destination.y) < 1.0:
+	if horizontal_distance < (.5 if recovering else 1.25) and absf(actor.global_position.y - destination.y) < 1.0:
 		move = Vector3.ZERO
 	# Separation only steers locally; strategic paths remain on the baked pedestrian mesh.
 	if move.length_squared() > .01:
@@ -136,6 +155,10 @@ func gather_intent(delta: float) -> CombatIntent:
 			intent.aim = move.normalized()
 		if actor.kit.ammo < actor.tuning.magazine and actor.state == "ready":
 			intent.reload = true
+	if actor.kit is CareKit and care_request != null:
+		for action: String in ["aim","primary","primary_held","secondary_held","aim_held","reload","hover","deflect","bomb","ultimate","melee","guard","throw_action"]:
+			intent.set(action,care_request.get(action))
+		if not care_request.move.is_zero_approx(): intent.move = avoid_wall(care_request.move)
 	watch_progress(delta, intent.move)
 	return intent
 
@@ -228,7 +251,7 @@ func watch_progress(delta: float, movement: Vector3) -> void:
 	var needs_travel: bool = actor.global_position.distance_to(destination) > 2.0
 	# Measure net progress from a stable anchor. Half-second back-and-forth motion
 	# used to reset the watchdog forever even when a crowded actor made no progress.
-	if (movement.length_squared() > .12 or needs_travel) and travelled < 1.0 and actor.state in ["ready","reload"]:
+	if (movement.length_squared() > .12 or needs_travel) and travelled < 1.0 and actor.state in ["ready","reload","slayer_knife","slayer_trap","marshal_shield","huddle_regroup"]:
 		stuck_time += movement_sample
 		longest_stuck = maxf(longest_stuck, stuck_time)
 	else:
@@ -237,22 +260,46 @@ func watch_progress(delta: float, movement: Vector3) -> void:
 	movement_sample = 0
 	if stuck_time >= 2.0:
 		stuck_events += 1
-		# Re-query a nearby navigable detour rather than granting teleport or parkour movement.
+		# Re-query a nearby navigable detour using ordinary walking or a checked jump.
 		var map: RID = navagent.get_navigation_map()
 		var tangent := Vector3(1,0,0) if slot % 2 == 0 else Vector3(-1,0,0)
-		var detour: Vector3 = NavigationServer3D.map_get_closest_point(map, actor.global_position + tangent * 3)
-		if actor.global_position.distance_to(detour) > .8:
-			destination = detour
-			detour_until = elapsed + 1.5
+		# The nearest polygon can be on the street above a stair pocket. Reject
+		# physically blocked detours; prefer a checked ordinary jump back up.
+		var walking_detour: Vector3 = Vector3.INF
+		var selected_detour: Vector3 = Vector3.INF
+		recovery_jump = false
+		for direction: Vector3 in [tangent,-tangent,Vector3.FORWARD,Vector3.BACK,(tangent+Vector3.FORWARD).normalized(),(tangent+Vector3.BACK).normalized(),(-tangent+Vector3.FORWARD).normalized(),(-tangent+Vector3.BACK).normalized()]:
+			var detour: Vector3 = NavigationServer3D.map_get_closest_point(map,actor.global_position+direction*3)
+			if actor.global_position.distance_to(detour) < 1.5: continue
+			var needs_jump: bool = actor.test_move(actor.global_transform,detour-actor.global_position)
+			if needs_jump:
+				if not actor.permits("jump"): continue
+				var clearance: float = maxf(.8,detour.y-actor.global_position.y+.15)
+				var apex: float = actor.tuning.jump_impulse*actor.tuning.jump_impulse/(2*actor.tuning.gravity)
+				if clearance > apex-.1 or actor.test_move(actor.global_transform,Vector3.UP*clearance): continue
+				var raised: Transform3D = actor.global_transform
+				raised.origin.y += clearance
+				if actor.test_move(raised,detour-raised.origin): continue
+			if needs_jump and detour.y-actor.global_position.y > .5:
+				selected_detour = detour
+				recovery_jump = true
+				break
+			if not needs_jump and walking_detour == Vector3.INF: walking_detour = detour
+		if selected_detour == Vector3.INF: selected_detour = walking_detour
+		if selected_detour != Vector3.INF:
+			destination = selected_detour
+			detour_until = elapsed+1.5
 		stuck_time = 0
 		sample_position = actor.global_position
 
 func reset_controller() -> void:
+	care_request = null
 	target = null
 	health_target = null
 	sees_target = false
 	seeking_health = false
 	detour_until = 0
+	recovery_jump = false
 	stuck_time = 0
 	movement_sample = 0
 	previous_position = actor.global_position

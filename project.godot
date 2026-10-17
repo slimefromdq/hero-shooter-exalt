@@ -26,10 +26,10 @@ window/size/viewport_width=1440
 window/size/viewport_height=900
 window/size/window_width_override=1280
 window/size/window_height_override=800
-window/size/min_width=960
-window/size/min_height=600
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+window/size/min_width=960
+window/size/min_height=600
 
 [input]
 
@@ -158,7 +158,5 @@ aim={
 
 [rendering]
 
-renderer/rendering_method="forward_plus"
-renderer/rendering_method.mobile="mobile"
 anti_aliasing/quality/msaa_3d=2
 environment/defaults/default_clear_color=Color(0.65, 0.76, 0.78, 1)

@@ -117,12 +117,17 @@ func draw_hud() -> void:
 	# Health / magazine / ability rail.
 	CombatHUD.vitals(canvas,p,font,bold,Vector2(32,816))
 	rect(Vector2(450, 738), Vector2(88, 126), paper, 4)
-	label_at("SWEEPER" if p.kit is SlayerKit else "RIFLE", Vector2(460, 763), 11, ink, true)
+	label_at(CareHUD.weapon_label(p), Vector2(460, 763), 11, ink, true)
 	label_at("%02d" % p.kit.ammo, Vector2(460, 811), 37, ink, true)
 	label_at("/ %02d" % p.tuning.magazine, Vector2(503, 808), 13, ink)
 	label_at("R  LOAD" if p.state != "reload" else "LOAD %.1f" % p.state_time, Vector2(460, 844), 10, ink)
 	ability_card(550, TrainingInputs.key_label("dash"), "VECTOR", "DASH", p.motor.dash_cd, p.tuning.dash_cooldown)
-	if p.kit is SlayerKit:
+	if p.kit is CareKit:
+		var labels: Array[String] = CareHUD.labels(p)
+		var times: Array[float] = CareHUD.cooldowns(p)
+		for i: int in 3: ability_card(663+i*113,TrainingInputs.key_label(["hover","deflect","bomb"][i]),labels[i],"",times[i],CareHUD.durations(p)[i])
+		label_at(CareHUD.detail(p) + "  " + CareHUD.status(p),Vector2(480,695),14,paper,true)
+	elif p.kit is SlayerKit:
 		var hunter := p.kit as SlayerKit
 		var t := p.tuning as SlayerTuning
 		ability_card(663,TrainingInputs.key_label("hover"),"SILVER KNIVES","%d / %d" % [hunter.knives,t.knife_charges],0 if hunter.knives > 0 else hunter.knife_timer,t.knife_recharge)
@@ -133,16 +138,16 @@ func draw_hud() -> void:
 		ability_card(776, TrainingInputs.key_label("deflect"), "RETURN", "DEFLECT", p.kit.deflect_cd, p.tuning.deflect_cooldown)
 		ability_card(889, TrainingInputs.key_label("bomb"), "POCKET", "BOMB", p.kit.bomb_cd, p.tuning.bomb_cooldown)
 	rect(Vector2(1014, 738), Vector2(190, 126), mint if p.kit.ultimate_charge >= 100.0 else Color("bdd5c5"), 4)
-	label_at("%s    %s" % [TrainingInputs.key_label("ultimate"),"HEADS WILL ROLL" if p.kit is SlayerKit else "FINAL NOTICE"], Vector2(1030, 763), 11, ink, true)
+	label_at("%s    %s" % [TrainingInputs.key_label("ultimate"),CareHUD.ultimate_label(p)], Vector2(1030, 763), 11, ink, true)
 	label_at("READY" if p.kit.ultimate_charge >= 100.0 else "%02d%%" % int(p.kit.ultimate_charge), Vector2(1030, 810), 29, ink, true)
-	label_at("AXE / MAX HP WOUND" if p.kit is SlayerKit else "EXECUTE  ≤20% HP", Vector2(1030, 844), 11, ink)
+	label_at(CareHUD.ultimate_detail(p), Vector2(1030, 844), 11, ink)
 	rect(Vector2(1216, 738), Vector2(194, 126), Color(0.10, 0.20, 0.24, 0.88), 4)
 	label_at("%s   GUARD" % TrainingInputs.key_label("guard"), Vector2(1231, 763), 12, paper, true)
 	rect(Vector2(1231, 776), Vector2(164, 4), Color("4c6269"))
 	rect(Vector2(1231, 776), Vector2(164 * p.close.guard_meter / 100.0, 4), mint)
 	label_at("%s   MELEE ENGAGE" % TrainingInputs.key_label("melee"), Vector2(1231, 809), 11, paper)
 	label_at("%s   THROW / COUNTER" % TrainingInputs.key_label("throw"), Vector2(1231, 842), 11, paper)
-	label_at("W A S D  MOVE    SPACE  JUMP / WALL KICK    HOLD SPACE + MOVE  MANTLE    %s  SLIDE    RMB  AIM" % TrainingInputs.key_label("slide"), Vector2(32, 889), 11, ink, true)
+	label_at("W A S D  MOVE    SPACE  JUMP / WALL KICK    HOLD SPACE + MOVE  MANTLE    %s  SLIDE    %s" % [TrainingInputs.key_label("slide"),CareHUD.secondary_label(p)], Vector2(32, 889), 11, ink, true)
 	label_at("F5  RESET    F6  REFILL    F3  TELEMETRY", Vector2(1098, 889), 10, ink)
 	if p.state != "ready" or p.motor.mode not in ["ground", "air"]:
 		label_at(p.state.to_upper().replace("_", " ") + "  /  " + p.motor.mode.to_upper(), Vector2(600, 721), 13, paper, true)
@@ -264,6 +269,12 @@ func build_menu() -> void:
 	menu_label(left, "01  /  EXERCISE & TARGETS", 18)
 	button(left,"Play Slayer  /  monster hunter",training.select_hero.bind("slayer"))
 	button(left,"Play Nimbus  /  field agent",training.select_hero.bind("nimbus"))
+	button(left,"Play Marshal / shield tank",training.select_hero.bind("marshal"))
+	button(left,"Play Doctor / main support",training.select_hero.bind("doctor"))
+	button(left,"Play Huddle / mobile off-tank",training.select_hero.bind("huddle"))
+	button(left,"Huddle rescue / flight, screen, wave",training.start_huddle_drill)
+	button(left,"Doctor rounds / heal, cleanse, escape",training.start_care_drill.bind("doctor"))
+	button(left,"Marshal drill / shield and barrage",training.start_care_drill.bind("marshal"))
 	button(left,"Start Slayer hunt  /  full kit practice",training.start_slayer_hunt)
 	button(left,"Cleanse player statuses",func() -> void: training.player.statuses.cleanse())
 	var scenarios := OptionButton.new()
@@ -294,8 +305,8 @@ func build_menu() -> void:
 	spin(left,"Strike trigger range (m)",2.4,.8,2.6,.1,func(value: float) -> void: training.guard_test_range = value; training.apply_bot_settings())
 	spin(left,"Strike interval (s)",1.6,1.0,4.0,.1,func(value: float) -> void: training.guard_test_interval = value; training.apply_bot_settings())
 	menu_label(right, "02  /  RULE LABORATORY", 18)
-	spin(right, "Player maximum HP (reset applies)", training.player_max_health, 50, 500, 25, func(value: float) -> void: training.player_max_health = value)
-	spin(right, "Target maximum HP (reset applies)", 250, 50, 500, 50, func(value: float) -> void: training.bot_max_health = value)
+	spin(right, "Player maximum HP (reset applies)", training.player_max_health, 50, 1000, 25, func(value: float) -> void: training.player_max_health = value)
+	spin(right, "Target maximum HP (reset applies)", 250, 50, 1000, 50, func(value: float) -> void: training.bot_max_health = value)
 	var health_row := HBoxContainer.new()
 	right.add_child(health_row)
 	for percent: int in [19, 20, 21, 100]:

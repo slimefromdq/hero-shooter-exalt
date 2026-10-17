@@ -32,12 +32,12 @@ func tick(delta: float, input: CombatIntent) -> void:
 		actor.state = "deflect"
 		actor.state_time = t.deflect_duration
 		deflect_cd = t.deflect_cooldown
-		cast_id = actor.resolver.new_cast()
+		cast_id = actor.resolver.new_cast(actor)
 		actor.resolver.record("cast", actor, "deflect")
 	if input.bomb and bomb_cd <= 0.0 and actor.permits("bomb"):
 		var grenade := PocketBomb.new()
 		grenade.source = actor
-		grenade.cast_id = actor.resolver.new_cast()
+		grenade.cast_id = actor.resolver.new_cast(actor)
 		actor.get_parent().add_child(grenade)
 		grenade.global_position = safe_muzzle()
 		grenade.velocity = actor.aim_direction * 13.0 + Vector3.UP * 3.8
@@ -70,14 +70,16 @@ func fire(ultimate: bool) -> void:
 	# Reject a muzzle already poked through a thin wall before tracing to the aim point.
 	var shoulder: Vector3 = actor.global_position + Vector3.UP * 1.36
 	var blocked: Dictionary = actor.resolver.ray(shoulder, muzzle, [actor.get_rid()], 1)
-	var hit: Dictionary = blocked if not blocked.is_empty() else actor.resolver.ray(muzzle, aim_point + (aim_point - muzzle).normalized() * 0.05, [actor.get_rid()])
+	var hit: Dictionary = blocked if not blocked.is_empty() else actor.resolver.attack_ray(actor, muzzle, aim_point + (aim_point - muzzle).normalized() * 0.05, [actor.get_rid()])
 	var endpoint: Vector3 = hit.get("position", aim_point)
-	cast_id = actor.resolver.new_cast()
+	cast_id = actor.resolver.new_cast(actor)
 	if not hit.is_empty() and hit.get("collider") is HeroActor:
 		var target: HeroActor = hit["collider"] as HeroActor
 		var head: bool = not ultimate and endpoint.y - target.global_position.y >= 1.5
 		var amount: float = t.ultimate_damage if ultimate else t.rifle_damage * (t.head_multiplier if head else 1.0)
 		actor.resolver.damage(actor, target, amount, "ultimate" if ultimate else "rifle", cast_id, head, ultimate)
+	elif hit.get("collider") is CombatBarrier:
+		hit.collider.receive_damage(actor,t.ultimate_damage if ultimate else t.rifle_damage,cast_id)
 	elif hit.get("collider") is HunterSnare:
 		(hit.collider as HunterSnare).receive_damage(actor,t.ultimate_damage if ultimate else t.rifle_damage,cast_id)
 	CombatEffect.line(actor.get_parent(), muzzle, endpoint, Color("fce7ab") if not ultimate else Color("9dfbe2"), 0.04 if not ultimate else 0.09)

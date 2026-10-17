@@ -16,6 +16,7 @@ Build a hero shooter around expressive characters whose weapons, movement, and u
 | Nimbus | Established | British spy; umbrella rifle, hover with an initial upward flight burst, deflect, sniper ultimate executing low-health targets; needs an offensive tool such as a bomb |
 | Slayer | Established | Buffy-inspired monster hunter; shotgun, bleeding throwing knives, dash into boot kick, disabling traps usable as thrown combat tools; ultimate throws her carried battle axe for severe max-HP damage |
 | Annex | Established | Dr. Lucien Vey; five-star spatial utility support with healing projectiles, linked doors, healing fixture, push/pull and self-displacement, and a climbable furniture-tower ultimate |
+| Huddle | Established and implemented | 600-HP mobile colony off-tank; seed volleys, Regroup self-heal, two-charge Scatterbound, ally interception screen, wingbeat peel, and a steerable displacing bug-wave ultimate. See [Huddle](HUDDLE.md). |
 | Ahab | Established | Moby-Dick-inspired aquatic tank wielding a harpoon; avoid the design problems associated with Roadhog |
 | Kung-fu heroine | Established concept, reserve roster | Palm chi blasts, acrobatic leaps, close-combat stance, Zen Breathing that heals and balances rage, dark side at full rage; ultimate install grants CC immunity |
 | Movement feel | Established | Acrobatic but weighty, demanding skill; every hero has limited advanced traversal; specific shared moves and tuning remain proposed |

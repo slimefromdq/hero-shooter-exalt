@@ -1,6 +1,7 @@
 class_name ProceduralSound
 extends AudioStreamPlayer
 
+static var marshal_wave: AudioStreamWAV
 static var guard_wave: AudioStreamWAV
 static var slayer_waves: Dictionary = {}
 var spatial_owner: Node3D
@@ -132,3 +133,34 @@ func play_tone(hz: float, seconds: float, loudness: float) -> void:
 	stream = wave
 	volume_db = -10.0 + distance_gain()
 	play()
+
+# A deep descending body hit, stone crunch and long bass rumble on a separate channel.
+static func marshal_slam() -> AudioStreamWAV:
+	if marshal_wave != null: return marshal_wave
+	var rate: int = 44100
+	var frames: int = int(.9 * rate)
+	var bytes := PackedByteArray()
+	bytes.resize(frames * 2)
+	var noise := RandomNumberGenerator.new()
+	noise.seed = 83021
+	var filtered: float = 0.0
+	for index: int in frames:
+		var time: float = float(index) / rate
+		var grit: float = noise.randf_range(-1,1)
+		filtered = lerpf(filtered,grit,.045)
+		var body: float = sin(TAU * (48 * time + 2.8 * (1 - exp(-time * 24)))) * .64 * exp(-time * 6)
+		var rumble: float = (sin(TAU * 34 * time) * .23 + filtered * 1.5) * exp(-time * 4)
+		var crunch: float = grit * .32 * exp(-time * 35)
+		var metal: float = sin(TAU * 183 * time) * .12 * exp(-time * 15)
+		var envelope: float = minf(1,time / .002) * clampf((.9 - time) / .09,0,1)
+		bytes.encode_s16(index * 2,int(clampf((body + rumble + crunch + metal) * envelope,-.95,.95) * 32767))
+	marshal_wave = AudioStreamWAV.new()
+	marshal_wave.format = AudioStreamWAV.FORMAT_16_BITS
+	marshal_wave.mix_rate = rate
+	marshal_wave.data = bytes
+	return marshal_wave
+
+func play_marshal_slam() -> void:
+	stream = marshal_slam()
+	volume_db = -2.0 + distance_gain()
+	if DisplayServer.get_name() != "headless": play()

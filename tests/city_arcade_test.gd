@@ -26,7 +26,7 @@ func run() -> void:
 	check(session.navigation_ready,"arcade and street navigation finish baking")
 	session.set_physics_process(false)
 	session.player.collision_mask = 1 # Geometry traversal; team gates have separate integration checks.
-	for point: Vector3 in [Vector3(-18,0,-18),Vector3(0,0,-18),Vector3(18,0,-18),Vector3(-18,0,0),Vector3(18,0,0),Vector3(-18,0,18),Vector3(0,0,18),Vector3(18,0,18)]:
+	for point: Vector3 in [Vector3(-18,0,-18),Vector3(0,0,-8),Vector3(18,0,-18),Vector3(-18,0,0),Vector3(18,0,0),Vector3(-18,0,18),Vector3(0,0,8),Vector3(18,0,18)]:
 		var floor_hit: Dictionary = cast(point+Vector3(0,-4.5,0),point+Vector3(0,-5.5,0))
 		check(not floor_hit.is_empty() and absf(floor_hit.position.y+5)<.08,"continuous concourse floor at "+str(Vector2(point.x,point.z)))
 		var ceiling_hit: Dictionary = cast(point+Vector3(0,-3,0),point+Vector3(0,-.3,0))
@@ -52,8 +52,14 @@ func run() -> void:
 	check(not cast(Vector3(-5,-4.1,12),Vector3(-5,-4.1,6)).is_empty(),"low counters provide solid crouching-height cover")
 	check(cast(Vector3(7,-3.6,0),Vector3(18,-3.6,0)).is_empty(),"front and rear shop doors preserve an open cross-route")
 	check(not session.hill.contains(Vector3(6,-5,0)),"arcade occupants cannot capture the hill through its floor")
-	await drop_to_roof("Complete conservatory canopy",Vector3(0,14,4),11.7)
-	await drop_to_roof("Closed apartment gable",Vector3(34,23,48),18.8)
+	check(cast(Vector3(5, 3, 4), Vector3(5, 16, 4)).is_empty(), "point has open sky for aerial fights")
+	for side: float in [-1.0, 1.0]:
+		check(cast(Vector3(side*23,8.3,side*8),Vector3(side*7,1.4,side*7)).is_empty(), "promenade can pressure the point through the removed canopy")
+		await walk_route("Direct hill stair ascent " + str(side),Vector3(0,-5,side*9),Vector3(0,0,side*26))
+		await walk_route("Direct hill stair descent " + str(side),Vector3(0,0,side*26),Vector3(0,-5,side*9))
+		await walk_route("Mall cross-route below hill stair " + str(side),Vector3(0,-5,side*18),Vector3(8,-5,side*18))
+		await walk_route("Station passage below hill stair " + str(side),Vector3(0,-5,side*18),Vector3(0,-5,side*35))
+	await drop_to_roof("Closed apartment gable",Vector3(32.5,23,48),18.8)
 	await drop_to_roof("Garden pavilion vault",Vector3(-34,10,0),6.6)
 	for side: float in [-1.0,1.0]:
 		await walk_route("Flush inner stair landing "+str(side),Vector3(side*17.7,0,-side*17),Vector3(side*23,6.5,side*2.5))

@@ -5,7 +5,10 @@ extends RefCounted
 
 static func build(kit: MeridianArchitecture) -> void:
 	kit.box(Vector3(42, .4, 42), Vector3(0, -5.2, 0), "paving", true)
-	kit.box(Vector3(42, .25, 42), Vector3(0, -.825, 0), "stone_dark", true)
+	# Ceiling openings match the surface holes and the two direct hill stairs.
+	for side: float in [-1.0, 1.0]:
+		kit.box(Vector3(18, .25, 42), Vector3(side * 12, -.825, 0), "stone_dark", true)
+	kit.box(Vector3(6, .25, 20), Vector3(0, -.825, 0), "stone_dark", true)
 	# Retaining walls close the underground volume. Openings align with the six stairs.
 	for side: float in [-1.0, 1.0]:
 		kit.box(Vector3(.4, 4.3, 42), Vector3(side * 21, -2.85, 0), "blue", true)
@@ -25,15 +28,17 @@ static func build(kit: MeridianArchitecture) -> void:
 			kit.box(Vector3(.8, 4.05, .8), Vector3(x, -2.975, z), "ivory", true)
 			kit.box(Vector3(1.15, .25, 1.15), Vector3(x, -4.875, z), "stone_dark")
 			kit.box(Vector3(1.15, .22, 1.15), Vector3(x, -1.06, z), "trim")
-		kit.box(Vector3(14.5, .4, .55), Vector3(0, -1.2, z), "ivory", true)
-		var turn: float = 0.0 if z > 0 else PI
-		kit.label("MERIDIAN EXCHANGE", Vector3(0, -1.62, z + signf(z) * .36), 28, Color("edd1a5"), turn)
-		kit.label("SHOPS  /  GARDENS  /  STATION", Vector3(0, -2.02, z + signf(z) * .36), 13, Color("a7ccdb"), turn)
+		for side: float in [-1.0, 1.0]:
+			kit.box(Vector3(4, .4, .55), Vector3(side * 5.25, -1.2, z), "ivory", true)
 	# Recessed ceiling coffers and connected structural beams leave four metres of headroom.
 	for x: float in [-6.8, 6.8]:
 		kit.box(Vector3(.45, .32, 31.5), Vector3(x, -1.13, 0), "ivory", true)
 	for z: float in [-10.0, 0.0, 10.0]:
-		kit.box(Vector3(42, .3, .45), Vector3(0, -1.1, z), "ivory", true)
+		if z == 0:
+			kit.box(Vector3(42, .3, .45), Vector3(0, -1.1, z), "ivory", true)
+		else:
+			for side: float in [-1.0, 1.0]:
+				kit.box(Vector3(18, .3, .45), Vector3(side * 12, -1.1, z), "ivory", true)
 		for x: float in [-5.2, 5.2, -18.0, 18.0]:
 			kit.box(Vector3(.24, .06, 2.4), Vector3(x, -1.31, z), "lamp")
 			kit.lamp_positions.append(Vector3(x, -2.0, z))
@@ -74,13 +79,13 @@ static func _shop(kit: MeridianArchitecture, side: float, z: float, caption: Str
 	var center: float = side * 12.0
 	var key: String = "rose" if index % 2 == 0 else "blue"
 	kit.box(Vector3(5.7, .018, 6.7), Vector3(center, -4.99, z), "paving_light")
-	kit.box(Vector3(6.3, .24, 7.4), Vector3(center, -1.02, z), "slate", true)
+	kit.box(Vector3(6.3, .3, 7.4), Vector3(center, -1.05, z), "slate", true)
 	for end: float in [-1.0, 1.0]:
 		kit.box(Vector3(6.0, 3.8, .3), Vector3(center, -3.1, z + end * 3.5), key, true)
 		kit.box(Vector3(.55, 3.8, .55), Vector3(front, -3.1, z + end * 3.35), "ivory", true)
 		# Front displays leave a 3.4 m open doorway; rear doors create real through-shops.
 		kit.box(Vector3(.2, 2.6, 1.35), Vector3(front, -3.35, z + end * 2.5), "glass", true)
-		kit.box(Vector3(.35, 3.6, 1.7), Vector3(back, -3.2, z + end * 2.65), key, true)
+		kit.box(Vector3(.35, 3.8, 1.7), Vector3(back, -3.1, z + end * 2.65), key, true)
 	kit.box(Vector3(.5, .52, 7.2), Vector3(front, -1.24, z), "brass", true)
 	kit.box(Vector3(.4, .45, 3.6), Vector3(back, -1.3, z), "ivory", true)
 	kit.label(caption, Vector3(front - side * .29, -1.76, z), 19, Color("f1d4a3"), -side * PI * .5)

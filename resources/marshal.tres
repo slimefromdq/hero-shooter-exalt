@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="MarshalTuning" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/actors/marshal_tuning.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+hero_id = "marshal"
+max_health = 550.0
+ground_speed = 5.5
+shot_interval = 0.65
+magazine = 8
+reload_time = 2.0
+head_multiplier = 1.5
