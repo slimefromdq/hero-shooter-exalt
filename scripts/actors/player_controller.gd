@@ -52,7 +52,10 @@ func _process(delta: float) -> void:
 	arm.position.x = shoulder_offset
 	var aiming: bool = actor.intent.aim_held or actor.state == "ultimate"
 	camera.fov = lerpf(camera.fov, 34.0 if actor.state == "ultimate" else (55.0 if aiming else 76.0), minf(1.0, delta * 12.0))
-	arm.spring_length = lerpf(arm.spring_length, camera_distance * (0.8 if aiming else 1.0), delta * 10.0)
+	var desired_distance: float = camera_distance * (0.8 if aiming else 1.0)
+	if actor.state == "marshal_shield" and actor.tuning is MarshalTuning:
+		desired_distance = (actor.tuning as MarshalTuning).shield_camera_distance
+	arm.spring_length = lerpf(arm.spring_length, desired_distance, minf(1.0,delta * 10.0))
 
 func gather_intent(_delta: float) -> CombatIntent:
 	var input := CombatIntent.new()
@@ -67,7 +70,9 @@ func gather_intent(_delta: float) -> CombatIntent:
 	right.y = 0.0
 	input.move = (right.normalized() * axes.x - forward.normalized() * axes.y).limit_length(1.0)
 	input.primary = Input.is_action_just_pressed("primary")
-	input.aim_held = Input.is_action_pressed("aim")
+	input.primary_held = Input.is_action_pressed("primary")
+	input.secondary_held = Input.is_action_pressed("aim")
+	input.aim_held = input.secondary_held and actor.tuning.hero_id in ["nimbus","slayer"]
 	input.jump = Input.is_action_just_pressed("jump")
 	input.jump_held = Input.is_action_pressed("jump")
 	input.dash = Input.is_action_just_pressed("dash")

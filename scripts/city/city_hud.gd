@@ -56,7 +56,7 @@ func _ready() -> void:
 	numbers.font = bold
 	canvas.add_child(numbers)
 	display_settings = get_node("/root/DisplaySettings")
-	for hero: String in ["nimbus", "slayer"]:
+	for hero: String in HeroRoster.IDS:
 		portraits[hero] = load("res://assets/portraits/" + hero + ".png") as Texture2D
 	build_menu()
 
@@ -257,7 +257,11 @@ func draw_player_rail(p: HeroActor) -> void:
 	if p.shields > 0:
 		box(origin + Vector2(0,19),Vector2(404 * clampf(p.shields / p.tuning.max_health,0,1),4),mint)
 		text("+%d SHIELD" % ceili(p.shields),origin + Vector2(132,-12),11,mint,true)
-	if p.kit is SlayerKit:
+	if p.kit is CareKit:
+		var labels: Array[String] = CareHUD.labels(p)
+		var times: Array[float] = CareHUD.cooldowns(p)
+		for i: int in 3: ability(600+i*104,TrainingInputs.key_label(["hover","deflect","bomb"][i]),labels[i],times[i],CareHUD.durations(p)[i],["boot","shield","bomb"][i])
+	elif p.kit is SlayerKit:
 		var hunter := p.kit as SlayerKit
 		var t := p.tuning as SlayerTuning
 		ability(600,TrainingInputs.key_label("hover"),"SILVER KNIVES",0 if hunter.knives > 0 else hunter.knife_timer,t.knife_recharge,"knife","%d/%d" % [hunter.knives,t.knife_charges])
@@ -268,8 +272,8 @@ func draw_player_rail(p: HeroActor) -> void:
 		ability(704,TrainingInputs.key_label("deflect"),"DEFLECT",p.kit.deflect_cd,p.tuning.deflect_cooldown,"shield")
 		ability(808,TrainingInputs.key_label("bomb"),"POCKET BOMB",p.kit.bomb_cd,p.tuning.bomb_cooldown,"bomb")
 	var charge: float = clampf(p.kit.ultimate_charge,0,100)
-	ability(912,TrainingInputs.key_label("ultimate"),"HEADS WILL ROLL" if p.kit is SlayerKit else "FINAL NOTICE",100-charge,100,"axe" if p.kit is SlayerKit else "scope","READY" if charge >= 100 else "%d%%" % floori(charge),true)
-	var status_text: String = ""
+	ability(912,TrainingInputs.key_label("ultimate"),CareHUD.ultimate_label(p),100-charge,100,"axe" if p.kit is SlayerKit else "scope","READY" if charge >= 100 else "%d%%" % floori(charge),true)
+	var status_text: String = CareHUD.detail(p) + "  " + CareHUD.status(p)
 	for kind: String in p.statuses.effects:
 		status_text += "%s %.1fs   " % [kind.replace("max_health","MAX HP WOUND").to_upper(),p.statuses.effects[kind].remaining]
 	if status_text != "": centered(status_text,Vector2(800,704),15,coral,true)
@@ -532,11 +536,13 @@ func build_menu() -> void:
 	frame.add_child(root)
 	menu_label(root,"MERIDIAN GARDENS",28,paper)
 	menu_label(root,"MATCH CONSOLE  /  SESSION PAUSED",12,brass)
-	menu_label(root,"6 v 6  ·  Nimbus / Slayer  ·  First to 100%",15,muted)
+	menu_label(root,"6 v 6  ·  Marshal / Doctor / Nimbus / Slayer  ·  First to 100%",15,muted)
 	var hero_row := HBoxContainer.new()
 	hero_row.add_theme_constant_override("separation",10)
 	root.add_child(hero_row)
 	menu_button(hero_row,"PLAY SLAYER / RESTART",func() -> void: match_controller.select_hero("slayer")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	menu_button(hero_row,"PLAY MARSHAL",func() -> void: match_controller.select_hero("marshal")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	menu_button(hero_row,"PLAY DOCTOR",func() -> void: match_controller.select_hero("doctor")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	menu_button(hero_row,"PLAY NIMBUS / RESTART",func() -> void: match_controller.select_hero("nimbus")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	menu_button(root,"RETURN TO THE CITY  /  TAB",func() -> void: match_controller.toggle_menu())
 	display_button = menu_button(root,display_settings.button_text(),display_settings.toggle_fullscreen)

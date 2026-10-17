@@ -119,19 +119,19 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 				transition("ground")
 	else:
 		var scale: float = 1.0
-		if input.aim_held:
+		if input.aim_held and actor.tuning.hero_id in ["nimbus","slayer"]:
 			scale = 0.6
 		if actor.state == "guard":
 			scale = 0.15
 		elif actor.state == "reload":
 			scale = minf(scale, t.reload_move_multiplier)
-		elif actor.state not in ["ready", "slayer_knife", "slayer_trap"]:
+		elif actor.state not in ["ready", "slayer_knife", "slayer_trap", "marshal_shield"]:
 			scale = minf(scale, 0.35)
 		var current := Vector3(actor.velocity.x, 0.0, actor.velocity.z)
 		var acceleration: float = t.acceleration if was_floor else t.air_steering
 		if wish.length_squared() < 0.01 and was_floor:
 			acceleration = t.braking
-		current = current.move_toward(wish * t.ground_speed * scale * actor.statuses.movement_scale() * actor.kit.movement_scale(), acceleration * delta)
+		current = current.move_toward(wish * t.ground_speed * scale * actor.statuses.movement_scale() * actor.kit.movement_scale() * actor.benefits.speed_multiplier(), acceleration * delta)
 		actor.velocity.x = current.x
 		actor.velocity.z = current.z
 		if mode == "hover_ascent":

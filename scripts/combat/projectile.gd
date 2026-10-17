@@ -24,7 +24,7 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 		return
 	var next: Vector3 = global_position + direction * speed * delta
-	var hit: Dictionary = source.resolver.ray(global_position, next, [source.get_rid()])
+	var hit: Dictionary = source.resolver.attack_ray(source, global_position, next, [source.get_rid()])
 	if hit.is_empty():
 		global_position = next
 		return
@@ -38,10 +38,12 @@ func _physics_process(delta: float) -> void:
 				reflections += 1
 				source = target
 				direction = target.aim_direction
-				cast_id = target.resolver.new_cast()
+				cast_id = target.resolver.new_cast(target)
 				global_position = hit["position"] + direction * 0.25
 				return
 	CombatEffect.pulse(get_parent(), hit["position"], Color("ffae81"), 0.28)
+	if hit.get("collider") is MarshalBarrier:
+		hit.collider.receive_damage(source,damage_amount,cast_id)
 	if hit.get("collider") is HunterSnare:
 		(hit.collider as HunterSnare).receive_damage(source,damage_amount,cast_id)
 	queue_free()

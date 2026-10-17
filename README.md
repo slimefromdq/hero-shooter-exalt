@@ -1,6 +1,8 @@
 # EXALT · Meridian Gardens
 
-A playable offline **6v6 King of the Hill** hero shooter in a modern fantasy city, with **Nimbus and Slayer** and a separate hero training arena. Built with original modular geometry and synthesized sound. **Godot 4.7.2 stable** is the verified engine (`4.7.2.stable.official.ed1daf0bf`).
+A playable offline **6v6 King of the Hill** hero shooter in a modern fantasy city, with **Nimbus, Slayer, Marshal and Doctor** and a separate hero training arena. Built with original modular geometry and synthesized sound. **Godot 4.7.2 stable** is the verified engine (`4.7.2.stable.official.ed1daf0bf`).
+
+**Play the new tank/support:** run `Launch.ps1 -Marshal` or `Launch.ps1 -Doctor`; add `-Training` for practice. Marshal carries an 8 x 4.5 m / 1,200-durability shield, launches enemies with Forward March, fires a progressing explosion lane, and leaps into a slam covering a 16 m cone. Doctor heals with **right hold**, shoots with **left hold**, leaves lingering treatment, escapes to allies on a 4 s cooldown, cleanses with brief heavy resistance, and empowers one teammate with her ultimate. Both pause menus offer all four heroes; training adds Doctor rounds and Marshal drill. See [kits, controls and rules](docs/MARSHAL_DOCTOR.md).
 
 **Play Slayer:** run `Launch.ps1 -Slayer` for the city, or `Launch.ps1 -Training -Slayer`. Both pause menus offer hero selection; training includes **Start Slayer hunt**. Slayer has 275 HP. Q throws trailing silver knives at 75 m/s, E performs a 12 m Boot Rush at 32 m/s with enemy knockback and a fading recovery slow, 1 tosses a snare that arms after 0.75 s even in flight, and 2 launches Heads Will Roll after a 0.55 s windup. The shotgun deals 90 close-range body damage with tight spread and useful midrange reach. Health/shields use a broad lower-screen bar, ammunition also appears beside the crosshair, hits show larger outlined damage numbers, and 4 performs her two-handed lift and slam. See [Slayer controls, tuning and engine validation](docs/SLAYER.md).
 
@@ -19,6 +21,8 @@ powershell -ExecutionPolicy Bypass -File .\Launch.ps1
 The game starts in **borderless fullscreen** at your monitor's native resolution. **F11** or **Alt+Enter** toggles fullscreen/windowed in both city and training, including while paused; both pause menus also have a display button. Your choice is saved for the next launch, and returning to windowed restores its previous size and position. Use `Launch.ps1 -Windowed` or `-Fullscreen` to override the saved preference for one launch. The game fills widescreen/ultrawide displays while the HUD keeps its proportions and centred aim point.
 
 ## Controls
+
+The table shows Nimbus's kit; [Marshal and Doctor](docs/MARSHAL_DOCTOR.md) use their own mouse and Q/E/1/2 abilities. Shared traversal and close-combat keys apply to every hero.
 
 | Input | Action |
 | --- | --- |
@@ -55,7 +59,7 @@ While airborne within **0.72 m** of a wall, press **Space** to kick upward and a
 
 ## Included
 
-- Meridian Gardens: one player and eleven Nimbus bots, navigation across five elevations, fixed-hill capture/contest/scoring, team-only safe rooms, eight-second respawns, ultimate retention, shared health pickups, match HUD, exploration mode and tactical atlas. First to 100% wins after the 20-second unlock and five-second uncontested capture.
+- Meridian Gardens: one player and eleven bots across four heroes, navigation across five elevations, fixed-hill capture/contest/scoring, team-only safe rooms, eight-second respawns, ultimate retention, shared health pickups, match HUD, exploration mode and tactical atlas. First to 100% wins after the 20-second unlock and five-second uncontested capture.
 - Nimbus's complete prototype kit: 45/90 body/head rifle, upward Hover, timed projectile reflection and hitscan blocking, 80-peak bomb with falloff and cover checks, and 150-damage Final Notice with a pre-hit 20% execution check.
 - Shared acceleration, braking, air steering, jump buffering/coyote time, collision-checked mantling, wall jumps, fixed-direction dash, both slide entries, and collision-aware shoulder camera.
 - A 4.8 m committed melee lunge for engages/finishers, finite frontal guard with attacker stagger, interruptible 3.2 m throws, counterthrows, and an articulated pull/hip-lift/turn/slam/get-up animation. Slam damage occurs at impact; both participants retain 90% outside-damage reduction during the pair.
@@ -63,7 +67,7 @@ While airborne within **0.72 m** of a wall, press **Space** to kick upward and a
 - Six bot profiles; seven exercises including the stationary guard drill; spawn/despawn; 250/500 HP experiments; 19/20/21% target presets; shield/invulnerability controls; AI settings; resource refills; movement presets; live combat tuning; route timer; event export.
 - Cover, firing lane, slope, elevated traversal platforms, and a ranged projectile-emitter opponent. The crossfire exercise uses a third-faction probe to test damage on **both** throw participants while preserving friendly-fire rules.
 - Slayer's complete prototype kit: pellet shotgun and shell reload, bleeding knives with flight trails, swept Boot Rush with knockback, a single aimed snare toss with timed arming, private pursuit marks, and a piercing axe with temporary max-health wounds. Includes distinct geometric art, keyed throwing poses, effects, synth audio, AI, selection and HUD support. Both heroes use a close 1.85 m shoulder camera with the normal 76-degree field of view and crosshair ammunition display.
-- All gameplay components and per-actor resources are shared by player and bots. Multiplayer and the roster beyond Nimbus and Slayer remain deferred.
+- All gameplay components and per-actor resources are shared by player and bots. Marshal and Doctor add main-tank and main-support roles; multiplayer and the remaining reserved roster remain deferred.
 
 ## Verify
 
@@ -86,11 +90,11 @@ godot --headless --path . --script res://tests/mantle_exit_test.gd
 godot --headless --path . --script res://tests/integration_test.gd
 ```
 
-Results are written to `artifacts/`. The current suite passes **715 headless checks**, plus **1,358 structural collision probes**. Native input verification adds **47 checks** and fullscreen verification adds **20**. A separate ten-minute mixed-hero simulation passes **15 stability checks**. City checks cover healing, objective heights, protection, respawns, resets, traversal, navigation recovery and camera clearance. See [Slayer validation](docs/SLAYER.md), `docs/PLAYTESTS.md` and the city field guide for evidence and reproduction commands. Competitive balance and game feel still need human playtesting. Tune the hero resources or map definition through the Inspector.
+Results are written to `artifacts/`. The full verification run passes **1,112 checks**, plus **2,516 structural surface probes** and **4,420 winding checks**. Marshal/Doctor follow-up verification passes **126 focused headless checks** and **128 native checks**. Native input verification adds **47 checks** and fullscreen verification adds **20**. The final ten-minute four-hero simulation passes **17 stability checks**. City checks cover healing, objective heights, protection, respawns, resets, traversal, navigation recovery and camera clearance. See [Slayer validation](docs/SLAYER.md), `docs/PLAYTESTS.md` and the city field guide for evidence and reproduction commands. Competitive balance and game feel still need human playtesting. Tune the hero resources or map definition through the Inspector.
 
 ## Layout
 
-`scenes/actors` composes the common actor. `scripts/actors` owns intent, actor state, movement and camera. `scripts/abilities` owns Nimbus and close-combat lifecycles. `scripts/combat` is the offline authority boundary for damage, cover and projectiles. `scripts/presentation` owns geometry, animation and sound. `scripts/training` owns exercises, bots/debug control and HUD. All dimensions are meters, times seconds, health/damage HP.
+`scenes/actors` composes the common actor. `scripts/actors` owns intent, actor state, movement and camera. `scripts/abilities` owns hero kits and close-combat lifecycles. `scripts/combat` is the offline authority boundary for damage, cover and projectiles. `scripts/presentation` owns geometry, animation and sound. `scripts/training` owns exercises, bots/debug control and HUD. All dimensions are meters, times seconds, health/damage HP.
 
 The city uses a reusable batched architecture kit, a baked pedestrian navigation mesh, original material shaders and static indirect lamp illumination. Nimbus retains the existing prototype character art and procedural animation. Human keyboard/mouse playtesting remains useful for responsiveness, route difficulty and combat balance. See `docs/DECISIONS.md` and `docs/TASKS.md` before extending it.
 

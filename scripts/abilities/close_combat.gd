@@ -51,7 +51,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 		melee_age = 0.0
 		lunge_blocked = false
 		melee_lunge_enabled = not input.stationary_melee
-		cast_id = actor.resolver.new_cast()
+		cast_id = actor.resolver.new_cast(actor)
 		actor.resolver.record("cast", actor, "melee")
 	if actor.state.begins_with("melee_"):
 		melee_age += delta
@@ -129,7 +129,7 @@ func start_throw() -> void:
 	last_throw_time = float(Engine.get_physics_frames()) / Engine.physics_ticks_per_second
 	actor.state = "throw_startup"
 	actor.state_time = actor.tuning.throw_startup
-	cast_id = actor.resolver.new_cast()
+	cast_id = actor.resolver.new_cast(actor)
 	throw_target = null
 	var nearest: float = actor.tuning.throw_range
 	for other: HeroActor in actor.get_tree().get_nodes_in_group("actors"):

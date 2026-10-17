@@ -1,10 +1,38 @@
 class_name HeroRoster
 extends RefCounted
 
-static var selected: String = "slayer" if "--hero=slayer" in OS.get_cmdline_user_args() else "nimbus"
+const IDS: Array[String] = ["nimbus", "slayer", "marshal", "doctor"]
+static var selected: String = initial_selection()
+
+static func initial_selection() -> String:
+	for id: String in IDS:
+		if "--hero=" + id in OS.get_cmdline_user_args(): return id
+	return "nimbus"
 
 static func tuning_for(id: String) -> HeroTuning:
-	return load("res://resources/slayer.tres" if id == "slayer" else "res://resources/nimbus.tres").duplicate() as HeroTuning
+	return load("res://resources/%s.tres" % (id if id in IDS else "nimbus")).duplicate() as HeroTuning
 
 static func kit_for(id: String) -> HeroKit:
-	return SlayerKit.new() if id == "slayer" else NimbusKit.new()
+	match id:
+		"slayer": return SlayerKit.new()
+		"marshal": return MarshalKit.new()
+		"doctor": return DoctorKit.new()
+	return NimbusKit.new()
+
+static func team_hero(slot: int, player_hero: String) -> String:
+	var composition: Array[String] = ["marshal","doctor","nimbus","nimbus","slayer","slayer"]
+	var player_slot: int = composition.find(player_hero)
+	var first: String = composition[0]
+	composition[0] = composition[player_slot]
+	composition[player_slot] = first
+	return composition[slot]
+
+static func bot_role(slot: int, player_hero: String) -> String:
+	var hero: String = team_hero(slot,player_hero)
+	if hero in ["marshal","doctor"]: return "frontline"
+	# Preserve one deliberate underground route without sending the main tank away.
+	for candidate: int in range(1,6):
+		if team_hero(candidate,player_hero) == "nimbus":
+			if slot == candidate: return "frontline_subway"
+			break
+	return ["frontline","frontline","frontline","flank_left","flank_right","high_ground"][slot]

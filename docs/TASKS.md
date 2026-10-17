@@ -40,3 +40,8 @@ Traversal follow-up: hold Space and move into the marked ledge, keep holding thr
 Mantle exit follow-up: approach at running or faster traversal speed, climb and continue forward; press Space near the end to launch straight into a jump. Check that the quicker climb still reads clearly and preserves the expected travel direction without a stop at the top.
 
 City follow-up: play the revised main approaches, inner stairs and underground shops using the shoulder camera. Evaluate hill pressure, flank commitment, health-pack contention and cover readability with human input. M opens the atlas; B switches its surface/underground layer. Automated simulations and rendered FPS samples establish functionality and a performance baseline; competitive balance remains a playtest decision.
+
+
+## ROSTER-02 - Marshal and Doctor
+
+Implemented October 17, 2026: new shield main tank and beam main support, with distinct original procedural models, portraits, bot tactics, both selection menus, balanced 6v6 compositions and two practice exercises. See [Marshal and Doctor](MARSHAL_DOCTOR.md) for controls, editable values, authority rules and reproduction commands. Annex and Ahab remain separate reserved concepts. This supersedes the earlier two-hero roster deferral.

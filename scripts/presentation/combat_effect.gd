@@ -8,6 +8,24 @@ var radius: float = 1.0
 var visual: MeshInstance3D
 var fading: bool = false
 
+static func cone_warning(parent: Node3D, origin: Vector3, forward: Vector3, reach: float, seconds: float) -> CombatEffect:
+	var effect := CombatEffect.new()
+	effect.lifetime = seconds
+	effect.initial_lifetime = seconds
+	parent.add_child(effect)
+	var mat := Geometry.material(Color("ffba64"),1.0)
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	var lines := ImmediateMesh.new()
+	lines.surface_begin(Mesh.PRIMITIVE_LINE_STRIP,mat)
+	lines.surface_add_vertex(Vector3.ZERO)
+	for i: int in 33:
+		lines.surface_add_vertex(forward.rotated(Vector3.UP,lerpf(-PI/4,PI/4,i/32.0)) * reach)
+	lines.surface_add_vertex(Vector3.ZERO)
+	lines.surface_end()
+	effect.visual = Geometry.mesh(effect,lines,Vector3.ZERO,mat)
+	effect.position = origin + Vector3.UP * .06
+	return effect
+
 static func streak(parent: Node3D, from: Vector3, to: Vector3, width: float, seconds: float) -> void:
 	if from.distance_to(to) < .001: return
 	var effect := CombatEffect.new()

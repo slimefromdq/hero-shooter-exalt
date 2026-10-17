@@ -35,6 +35,7 @@ var seeking_health: bool = false
 var health_target: Node3D
 var entered_hill: bool = false
 var detour_until: float = 0.0
+var care_request: CombatIntent
 var rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
@@ -60,7 +61,7 @@ func _ready() -> void:
 func load_route() -> void:
 	route.clear()
 	if is_instance_valid(match_controller) and match_controller.definition != null:
-		var route_role: String = "frontline_subway" if role == "frontline" and slot == 2 else role
+		var route_role: String = role
 		for point: Vector3 in match_controller.definition.route_points(actor.team, route_role):
 			route.append(point)
 	route_index = 0
@@ -84,6 +85,15 @@ func gather_intent(delta: float) -> CombatIntent:
 	if think_timer <= 0.0:
 		think_timer += .2
 		decide()
+		if actor.kit is CareKit:
+			care_request = CombatIntent.new()
+			care_request.aim_origin = actor.global_position + Vector3.UP * 1.45
+			CareTactics.apply(actor,care_request)
+		if actor.kit is DoctorKit:
+			var patient: HeroActor = CareTactics.ally(actor)
+			if is_instance_valid(patient):
+				var back: Vector3 = (actor.global_position - patient.global_position).normalized()
+				destination = patient.global_position + back * 5
 	if path_timer <= 0.0:
 		path_timer += .5
 		navagent.target_position = destination
@@ -136,6 +146,10 @@ func gather_intent(delta: float) -> CombatIntent:
 			intent.aim = move.normalized()
 		if actor.kit.ammo < actor.tuning.magazine and actor.state == "ready":
 			intent.reload = true
+	if actor.kit is CareKit and care_request != null:
+		for action: String in ["aim","primary","primary_held","secondary_held","aim_held","reload","hover","deflect","bomb","ultimate","melee","guard","throw_action"]:
+			intent.set(action,care_request.get(action))
+		if not care_request.move.is_zero_approx(): intent.move = avoid_wall(care_request.move)
 	watch_progress(delta, intent.move)
 	return intent
 
@@ -248,6 +262,7 @@ func watch_progress(delta: float, movement: Vector3) -> void:
 		sample_position = actor.global_position
 
 func reset_controller() -> void:
+	care_request = null
 	target = null
 	health_target = null
 	sees_target = false

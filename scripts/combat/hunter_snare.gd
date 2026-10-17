@@ -16,7 +16,7 @@ func _ready() -> void:
 	add_to_group("owned_attacks")
 	add_to_group("transient")
 	add_to_group("traps")
-	cast_id = source.resolver.new_cast()
+	cast_id = source.resolver.new_cast(source)
 	health = (source.tuning as SlayerTuning).trap_health
 	# Shootable by combat traces, while character capsules can walk over it.
 	collision_layer = 16
@@ -67,6 +67,11 @@ func _physics_process(delta: float) -> void:
 	armed = arm_age >= t.trap_arm_time
 	if flying:
 		velocity.y -= t.trap_gravity * delta
+		var barrier_hit: Dictionary = source.resolver.attack_ray(source,global_position,global_position + velocity * delta,[get_rid(),source.get_rid()],1)
+		if barrier_hit.get("collider") is MarshalBarrier:
+			barrier_hit.collider.receive_damage(source,t.trap_damage,cast_id)
+			queue_free()
+			return
 		var collision: KinematicCollision3D = move_and_collide(velocity * delta)
 		if collision != null:
 			if collision.get_normal().y >= .7 and placement_clear(source,global_position,[get_rid()]):

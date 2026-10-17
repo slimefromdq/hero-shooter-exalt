@@ -9,3 +9,8 @@ Use case: stylized-concept. Create one square production game HUD character port
 ## Slayer prompt
 
 Use case: stylized-concept. Create one square production character portrait asset for Slayer, an original adult woman hero in a fantasy streetwear hero shooter. Tight closeup head and upper shoulders at three-quarter angle, expressive confident fierce face fills frame and remains legible as 72-pixel team HUD portrait. Warm light tan skin, sharp cheekbones, amber eyes, layered choppy black-purple bob haircut with a single pale silver forelock and asymmetrical bangs, cropped dark plum tactical streetwear jacket with silver lapel and zipper, small silver ear cuff. Polished painterly 3D competitive hero shooter character portrait with sculpted volumetric lighting, richly detailed face, attractive strong silhouette, deep purple background and warm peach face illumination. No weapon obscuring face. No text, no border, no UI, no watermark.
+
+
+## Marshal and Doctor
+
+`marshal.png` and `doctor.png` are original Godot-rendered portraits of their actual procedural character models. `tests/capture_care_heroes.gd` regenerates them from the training scene without external assets. Import the project afterward to refresh Godot's texture cache.

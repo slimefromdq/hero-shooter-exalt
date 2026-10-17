@@ -29,6 +29,10 @@ func _physics_process(delta: float) -> void:
 	fuse -= delta
 	body.scale = Vector3.ONE * (1.0 + sin(fuse * 35.0) * 0.18)
 	velocity.y -= 15.0 * delta
+	var shield_hit: Dictionary = source.resolver.attack_ray(source,global_position,global_position + velocity * delta,[get_rid()],1)
+	if shield_hit.get("collider") is MarshalBarrier:
+		global_position = shield_hit.position + shield_hit.normal * .15
+		velocity = velocity.bounce(shield_hit.normal) * .58
 	var collision: KinematicCollision3D = move_and_collide(velocity * delta)
 	if collision != null:
 		velocity = velocity.bounce(collision.get_normal()) * 0.58
@@ -42,12 +46,7 @@ func explode() -> void:
 		var hit: Dictionary = source.resolver.ray(global_position,trap.global_position,[get_rid()])
 		if distance < t.bomb_radius and (hit.is_empty() or hit.get("collider") == trap):
 			trap.receive_damage(source,t.bomb_damage * (1.0 - distance / t.bomb_radius),cast_id)
-	for target: HeroActor in get_tree().get_nodes_in_group("actors"):
-		if target == source or not target.alive or target.team == source.team:
-			continue
-		var distance: float = global_position.distance_to(target.global_position + Vector3.UP * 0.9)
-		if distance <= t.bomb_radius and source.resolver.visible(global_position + Vector3.UP * 0.05, target):
-			source.resolver.damage(source, target, t.bomb_damage * (1.0 - distance / t.bomb_radius), "bomb", cast_id)
+	source.resolver.splash(source,global_position,t.bomb_radius,t.bomb_damage,"bomb",cast_id,true)
 	CombatEffect.pulse(get_parent(), global_position, Color("ffd18d"), t.bomb_radius)
 	source.presentation.sound.play_tone(60.0, 0.28, 0.3)
 	source.resolver.record("detonate", source, "bomb", "cast=%d" % cast_id)

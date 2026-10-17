@@ -18,6 +18,7 @@ var left_arm: Node3D
 var right_arm: Node3D
 var animator: AnimationPlayer
 var sound: ProceduralSound
+var impact_sound: ProceduralSound
 var block_sound: ProceduralSound
 var block_flash: float = 0.0
 var block_effect: BlockImpact
@@ -28,6 +29,7 @@ var muzzle_flash: MeshInstance3D
 var status_label: Label3D
 var status_ring: MeshInstance3D
 var held_knife: Node3D
+var care_tool: Node3D
 var held_trap: Node3D
 
 func _ready() -> void:
@@ -120,6 +122,9 @@ func _ready() -> void:
 	sound = ProceduralSound.new()
 	sound.spatial_owner = actor
 	add_child(sound)
+	impact_sound = ProceduralSound.new()
+	impact_sound.spatial_owner = actor
+	add_child(impact_sound)
 	block_sound = ProceduralSound.new()
 	block_sound.spatial_owner = actor
 	add_child(block_sound)
@@ -132,6 +137,7 @@ func _ready() -> void:
 	if actor.tuning is SlayerTuning:
 		SlayerVisuals.remodel(self)
 		animator.add_animation_library("slayer",SlayerAnimations.library())
+	if actor.kit is CareKit: CareVisuals.remodel(self)
 	status_label = Geometry.text3d(self,"",Vector3(0,2.3,0),23,Color("e3b8ff"))
 	status_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	status_label.no_depth_test = false
@@ -189,7 +195,13 @@ func _process(delta: float) -> void:
 		rifle.rotation.x = -0.7
 	var animation: String = ""
 	var progress: float = 0.0
-	if actor.state in ["slayer_knife", "slayer_trap"]:
+	if actor.state == "marshal_verdict":
+		animation = "care/verdict"
+		progress = (actor.kit as MarshalKit).verdict_progress()
+	elif actor.state == "doctor_ultimate":
+		animation = "care/prescribe"
+		progress = 1.0 - actor.state_time / (actor.tuning as DoctorTuning).exemplary_windup
+	elif actor.state in ["slayer_knife", "slayer_trap"]:
 		animation = "slayer/knife" if actor.state == "slayer_knife" else "slayer/toss"
 		var hunter := actor.kit as SlayerKit
 		var data := actor.tuning as SlayerTuning
@@ -260,7 +272,8 @@ func _process(delta: float) -> void:
 		sound.play_tone(70.0, 0.07, 0.1)
 	was_grounded = actor.is_on_floor()
 	if actor.tuning is SlayerTuning: SlayerVisuals.animate(self)
-	var status_text: String = ""
+	if actor.kit is CareKit: CareVisuals.animate(self)
+	var status_text: String = CareHUD.status(actor)
 	for effect: String in actor.statuses.effects:
 		status_text += "%s %.1f  " % [effect.replace("max_health","MAX HP WOUND").to_upper(),actor.statuses.effects[effect].remaining]
 	var viewer: HeroActor = session.player if session != null else null
@@ -270,7 +283,9 @@ func _process(delta: float) -> void:
 			status_text += "WOUNDED ◆" if actor.health / actor.effective_max_health() <= slayer_data.wounded_threshold else "HUNTED ◇"
 	status_label.text = status_text
 	status_label.visible = actor.alive and status_text != "" and actor != viewer
-	status_ring.visible = actor.alive and (actor.statuses.effects.has("max_health") or actor.statuses.effects.has("root"))
+	status_ring.visible = actor.alive and (actor.statuses.effects.has("max_health") or actor.statuses.effects.has("root") or actor.benefits.has_kind("exemplary") or actor.benefits.has_kind("prescription"))
+	var ring_color := Color("ffda80") if actor.benefits.has_kind("exemplary") else (Color("b7f3ff") if actor.benefits.has_kind("prescription") else Color("c79aef"))
+	(status_ring.material_override as StandardMaterial3D).albedo_color = ring_color
 	status_ring.rotation.y += delta
 
 func on_block(attacker: HeroActor, defender: HeroActor) -> void:
@@ -291,6 +306,8 @@ func clear_feedback() -> void:
 	block_flash = 0.0
 	if is_instance_valid(stagger_marks):
 		stagger_marks.visible = false
+	if is_instance_valid(impact_sound):
+		impact_sound.stop()
 	if is_instance_valid(block_sound):
 		block_sound.stop()
 	if is_instance_valid(block_effect):
