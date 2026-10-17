@@ -85,6 +85,13 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 	confirmed_hit.emit(source, target, hp_damage + absorbed, head, executed)
 	return "execution" if executed else "hit"
 
+func knockback(source: HeroActor, target: HeroActor, impulse: Vector3, tag: String) -> void:
+	if not target.alive or target.invulnerable or source.team == target.team or protected_room(source) or protected_room(target): return
+	if target.state in ["captured", "throw_pair"]: return
+	if target.motor.traversal.active: target.motor.traversal.abort()
+	target.motor.external_velocity += impulse
+	record("displacement",source,tag,"target=%s speed=%.1f" % [target.actor_id,impulse.length()])
+
 func ray(from: Vector3, to: Vector3, exclude: Array[RID] = [], mask: int = 19) -> Dictionary:
 	var query := PhysicsRayQueryParameters3D.create(from, to, mask, exclude)
 	return get_viewport().world_3d.direct_space_state.intersect_ray(query)

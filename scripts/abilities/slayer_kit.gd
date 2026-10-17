@@ -104,7 +104,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 	elif input.hover and knives > 0 and cancel_window and actor.permits("knife"):
 		throw_knife()
 	elif input.bomb and snares > 0 and actor.permits("snare"):
-		if not deploy_trap(): hint("SNARE / NO CLEAR GROUND NEARBY")
+		if not deploy_trap(): hint("SNARE / NO CLEAR RELEASE SPACE")
 	elif input.ultimate and ultimate_charge >= 100.0 and actor.permits("ultimate"):
 		ultimate_charge = 0.0
 		ultimate_age = 0.0
@@ -259,8 +259,8 @@ func boot_targets() -> bool:
 		var result: String = actor.resolver.damage(actor,target,data().boot_damage,"boot",cast_id,false,false,actor.global_position)
 		if result in ["hit", "blocked"]:
 			boot_connected = true
-			if result == "hit" and target.state not in ["captured", "throw_pair"]:
-				target.motor.external_velocity += boot_direction * data().boot_knockback
+			if result == "hit":
+				actor.resolver.knockback(actor,target,boot_direction * data().boot_knockback,"boot")
 			CombatEffect.pulse(actor.get_parent(),target.global_position + Vector3.UP,Color("f7bb65"),.9)
 			cue("boot_hit")
 			return true
@@ -299,19 +299,16 @@ func move_override(delta: float) -> bool:
 	return true
 
 func deploy_trap() -> bool:
-	var intended: Vector3 = actor.global_position - actor.global_basis.z * .95
-	var hit: Dictionary = actor.resolver.ray(intended + Vector3.UP * 1.2,intended + Vector3.DOWN * 2,[actor.get_rid()],1)
-	if hit.is_empty() or (hit.normal as Vector3).y < .7: return false
-	if not HunterSnare.placement_clear(actor,hit.position + hit.normal * .2): return false
+	if not HunterSnare.placement_clear(actor,throw_origin(),[actor.get_rid()]): return false
 	var t: SlayerTuning = data()
-	pending_trap_direction = -actor.global_basis.z
+	pending_trap_direction = (aim_point(t.weapon_range) - throw_origin()).normalized()
 	if snares == t.trap_limit: snare_timer = t.trap_recharge
 	snares -= 1
 	actor.state = "slayer_trap"
 	actor.state_time = t.trap_recovery
 	action_age = 0.0
 	action_released = false
-	actor.resolver.record("cast",actor,"snare_drop")
+	actor.resolver.record("cast",actor,"snare_toss")
 	return true
 
 func release_trap() -> void:
@@ -327,11 +324,18 @@ func release_trap() -> void:
 	trap.flying = true
 	actor.get_parent().add_child(trap)
 	var hand: Vector3 = throw_origin()
-	var obstruction: Dictionary = actor.resolver.ray(actor.global_position + Vector3.UP * 1.1,hand,[actor.get_rid()],1)
-	trap.global_position = obstruction.position + obstruction.normal * .2 if not obstruction.is_empty() else hand
-	trap.velocity = pending_trap_direction * t.trap_drop_forward + Vector3.DOWN * t.trap_drop_speed
+	# Sweep the actual device from the shoulder to the hand; a thin wall cannot
+	# be skipped by the release animation. Actors remain free to walk over traps.
+	trap.global_position = actor.global_position + Vector3.UP * 1.36
+	trap.move_and_collide(hand - trap.global_position)
+	if not HunterSnare.placement_clear(actor,trap.global_position,[actor.get_rid(),trap.get_rid()]):
+		trap.queue_free()
+		snares = mini(snares + 1,t.trap_limit)
+		hint("SNARE / RELEASE BLOCKED")
+		return
+	trap.velocity = pending_trap_direction * t.trap_throw_speed + Vector3.UP * t.trap_throw_lift
 	traps.append(trap)
-	actor.resolver.record("release",actor,"snare_drop")
+	actor.resolver.record("release",actor,"snare_toss")
 	cue("snare")
 
 func release_axe() -> void:

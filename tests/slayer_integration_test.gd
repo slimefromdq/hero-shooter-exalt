@@ -66,7 +66,7 @@ func run() -> void:
 	training.player.controller.active = false
 	training.player.statuses.apply("max_health",hunter,8,.5)
 	training.refill_all()
-	check(training.player.health == 250 and training.player.statuses.effects.is_empty(),"training refill intentionally cleanses temporary wounds")
+	check(training.player.health == 275 and training.player.statuses.effects.is_empty(),"training refill restores Slayer's 275 HP and cleanses temporary wounds")
 	training.select_hero("slayer")
 	training.player.global_position = Vector3(0,.01,11)
 	var kit := training.player.kit as SlayerKit

@@ -30,3 +30,14 @@ static func hit(canvas: Control, font: Font, caption: String, center: Vector2, h
 	var at: Vector2 = center + Vector2(36,-30 - (1.0 - minf(1.0,remaining / .8)) * 15)
 	canvas.draw_string_outline(font,at,caption,HORIZONTAL_ALIGNMENT_LEFT,-1,30,5,Color(0.03,.05,.07,color.a))
 	canvas.draw_string(font,at,caption,HORIZONTAL_ALIGNMENT_LEFT,-1,30,color)
+
+static func ammo(canvas: Control, actor: HeroActor, font: Font, center: Vector2) -> void:
+	var caption: String = "%d / %d" % [actor.kit.ammo,actor.tuning.magazine]
+	var color := Color("ffe080") if actor.kit.ammo == 0 or actor.state == "reload" else Color("fbfff4")
+	var at: Vector2 = center + Vector2(40,23)
+	canvas.draw_string_outline(font,at,caption,HORIZONTAL_ALIGNMENT_LEFT,-1,22,4,Color(.025,.04,.06,.95))
+	canvas.draw_string(font,at,caption,HORIZONTAL_ALIGNMENT_LEFT,-1,22,color)
+	if actor.state == "reload" or actor.kit.ammo == 0:
+		var prompt: String = "LOADING" if actor.state == "reload" else "R  RELOAD"
+		canvas.draw_string_outline(font,at + Vector2(0,17),prompt,HORIZONTAL_ALIGNMENT_LEFT,-1,11,3,Color(.025,.04,.06,.95))
+		canvas.draw_string(font,at + Vector2(0,17),prompt,HORIZONTAL_ALIGNMENT_LEFT,-1,11,color)

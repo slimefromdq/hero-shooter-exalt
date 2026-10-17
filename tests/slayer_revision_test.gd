@@ -140,19 +140,19 @@ func run() -> void:
 	player.intent.aim_origin = player.global_position + Vector3.UP * 1.05
 	training.hud.numbers.entries.clear()
 	kit().fire(false)
-	check(is_equal_approx(kit().last_shot_damage,100),"tight close-range shotgun produces the new 100 body damage")
-	check(training.hud.numbers.entries.size() == 1 and is_equal_approx(training.hud.numbers.entries[0].amount,100),"world-space damage feedback coalesces all ten pellets")
-	check(training.hud.hit_timer >= .75 and training.hud.hit_text == "100","large aggregate damage stays visible longer than the old flash")
+	check(is_equal_approx(kit().last_shot_damage,90),"tight close-range shotgun produces the revised 90 body damage")
+	check(training.hud.numbers.entries.size() == 1 and is_equal_approx(training.hud.numbers.entries[0].amount,90),"world-space damage feedback coalesces all ten pellets")
+	check(training.hud.hit_timer >= .75 and training.hud.hit_text == "90","large aggregate damage stays visible longer than the old flash")
 	await step(70)
 	check(training.hud.numbers.entries.is_empty(),"floating damage numbers expire cleanly")
 	await reset()
-	check(kit().deploy_trap(),"single trap action accepts nearby clear ground")
+	check(kit().deploy_trap(),"single trap action accepts a clear release")
 	await step(4)
-	check(player.presentation.held_trap.visible and kit().traps.is_empty(),"trap anticipation visibly holds the device before the downward release")
+	check(player.presentation.held_trap.visible and kit().traps.is_empty(),"trap anticipation visibly holds the device before release")
 	await step(7)
-	check(kit().traps.size() == 1 and kit().traps[0].velocity.y < 0,"trap is physically thrown downward instead of appearing on the floor")
+	check(kit().traps.size() == 1 and kit().traps[0].velocity.z < -8,"trap has forward flight rather than immediately dropping at Slayer's feet")
 	await step(60)
-	check(kit().traps[0].armed and kit().traps[0].position.distance_to(player.position) < 2,"downward toss lands nearby and arms")
+	check(kit().traps[0].armed and kit().traps[0].position.distance_to(player.position) > 4,"toss travels farther and arms on its timer")
 	var deployed: HunterSnare = kit().traps[0]
 	player.position = Vector3(deployed.position.x,.01,deployed.position.z + 1.2)
 	await step(2)
@@ -184,6 +184,7 @@ func run() -> void:
 	check(player.presentation.rifle.position.z > 0,"proper throw stows the shotgun away from both hands")
 	await step(90)
 	check(target.health == 155 and player.state == "ready" and target.close.pair == null,"throw deals damage once at impact and releases both participants")
+	await tuning_pass_tests()
 	var report: String = "slayer-revision-native-results.json" if native_input else "slayer-revision-results.json"
 	var file := FileAccess.open("res://artifacts/" + report,FileAccess.WRITE)
 	file.store_string(JSON.stringify({"checks":checks,"failures":failures,"native_input":native_input},"\t"))
@@ -196,3 +197,78 @@ func run() -> void:
 	arena.queue_free()
 	await step(3)
 	quit(0 if failures.is_empty() else 1)
+
+func tuning_pass_tests() -> void:
+	await reset()
+	check(player.health == 275 and player.effective_max_health() == 275,"direct Slayer launch and training resets preserve 275 HP")
+	check(controller.arm.spring_length <= 4.01,"shared shoulder camera settles at the closer four-metre distance")
+	var target: HeroActor = training.bots[0]
+	target.reset_actor(player.position + Vector3(0,0,-5))
+	await step(3)
+	var before: Vector3 = target.position
+	await boot_press()
+	await step(35)
+	check(target.health == 195 and before.z - target.position.z > 1.5,"Boot Rush visibly knocks a grounded enemy back over 1.5 metres")
+	check(player.resolver.events.any(func(entry: Dictionary) -> bool: return entry.event == "displacement" and entry.ability == "boot"),"boot displacement records attacker attribution")
+	await reset()
+	target = training.bots[0]
+	target.reset_actor(player.position + Vector3(0,0,-5))
+	target.statuses.apply("root",player,2)
+	before = target.position
+	await boot_press()
+	await step(35)
+	check(before.z - target.position.z > 1.5 and target.statuses.movement_disabled(),"root prevents walking but does not swallow the kick's knockback")
+	await reset()
+	target = training.bots[0]
+	target.reset_actor(player.position + Vector3(0,0,-5))
+	before = target.position
+	await boot_press()
+	for frame: int in 60:
+		if target.health < 250: break
+		await step()
+	target.statuses.apply("root",player,2)
+	await step(30)
+	check(before.z - target.position.z > 1.5,"a snare applied after boot contact also preserves the knockback")
+	await reset()
+	target = training.bots[0]
+	target.reset_actor(player.position + Vector3(0,0,-5))
+	var wall: Node3D = Geometry.box(arena,Vector3(3,3,.08),target.position + Vector3(0,1.5,-.65),Color.GRAY)
+	await step(3)
+	await boot_press()
+	await step(35)
+	check(target.health == 195 and target.position.z > wall.position.z + .38,"boot knockback sweeps safely against thin cover")
+	wall.queue_free()
+	await reset()
+	player.reset_actor(Vector3(20,8,10))
+	player.intent.aim = Vector3.FORWARD
+	player.aim_direction = Vector3.FORWARD
+	check(kit().deploy_trap(),"trap can be tossed from the air without ground below the release")
+	await step(30)
+	var trap: HunterSnare = kit().traps.back()
+	check(trap.flying and not trap.armed and trap.position.z < 6,"snare covers several metres before it is armed")
+	await step(25)
+	check(trap.flying and trap.armed and trap.arm_age < 1,"arming timer completes during airborne travel")
+	target = training.bots[0]
+	target.reset_actor(trap.position - Vector3.UP * .9 + Vector3.FORWARD * .2)
+	await step(2)
+	check(target.health == 225 and target.statuses.movement_disabled(),"armed airborne trap can catch an enemy before landing")
+	for hero: String in ["nimbus","slayer"]:
+		await reset()
+		player.controller = controller
+		training.select_hero(hero)
+		player.controller = controller if native_input else null
+		target = training.bots[0]
+		target.reset_actor(player.position + Vector3(0,0,-3.05))
+		await step(3)
+		player.close.start_throw()
+		await step(20)
+		check(player.state == "throw_pair" and target.state == "captured",hero + " captures a target just beyond the old throw reach")
+		await reset()
+		target = training.bots[0]
+		target.reset_actor(player.position + Vector3(0,0,-3.6))
+		await step(3)
+		player.close.start_throw()
+		await step(20)
+		check(player.state == "throw_whiff" and target.state == "ready",hero + " still whiffs outside the more forgiving reach")
+	player.controller = controller
+	training.select_hero("slayer")

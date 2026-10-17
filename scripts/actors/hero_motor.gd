@@ -20,6 +20,21 @@ func _ready() -> void:
 	traversal.actor = actor
 
 func tick(delta: float, input: CombatIntent) -> void:
+	tick_motion(delta,input)
+	# Root, melee and mobility branches must not silently swallow a hit impulse.
+	# Move separately so knockback cannot turn into stored player momentum.
+	if actor.state in ["captured", "throw_pair"]:
+		external_velocity = Vector3.ZERO
+	elif not external_velocity.is_zero_approx():
+		var motion: Vector3 = external_velocity * delta
+		for index: int in 3:
+			var collision: KinematicCollision3D = actor.move_and_collide(motion)
+			if collision == null: break
+			motion = collision.get_remainder().slide(collision.get_normal())
+			if motion.is_zero_approx(): break
+		external_velocity = external_velocity.move_toward(Vector3.ZERO,delta * actor.tuning.braking)
+
+func tick_motion(delta: float, input: CombatIntent) -> void:
 	var t: HeroTuning = actor.tuning
 	var was_floor: bool = grounded()
 	traversal.tick(delta,was_floor)
@@ -159,10 +174,6 @@ func tick(delta: float, input: CombatIntent) -> void:
 	var before: Vector3 = actor.velocity
 	actor.floor_stop_on_slope = mode != "slide"
 	actor.move_and_slide()
-	if not external_velocity.is_zero_approx():
-		# External impulses are swept displacement, never added repeatedly to velocity.
-		actor.move_and_collide(external_velocity * delta)
-		external_velocity = external_velocity.move_toward(Vector3.ZERO,delta * t.braking)
 	if mode == "slide":
 		for index: int in actor.get_slide_collision_count():
 			var normal: Vector3 = actor.get_slide_collision(index).get_normal()
@@ -241,4 +252,4 @@ func interrupt_mobility() -> void:
 		actor.kit.cancel()
 	actor.velocity.x = 0.0
 	actor.velocity.z = 0.0
-	external_velocity = Vector3.ZERO
+	# A root/slow interrupts voluntary mobility, not an enemy's existing push.

@@ -105,6 +105,7 @@ func draw_hud() -> void:
 			canvas.draw_line(center + direction * (7 + bloom), center + direction * (14 + bloom), Color(0, 0, 0, 0.35), 4)
 			canvas.draw_line(center + direction * (7 + bloom), center + direction * (14 + bloom), cross_color, 2)
 		canvas.draw_circle(center, 1.3, cross_color)
+		CombatHUD.ammo(canvas,p,bold,center)
 		if p.state == "ultimate":
 			canvas.draw_arc(center, 250, 0, TAU, 100, Color(0.65, 0.95, 0.85, 0.7), 1, true)
 			canvas.draw_arc(center, 220, -PI / 2, -PI / 2 + TAU * minf(1, p.kit.ultimate_age / p.tuning.ultimate_preparation), 100, mint, 3, true)
@@ -126,7 +127,7 @@ func draw_hud() -> void:
 		var t := p.tuning as SlayerTuning
 		ability_card(663,TrainingInputs.key_label("hover"),"SILVER KNIVES","%d / %d" % [hunter.knives,t.knife_charges],0 if hunter.knives > 0 else hunter.knife_timer,t.knife_recharge)
 		ability_card(776,TrainingInputs.key_label("deflect"),"BOOT","RUSH",hunter.deflect_cd,t.boot_cooldown)
-		ability_card(889,TrainingInputs.key_label("bomb"),"DROP SNARE","%d / %d" % [hunter.snares,t.trap_limit],0 if hunter.snares > 0 else hunter.snare_timer,t.trap_recharge)
+		ability_card(889,TrainingInputs.key_label("bomb"),"TOSS SNARE","%d / %d" % [hunter.snares,t.trap_limit],0 if hunter.snares > 0 else hunter.snare_timer,t.trap_recharge)
 	else:
 		ability_card(663, TrainingInputs.key_label("hover"), "UMBRELLA", "HOVER", p.motor.hover_cd, p.tuning.hover_cooldown)
 		ability_card(776, TrainingInputs.key_label("deflect"), "RETURN", "DEFLECT", p.kit.deflect_cd, p.tuning.deflect_cooldown)
@@ -174,7 +175,7 @@ func draw_statuses(p: HeroActor) -> void:
 	if status != "": label_at(status,Vector2(475,675),16,coral,true)
 	if p.kit is SlayerKit:
 		var hunter := p.kit as SlayerKit
-		label_at("Q KNIVES   ·   E BOOT RUSH   ·   1 DROP SNARE   ·   4 GRAB / SLAM",Vector2(430,706),12,paper,true)
+		label_at("Q KNIVES   ·   E BOOT RUSH   ·   1 TOSS SNARE   ·   4 GRAB / SLAM",Vector2(430,706),12,paper,true)
 		if hunter.action_hint_time > 0:
 			label_at(hunter.action_hint,Vector2(470,620),18,coral,true)
 		elif hunter.boot_slow_time > 0:
@@ -293,7 +294,7 @@ func build_menu() -> void:
 	spin(left,"Strike trigger range (m)",2.4,.8,2.6,.1,func(value: float) -> void: training.guard_test_range = value; training.apply_bot_settings())
 	spin(left,"Strike interval (s)",1.6,1.0,4.0,.1,func(value: float) -> void: training.guard_test_interval = value; training.apply_bot_settings())
 	menu_label(right, "02  /  RULE LABORATORY", 18)
-	spin(right, "Player maximum HP (reset applies)", 250, 50, 500, 50, func(value: float) -> void: training.player_max_health = value)
+	spin(right, "Player maximum HP (reset applies)", training.player_max_health, 50, 500, 25, func(value: float) -> void: training.player_max_health = value)
 	spin(right, "Target maximum HP (reset applies)", 250, 50, 500, 50, func(value: float) -> void: training.bot_max_health = value)
 	var health_row := HBoxContainer.new()
 	right.add_child(health_row)
@@ -305,7 +306,7 @@ func build_menu() -> void:
 		["Melee damage", "melee_damage", 75.0, 10.0, 150.0, 5.0],
 		["Melee reach (m)", "melee_range", 2.6, 1.0, 4.0, 0.1],
 		["Melee lunge travel (m)", "melee_lunge_distance", 3.6, 0.0, 5.0, 0.1],
-		["Throw reach (m)", "throw_range", 2.8, 1.0, 4.0, 0.1],
+		["Throw reach (m)", "throw_range", 3.2, 1.0, 4.0, 0.1],
 		["Throw damage", "throw_damage", 95.0, 10.0, 200.0, 5.0],
 		["Counter window (s)", "counter_window", 0.24, 0.05, 0.4, 0.01],
 		["Throw outside damage multiplier", "throw_outside_multiplier", 0.1, 0.05, 1.0, 0.05],
@@ -322,7 +323,7 @@ func build_menu() -> void:
 	var camera_controls := VBoxContainer.new()
 	right.add_child(camera_controls)
 	var camera_controller: PlayerController = training.player.controller as PlayerController
-	spin(camera_controls, "Camera distance (m)", 4.5, 2.0, 8.0, 0.1, func(value: float) -> void: camera_controller.camera_distance = value)
+	spin(camera_controls, "Camera distance (m)", camera_controller.camera_distance, 2.0, 8.0, 0.1, func(value: float) -> void: camera_controller.camera_distance = value)
 	spin(camera_controls, "Camera shoulder offset (m)", 0.65, -1.2, 1.2, 0.05, func(value: float) -> void: camera_controller.shoulder_offset = value)
 	spin(camera_controls, "Camera height (m)", 1.65, 1.0, 2.4, 0.05, func(value: float) -> void: camera_controller.camera_height = value)
 	spin(camera_controls, "Mouse sensitivity", 0.0025, 0.0005, 0.008, 0.0005, func(value: float) -> void: camera_controller.sensitivity = value)

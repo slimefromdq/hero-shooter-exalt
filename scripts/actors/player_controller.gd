@@ -8,7 +8,7 @@ var camera: Camera3D
 var yaw: float = 0.0
 var pitch: float = -0.12
 @export var sensitivity: float = 0.0025
-@export var camera_distance: float = 4.5
+@export var camera_distance: float = 4.0
 @export var shoulder_offset: float = 0.65
 @export var camera_height: float = 1.65
 var active: bool = true

@@ -14,13 +14,13 @@ static func library() -> AnimationLibrary:
 	var drop := Animation.new()
 	drop.length = 1.0
 	keys = [0,.2,.39,.7,1]
-	CloseCombatAnimations.track(drop,"Model:position",keys,[Vector3(0,1,0),Vector3(0,.93,0),Vector3(0,.8,-.05),Vector3(0,.9,0),Vector3(0,1,0)])
-	CloseCombatAnimations.track(drop,"Model:rotation",keys,[Vector3.ZERO,Vector3(-.1,-.2,-.06),Vector3(.32,.15,.1),Vector3(.12,.1,0),Vector3.ZERO])
-	CloseCombatAnimations.track(drop,"Model/Geometry/RightArm:rotation",keys,[Vector3(1.1,0,0),Vector3(2.2,-.2,.4),Vector3(.85,0,.15),Vector3(.25,0,.05),Vector3(1.1,0,0)])
+	CloseCombatAnimations.track(drop,"Model:position",keys,[Vector3(0,1,0),Vector3(0,.96,0),Vector3(0,1,-.05),Vector3(0,.98,0),Vector3(0,1,0)])
+	CloseCombatAnimations.track(drop,"Model:rotation",keys,[Vector3.ZERO,Vector3(-.12,-.35,-.06),Vector3(.12,.2,.08),Vector3(.18,.3,0),Vector3.ZERO])
+	CloseCombatAnimations.track(drop,"Model/Geometry/RightArm:rotation",keys,[Vector3(1.1,0,0),Vector3(2.5,-.3,.4),Vector3(1.7,.1,.15),Vector3(.7,.3,.05),Vector3(1.1,0,0)])
 	CloseCombatAnimations.track(drop,"Model/Geometry/RightArm/Joint:rotation",keys,[Vector3.ZERO,Vector3(-1.25,0,0),Vector3(-.1,0,0),Vector3(.1,0,0),Vector3.ZERO])
 	CloseCombatAnimations.track(drop,"Model/Geometry/LeftArm:rotation",keys,[Vector3(1,0,.3),Vector3(.5,0,-.5),Vector3(.65,0,-.6),Vector3(.4,0,-.2),Vector3(1,0,.3)])
 	CloseCombatAnimations.track(drop,"Model/Geometry/RightLeg/Joint:rotation",keys,[Vector3.ZERO,Vector3(.25,0,0),Vector3(.6,0,0),Vector3(.2,0,0),Vector3.ZERO])
-	result.add_animation("drop",drop)
+	result.add_animation("toss",drop)
 	var grab := Animation.new()
 	grab.length = 1
 	keys = [0,.35,.7,1]

@@ -25,6 +25,7 @@ Implementation date: 2026-10-16. The project is playable; completion of human ac
 | DISPLAY-01 | Implemented / 20 native display checks and rendered review | F11 / Alt+Enter, both pause menus, saved fullscreen preference, restored window geometry, proportional HUD and expanded widescreen/ultrawide viewport |
 | SLAYER-01 | Implemented / 108 focused checks, 28 scene checks and rendered review | Complete kit, statuses, selection, AI and training; see SLAYER.md |
 | SLAYER-FEEL-02 | Implemented / 32 focused + native input checks and rendered review | 12 m kick with fading recovery slow, E buffering/feedback, single downward snare toss, tighter 100-damage shotgun, knife trails, readable numbers, horizontal health strip and keyed throws |
+| SLAYER-FEEL-03 | Implemented / 47 focused + native input checks and rendered review | Reliable enemy knockback across movement states, faster knives/kick, 90-damage shotgun, shorter axe windup, timed aimed snare toss, 275 HP, crosshair ammo, closer shared camera and 3.2 m shared throws; 715 headless checks and a ten-minute simulation pass |
 | SLAYER-STABILITY | Verified / mixed roster and native display | 15 simulation checks, 20 display checks, original 530 checks and 1,358 collision probes pass |
 | Later roster/networking | Deferred by design | Nimbus and Slayer are playable; preserve remaining references in DESIGN.md |
 

@@ -40,6 +40,7 @@ var route_accuracy: float = 0.0
 var previous_route_position: Vector3
 
 func _ready() -> void:
+	player_max_health = player.tuning.max_health
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	add_to_group("training")
 	add_to_group("game_session")

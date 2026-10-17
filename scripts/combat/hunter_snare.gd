@@ -61,8 +61,12 @@ func _physics_process(delta: float) -> void:
 	if age >= t.trap_lifetime or global_position.y < -8:
 		queue_free()
 		return
+	# Arming runs from release, independent of finding a floor. An aimed toss
+	# from a rooftop can become active in flight before settling below.
+	arm_age += delta
+	armed = arm_age >= t.trap_arm_time
 	if flying:
-		velocity.y -= 15.0 * delta
+		velocity.y -= t.trap_gravity * delta
 		var collision: KinematicCollision3D = move_and_collide(velocity * delta)
 		if collision != null:
 			if collision.get_normal().y >= .7 and placement_clear(source,global_position,[get_rid()]):
@@ -73,18 +77,17 @@ func _physics_process(delta: float) -> void:
 			else:
 				velocity = velocity.bounce(collision.get_normal()) * .4
 		visual.rotation.x += delta * 8.0
-		indicator.visible = false
-		return
-	# Placed traps settle if their supporting platform is removed.
-	velocity = Vector3.DOWN * .7
-	move_and_collide(velocity * delta)
-	arm_age += delta
-	armed = arm_age >= t.trap_arm_time
+	else:
+		# Settled traps fall again if their supporting platform is removed.
+		velocity = Vector3.DOWN * .7
+		var support: KinematicCollision3D = move_and_collide(velocity * delta)
+		if support == null: flying = true
 	indicator.visible = true
 	indicator.scale = Vector3.ONE * (.42 if not armed else t.trap_radius / 1.4)
+	if armed: visual.rotation.x = 0.0
 	for target: HeroActor in get_tree().get_nodes_in_group("actors"):
 		if not armed or not target.alive or target.team == source.team: continue
-		var offset: Vector3 = target.global_position - global_position
+		var offset: Vector3 = target.global_position + (Vector3.UP * .9 if flying else Vector3.ZERO) - global_position
 		if Vector2(offset.x,offset.z).length() <= t.trap_radius and absf(offset.y) < 1.15 and source.resolver.visible(global_position + Vector3.UP * .25,target,[get_rid()]):
 			trigger(target)
 			break

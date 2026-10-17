@@ -3,7 +3,7 @@ extends HeroTuning
 
 @export_category("Street Sweeper")
 @export_range(1,64,1) var pellets: int = 10
-@export var pellet_damage: float = 10.0
+@export var pellet_damage: float = 9.0
 @export var spread_degrees: float = 1.1
 @export var falloff_start: float = 12.0
 @export var falloff_end: float = 24.0
@@ -15,7 +15,7 @@ extends HeroTuning
 @export var recoil_degrees: float = 2.4
 @export_category("Silver Knives")
 @export var knife_damage: float = 30.0
-@export var knife_speed: float = 35.0
+@export var knife_speed: float = 50.0
 @export var knife_range: float = 25.0
 @export_range(1,8,1) var knife_charges: int = 2
 @export var knife_recharge: float = 7.0
@@ -27,11 +27,11 @@ extends HeroTuning
 @export var bleed_duration: float = 4.0
 @export_category("Boot Rush")
 @export var boot_distance: float = 12.0
-@export var boot_speed: float = 25.0
+@export var boot_speed: float = 32.0
 @export var boot_startup: float = 0.12
 @export var boot_damage: float = 55.0
 @export var boot_reach: float = 1.25
-@export var boot_knockback: float = 8.0
+@export var boot_knockback: float = 11.0
 @export var boot_miss_recovery: float = 0.7
 @export var boot_hit_recovery: float = 0.4
 @export_range(0,1) var boot_recovery_speed: float = 0.35
@@ -40,15 +40,16 @@ extends HeroTuning
 @export_range(0,1) var boot_momentum: float = 0.3
 @export_category("Hunter's Snare")
 @export_range(1,8,1) var trap_limit: int = 2
-@export var trap_arm_time: float = 0.5
+@export var trap_arm_time: float = 0.75
 @export var trap_radius: float = 1.4
 @export var trap_root: float = 1.5
 @export var trap_lifetime: float = 15.0
 @export var trap_recharge: float = 12.0
 @export var trap_health: float = 25.0
 @export var trap_damage: float = 25.0
-@export var trap_drop_speed: float = 7.0
-@export var trap_drop_forward: float = 2.0
+@export var trap_throw_speed: float = 11.0
+@export var trap_throw_lift: float = 3.0
+@export var trap_gravity: float = 15.0
 @export var trap_release_time: float = 0.14
 @export var trap_recovery: float = 0.36
 @export_category("Hunter's Instinct")
@@ -59,7 +60,7 @@ extends HeroTuning
 @export var axe_damage: float = 110.0
 @export_range(0,0.9) var axe_max_reduction: float = 0.5
 @export var axe_debuff_duration: float = 8.0
-@export var axe_windup: float = 0.65
+@export var axe_windup: float = 0.55
 @export var axe_release: float = 0.2
 @export var axe_recovery: float = 0.55
 @export var axe_speed: float = 20.0

@@ -89,7 +89,7 @@ func run() -> void:
 	var original: Vector3 = b.global_position
 	a.close.start_throw()
 	await step(19)
-	check(a.state == "throw_pair" and b.state == "captured", "expanded 2.8 m grab captures an opponent at 2.6 m")
+	check(a.state == "throw_pair" and b.state == "captured", "shared grab captures an opponent at 2.6 m")
 	check(b.global_position.distance_to(original) < .2, "capture begins at the victim's actual position without an immediate pull teleport")
 	check(a.get_collision_exceptions().has(b) and b.get_collision_exceptions().has(a), "only paired actors temporarily ignore each other's capsules")
 	var forward: Vector3 = a.aim_direction

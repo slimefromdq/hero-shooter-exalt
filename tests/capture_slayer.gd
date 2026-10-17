@@ -74,7 +74,7 @@ func capture() -> void:
 	await save_image("boot")
 	await step(25)
 	print("BOOT TARGET HP: ",target.health)
-	target = reset_target(Vector3(0,.01,6))
+	target = reset_target(Vector3(7,.01,6))
 	await step(3)
 	(player.kit as SlayerKit).deploy_trap()
 	await step(6)

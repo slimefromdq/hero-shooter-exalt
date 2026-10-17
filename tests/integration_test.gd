@@ -44,7 +44,7 @@ func run() -> void:
 	check(camera_controller.arm.get_hit_length() < 2.0, "third-person camera pulls forward before entering nearby geometry")
 	camera_wall.queue_free()
 	await step(4)
-	check(camera_controller.arm.get_hit_length() > 4.0, "camera restores its shoulder distance after obstruction clears")
+	check(absf(camera_controller.arm.get_hit_length() - camera_controller.camera_distance) < .25, "camera restores its configured shoulder distance after obstruction clears")
 	for action: String in ["primary","aim","jump","dash","slide","melee","guard","throw","hover","deflect","bomb","ultimate"]:
 		check(InputMap.has_action(action), "named input action exists: " + action)
 	var key := InputEventKey.new()

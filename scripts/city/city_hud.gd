@@ -172,6 +172,7 @@ func draw_crosshair(p: HeroActor) -> void:
 		canvas.draw_line(center + direction * (7+bloom),center + direction * (13+bloom),Color(0,0,0,.6),4)
 		canvas.draw_line(center + direction * (7+bloom),center + direction * (13+bloom),color,1.5)
 	canvas.draw_circle(center,1.3,color)
+	if p.alive and not match_controller.menu_open: CombatHUD.ammo(canvas,p,bold,center)
 	if hit_timer > 0:
 		for direction: Vector2 in [Vector2(-1,-1),Vector2(1,-1),Vector2(-1,1),Vector2(1,1)]:
 			canvas.draw_line(center + direction * 17,center + direction * 24,coral if hit_head else mint,2.5,true)
@@ -193,7 +194,7 @@ func draw_player_rail(p: HeroActor) -> void:
 		var t := p.tuning as SlayerTuning
 		ability(744,TrainingInputs.key_label("hover"),"SILVER KNIVES %d/%d" % [hunter.knives,t.knife_charges],0 if hunter.knives > 0 else hunter.knife_timer,t.knife_recharge)
 		ability(876,TrainingInputs.key_label("deflect"),"BOOT RUSH",hunter.deflect_cd,t.boot_cooldown)
-		ability(1008,TrainingInputs.key_label("bomb"),"DROP SNARE %d/%d" % [hunter.snares,t.trap_limit],0 if hunter.snares > 0 else hunter.snare_timer,t.trap_recharge)
+		ability(1008,TrainingInputs.key_label("bomb"),"TOSS SNARE %d/%d" % [hunter.snares,t.trap_limit],0 if hunter.snares > 0 else hunter.snare_timer,t.trap_recharge)
 	else:
 		ability(744,"Q","UMBRELLA VAULT",p.motor.hover_cd,p.tuning.hover_cooldown)
 		ability(876,"E","DEFLECT",p.kit.deflect_cd,p.tuning.deflect_cooldown)
@@ -218,7 +219,7 @@ func draw_player_rail(p: HeroActor) -> void:
 	if status_text != "": centered(status_text,Vector2(800,690),15,coral,true)
 	if p.kit is SlayerKit:
 		var hunter := p.kit as SlayerKit
-		centered("Q KNIVES   /   E BOOT RUSH   /   1 DROP SNARE   /   4 GRAB AND SLAM",Vector2(800,730),11,muted)
+		centered("Q KNIVES   /   E BOOT RUSH   /   1 TOSS SNARE   /   4 GRAB AND SLAM",Vector2(800,730),11,muted)
 		if hunter.action_hint_time > 0:
 			centered(hunter.action_hint,Vector2(800,620),18,brass,true)
 		elif hunter.boot_slow_time > 0:

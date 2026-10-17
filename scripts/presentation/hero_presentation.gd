@@ -190,7 +190,7 @@ func _process(delta: float) -> void:
 	var animation: String = ""
 	var progress: float = 0.0
 	if actor.state in ["slayer_knife", "slayer_trap"]:
-		animation = "slayer/knife" if actor.state == "slayer_knife" else "slayer/drop"
+		animation = "slayer/knife" if actor.state == "slayer_knife" else "slayer/toss"
 		var hunter := actor.kit as SlayerKit
 		var data := actor.tuning as SlayerTuning
 		progress = hunter.action_age / (data.knife_recovery if actor.state == "slayer_knife" else data.trap_recovery)
