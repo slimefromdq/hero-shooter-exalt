@@ -216,12 +216,17 @@ func watch_progress(delta: float, movement: Vector3) -> void:
 	if movement_sample < .5:
 		return
 	var travelled: float = actor.global_position.distance_to(sample_position)
-	if movement.length_squared() > .12 and travelled < .3 and actor.state in ["ready","reload"]:
+	# A zero steering vector can itself be the failure: a refreshed path or local
+	# separation can leave the actor stationary while its requested goal is far away.
+	var needs_travel: bool = actor.global_position.distance_to(destination) > 2.0
+	# Measure net progress from a stable anchor. Half-second back-and-forth motion
+	# used to reset the watchdog forever even when a crowded actor made no progress.
+	if (movement.length_squared() > .12 or needs_travel) and travelled < 1.0 and actor.state in ["ready","reload"]:
 		stuck_time += movement_sample
 		longest_stuck = maxf(longest_stuck, stuck_time)
 	else:
 		stuck_time = 0
-	sample_position = actor.global_position
+		sample_position = actor.global_position
 	movement_sample = 0
 	if stuck_time >= 2.0:
 		stuck_events += 1
@@ -231,8 +236,9 @@ func watch_progress(delta: float, movement: Vector3) -> void:
 		var detour: Vector3 = NavigationServer3D.map_get_closest_point(map, actor.global_position + tangent * 3)
 		if actor.global_position.distance_to(detour) > .8:
 			destination = detour
-			detour_until = elapsed + .9
+			detour_until = elapsed + 1.5
 		stuck_time = 0
+		sample_position = actor.global_position
 
 func reset_controller() -> void:
 	target = null

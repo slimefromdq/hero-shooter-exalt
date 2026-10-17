@@ -22,6 +22,8 @@ extends Resource
 @export var large_pack_positions: Array[Vector3] = [Vector3(-34, 0, 0), Vector3(34, 0, 0)]
 @export var district_labels: Dictionary = {"Meridian Conservatory": Vector3(0, 0, 0), "Crown Station": Vector3(0, 0, -60), "Lantern Court": Vector3(0, 0, 60), "Garden Walk": Vector3(-34, 0, 0), "Lantern Market": Vector3(34, 0, 0), "Lower Meridian": Vector3(0, -5, 18), "Arcane Viaduct": Vector3(20, 6.5, 0)}
 @export var navigation_region_path: NodePath = NodePath("MeridianGardensEnvironment/CityNavigation")
+@export var shopping_arcade_bounds: AABB = AABB(Vector3(-21, -5, -21), Vector3(42, 4.3, 42))
+@export var shopping_arcade_shops: Array[Vector3] = [Vector3(-12,-5,-10), Vector3(-12,-5,0), Vector3(-12,-5,10), Vector3(12,-5,-10), Vector3(12,-5,0), Vector3(12,-5,10)]
 
 func team_spawns(team: int) -> Array[Vector3]:
 	return south_spawns if team == 0 else north_spawns
@@ -43,7 +45,7 @@ func route_points(team: int, role: String) -> Array[Vector3]:
 		"flank_right":
 			result.assign([Vector3(8, 0, 51), Vector3(30, 0, 30), Vector3(26, 0, 15), Vector3(10, 0, 9), Vector3(8, 0, 7)])
 		"frontline_subway":
-			result.assign([Vector3(0, 0, 58), Vector3(0, -5, 38), Vector3(0, -5, 18), Vector3(18, -5, 18), Vector3(18, 0, 38), Vector3(6, 0, 26), Vector3(4, 0, 13), Vector3(4, 0, 4)])
+			result.assign([Vector3(0, 0, 58), Vector3(0, -5, 38), Vector3(0, -5, 18), Vector3(6, -5, 0), Vector3(18, -5, -18), Vector3(18, 0, -38), Vector3(6, 0, -26), Vector3(4, 0, -13), Vector3(4, 0, -4)])
 		"high_ground":
 			result.assign([Vector3(8, 0, 51), Vector3(42, 0, 51), Vector3(42, 0, 46), Vector3(42, 6.5, 20), Vector3(23, 6.5, 20), Vector3(23, 6.5, 0), Vector3(14, 0, 0), Vector3(6, 0, 0)])
 		_:

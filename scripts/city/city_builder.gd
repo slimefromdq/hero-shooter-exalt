@@ -13,6 +13,7 @@ var trains: Array[Node3D] = []
 var debug_root: Node3D
 var environment: Environment
 var _elapsed: float = 0.0
+var _transit_elapsed: float = 0.0
 
 func _ready() -> void:
 	name = "MeridianGardensEnvironment"
@@ -37,9 +38,11 @@ func _process(delta: float) -> void:
 	if is_instance_valid(orrery):
 		orrery.rotation.y += delta * 0.075
 		orrery.get_node("ObliqueOrbit").rotation.z = sin(_elapsed * 0.12) * 0.12 + 0.52
+func _physics_process(delta: float) -> void:
+	_transit_elapsed += delta
 	for i in trains.size():
 		var train := trains[i]
-		train.position.x = fposmod(_elapsed * (8.0 if i == 0 else -6.5) + i * 93.0 + 130.0, 260.0) - 130.0
+		train.position.x = fposmod(_transit_elapsed * (8.0 if i == 0 else -6.5) + i * 93.0 + 130.0, 260.0) - 130.0
 
 func _build_environment() -> void:
 	var world := WorldEnvironment.new()
@@ -141,15 +144,8 @@ func _build_ground_and_subway() -> void:
 			_subway_stair_portal(Vector3(sx * 18, 0, sz * 38), sz)
 	for sign: float in [-1.0, 1.0]:
 		_ramp(Vector3(0, -5, sign * 38), Vector3(0, 0, sign * 58), 5.6, "paving_light", true)
-		_subway_corridor(Vector3(0, -5, sign * 28), Vector3(0, -5, sign * 18), 5.9)
-		_subway_corridor(Vector3(0, -5, sign * 38), Vector3(0, -5, sign * 28), 5.9)
-		_subway_corridor(Vector3(-18, -5, sign * 18), Vector3(18, -5, sign * 18), 6.0, true)
-		_subway_corridor(Vector3(sign * 18, -5, -18), Vector3(sign * 18, -5, 18), 6.0)
-		# Recesses place the medical pickup behind a short wall, off the throughline.
-		architecture.box(Vector3(3.8, 0.25, 3.8), Vector3(0, -5.125, sign * 18), "paving", true)
-		architecture.box(Vector3(2.6, 2.6, 0.35), Vector3(-2.5 * sign, -3.7, sign * 21.0), "blue", true)
-		architecture.label("LOWER MERIDIAN   /   " + ("CROWN" if sign < 0 else "LANTERN"), Vector3(0, -1.8, sign * 22), 30, Color("b8d3e3"), PI if sign < 0 else 0.0)
-		architecture.label("LOWER MERIDIAN   /   " + ("CROWN" if sign < 0 else "LANTERN"), Vector3(0, -1.8, sign * 22 - sign * 0.06), 30, Color("b8d3e3"), PI if sign > 0 else 0.0)
+		_subway_approach(sign)
+	MeridianShoppingArcade.build(architecture)
 	# Guard perimeter: the city continues visually beyond the actual combat district.
 	for sign: float in [-1.0, 1.0]:
 		architecture.box(Vector3(0.7, 5.0, 132), Vector3(sign * 72, 2.2, 0), "stone_dark", true)
@@ -170,16 +166,16 @@ func _ramp(low: Vector3, high: Vector3, width: float, material_key: String, step
 	var collider := CollisionShape3D.new()
 	collider.shape = shape
 	architecture.collision_body.add_child(collider)
-	var arrays := []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = PackedVector3Array([points[0], points[2], points[1], points[1], points[2], points[3]])
-	arrays[Mesh.ARRAY_NORMAL] = PackedVector3Array([Vector3.UP, Vector3.UP, Vector3.UP, Vector3.UP, Vector3.UP, Vector3.UP])
-	var mesh := ArrayMesh.new()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	var visual := MeshInstance3D.new()
-	visual.mesh = mesh
-	visual.material_override = architecture.materials[material_key]
-	add_child(visual)
+	# Render the complete six-sided volume used by the convex collider. Previously
+	# only a backwards-wound top existed, leaving stairs invisible from below/sides.
+	var faces := PackedInt32Array([0,1,2, 1,3,2, 4,6,5, 5,6,7, 0,4,1, 1,4,5,
+		2,3,6, 3,7,6, 0,2,4, 2,6,4, 1,5,3, 3,5,7])
+	architecture.polyhedron(points, faces, Vector3.ZERO, material_key, false)
+	if hollow:
+		for fraction: float in [.35, .75]:
+			var support: Vector3 = low.lerp(high, fraction)
+			if support.y > .5:
+				architecture.box(Vector3(.6, support.y - .25, .6), Vector3(support.x, (support.y - .25) * .5, support.z), "ivory", true)
 	if steps:
 		var count := int(ceil(absf(high.y - low.y) / 0.23))
 		for i in count:
@@ -190,39 +186,24 @@ func _ramp(low: Vector3, high: Vector3, width: float, material_key: String, step
 	architecture.railing(low - sideways, high - sideways, 1.1, true)
 	architecture.railing(low + sideways, high + sideways, 1.1, true)
 
-func _subway_corridor(a: Vector3, b: Vector3, width: float, branch_gap: bool = false) -> void:
-	var along := b - a
-	var side := Vector3(-along.z, 0, along.x).normalized()
-	var angle := -atan2(along.z, along.x)
-	architecture.box(Vector3(along.length() + width, 0.35, width), (a + b) * 0.5 - Vector3.UP * 0.175, "paving", true, Vector3(0, angle, 0))
-	# Ceiling remains clear at all intersections and is the underside of the street.
-	for sign: float in [-1.0, 1.0]:
-		var center := (a + b) * 0.5 + side * sign * (width * 0.5 - 0.35)
-		# Open corners and branch junctions intentionally have no continuous walls.
-		if branch_gap:
-			for offset: float in [-8.5, 8.5]:
-				architecture.box(Vector3(10.0, 3.0, 0.3), center + Vector3(offset, 1.5, 0), "blue", true, Vector3(0, angle, 0))
-				architecture.box(Vector3(10.0, 0.25, 0.33), center + Vector3(offset, 0.7, 0), "trim", false, Vector3(0, angle, 0))
-		else:
-			architecture.box(Vector3(maxf(0.4, along.length() - 8.0), 3.0, 0.3), center + Vector3.UP * 1.5, "blue", true, Vector3(0, angle, 0))
-			architecture.box(Vector3(maxf(0.4, along.length() - 8.0), 0.25, 0.33), center + Vector3.UP * 0.7, "trim", false, Vector3(0, angle, 0))
-	var segments := maxi(2, int(along.length() / 8))
-	for i in segments + 1:
-		var at := a.lerp(b, float(i) / segments)
-		architecture.arch(at + Vector3.UP * 2.6, width, 1.4, 0.30, "iron", angle + PI * 0.5, 0.12)
-		architecture.box(Vector3(0.4, 0.08, 1.8), at + Vector3.UP * 3.9, "lamp")
-		if i % 2 == 0:
-			var light := OmniLight3D.new()
-			light.position = at + Vector3.UP * 2.8
-			light.omni_range = 9
-			light.light_energy = 0.8
-			light.light_color = Color("d5bfaa")
-			add_child(light)
+func _subway_approach(sign_z: float) -> void:
+	architecture.box(Vector3(6, .4, 17.6), Vector3(0, -5.2, sign_z * 29.6), "paving", true)
+	architecture.box(Vector3(6.4, .3, 17.6), Vector3(0, -.85, sign_z * 29.6), "stone_dark", true)
+	for side: float in [-1.0, 1.0]:
+		architecture.box(Vector3(.35, 4.3, 17.6), Vector3(side * 3, -2.85, sign_z * 29.6), "blue", true)
+	# Real retaining cheeks close the sides of each descending stair trench.
+	for x: float in [-21.05, -14.95, 14.95, 21.05]:
+		architecture.box(Vector3(.25, 5.1, 20), Vector3(x, -2.45, sign_z * 28), "stone_dark", true)
+	for z: float in [24.0, 31.0, 37.0]:
+		architecture.arch(Vector3(0, -2, sign_z * z), 5.7, .8, .22, "ivory", 0, .18)
+		architecture.box(Vector3(.35, .07, 1.8), Vector3(0, -1.2, sign_z * z), "lamp")
+		architecture.lamp_positions.append(Vector3(0, -2, sign_z * z))
+	architecture.label("EXCHANGE  /  SHOPS", Vector3(0, -1.8, sign_z * 22), 24, Color("e5c397"), PI if sign_z < 0 else 0)
 
 func _subway_stair_portal(at: Vector3, sign_z: float) -> void:
 	for sign_x: float in [-1.0, 1.0]:
 		architecture.box(Vector3(0.45, 2.6, 0.7), at + Vector3(sign_x * 3.1, 1.3, 0), "ivory", true)
-	architecture.box(Vector3(6.7, 0.60, 0.8), at + Vector3.UP * 2.85, "slate")
+	architecture.box(Vector3(6.7, 0.60, 0.8), at + Vector3.UP * 2.85, "slate", true)
 	architecture.label("M  /  LOWER MERIDIAN", at + Vector3(0, 2.85, sign_z * 0.46), 25, Color("e5c397"), 0.0 if sign_z > 0 else PI)
 
 func _build_conservatory() -> void:
@@ -233,8 +214,8 @@ func _build_conservatory() -> void:
 	architecture.piece("ring", Vector3(8, 0.15, 8), Vector3(0, 0.065, 0), "brass")
 	# Solid central plinth blocks diagonal shooting through the park.
 	architecture.cylinder(3.1, 2.35, Vector3(0, 1.175, 0), "stone_dark", true)
-	architecture.cylinder(3.25, 0.2, Vector3(0, 2.4, 0), "brass")
-	architecture.cylinder(2.3, 0.4, Vector3(0, 2.7, 0), "ivory")
+	architecture.cylinder(3.25, 0.2, Vector3(0, 2.4, 0), "brass", true)
+	architecture.cylinder(2.3, 0.4, Vector3(0, 2.7, 0), "ivory", true)
 	architecture.cylinder(2.0, 0.12, Vector3(0, 2.97, 0), "cyan")
 	for sx: float in [-1.0, 1.0]:
 		for sz: float in [-1.0, 1.0]:
@@ -247,17 +228,18 @@ func _build_conservatory() -> void:
 			architecture.planter(Vector3(sx * 12.0, 0, sz * 5.8), Vector3(2.2, 1.9, 5.0))
 	# Four huge glazed portals keep entrances legible from each approach.
 	for sign: float in [-1.0, 1.0]:
-		architecture.arch(Vector3(0, 6.4, sign * 11.5), 27, 5.0, 0.55, "brass", 0.0, 0.25)
-		architecture.arch(Vector3(sign * 13.5, 6.4, 0), 23, 5.0, 0.55, "brass", PI * 0.5, 0.25)
+		architecture.arch(Vector3(0, 6.8, sign * 11.5), 27, 5.0, 0.55, "brass", 0.0, 0.25)
+		# Side elevations have a supported lintel, rather than an intersecting false vault.
 		architecture.box(Vector3(27.8, 0.4, 0.7), Vector3(0, 6.65, sign * 11.5), "ivory")
 		architecture.box(Vector3(0.7, 0.4, 23), Vector3(sign * 13.5, 6.65, 0), "ivory")
 		architecture.label("MERIDIAN   CONSERVATORY", Vector3(0, 7.25, sign * 11.85), 45, Color("e8d3a6"), PI if sign < 0 else 0.0)
-	# A floating barrel lantern roof: opaque narrow wings frame actors against sky.
+	# A complete barrel canopy sits on its ribs and piers; no gaps or floating wings.
+	architecture.vaulted_roof(Vector3(0, 6.8, 0), 27, 5, 23.6, "roof_glass")
 	for z: float in [-11.5, -6, 0, 6, 11.5]:
 		architecture.arch(Vector3(0, 6.8, z), 27, 5.0, 0.12, "iron", 0.0, 0.12)
-	for sign: float in [-1.0, 1.0]:
-		architecture.box(Vector3(4.7, 0.2, 23), Vector3(sign * 10.6, 8.2, 0), "glass", false, Vector3(0, 0, sign * 0.45))
-		architecture.box(Vector3(0.15, 0.18, 23), Vector3(sign * 7.8, 10.5, 0), "brass")
+	for index: int in range(1, 8):
+		var angle: float = index * PI / 8
+		architecture.box(Vector3(.12, .14, 23.7), Vector3(cos(angle) * 13.5, 6.91 + sin(angle) * 5, 0), "brass")
 	architecture.box(Vector3(0.18, 0.2, 24), Vector3(0, 11.8, 0), "brass")
 	orrery = Node3D.new()
 	orrery.name = "CelestialOrrery"
@@ -286,15 +268,18 @@ func _build_conservatory() -> void:
 	for x: float in [-18.0, 18.0]:
 		architecture.cylinder(2.45, 0.8, Vector3(x, 0.4, 0), "ivory", true)
 		architecture.cylinder(2.2, 0.06, Vector3(x, 0.83, 0), "water")
-		architecture.cylinder(0.45, 2.7, Vector3(x, 1.7, 0), "brass")
-		architecture.cylinder(1.2, 0.18, Vector3(x, 2.7, 0), "trim")
+		architecture.cylinder(0.45, 2.7, Vector3(x, 1.7, 0), "brass", true)
+		architecture.cylinder(1.2, 0.18, Vector3(x, 2.7, 0), "trim", true)
 		architecture.piece("sphere", Vector3(0.48, 0.48, 0.48), Vector3(x, 3.1, 0), "cyan")
 
 func _build_gardens() -> void:
 	for sx: float in [-1.0, 1.0]:
 		for sz: float in [-1.0, 1.0]:
 			architecture.planter(Vector3(sx * 8.5, 0, sz * 18.1), Vector3(6.0, 0.75, 2.3))
-			architecture.tree(Vector3(sx * 18.3, 0, sz * 11), 0.85, sx < 0)
+			# Keep crowns out of the two inner stair volumes instead of growing
+			# trees through their treads and railings.
+			if sx * sz > 0:
+				architecture.tree(Vector3(sx * 18.3, 0, sz * 11), 0.85, sx < 0)
 			architecture.planter(Vector3(sx * 28.0, 0, sz * 11), Vector3(3.2, 1.35, 5.0))
 			architecture.tree(Vector3(sx * 30.0, 0, sz * 17), 1.0, sx < 0)
 			architecture.lamp(Vector3(sx * 25.5, 0, sz * 7.5), 4.8)
@@ -307,7 +292,9 @@ func _build_gardens() -> void:
 			architecture.cylinder(0.55, 0.22, Vector3(x, 4.45, z), "trim")
 	architecture.arch(Vector3(-34, 4.5, -5), 10, 2.2, 0.5, "trim")
 	architecture.arch(Vector3(-34, 4.5, 5), 10, 2.2, 0.5, "trim")
-	architecture.box(Vector3(11.0, 0.4, 11.0), Vector3(-34, 5.3, 0), "slate")
+	architecture.vaulted_roof(Vector3(-34, 4.5, 0), 10, 2.2, 11, "slate", 16)
+	for x: float in [-39.0, -29.0]:
+		architecture.box(Vector3(.4, .25, 11), Vector3(x, 4.4, 0), "trim", true)
 	architecture.box(Vector3(5.0, 2.3, 0.75), Vector3(-34, 1.15, -4.5), "ivory", true)
 	architecture.label("GARDEN WALK", Vector3(-34, 4.3, 5.4), 32)
 	architecture.planter(Vector3(-42, 0, 8), Vector3(4, 0.8, 6))
@@ -331,14 +318,15 @@ func _build_districts() -> void:
 			_apartment(Vector3(sx * 34, 0, sz * 48), Vector3(13, 16, 8), "rose" if sz > 0 else "blue", 3, true)
 	# East shops face a full through arcade. The pack has an opaque streetward back.
 	for z: float in [-10.0, 10.0]:
-		architecture.box(Vector3(10, 3.9, 1.0), Vector3(38, 1.95, z), "rose", true)
+		architecture.box(Vector3(10, 4.3, 1.0), Vector3(38, 2.15, z), "rose", true)
 		architecture.box(Vector3(10, 0.3, 2.2), Vector3(38, 4.0, z), "trim")
 		architecture.window(Vector3(37, 2.0, z + (0.6 if z < 0 else -0.6)), 3.8, 2.4, PI if z > 0 else 0.0)
 	architecture.box(Vector3(0.8, 3.0, 4.5), Vector3(38.2, 1.5, 0), "ivory", true)
-	architecture.box(Vector3(14, 0.4, 18), Vector3(36, 4.4, 0), "slate")
-	for z: float in [-7.0, 0.0, 7.0]:
-		architecture.cylinder(0.32, 4.3, Vector3(30, 2.15, z), "ivory", true)
-		architecture.arch(Vector3(30, 3.4, z), 6, 1.2, 0.4, "trim", PI * 0.5, 0.3)
+	architecture.box(Vector3(14, 0.4, 22), Vector3(36, 4.5, 0), "slate", true)
+	for z: float in [-10.0, -10.0 / 3, 10.0 / 3, 10.0]:
+		architecture.cylinder(0.32, 3.0, Vector3(30, 1.5, z), "ivory", true)
+	for z: float in [-20.0 / 3, 0.0, 20.0 / 3]:
+		architecture.arch(Vector3(30, 3.0, z), 20.0 / 3, 1.2, 0.4, "trim", PI * 0.5, 0.3)
 	architecture.label("LANTERN MARKET", Vector3(29.7, 4.2, 0), 30, Color("e4b988"), -PI * 0.5)
 	# Two accessible store interiors, useful passages rather than closed facades.
 	for sign: float in [-1.0, 1.0]:
@@ -359,8 +347,8 @@ func _arcade(at: Vector3, sx: float, sz: float) -> void:
 	architecture.box(Vector3(10.7, 0.45, 12.6), at + Vector3.UP * 4.0, "trim")
 	architecture.box(Vector3(10.4, 0.35, 12.4), at + Vector3.UP * 4.5, "slate")
 	for z: float in [-4.4, 4.4]:
-		architecture.cylinder(0.35, 3.7, at + Vector3(-sx * 4.2, 1.85, z), "ivory", true)
-		architecture.arch(at + Vector3(0, 3.0, z), 8.8, 1.1, 0.45, "trim", 0.0, 0.35)
+		architecture.cylinder(0.35, 3.8, at + Vector3(-sx * 4.2, 1.9, z), "ivory", true)
+		architecture.arch(at + Vector3(0, 3.0, z), 8.8, .7, 0.45, "trim", 0.0, 0.35)
 		architecture.box(Vector3(1.8, 3.0, 0.45), at + Vector3(sx * 3.7, 1.5, z), "ivory", true)
 	architecture.label("BOTANICA" if sx < 0 else "THE LANTERN ROOMS", at + Vector3(0, 3.55, sz * 6.35), 26, Color("edc18b"), PI if sz < 0 else 0.0)
 	for z: float in [-3.0, 0.0, 3.0]:
@@ -368,15 +356,15 @@ func _arcade(at: Vector3, sx: float, sz: float) -> void:
 	architecture.planter(at + Vector3(sx * 1.5, 0, -sz * 4.5), Vector3(4, 1.4, 1.2))
 
 func _apartment(at: Vector3, size: Vector3, key: String, floors: int = 4, solid: bool = true) -> void:
-	architecture.box(size, at + Vector3.UP * size.y * 0.5, key, solid)
+	architecture.box(size, at + Vector3.UP * size.y * 0.5, key, true)
 	architecture.box(Vector3(size.x + 0.5, 0.55, size.z + 0.5), at + Vector3.UP * (size.y - 0.4), "trim")
 	architecture.box(Vector3(size.x + 0.8, 0.5, size.z + 0.8), at + Vector3.UP * (size.y + 0.15), "slate")
 	architecture.box(Vector3(size.x + 0.22, 0.7, size.z + 0.22), at + Vector3.UP * 0.35, "stone_dark")
-	# Mansard roof shoulders alternate with the modern flat-roof buildings.
+	# Closed gabled roofs meet their eaves and ridge, replacing two floating panels.
 	if key == "ivory" or key == "rose":
-		for side: float in [-1.0, 1.0]:
-			architecture.box(Vector3(size.x * 0.54, 0.3, size.z + 0.7), at + Vector3(side * size.x * 0.25, size.y + 1.5, 0), "slate", false, Vector3(0, 0, side * -0.38))
-		architecture.box(Vector3(0.18, 0.18, size.z + 0.85), at + Vector3.UP * (size.y + 2.5), "brass")
+		var roof_rise: float = minf(3.0, size.x * .2)
+		architecture.polygon_prism(PackedVector2Array([Vector2(-size.x * .5 - .4, 0), Vector2(size.x * .5 + .4, 0), Vector2(0, roof_rise)]), size.z + .8, at + Vector3.UP * (size.y + .4), "slate")
+		architecture.box(Vector3(.18, .18, size.z + .85), at + Vector3.UP * (size.y + .4 + roof_rise), "brass")
 	floors = maxi(floors, int((size.y - 1.5) / 3.25))
 	var columns := maxi(2, int(size.x / 3.0))
 	for floor_index in floors:
@@ -385,10 +373,16 @@ func _apartment(at: Vector3, size: Vector3, key: String, floors: int = 4, solid:
 		for column in columns:
 			var x := (float(column) + 0.5) * size.x / columns - size.x * 0.5
 			for side: float in [-1.0, 1.0]:
-				architecture.window(at + Vector3(x, y, side * (size.z * 0.5 + 0.09)), 1.25, 1.7, PI if side < 0 else 0.0, (column + floor_index) % 4 != 1)
-				if solid and floor_index % 3 == 1 and column % 2 == 0:
+				var balcony: bool = solid and floor_index % 3 == 1 and column % 2 == 0
+				architecture.window(at + Vector3(x, y, side * (size.z * 0.5 + 0.09)), 1.25, 2.0 if balcony else 1.7, PI if side < 0 else 0.0, (column + floor_index) % 4 != 1)
+				if balcony:
 					architecture.box(Vector3(2.1, 0.18, 1.2), at + Vector3(x, y - 1.0, side * (size.z * 0.5 + 0.65)), "trim")
-					architecture.railing(at + Vector3(x - 1.0, y - 0.9, side * (size.z * 0.5 + 1.1)), at + Vector3(x + 1.0, y - 0.9, side * (size.z * 0.5 + 1.1)), 0.85, false)
+					var balcony_y: float = y - .91
+					var wall_z: float = at.z + side * (size.z * .5)
+					var rail_z: float = at.z + side * (size.z * .5 + 1.18)
+					architecture.railing(Vector3(at.x + x - 1, balcony_y, rail_z), Vector3(at.x + x + 1, balcony_y, rail_z), .85)
+					for edge: float in [-1.0, 1.0]:
+						architecture.railing(Vector3(at.x + x + edge, balcony_y, wall_z), Vector3(at.x + x + edge, balcony_y, rail_z), .85)
 		for side: float in [-1.0, 1.0]:
 			for z: float in [-size.z * 0.25, size.z * 0.25]:
 				architecture.window(at + Vector3(side * (size.x * 0.5 + 0.09), y, z), 1.25, 1.7, side * PI * 0.5, (floor_index + int(side)) % 3 != 0)
@@ -408,6 +402,7 @@ func _build_wizard_study() -> void:
 	architecture.box(Vector3(8, 0.4, 11.7), Vector3(49, 7.7, 28), "slate")
 	for x: float in [45.4, 52.6]:
 		for z: float in [23.0, 33.0]:
+			architecture.cylinder(.3, 3.8, Vector3(x, 1.9, z), "ivory", true)
 			architecture.cylinder(0.3, 3.3, Vector3(x, 5.85, z), "ivory", true)
 	architecture.box(Vector3(0.8, 2.5, 6), Vector3(51.9, 5.5, 28), "brick", true)
 	for shelf in 5:
@@ -423,9 +418,19 @@ func _build_wizard_study() -> void:
 
 func _wizard_tower(at: Vector3, height: float, radius: float) -> void:
 	architecture.cylinder(radius, height, at + Vector3.UP * height * 0.5, "blue", absf(at.x) < 72 and absf(at.z) < 66)
-	architecture.cylinder(radius * 1.1, 0.6, at + Vector3.UP * height, "trim")
+	architecture.cylinder(radius * 1.1, 0.6, at + Vector3.UP * height, "trim", true)
 	architecture.cylinder(radius * 1.08, 0.5, at + Vector3.UP * (height - 5.0), "brass")
-	architecture.piece("cone", Vector3(radius * 2.5, height * 0.37, radius * 2.5), at + Vector3.UP * height * 1.185, "slate")
+	# The conical spire sits on the crown and uses a matching convex collision hull.
+	architecture.piece("cone", Vector3(radius * 2.2, height * .37, radius * 2.2), at + Vector3.UP * (height + .3 + height * .185), "slate")
+	var spire_points := PackedVector3Array([at + Vector3.UP * (height + .3 + height * .37)])
+	for segment: int in 12:
+		var angle: float = segment * TAU / 12
+		spire_points.append(at + Vector3(cos(angle) * radius * 1.1, height + .3, sin(angle) * radius * 1.1))
+	var spire_shape := ConvexPolygonShape3D.new()
+	spire_shape.points = spire_points
+	var spire_collision := CollisionShape3D.new()
+	spire_collision.shape = spire_shape
+	architecture.collision_body.add_child(spire_collision)
 	architecture.piece("sphere", Vector3.ONE * 0.7, at + Vector3.UP * height * 1.38, "violet")
 	for index in 8:
 		var angle := index * TAU / 8.0
@@ -452,7 +457,9 @@ func _build_spawns() -> void:
 			architecture.arch(Vector3(sx * 8.0, 2.9, sign * 54), 5.0, 1.4, 0.7, "trim", 0.0, 0.4)
 			architecture.lamp(Vector3(sx * 10.8, 0, sign * 51.8), 4.5)
 			architecture.planter(Vector3(sx * 9.5, 0, sign * 47), Vector3(3, 2.2, 3))
-			_apartment(Vector3(sx * 22, 0, sign * 60), Vector3(12, 14 if sign < 0 else 18, 12), "blue" if sign < 0 else "rose", 3)
+			# A five-metre lane separates these homes from the next block, including
+			# solid cornices and balconies. The old two-metre gap pinched shut in nav.
+			_apartment(Vector3(sx * 22, 0, sign * 62), Vector3(12, 14 if sign < 0 else 18, 8), "blue" if sign < 0 else "rose", 3)
 			architecture.box(Vector3(3.2, 2.5, 1.2), Vector3(sx * 5.2, 1.25, sign * 39), "ivory", true)
 			architecture.box(Vector3(3.4, 0.2, 1.4), Vector3(sx * 5.2, 2.6, sign * 39), "brass")
 			architecture.lamp(Vector3(sx * 11, 0, sign * 34), 4.7)
@@ -464,6 +471,7 @@ func _build_high_routes() -> void:
 		for sz: float in [-1.0, 1.0]:
 			_ramp(Vector3(sx * 42, 0, sz * 46), Vector3(sx * 42, 6.5, sz * 22.25), 4.5, "ivory", true)
 			architecture.box(Vector3(21.5, 0.45, 4.5), Vector3(sx * 33.75, 6.275, sz * 20), "ivory", true)
+			architecture.box(Vector3(1.0, 6.05, 1.0), Vector3(sx * 37.5, 3.025, sz * 20), "ivory", true)
 			architecture.railing(Vector3(sx * 23, 6.5, sz * 22.1), Vector3(sx * 39.5, 6.5, sz * 22.1))
 			architecture.railing(Vector3(sx * 25.3, 6.5, sz * 17.9), Vector3(sx * 39.7, 6.5, sz * 17.9))
 			architecture.box(Vector3(2.0, 2.2, 1.1), Vector3(sx * 21.8, 7.6, sz * 10), "ivory", true)
@@ -471,13 +479,20 @@ func _build_high_routes() -> void:
 			architecture.railing(Vector3(sx * 44.4, 6.5, sz * 17.8), Vector3(sx * 44.4, 6.5, sz * 22.25), 1.1)
 			architecture.lamp(Vector3(sx * 40, 6.5, sz * 20), 3.3)
 		architecture.railing(Vector3(sx * 25.2, 6.5, -18), Vector3(sx * 25.2, 6.5, 18))
-		architecture.railing(Vector3(sx * 20.8, 6.5, -18), Vector3(sx * 20.8, 6.5, -7 if sx > 0 else -3))
-		architecture.railing(Vector3(sx * 20.8, 6.5, 7 if sx < 0 else 3), Vector3(sx * 20.8, 6.5, 18))
+		architecture.railing(Vector3(sx * 20.8, 6.5, -18), Vector3(sx * 20.8, 6.5, .5 if sx > 0 else -4.5))
+		architecture.railing(Vector3(sx * 20.8, 6.5, -.5 if sx < 0 else 4.5), Vector3(sx * 20.8, 6.5, 18))
 		# An inner garden stair lets high-ground players rejoin a fight promptly.
 		# It also prevents bots taking a 150 m promenade detour to return to the hill.
-		_ramp(Vector3(sx * 14, 0, -sx * 21), Vector3(sx * 20.7, 6.5, -sx * 5), 4.2, "ivory", true, true)
+		# A square-ended flight meets a level landing flush. The old diagonal
+		# overlap entered the side of the promenade slab below its finished floor.
+		_ramp(Vector3(sx * 17.7, 0, -sx * 15.5), Vector3(sx * 17.7, 6.5, sx * .5), 4.2, "ivory", true, true)
+		architecture.box(Vector3(5.1, .45, 4), Vector3(sx * 18.15, 6.275, sx * 2.5), "ivory", true)
+		architecture.box(Vector3(.75, 6.05, .75), Vector3(sx * 16.1, 3.025, sx * 4), "ivory", true)
+		architecture.railing(Vector3(sx * 15.6, 6.5, sx * .5), Vector3(sx * 15.6, 6.5, sx * 4.5))
+		architecture.railing(Vector3(sx * 15.6, 6.5, sx * 4.5), Vector3(sx * 20.7, 6.5, sx * 4.5))
+		architecture.railing(Vector3(sx * 19.8, 6.5, sx * .5), Vector3(sx * 20.7, 6.5, sx * .5))
 		# Opaque central shelter denies a single uninterrupted hill overlook.
-		architecture.box(Vector3(0.65, 3.2, 7), Vector3(sx * 20.9, 8.1, 0), "ivory", true)
+		architecture.box(Vector3(0.65, 3.2, 7), Vector3(sx * 20.9, 8.1, -sx * 10), "ivory", true)
 		architecture.box(Vector3(5.2, 0.3, 42), Vector3(sx * 23, 10.0, 0), "slate")
 		for z: float in [-19.0, -12.0, 0.0, 12.0, 19.0]:
 			for side: float in [-1.0, 1.0]:
@@ -487,7 +502,7 @@ func _build_high_routes() -> void:
 		architecture.label("ARCANE PROMENADE", Vector3(sx * 23, 10.7, 0), 29, Color("d3c5df"), sx * PI * 0.5)
 
 func _build_viaduct() -> void:
-	# The impossible central 48 m arch is the principal city silhouette.
+	# Masonry spandrels carry the railway deck continuously onto the arch and piers.
 	var pillar_x := [-96.0, -72.0, -48.0, -29.0, 29.0, 48.0, 72.0, 96.0]
 	for x: float in pillar_x:
 		architecture.box(Vector3(3.6, 13, 5.6), Vector3(x, 6.5, -13), "ivory", absf(x) < 72)
@@ -499,8 +514,13 @@ func _build_viaduct() -> void:
 		var width: float = pillar_x[i + 1] - pillar_x[i]
 		var center_x: float = (pillar_x[i + 1] + pillar_x[i]) * 0.5
 		architecture.arch(Vector3(center_x, 12.3, -13), width, 8.0, 5.2, "ivory", 0, 1.15)
-		architecture.arch(Vector3(center_x, 12.3, -9.9), width - 1.1, 7.45, 0.16, "cyan", 0, 0.10)
-		architecture.arch(Vector3(center_x, 12.3, -16.1), width - 1.1, 7.45, 0.16, "cyan", 0, 0.10)
+		var wall_outline := PackedVector2Array([Vector2(-width * .5, 20.95), Vector2(width * .5, 20.95)])
+		for segment: int in 25:
+			var angle: float = segment * PI / 24
+			wall_outline.append(Vector2(cos(angle) * width * .5, 12.7 + sin(angle) * 8))
+		architecture.polygon_prism(wall_outline, 5.2, Vector3(center_x, 0, -13), "ivory")
+		architecture.arch(Vector3(center_x, 12.3, -10.32), width - 1.1, 7.45, 0.16, "cyan", 0, 0.10, false)
+		architecture.arch(Vector3(center_x, 12.3, -15.68), width - 1.1, 7.45, 0.16, "cyan", 0, 0.10, false)
 	architecture.box(Vector3(220, 1.0, 7.2), Vector3(0, 21.4, -13), "ivory")
 	architecture.box(Vector3(220, 0.20, 7.8), Vector3(0, 22.0, -13), "trim")
 	for z: float in [-16.6, -9.4]:

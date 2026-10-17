@@ -1,0 +1,14 @@
+{
+	"alive_actors": 12,
+	"average_draw_calls": 1629.26521944313,
+	"average_fps": 105.926081890709,
+	"device": "NVIDIA GeForce RTX 3080",
+	"frames": 2119,
+	"location": "shopping_arcade",
+	"p95_frame_ms": 11.011,
+	"p99_frame_ms": 11.322,
+	"physics_hz": 60,
+	"renderer": "forward_plus",
+	"resolution": "(1920, 1080)",
+	"seconds": 20.004516
+}

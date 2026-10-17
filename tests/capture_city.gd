@@ -41,9 +41,12 @@ func run() -> void:
 	await photograph("01-meridian-gardens", Vector3(-31, 13, 40), Vector3(3, 7, -6), 66)
 	await photograph("02-conservatory", Vector3(9, 2.1, 20), Vector3(-1, 5.5, -3), 76)
 	await photograph("03-garden-walk", Vector3(-46, 2.2, 21), Vector3(-24, 5, -9), 72)
-	await photograph("04-lantern-market", Vector3(42, 2.2, 25), Vector3(29, 5, -9), 72)
+	await photograph("04-lantern-market", Vector3(26.9, 2.2, 15), Vector3(35, 3.3, -2), 72)
 	await photograph("05-lower-meridian", Vector3(0, -3.2, 31), Vector3(1, -3.2, 12), 76)
 	await photograph("06-arcane-viaduct", Vector3(37, 9, 20), Vector3(-5, 15, -25), 76)
+	await photograph("10-meridian-exchange", Vector3(5.8, -3.1, 14.2), Vector3(-1.0, -2.9, -9.0), 78)
+	await photograph("11-exchange-shops", Vector3(-5.5, -3.0, 5), Vector3(-12.0, -3.0, -1), 76)
+	await photograph("12-supported-promenade", Vector3(14.8, 2.2, 10), Vector3(19, 5.0, 1), 74)
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	camera.size = 165
 	camera.position = Vector3(0, 150, 0)
@@ -57,6 +60,11 @@ func run() -> void:
 	await frames(4)
 	await RenderingServer.frame_post_draw
 	root.get_texture().get_image().save_png("res://artifacts/city-frames/08-resource-atlas.png")
+	session.hud.underground_view = true
+	await frames(4)
+	await RenderingServer.frame_post_draw
+	root.get_texture().get_image().save_png("res://artifacts/city-frames/13-arcade-atlas.png")
+	session.hud.underground_view = false
 	session.hud.overview_open = false
 	session.debug_view = false
 	var player: HeroActor = arena.player

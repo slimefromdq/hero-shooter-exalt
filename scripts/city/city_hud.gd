@@ -7,6 +7,7 @@ var menu: Control
 var font: SystemFont
 var bold: SystemFont
 var overview_open: bool = false
+var underground_view: bool = false
 var hit_timer: float = 0.0
 var hit_head: bool = false
 var hit_text: String = ""
@@ -51,6 +52,10 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("city_map") and not event.is_echo():
 		overview_open = not overview_open
+		if overview_open: underground_view = match_controller.player.position.y < -2
+		get_viewport().set_input_as_handled()
+	elif overview_open and event.is_action_pressed("city_map_layer") and not event.is_echo():
+		underground_view = not underground_view
 		get_viewport().set_input_as_handled()
 
 func _process(delta: float) -> void:
@@ -218,10 +223,14 @@ func route_line(points: Array[Vector3], bounds: Rect2, color: Color, width: floa
 	canvas.draw_polyline(line,color,width,true)
 
 func draw_overview() -> void:
+	if underground_view:
+		draw_underground_overview()
+		return
 	box(Vector2.ZERO,Vector2(1600,900),Color(.025,.05,.08,.96))
 	text("MERIDIAN GARDENS",Vector2(65,65),31,paper,true)
 	text("DISTRICT ATLAS  /  TACTICAL ROUTES & SHARED RESOURCES",Vector2(67,91),12,brass)
 	text("M  CLOSE",Vector2(1445,65),14,mint,true)
+	text("B  ARCADE",Vector2(1290,65),14,brass,true)
 	var bounds := Rect2(69,125,752,689)
 	box(bounds.position,bounds.size,Color("14222e"))
 	# The overview uses the actual district metre scale and labels all three traversal layers.
@@ -277,6 +286,58 @@ func draw_overview() -> void:
 	text("144 m",bounds.position + Vector2(bounds.size.x - 48,bounds.size.y + 22),11,muted)
 	text("132 m",bounds.position + Vector2(-2,bounds.size.y + 22),11,muted)
 	draw_map_legend()
+
+func arcade_point(point: Vector3) -> Vector2:
+	return Vector2(440, 480) + Vector2(point.x, point.z) * 14.0
+
+func arcade_rect(point: Vector3, size: Vector2, color: Color) -> void:
+	box(arcade_point(point) - size * 7, size * 14, color)
+
+func draw_underground_overview() -> void:
+	box(Vector2.ZERO, Vector2(1600,900), Color("0b151e"))
+	text("LOWER MERIDIAN EXCHANGE",Vector2(65,65),29,paper,true)
+	text("UNDERGROUND ATLAS  /  −5 m  /  BELOW THE CONSERVATORY",Vector2(67,91),12,brass)
+	text("B  SURFACE",Vector2(1270,65),14,brass,true)
+	text("M  CLOSE",Vector2(1445,65),14,mint,true)
+	arcade_rect(Vector3.ZERO, Vector2(46,46), Color("14222e"))
+	arcade_rect(Vector3.ZERO, Vector2(42,42), Color("52616a"))
+	for side: float in [-1.0, 1.0]:
+		for x: float in [-18.0, 0.0, 18.0]:
+			arcade_rect(Vector3(x,0,side*21), Vector2(4,3), Color("547f91"))
+			centered("STAIRS",arcade_point(Vector3(x,0,side*22.4)),9,mint,true)
+	for shop: Vector3 in match_controller.definition.shopping_arcade_shops:
+		arcade_rect(shop, Vector2(6,7), Color("b7aca0"))
+		for edge: float in [-1.0, 1.0]:
+			arcade_rect(shop + Vector3(0,0,edge*3.5), Vector2(6,.3), Color("283945"))
+		arcade_rect(shop + Vector3(0,0,2.3), Vector2(3.2,1), Color("88705c"))
+		centered("SHOP",arcade_point(shop) + Vector2(0,4),10,ink,true)
+	for side: float in [-1.0, 1.0]:
+		arcade_rect(Vector3(side*5.1,0,side*7),Vector2(2.8,2.1),Color("c38d79"))
+		arcade_rect(Vector3(-side*5,0,side*9),Vector2(2.4,1.4),Color("d1c8ae"))
+		arcade_rect(Vector3(side*4.7,0,side*17.2),Vector2(2,.4),Color("283945"))
+	canvas.draw_circle(arcade_point(Vector3.ZERO),3.4*14,Color("253b49"))
+	centered("CORE",arcade_point(Vector3.ZERO) + Vector2(0,4),12,brass,true)
+	for pickup: CityHealthPack in match_controller.pickups:
+		if pickup.position.y > -2: continue
+		var at: Vector2 = arcade_point(pickup.position)
+		canvas.draw_line(at-Vector2(7,0),at+Vector2(7,0),health_green,4)
+		canvas.draw_line(at-Vector2(0,7),at+Vector2(0,7),health_green,4)
+		text("75",at+Vector2(12,4),11,health_green)
+	for actor: HeroActor in match_controller.actors:
+		if not actor.alive or actor.position.y > -2 or absf(actor.position.z)>21 or absf(actor.position.x)>21: continue
+		if actor.team != match_controller.player.team and not match_controller.debug_view: continue
+		canvas.draw_circle(arcade_point(actor.position),5,mint if actor.team == 0 else coral)
+	text("N",Vector2(125,154),16,brass,true)
+	text("42 × 42 m",Vector2(650,820),12,muted)
+	text("SIX SHOPS. MULTIPLE WAYS THROUGH.",Vector2(850,180),22,paper,true)
+	var notes: Array[String] = ["Central drum and kiosks break long sightlines.", "Shop doors connect the gallery to both perimeter aisles.", "Four corner stairs return to the garden streets.", "North / south tunnels connect to team spawns.", "Two shared 75 HP caches remain in the entry recesses.", "The hill above cannot be captured from this floor."]
+	for index: int in notes.size():
+		text(notes[index],Vector2(850,240+index*46),15,muted)
+	text("WEST",Vector2(850,575),13,brass,true)
+	text("Moon & Quill · Starling Tailors · Astra Patisserie",Vector2(850,609),14,paper)
+	text("EAST",Vector2(850,661),13,brass,true)
+	text("Botanica Gifts · Thauma Workshop · Meridian Maps",Vector2(850,695),14,paper)
+	text("B  SWITCH SURFACE / UNDERGROUND",Vector2(850,805),12,mint,true)
 
 func map_label(caption: String, point: Vector3, bounds: Rect2, color: Color) -> void:
 	centered(caption,map_point(point,bounds) + Vector2(0,4),10,color,true)

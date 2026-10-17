@@ -2,7 +2,7 @@
 
 A playable offline **6v6 King of the Hill** hero shooter in a modern fantasy city, with a separate Nimbus training arena. Built with original modular geometry and synthesized sound. **Godot 4.7.2 stable** is the verified engine (`4.7.2.stable.official.ed1daf0bf`).
 
-The city includes a celestial conservatory, garden and market flanks, subway loop, accessible balconies and wizard's study, elevated promenades, monumental railway arches and moving scenic trains. Six small packs heal **75 HP**; two large packs heal **400 HP**, capped at maximum health. See [Meridian Gardens field guide and validation](docs/MERIDIAN_GARDENS.md).
+The city includes a celestial conservatory, garden and market flanks, an underground shopping arcade with six through-shops and cover, accessible balconies and wizard's study, elevated promenades, monumental railway arches and moving scenic trains. Six small packs heal **75 HP**; two large packs heal **400 HP**, capped at maximum health. See [Meridian Gardens field guide and validation](docs/MERIDIAN_GARDENS.md) and the [geometry revision](docs/GEOMETRY_AUDIT.md).
 
 ## Play
 
@@ -33,6 +33,7 @@ powershell -ExecutionPolicy Bypass -File .\Launch.ps1
 | 6 hold | Shield / frontal melee guard |
 | Tab or Esc | Pause menu / training console / return to play |
 | M | City district atlas with routes, levels and shared health locations |
+| B | Switch the open city atlas between surface and underground plans |
 | F3 / F5 / F6 | Telemetry / match or exercise restart / training-only refill |
 
 Bindings use named InputMap actions in `scripts/training/input_bindings.gd`; the saved project map contains the user's requested controls. Existing editor-configured bindings take precedence, and HUD prompts read the actual map. A downward dash automatically enters a momentum slide. Jump ends a slide; holding and then releasing Shift can also end an automatic dash slide. Guard limits movement and does **not** reduce bullets at the default setting.
@@ -79,7 +80,7 @@ godot --headless --path . --script res://tests/mantle_exit_test.gd
 godot --headless --path . --script res://tests/integration_test.gd
 ```
 
-Results are written to `artifacts/`. City checks cover healing, objective heights, spawn protection, respawns, complete resets, route timings, physical stairs/subway traversal and camera clearance. The field guide includes ten-minute simulation and real-time 1080p benchmark commands. See `docs/PLAYTESTS.md` for performed checks; competitive balance and game feel still need human playtesting. Tune `resources/nimbus.tres` or the map definition through the Inspector.
+Results are written to `artifacts/`. The current suite passes **530 checks**, plus **1,358 structural collision probes**. City checks cover healing, objective heights, spawn protection, respawns, complete resets, route timings, physical stairs/shop/subway traversal, roof landings, navigation recovery and camera clearance. Two ten-minute simulations pass without persistent stuck bots. The field guide includes reproduction commands and surface/underground 1080p benchmarks. See `docs/PLAYTESTS.md` for performed checks; competitive balance and game feel still need human playtesting. Tune `resources/nimbus.tres` or the map definition through the Inspector.
 
 ## Layout
 

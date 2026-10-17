@@ -5,6 +5,7 @@ func _initialize() -> void:
 	call_deferred("run")
 
 func run() -> void:
+	var underground: bool = OS.get_cmdline_user_args().has("--underground")
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	Engine.max_fps = 0
 	var arena: Node3D = load("res://scenes/city/meridian_gardens.tscn").instantiate()
@@ -17,7 +18,7 @@ func run() -> void:
 	var start_wait: int = Time.get_ticks_msec()
 	while not session.navigation_ready and Time.get_ticks_msec() - start_wait < 30000:
 		await process_frame
-	player.reset_actor(Vector3(0, .08, 16))
+	player.reset_actor(Vector3(6, -4.92, 14) if underground else Vector3(0, .08, 16))
 	player.kit.ultimate_charge = 35
 	var controller: PlayerController = player.controller
 	controller.pitch = -.08
@@ -29,7 +30,20 @@ func run() -> void:
 		actor.tuning.max_health = 100000
 		actor.health = actor.tuning.max_health
 		if actor != player:
-			actor.reset_actor(Vector3((-1 if index % 2 else 1) * (4 + index % 3 * 2.5), .08, (6 if actor.team == 0 else -6) + index % 3 * 2))
+			if underground:
+				var previous: CityBotController = actor.controller
+				previous.navagent.queue_free()
+				previous.queue_free()
+				var driver := preload("res://tests/arcade_benchmark_controller.gd").new()
+				driver.actor = actor
+				driver.match_controller = session
+				driver.slot = index
+				driver.hold_position = Vector3((-1 if index % 2 else 1)*(4.6+index%3*.6),-4.92,(11+index%3*1.5)*(1 if actor.team==0 else -1))
+				actor.add_child(driver)
+				actor.controller = driver
+				actor.reset_actor(driver.hold_position)
+			else:
+				actor.reset_actor(Vector3((-1 if index % 2 == 0 else 1) * (4 + index % 3 * 2.5), .08, (6 if actor.team == 0 else -6) + index % 3 * 2))
 			actor.controller.entered_hill = true
 			actor.controller.route_index = actor.controller.route.size() - 1
 			actor.controller.destination = Vector3(actor.position.x, .05, actor.position.z)
@@ -55,16 +69,18 @@ func run() -> void:
 	var total_draws: float = 0
 	for value: float in draw_calls: total_draws += value
 	var report: Dictionary = {"resolution": root.size, "renderer": RenderingServer.get_current_rendering_method(),
+		"location": "shopping_arcade" if underground else "conservatory",
 		"device": RenderingServer.get_video_adapter_name(), "frames": intervals.size(), "seconds": seconds,
 		"average_fps": intervals.size() / seconds, "p95_frame_ms": intervals[int(intervals.size() * .95)],
 		"p99_frame_ms": intervals[int(intervals.size() * .99)], "average_draw_calls": total_draws / maxf(1, draw_calls.size()),
 		"alive_actors": session.team_count(0) + session.team_count(1), "physics_hz": Engine.physics_ticks_per_second}
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://artifacts"))
-	var output := FileAccess.open("res://artifacts/city-performance.json", FileAccess.WRITE)
+	var stem: String = "arcade-performance" if underground else "city-performance"
+	var output := FileAccess.open("res://artifacts/"+stem+".json", FileAccess.WRITE)
 	output.store_string(JSON.stringify(report, "\t"))
 	print("CITY PERFORMANCE ", JSON.stringify(report))
 	await RenderingServer.frame_post_draw
-	root.get_texture().get_image().save_png("res://artifacts/city-performance.png")
+	root.get_texture().get_image().save_png("res://artifacts/"+stem+".png")
 	arena.queue_free()
 	await process_frame
 	var audio_release: int = Time.get_ticks_msec()

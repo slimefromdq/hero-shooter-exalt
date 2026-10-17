@@ -1,0 +1,142 @@
+{
+	"checks": 84,
+	"failures": [],
+	"physical_routes": [
+		{
+			"arrived": true,
+			"end": "(-16.85002, -4.999161, -10.0)",
+			"lowest_y": -5.00518131256104,
+			"route": "Through shop (-12.0, -10.0)",
+			"seconds": 1.73333333333333,
+			"target": "(-18.0, -5.0, -10.0)"
+		},
+		{
+			"arrived": true,
+			"end": "(-16.85003, -4.999161, -0.0)",
+			"lowest_y": -4.99935340881348,
+			"route": "Through shop (-12.0, 0.0)",
+			"seconds": 1.73333333333333,
+			"target": "(-18.0, -5.0, 0.0)"
+		},
+		{
+			"arrived": true,
+			"end": "(-16.85001, -4.999161, 10.0)",
+			"lowest_y": -5.0051794052124,
+			"route": "Through shop (-12.0, 10.0)",
+			"seconds": 1.73333333333333,
+			"target": "(-18.0, -5.0, 10.0)"
+		},
+		{
+			"arrived": true,
+			"end": "(16.85001, -4.999161, -10.0)",
+			"lowest_y": -5.00518131256104,
+			"route": "Through shop (12.0, -10.0)",
+			"seconds": 1.73333333333333,
+			"target": "(18.0, -5.0, -10.0)"
+		},
+		{
+			"arrived": true,
+			"end": "(16.85002, -4.999161, 0.0)",
+			"lowest_y": -4.99935340881348,
+			"route": "Through shop (12.0, 0.0)",
+			"seconds": 1.73333333333333,
+			"target": "(18.0, -5.0, 0.0)"
+		},
+		{
+			"arrived": true,
+			"end": "(16.85, -4.999161, 10.0)",
+			"lowest_y": -5.0051794052124,
+			"route": "Through shop (12.0, 10.0)",
+			"seconds": 1.73333333333333,
+			"target": "(18.0, -5.0, 10.0)"
+		},
+		{
+			"arrived": true,
+			"end": "(0.247478, -4.999161, -16.96368)",
+			"lowest_y": -5.00520849227905,
+			"route": "Central gallery around foundation and kiosks",
+			"seconds": 6.06666666666665,
+			"target": "(0.0, -5.0, -18.0)"
+		},
+		{
+			"arrived": true,
+			"end": "(-17.99934, 0.000831, -38.86438)",
+			"lowest_y": -4.98862409591675,
+			"route": "Arcade corner street exit (-1.0, -1.0)",
+			"seconds": 3.83333333333332,
+			"target": "(-18.0, 0.0, -40.0)"
+		},
+		{
+			"arrived": true,
+			"end": "(-17.99933, 0.000831, 38.86435)",
+			"lowest_y": -4.98860025405884,
+			"route": "Arcade corner street exit (-1.0, 1.0)",
+			"seconds": 3.83333333333332,
+			"target": "(-18.0, 0.0, 40.0)"
+		},
+		{
+			"arrived": true,
+			"end": "(17.99934, 0.000839, -38.86427)",
+			"lowest_y": -4.98869562149048,
+			"route": "Arcade corner street exit (1.0, -1.0)",
+			"seconds": 3.83333333333332,
+			"target": "(18.0, 0.0, -40.0)"
+		},
+		{
+			"arrived": true,
+			"end": "(17.99934, 0.000819, 38.86424)",
+			"lowest_y": -4.98869562149048,
+			"route": "Arcade corner street exit (1.0, 1.0)",
+			"seconds": 3.83333333333332,
+			"target": "(18.0, 0.0, 40.0)"
+		},
+		{
+			"arrived": true,
+			"end": "(0.0, 0.000824, -58.86843)",
+			"lowest_y": -4.99935340881348,
+			"route": "Arcade station connection -1.0",
+			"seconds": 4.33333333333332,
+			"target": "(0.0, 0.0, -60.0)"
+		},
+		{
+			"arrived": true,
+			"end": "(-0.0, 0.000824, 58.86843)",
+			"lowest_y": -4.99935340881348,
+			"route": "Arcade station connection 1.0",
+			"seconds": 4.33333333333332,
+			"target": "(0.0, 0.0, 60.0)"
+		},
+		{
+			"arrived": true,
+			"end": "(-21.97448, 6.500784, -2.14164)",
+			"lowest_y": 0.000646695494651794,
+			"route": "Flush inner stair landing -1.0",
+			"seconds": 4.18333333333332,
+			"target": "(-23.0, 6.5, -2.5)"
+		},
+		{
+			"arrived": true,
+			"end": "(-17.76235, 0.000835, 15.93176)",
+			"lowest_y": 0.000236205756664276,
+			"route": "Inner stair return to street -1.0",
+			"seconds": 3.66666666666666,
+			"target": "(-17.7, 0.0, 17.0)"
+		},
+		{
+			"arrived": true,
+			"end": "(21.97477, 6.500831, 2.140919)",
+			"lowest_y": 0.000646695494651794,
+			"route": "Flush inner stair landing 1.0",
+			"seconds": 4.18333333333332,
+			"target": "(23.0, 6.5, 2.5)"
+		},
+		{
+			"arrived": true,
+			"end": "(17.76194, 0.000839, -15.93672)",
+			"lowest_y": 0.000189764425158501,
+			"route": "Inner stair return to street 1.0",
+			"seconds": 3.66666666666666,
+			"target": "(17.7, 0.0, -17.0)"
+		}
+	]
+}

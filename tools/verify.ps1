@@ -39,6 +39,12 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'City physical stair, subway or camera traversal failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_transition_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'City/training scene transitions or cleanup failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_geometry_audit.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Rendered city structural surfaces do not match collision.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_arcade_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Shopping arcade, cover or repaired roof traversal failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_navigation_regression.gd
+    if ($LASTEXITCODE -ne 0) { throw 'City navigation recovery or healing route failed.' }
     if ($Capture) {
         & $taskEngine --path $taskRoot --script res://tests/capture.gd --resolution 1440x900 --audio-driver Dummy
         if ($LASTEXITCODE -ne 0) { throw 'Rendered capture failed.' }

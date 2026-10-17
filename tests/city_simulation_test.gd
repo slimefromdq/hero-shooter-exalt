@@ -14,6 +14,7 @@ var deaths: int = 0
 var rounds: int = 0
 var health_collections: int = 0
 var visited_subway: Array[bool] = [false,false]
+var visited_arcade: Array[bool] = [false,false]
 var visited_high: Array[bool] = [false,false]
 var falls: Array[String] = []
 var persistent_stalls: Array[Dictionary] = []
@@ -37,6 +38,8 @@ func step(frames: int) -> void:
 		if is_instance_valid(session):
 			for actor: HeroActor in session.actors:
 				if actor.alive:
+					if actor.position.y < -3.5 and absf(actor.position.x) < 8 and absf(actor.position.z) < 12:
+						visited_arcade[actor.team] = true
 					max_heights[actor.team] = maxf(max_heights[actor.team],actor.global_position.y)
 					var position: Vector3 = actor.global_position
 					if position.y >= 6.4 and position.y <= 6.8 and absf(position.x) >= 20.5 and absf(position.x) <= 25.5 and absf(position.z) <= 18.0:
@@ -128,6 +131,7 @@ func run() -> void:
 	check(persistent_stalls.is_empty(),"no bot remains physically stalled for eight seconds outside the objective")
 	check(falls.is_empty(),"navigation never sends an actor below the district floor")
 	check(visited_subway[0] and visited_subway[1],"both teams use the underground subway flank")
+	check(visited_arcade[0] and visited_arcade[1],"both teams navigate through the shopping arcade below the control point")
 	check(visited_high[0] and visited_high[1],"both teams reach the actual 6.5 metre covered promenade decks")
 	var warps: int = 0
 	var decisions_within_budget: bool = true
@@ -152,7 +156,7 @@ func finish() -> void:
 	print("RESULT: ",checks," checks, ",failures.size()," failures")
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://artifacts"))
 	var file := FileAccess.open("res://artifacts/city-simulation-%d-%ds.json" % [simulation_seed,duration],FileAccess.WRITE)
-	file.store_string(JSON.stringify({"seed":simulation_seed,"seconds":duration,"checks":checks,"failures":failures,"captures":captures,"contest_seconds":contest_seconds,"deaths":deaths,"rounds":rounds,"health_collections":health_collections,"subway_teams":visited_subway,"high_ground_teams":visited_high,"max_heights":max_heights,"lowest_y":lowest_y,"worst_stall":worst_stall,"persistent_stalls":persistent_stalls,"falls":falls,"total_metres_travelled":total_travel,"bots":bot_statistics},"\t"))
+	file.store_string(JSON.stringify({"seed":simulation_seed,"seconds":duration,"checks":checks,"failures":failures,"captures":captures,"contest_seconds":contest_seconds,"deaths":deaths,"rounds":rounds,"health_collections":health_collections,"subway_teams":visited_subway,"arcade_teams":visited_arcade,"high_ground_teams":visited_high,"max_heights":max_heights,"lowest_y":lowest_y,"worst_stall":worst_stall,"persistent_stalls":persistent_stalls,"falls":falls,"total_metres_travelled":total_travel,"bots":bot_statistics},"\t"))
 	arena.queue_free()
 	await process_frame
 	quit(0 if failures.is_empty() else 1)

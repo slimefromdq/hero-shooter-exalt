@@ -4,7 +4,7 @@ A playable offline 6v6 King of the Hill district for Godot 4.7.2. You play Nimbu
 
 ## Field guide
 
-**WASD / mouse** move and look. **Space** jumps or wall kicks; hold Space while moving into a ledge to mantle. **3** dash, **Q** umbrella vault, **E** deflect, **1** bomb, **2** ultimate, **Shift** slide, **5** melee, **4** throw/counter, **6** shield. **M** opens the district atlas, **F3** adds live route/resource telemetry, **Tab / Esc** pauses, **F5** restarts the match. The pause menu includes exploration and return to training. Exploration freezes bots and the match clock and gives the player unlimited resources and invulnerability; restart restores ordinary rules.
+**WASD / mouse** move and look. **Space** jumps or wall kicks; hold Space while moving into a ledge to mantle. **3** dash, **Q** umbrella vault, **E** deflect, **1** bomb, **2** ultimate, **Shift** slide, **5** melee, **4** throw/counter, **6** shield. **M** opens the district atlas, **B** switches its surface/underground layer, **F3** adds live route/resource telemetry, **Tab / Esc** pauses, **F5** restarts the match. Opening the atlas underground selects the Exchange plan automatically. The pause menu includes exploration and return to training. Exploration freezes bots and the match clock and gives the player unlimited resources and invulnerability; restart restores ordinary rules.
 
 The hill unlocks after twenty seconds. Five uncontested seconds capture it. Owning it earns one percent per second, including when empty. Any enemy on the hill stops ownership scoring; both teams together also stop capture. Abandoned partial captures decay. Only living ground-level actors inside the 20 × 18 m brass outline count. Subway occupants and elevated promenade occupants cannot capture from another floor. First to 100% wins. Respawn takes eight seconds; earned ultimate charge survives death. A fresh match starts everyone at zero ultimate.
 
@@ -20,7 +20,7 @@ The playable district measures 144 × 132 m. Crown Station sits north, Lantern C
 | Terrace / 2 m | Garden platforms with ordinary stairs and mantle shortcuts |
 | Balcony / 4 m | Market balconies and wizard’s study, reached by stairs |
 | Promenade / 6.5 m | Covered high ground with multiple stairs, opaque cover and retreat routes |
-| Lower Meridian / −5 m | Underground loop with four corner stairs and spawn connections; no hatch onto the hill |
+| Lower Meridian Exchange / −5 m | Six through-shops, central gallery, perimeter aisles, four corner stairs and spawn connections; no hatch onto the hill |
 
 All eight health caches are shared between teams and sit outside the capture area. Full-health actors leave them available. Healing never exceeds maximum health or restores shields, ammunition, cooldowns or ultimate.
 
@@ -33,6 +33,8 @@ All eight health caches are shared between teams and sit outside the capture are
 ## Architecture and rendering
 
 The original reusable kit combines ivory masonry, cornices, arched windows, slate roofs, brass, modern glass, glowing homes and restrained cyan/violet magic. Strong medical green identifies pickups. A surrounding scenic skyline suggests a much larger inhabited city. Apartment interiors are limited to tactical passages and selected rooms.
+
+The [geometry and Exchange revision](GEOMETRY_AUDIT.md) closes roof shells, connects railway arches to the deck, adds structural supports and repairs stair landings. Substantial roofs, balconies, walls and storefront panes have matching collision. Beneath the control point, a finished 42 × 42 m shopping concourse provides six connected shops, full-height and low cover, and two sheltered health caches.
 
 Forward+ supplies the sun, combat shadows, local lights, glow and atmospheric effects. Repeated architectural details use shared meshes/materials and MultiMeshes. Decorative details are separate from simple collision volumes; visible steps use smooth collision ramps. Static indirect lamp illumination is baked into three world-space irradiance texture layers for subway, street and promenade heights. This procedural bake is not a LightmapGI bake. The city also includes an original quiet storm-wind/transit audio bed.
 
@@ -47,9 +49,10 @@ godot --headless --path . --fixed-fps 60 --script res://tests/city_simulation_te
 godot --headless --path . --fixed-fps 60 --script res://tests/city_simulation_test.gd -- --seconds=600 --seed=971
 godot --path . --script res://tests/capture_city.gd --resolution 1920x1080 --audio-driver Dummy --fixed-fps 60
 godot --path . --script res://tests/city_performance.gd --resolution 1920x1080 --audio-driver Dummy
+godot --path . --script res://tests/city_performance.gd --resolution 1920x1080 --audio-driver Dummy -- --underground
 ```
 
-Use the installed Godot 4.7.2 executable in place of `godot` when it is not on PATH. The performance run uses real elapsed time, disables VSync and keeps twelve actors fighting with benchmark-only enlarged health pools. Production Nimbus remains at 250 HP. Capture and verification outputs live under ignored `artifacts/`.
+Use the installed Godot 4.7.2 executable in place of `godot` when it is not on PATH. Performance runs use real elapsed time, disable VSync and keep twelve actors active with benchmark-only enlarged health pools. The underground run holds eleven bot destinations inside the concourse while retaining ordinary targeting and combat. Production Nimbus remains at 250 HP. Capture and verification outputs live under ignored `artifacts/`.
 
 The map-definition resource is `resources/maps/meridian_gardens.tres`; its script owns spawns, objective dimensions, health positions, district labels and navigation references. Geometry, match lifecycle, hill rules, pickups, bot tactics and HUD are separate city modules. The training scene remains independently runnable.
 
@@ -57,22 +60,29 @@ This build does not include multiplayer, other heroes, rideable trains or full a
 
 ## Verified build — 16 October 2026
 
-**440 automated checks pass**: 288 existing gameplay regressions, 33 city-rule checks, 70 full-city integration checks, 17 physical traversal checks and 32 scene-transition checks. Tests cover 250 HP Nimbus, a 500 HP tank and a 600 HP higher-health fixture, including full 400 HP restoration and missing-health caps. Spawn roofs also block vault entry from above. Navigation warmup grants no starting ultimate, and entering exploration while dead revives the player immediately. Paused city/training transitions and leaving before navigation finishes release the previous scene and its actors cleanly.
+**530 automated checks pass**: 288 existing gameplay regressions, 33 city-rule checks, 70 full-city integration checks, 17 physical traversal checks, 32 scene-transition checks, 84 arcade/structure traversal checks and six navigation-recovery checks. An independent structural audit also reports **1,358 exposed surface probes with zero missing contacts**. Tests cover 250 HP Nimbus, a 500 HP tank and a 600 HP higher-health fixture, including full 400 HP restoration and missing-health caps. Spawn roofs also block vault entry from above. Navigation warmup grants no starting ultimate, and entering exploration while dead revives the player immediately. Paused city/training transitions and leaving before navigation finishes release the previous scene and its actors cleanly.
 
-Actual navigation paths measure **10.12–10.16 s** for the two main approaches and **13.45–13.72 s** for surface flanks at 6 m/s. Capsule sweeps clear the authored routes. Real player physics reaches the 2 m terrace, 4.2 m study, 6.5 m promenade and −5 m subway using movement alone, with a clear shoulder camera.
+Actual navigation paths measure **10.12–10.16 s** for the two main approaches and **13.43–13.80 s** for surface flanks at 6 m/s. Capsule sweeps clear the authored routes. Real player physics reaches the 2 m terrace, 4.2 m study, 6.5 m promenade and −5 m subway using movement alone, with a clear shoulder camera. Additional capsule walks clear every underground shop, all six concourse connections and both rebuilt inner stairs in both directions; real falls land on the repaired conservatory, apartment and pavilion roofs.
 
 | Ten-minute simulation | Seed 76 | Seed 971 |
 | --- | --- | --- |
-| Capture changes, Lantern / Crown | 6 / 6 | 5 / 7 |
-| Seconds sampled as contested | 235 | 286 |
-| Deaths / health collections | 164 / 100 | 169 / 106 |
-| Completed and reset rounds | 2 | 1 |
-| Longest temporary stall | 2 s | 6 s |
+| Capture changes, Lantern / Crown | 6 / 7 | 9 / 9 |
+| Seconds sampled as contested | 253 | 251 |
+| Deaths / health collections | 164 / 109 | 161 / 116 |
+| Completed and reset rounds | 1 | 1 |
+| Longest temporary stall | 2 s | 2 s |
 | Persistent ≥8 s stalls / falls / recovery teleports | 0 / 0 / 0 | 0 / 0 / 0 |
 
-Both runs pass all fourteen simulation checks, including both teams physically reaching the covered promenade deck at approximately 6.51 m, subway use, captures, contests, health-seeking and the 5 Hz / 2 Hz decision budgets. The simulated player slot uses the same bot controller so all twelve slots can fight unattended. Exact fight outcomes can vary with asynchronous navigation startup scheduling.
+Both runs pass all fifteen simulation checks, including both teams physically reaching the covered promenade deck at approximately 6.51 m, crossing the central shopping gallery, subway use, captures, contests, health-seeking and the 5 Hz / 2 Hz decision budgets. The simulated player slot uses the same bot controller so all twelve slots can fight unattended. Exact fight outcomes can vary with asynchronous navigation startup scheduling.
 
-The clean rendered benchmark on this PC’s **RTX 3080**, Forward+, **1920 × 1080**, measured **136.5 FPS average**, **8.98 ms p95** and **9.34 ms p99** over twenty seconds after a five-second warmup. All twelve combatants remained active, using enlarged benchmark-only health pools to sustain the fight; VSync was disabled. This is one representative shoulder-camera fight, not a guarantee for every future content addition or machine. [Raw verification records](validation/meridian) are saved with the project.
+Clean rendered benchmarks on this PC’s **RTX 3080**, Forward+, **1920 × 1080**, measured the revised map over twenty seconds after a five-second warmup:
+
+| Fight location | Average FPS | p95 frame time | p99 frame time |
+| --- | --- | --- | --- |
+| Conservatory | **103.0** | 11.58 ms | 12.11 ms |
+| Shopping arcade | **105.9** | 11.01 ms | 11.32 ms |
+
+All twelve combatants remained active, using enlarged benchmark-only health pools to sustain combat processing; VSync was disabled. These are representative shoulder-camera samples, not guarantees for every view, future content addition or machine. [Raw verification records](validation/meridian) are saved with the project.
 
 ## In-engine gallery
 
@@ -93,3 +103,11 @@ The clean rendered benchmark on this PC’s **RTX 3080**, Forward+, **1920 × 10
 ![Route and resource debug atlas](media/meridian/08-resource-atlas.png)
 
 ![Shoulder-camera combat](media/meridian/09-shoulder-combat.png)
+
+![Lower Meridian Exchange](media/meridian/10-meridian-exchange.png)
+
+![Through-shops](media/meridian/11-exchange-shops.png)
+
+![Supported promenade landing](media/meridian/12-supported-promenade.png)
+
+![Underground route and resource atlas](media/meridian/13-arcade-atlas.png)

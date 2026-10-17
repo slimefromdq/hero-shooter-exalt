@@ -9,6 +9,7 @@ var batches: Dictionary = {}
 var meshes: Dictionary = {}
 var collision_shapes: Dictionary = {}
 var lamp_positions: Array[Vector3] = []
+var custom_surfaces: Array[MeshInstance3D] = []
 
 func _init(parent: Node3D) -> void:
 	owner_node = parent
@@ -69,6 +70,10 @@ func _palette() -> void:
 	mat("window", Color("c99555"), 1.05, 0.35)
 	mat("window_dim", Color("886f58"), 0.6, 0.38)
 	mat("glass", Color("334d63"), 0.06, 0.16, 0.35)
+	var roof_glass: StandardMaterial3D = mat("roof_glass", Color("69879a"), .03, .2, .1)
+	roof_glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_DEPTH_PRE_PASS
+	roof_glass.albedo_color.a = .38
+	roof_glass.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mat("cyan", Color("79c7e5"), 1.6, 0.32)
 	mat("violet", Color("b09bdf"), 1.3, 0.35)
 	mat("lamp", Color("ffd5a0"), 2.6, 0.4)
@@ -97,7 +102,9 @@ func piece(kind: String, size: Vector3, at: Vector3, material_key: String, rotat
 
 func box(size: Vector3, at: Vector3, material_key: String, solid: bool = false, rotation: Vector3 = Vector3.ZERO) -> void:
 	piece("box", size, at, material_key, rotation)
-	if solid:
+	# Substantial slabs, roofs, balcony decks and counter tops are always tangible.
+	# Thin paint, mouldings and small trim remain detail over the supporting collider.
+	if solid or (size.x >= 1.0 and size.z >= 1.0 and size.y >= 0.12):
 		collider_box(size, at, rotation)
 
 func cylinder(radius: float, height: float, at: Vector3, material_key: String, solid: bool = false) -> void:
@@ -133,7 +140,7 @@ func line(a: Vector3, b: Vector3, thickness: float, material_key: String) -> voi
 		batches[key] = []
 	batches[key].append(Transform3D(orient.scaled_local(Vector3(thickness, thickness, along.length())), (a + b) * 0.5))
 
-func arch(center: Vector3, width: float, height: float, depth: float, material_key: String, turn: float = 0.0, thickness: float = 0.55) -> void:
+func arch(center: Vector3, width: float, height: float, depth: float, material_key: String, turn: float = 0.0, thickness: float = 0.55, solid: bool = true) -> void:
 	var rot := Basis(Vector3.UP, turn)
 	var steps := 18
 	for i in steps:
@@ -144,12 +151,78 @@ func arch(center: Vector3, width: float, height: float, depth: float, material_k
 		var delta := second - first
 		var midpoint := (first + second) * 0.5
 		var angle := atan2(delta.y, delta.x)
-		piece("box", Vector3(delta.length() + 0.07, thickness, depth), center + rot * midpoint, material_key, Vector3(0, turn, angle))
+		if angle > PI * 0.5: angle -= PI
+		var size := Vector3(delta.length() + 0.07, thickness, depth)
+		var at: Vector3 = center + rot * midpoint
+		piece("box", size, at, material_key, Vector3(0, turn, angle))
+		if solid: collider_box(size, at, Vector3(0, turn, angle))
+
+func vaulted_roof(center: Vector3, width: float, rise: float, length: float, key: String, segments: int = 24) -> void:
+	# Continuous supported barrel roof. Every visible panel has the same physical slab.
+	for index: int in segments:
+		var a := float(index) * PI / segments
+		var b := float(index + 1) * PI / segments
+		var first := Vector3(cos(a) * width * .5, sin(a) * rise, 0)
+		var second := Vector3(cos(b) * width * .5, sin(b) * rise, 0)
+		var along: Vector3 = second - first
+		var angle: float = atan2(along.y, along.x)
+		if angle > PI * .5: angle -= PI
+		box(Vector3(along.length() + .035, .18, length), center + (first + second) * .5, key, true, Vector3(0, 0, angle))
+
+func polygon_prism(outline: PackedVector2Array, depth: float, at: Vector3, key: String, solid: bool = true) -> MeshInstance3D:
+	# Closed extrusion for gables and the masonry above railway arches.
+	var area: float = 0
+	for index: int in outline.size():
+		var next: int = (index + 1) % outline.size()
+		area += outline[index].cross(outline[next])
+	if area < 0: outline.reverse()
+	var vertices := PackedVector3Array()
+	for side: float in [1.0, -1.0]:
+		for point: Vector2 in outline: vertices.append(Vector3(point.x, point.y, side * depth * .5))
+	var count: int = outline.size()
+	var faces := PackedInt32Array()
+	var cap: PackedInt32Array = Geometry2D.triangulate_polygon(outline)
+	for index: int in range(0, cap.size(), 3):
+		faces.append_array(PackedInt32Array([cap[index], cap[index + 1], cap[index + 2], cap[index + 2] + count, cap[index + 1] + count, cap[index] + count]))
+	for index: int in count:
+		var next: int = (index + 1) % count
+		faces.append_array(PackedInt32Array([index, index + count, next, next, index + count, next + count]))
+	return polyhedron(vertices, faces, at, key, solid)
+
+func polyhedron(vertices: PackedVector3Array, faces: PackedInt32Array, at: Vector3, key: String, solid: bool = true) -> MeshInstance3D:
+	var tool := SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var collision_faces := PackedVector3Array()
+	for index: int in range(0, faces.size(), 3):
+		var a: Vector3 = vertices[faces[index]]
+		var b: Vector3 = vertices[faces[index + 1]]
+		var c: Vector3 = vertices[faces[index + 2]]
+		var normal: Vector3 = (b - a).cross(c - a).normalized()
+		for point: Vector3 in [a, b, c]:
+			tool.set_normal(normal)
+			tool.add_vertex(point)
+			collision_faces.append(point)
+	var visual := MeshInstance3D.new()
+	visual.mesh = tool.commit()
+	visual.position = at
+	visual.material_override = materials[key]
+	visual.set_meta("material_key", key)
+	owner_node.add_child(visual)
+	custom_surfaces.append(visual)
+	if solid:
+		var shape := ConcavePolygonShape3D.new()
+		shape.set_faces(collision_faces)
+		shape.backface_collision = true
+		var collider := CollisionShape3D.new()
+		collider.shape = shape
+		collider.position = at
+		collision_body.add_child(collider)
+	return visual
 
 func window(at: Vector3, width: float = 1.15, height: float = 1.65, turn: float = 0.0, lit: bool = true, ornate: bool = true) -> void:
 	var basis := Basis(Vector3.UP, turn)
 	box(Vector3(width + 0.22, height + 0.22, 0.18), at, "stone_dark", false, Vector3(0, turn, 0))
-	box(Vector3(width, height, 0.20), at + basis * Vector3(0, 0, 0.04), "window" if lit else "window_dim", false, Vector3(0, turn, 0))
+	box(Vector3(width, height, 0.20), at + basis * Vector3(0, 0, 0.04), "window" if lit else "window_dim", width >= 1.5 and height >= 1.5, Vector3(0, turn, 0))
 	box(Vector3(0.075, height, 0.25), at, "iron", false, Vector3(0, turn, 0))
 	box(Vector3(width, 0.075, 0.25), at + Vector3(0, height * 0.16, 0), "iron", false, Vector3(0, turn, 0))
 	# Interior shades leave a dark recess around the amber panes.
@@ -157,11 +230,11 @@ func window(at: Vector3, width: float = 1.15, height: float = 1.65, turn: float 
 	box(Vector3(width * 0.13, height, 0.27), at + basis * Vector3(width * 0.43, 0, 0.01), "slate", false, Vector3(0, turn, 0))
 	if ornate:
 		box(Vector3(width + 0.45, 0.14, 0.5), at + Vector3(0, -height * 0.5 - 0.15, 0), "trim", false, Vector3(0, turn, 0))
-		arch(at + Vector3(0, height * 0.5, 0), width + 0.25, width * 0.35, 0.22, "trim", turn, 0.15)
+		arch(at + Vector3(0, height * 0.5, 0), width + 0.25, width * 0.35, 0.22, "trim", turn, 0.15, false)
 
 func lamp(at: Vector3, tall: float = 4.2) -> void:
 	lamp_positions.append(at + Vector3.UP * tall)
-	cylinder(0.12, tall, at + Vector3(0, tall * 0.5, 0), "iron")
+	cylinder(0.12, tall, at + Vector3(0, tall * 0.5, 0), "iron", true)
 	cylinder(0.32, 0.22, at + Vector3(0, 0.11, 0), "brass")
 	box(Vector3(0.41, 0.58, 0.41), at + Vector3(0, tall, 0), "lamp")
 	box(Vector3(0.58, 0.12, 0.58), at + Vector3(0, tall - 0.39, 0), "iron")
@@ -192,7 +265,7 @@ func planter(at: Vector3, size: Vector3, flowers: bool = true, solid: bool = tru
 				piece("sphere", Vector3(0.06, 0.06, 0.06), flower_at + Vector3.UP * 0.04, "brass")
 
 func tree(at: Vector3, scale_factor: float = 1.0, pale: bool = false) -> void:
-	cylinder(0.24 * scale_factor, 3.7 * scale_factor, at + Vector3(0, 1.85 * scale_factor, 0), "trunk")
+	cylinder(0.24 * scale_factor, 3.7 * scale_factor, at + Vector3(0, 1.85 * scale_factor, 0), "trunk", true)
 	for i in 9:
 		var angle := i * TAU / 9.0
 		var radius := 1.15 + (i % 3) * 0.24
@@ -247,6 +320,10 @@ func flush() -> void:
 		var instance := MultiMeshInstance3D.new()
 		instance.name = key.replace(":", "_")
 		instance.multimesh = mesh_batch
+		# The headless renderer cannot read MultiMesh buffers back. Preserve authored
+		# matrices for independent geometry/physics audits only in headless verification.
+		if DisplayServer.get_name() == "headless":
+			instance.set_meta("authored_transforms", transforms)
 		instance.material_override = materials[key.get_slice(":", 1)]
 		owner_node.add_child(instance)
 	batches.clear()
@@ -287,3 +364,5 @@ func bake_static_illumination(extra_lamps: Array[Vector3]) -> void:
 		material.set_shader_parameter("wet_paving", 0.38 if key in ["asphalt", "paving", "paving_light"] else 0.0)
 		material.set_shader_parameter("static_irradiance", baked_texture)
 		materials[key] = material
+	for visual: MeshInstance3D in custom_surfaces:
+		visual.material_override = materials[visual.get_meta("material_key")]
