@@ -5,7 +5,10 @@ extends RefCounted
 
 static func build(kit: MeridianArchitecture) -> void:
 	kit.box(Vector3(42, .4, 42), Vector3(0, -5.2, 0), "paving", true)
-	kit.box(Vector3(42, .25, 42), Vector3(0, -.825, 0), "stone_dark", true)
+	# Ceiling openings match the surface holes and the two direct hill stairs.
+	for side: float in [-1.0, 1.0]:
+		kit.box(Vector3(18, .25, 42), Vector3(side * 12, -.825, 0), "stone_dark", true)
+	kit.box(Vector3(6, .25, 20), Vector3(0, -.825, 0), "stone_dark", true)
 	# Retaining walls close the underground volume. Openings align with the six stairs.
 	for side: float in [-1.0, 1.0]:
 		kit.box(Vector3(.4, 4.3, 42), Vector3(side * 21, -2.85, 0), "blue", true)
@@ -25,15 +28,17 @@ static func build(kit: MeridianArchitecture) -> void:
 			kit.box(Vector3(.8, 4.05, .8), Vector3(x, -2.975, z), "ivory", true)
 			kit.box(Vector3(1.15, .25, 1.15), Vector3(x, -4.875, z), "stone_dark")
 			kit.box(Vector3(1.15, .22, 1.15), Vector3(x, -1.06, z), "trim")
-		kit.box(Vector3(14.5, .4, .55), Vector3(0, -1.2, z), "ivory", true)
-		var turn: float = 0.0 if z > 0 else PI
-		kit.label("MERIDIAN EXCHANGE", Vector3(0, -1.62, z + signf(z) * .36), 28, Color("edd1a5"), turn)
-		kit.label("SHOPS  /  GARDENS  /  STATION", Vector3(0, -2.02, z + signf(z) * .36), 13, Color("a7ccdb"), turn)
+		for side: float in [-1.0, 1.0]:
+			kit.box(Vector3(4, .4, .55), Vector3(side * 5.25, -1.2, z), "ivory", true)
 	# Recessed ceiling coffers and connected structural beams leave four metres of headroom.
 	for x: float in [-6.8, 6.8]:
 		kit.box(Vector3(.45, .32, 31.5), Vector3(x, -1.13, 0), "ivory", true)
 	for z: float in [-10.0, 0.0, 10.0]:
-		kit.box(Vector3(42, .3, .45), Vector3(0, -1.1, z), "ivory", true)
+		if z == 0:
+			kit.box(Vector3(42, .3, .45), Vector3(0, -1.1, z), "ivory", true)
+		else:
+			for side: float in [-1.0, 1.0]:
+				kit.box(Vector3(18, .3, .45), Vector3(side * 12, -1.1, z), "ivory", true)
 		for x: float in [-5.2, 5.2, -18.0, 18.0]:
 			kit.box(Vector3(.24, .06, 2.4), Vector3(x, -1.31, z), "lamp")
 			kit.lamp_positions.append(Vector3(x, -2.0, z))

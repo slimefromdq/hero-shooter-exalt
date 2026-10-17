@@ -121,20 +121,23 @@ func _build_environment() -> void:
 func _build_ground_and_subway() -> void:
 	# Real holes, not a second floor hidden underneath an unbroken ground slab.
 	var x_edges: Array[float] = [-72.0, -21.0, -15.0, -3.0, 3.0, 15.0, 21.0, 72.0]
-	var z_edges: Array[float] = [-66.0, -58.0, -38.0, -18.0, 18.0, 38.0, 58.0, 66.0]
+	var z_edges: Array[float] = [-66.0, -58.0, -38.0, -24.0, -18.0, -10.0, 10.0, 18.0, 24.0, 38.0, 58.0, 66.0]
 	for xi in x_edges.size() - 1:
 		for zi in z_edges.size() - 1:
 			var x := (x_edges[xi] + x_edges[xi + 1]) * 0.5
 			var z := (z_edges[zi] + z_edges[zi + 1]) * 0.5
 			var corner_hole := absf(x) > 15.0 and absf(x) < 21.0 and absf(z) > 18.0 and absf(z) < 38.0
 			var spawn_hole := absf(x) < 3.0 and absf(z) > 38.0 and absf(z) < 58.0
-			if corner_hole or spawn_hole:
+			var hill_hole := absf(x) < 3.0 and absf(z) > 10.0 and absf(z) < 24.0
+			if corner_hole or spawn_hole or hill_hole:
 				continue
 			architecture.box(Vector3(x_edges[xi + 1] - x_edges[xi], 0.7, z_edges[zi + 1] - z_edges[zi]), Vector3(x, -0.35, z), "asphalt", true)
 	# Wide park paving and axial streets. Thin dressings never introduce trip edges.
-	for xa: Vector2 in [Vector2(-22, -21), Vector2(-21, -15), Vector2(-15, 15), Vector2(15, 21), Vector2(21, 22)]:
-		for za: Vector2 in [Vector2(-21, -18), Vector2(-18, 18), Vector2(18, 21)]:
+	for xa: Vector2 in [Vector2(-22, -21), Vector2(-21, -15), Vector2(-15, -3), Vector2(-3, 3), Vector2(3, 15), Vector2(15, 21), Vector2(21, 22)]:
+		for za: Vector2 in [Vector2(-21, -18), Vector2(-18, -10), Vector2(-10, 10), Vector2(10, 18), Vector2(18, 21)]:
 			if absf(xa.x + xa.y) > 30 and absf(xa.x + xa.y) < 43 and absf(za.x + za.y) > 36:
+				continue
+			if xa.x == -3 and absf(za.x + za.y) > 20:
 				continue
 			architecture.box(Vector3(xa.y - xa.x, 0.035, za.y - za.x), Vector3((xa.x + xa.y) * 0.5, 0.02, (za.x + za.y) * 0.5), "paving_light")
 	for sx: float in [-1.0, 1.0]:
@@ -145,6 +148,14 @@ func _build_ground_and_subway() -> void:
 	for sign: float in [-1.0, 1.0]:
 		_ramp(Vector3(0, -5, sign * 38), Vector3(0, 0, sign * 58), 5.6, "paving_light", true)
 		_subway_approach(sign)
+	# Two short, open-air stairs connect the gallery directly to the hill approaches.
+	# Thin flights preserve the station tunnel beneath their upper halves.
+	for sign: float in [-1.0, 1.0]:
+		_ramp(Vector3(0, -5, sign * 10), Vector3(0, 0, sign * 24), 5.6, "ivory", true, true)
+		for side: float in [-1.0, 1.0]:
+			architecture.box(Vector3(.25, .7, 11), Vector3(side * 3.05, -.35, sign * 15.5), "stone_dark", true)
+			architecture.lamp(Vector3(side * 3.7, 0, sign * 24), 3.2)
+		architecture.label("EXCHANGE  /  HILL STAIRS", Vector3(0, 2.2, sign * 24.8), 23, Color("a7ccdb"), 0 if sign > 0 else PI)
 	MeridianShoppingArcade.build(architecture)
 	# Guard perimeter: the city continues visually beyond the actual combat district.
 	for sign: float in [-1.0, 1.0]:
@@ -188,7 +199,7 @@ func _ramp(low: Vector3, high: Vector3, width: float, material_key: String, step
 
 func _subway_approach(sign_z: float) -> void:
 	architecture.box(Vector3(6, .4, 17.6), Vector3(0, -5.2, sign_z * 29.6), "paving", true)
-	architecture.box(Vector3(6.4, .3, 17.6), Vector3(0, -.85, sign_z * 29.6), "stone_dark", true)
+	architecture.box(Vector3(6.4, .3, 14), Vector3(0, -.85, sign_z * 31), "stone_dark", true)
 	for side: float in [-1.0, 1.0]:
 		architecture.box(Vector3(.35, 4.3, 17.6), Vector3(side * 3, -2.85, sign_z * 29.6), "blue", true)
 	# Real retaining cheeks close the sides of each descending stair trench.
@@ -226,21 +237,15 @@ func _build_conservatory() -> void:
 			architecture.lamp(corner + Vector3(sx * 1.3, 0, sz * 1.3), 4.5)
 			architecture.planter(Vector3(sx * 8.0, 0, sz * 11.9), Vector3(6, 1.6, 2.4))
 			architecture.planter(Vector3(sx * 12.0, 0, sz * 5.8), Vector3(2.2, 1.9, 5.0))
-	# Four huge glazed portals keep entrances legible from each approach.
+	# Perimeter portals keep entrances legible from each approach.
 	for sign: float in [-1.0, 1.0]:
 		architecture.arch(Vector3(0, 6.8, sign * 11.5), 27, 5.0, 0.55, "brass", 0.0, 0.25)
 		# Side elevations have a supported lintel, rather than an intersecting false vault.
 		architecture.box(Vector3(27.8, 0.4, 0.7), Vector3(0, 6.65, sign * 11.5), "ivory")
 		architecture.box(Vector3(0.7, 0.4, 23), Vector3(sign * 13.5, 6.65, 0), "ivory")
 		architecture.label("MERIDIAN   CONSERVATORY", Vector3(0, 7.25, sign * 11.85), 45, Color("e8d3a6"), PI if sign < 0 else 0.0)
-	# A complete barrel canopy sits on its ribs and piers; no gaps or floating wings.
-	architecture.vaulted_roof(Vector3(0, 6.8, 0), 27, 5, 23.6, "roof_glass")
-	for z: float in [-11.5, -6, 0, 6, 11.5]:
-		architecture.arch(Vector3(0, 6.8, z), 27, 5.0, 0.12, "iron", 0.0, 0.12)
-	for index: int in range(1, 8):
-		var angle: float = index * PI / 8
-		architecture.box(Vector3(.12, .14, 23.7), Vector3(cos(angle) * 13.5, 6.91 + sin(angle) * 5, 0), "brass")
-	architecture.box(Vector3(0.18, 0.2, 24), Vector3(0, 11.8, 0), "brass")
+	# Open sky above the point lets promenade teams pressure the hill and lets
+	# defenders answer that pressure. Keep the landmark's perimeter portals.
 	orrery = Node3D.new()
 	orrery.name = "CelestialOrrery"
 	orrery.position = Vector3(0, 6.0, 0)
@@ -479,8 +484,11 @@ func _build_high_routes() -> void:
 			architecture.railing(Vector3(sx * 44.4, 6.5, sz * 17.8), Vector3(sx * 44.4, 6.5, sz * 22.25), 1.1)
 			architecture.lamp(Vector3(sx * 40, 6.5, sz * 20), 3.3)
 		architecture.railing(Vector3(sx * 25.2, 6.5, -18), Vector3(sx * 25.2, 6.5, 18))
-		architecture.railing(Vector3(sx * 20.8, 6.5, -18), Vector3(sx * 20.8, 6.5, .5 if sx > 0 else -4.5))
-		architecture.railing(Vector3(sx * 20.8, 6.5, -.5 if sx < 0 else 4.5), Vector3(sx * 20.8, 6.5, 18))
+		architecture.railing(Vector3(sx * 20.8, 6.5, -sx * 18), Vector3(sx * 20.8, 6.5, sx * .5))
+		# Low firing parapets let ordinary standing aim reach the point. The
+		# opposite tall shelter provides a retreat from return fire.
+		for span: Vector3 in [Vector3(4.5, 6, 1.1), Vector3(6, 10, .45), Vector3(10, 18, 1.1)]:
+			architecture.railing(Vector3(sx * 20.8, 6.5, sx * span.x), Vector3(sx * 20.8, 6.5, sx * span.y), span.z)
 		# An inner garden stair lets high-ground players rejoin a fight promptly.
 		# It also prevents bots taking a 150 m promenade detour to return to the hill.
 		# A square-ended flight meets a level landing flush. The old diagonal

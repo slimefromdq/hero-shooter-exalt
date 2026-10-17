@@ -201,7 +201,7 @@ func run() -> void:
 func tuning_pass_tests() -> void:
 	await reset()
 	check(player.health == 275 and player.effective_max_health() == 275,"direct Slayer launch and training resets preserve 275 HP")
-	check(controller.arm.spring_length <= 4.01,"shared shoulder camera settles at the closer four-metre distance")
+	check(absf(controller.arm.spring_length - controller.camera_distance) < .1,"shared shoulder camera settles at its configured close shoulder distance")
 	var target: HeroActor = training.bots[0]
 	target.reset_actor(player.position + Vector3(0,0,-5))
 	await step(3)

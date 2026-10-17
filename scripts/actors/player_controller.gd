@@ -8,9 +8,10 @@ var camera: Camera3D
 var yaw: float = 0.0
 var pitch: float = -0.12
 @export var sensitivity: float = 0.0025
-@export var camera_distance: float = 4.0
+# Close shoulder framing enlarges the hero without narrowing the normal 76-degree FOV.
+@export var camera_distance: float = 1.85
 @export var shoulder_offset: float = 0.65
-@export var camera_height: float = 1.65
+@export var camera_height: float = 1.75
 var active: bool = true
 var recoil: float = 0.0
 
