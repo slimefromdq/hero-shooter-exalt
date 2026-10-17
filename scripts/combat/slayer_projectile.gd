@@ -13,7 +13,7 @@ func _ready() -> void:
 	add_to_group("owned_attacks")
 	add_to_group("transient")
 	collision_layer = 0
-	collision_mask = 3
+	collision_mask = 19
 	add_collision_exception_with(source)
 	cast_id = source.resolver.new_cast()
 	var collider := CollisionShape3D.new()
@@ -25,6 +25,13 @@ func _ready() -> void:
 	add_child(visual)
 	SlayerVisuals.knife(visual) if kind == "knife" else SlayerVisuals.axe(visual)
 	if kind == "axe": visual.scale = Vector3.ONE * .9
+	else:
+		var glint := SphereMesh.new()
+		glint.radius = .065
+		glint.height = .13
+		var mat: StandardMaterial3D = Geometry.material(Color("c2f6ff"),1.8)
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		Geometry.mesh(visual,glint,Vector3(0,0,-.25),mat)
 	rotation.y = atan2(-direction.x,-direction.z)
 
 func _physics_process(delta: float) -> void:
@@ -44,6 +51,7 @@ func _physics_process(delta: float) -> void:
 	for iteration: int in 16:
 		var hit: KinematicCollision3D = move_and_collide(motion)
 		if hit == null: break
+		if kind == "knife": CombatEffect.streak(get_parent(),previous,global_position,t.knife_trail_width,t.knife_trail_time)
 		var target := hit.get_collider() as HeroActor
 		if target != null:
 			var id: int = target.get_instance_id()
@@ -81,4 +89,5 @@ func _physics_process(delta: float) -> void:
 		visual.rotation.x += delta * 20.0
 		CombatEffect.line(get_parent(),previous,global_position,Color("b585eb"),.12)
 	else:
+		CombatEffect.streak(get_parent(),previous,global_position,t.knife_trail_width,t.knife_trail_time)
 		look_at(global_position + direction)

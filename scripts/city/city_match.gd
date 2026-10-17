@@ -185,6 +185,7 @@ func restart_match() -> void:
 	get_tree().paused = false
 	menu_open = false
 	winner = -1
+	if is_instance_valid(hud): hud.hit_timer = 0.0
 	elapsed = 0.0
 	exploration = false
 	freeze_ai = false

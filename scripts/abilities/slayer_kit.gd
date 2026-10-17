@@ -15,6 +15,15 @@ var traps: Array[HunterSnare] = []
 var last_shot_damage: float = 0.0
 var last_shot_pellets: int = 0
 var last_shot_head: bool = false
+var boot_buffer: float = 0.0
+var boot_slow_time: float = 0.0
+var boot_slow_duration: float = 0.0
+var action_age: float = 0.0
+var action_released: bool = false
+var pending_trap_direction: Vector3
+var pending_knife_aim: Vector3
+var action_hint: String = ""
+var action_hint_time: float = 0.0
 
 func _ready() -> void:
 	refill()
@@ -24,7 +33,11 @@ func data() -> SlayerTuning:
 
 func tick(delta: float, input: CombatIntent) -> void:
 	var t: SlayerTuning = data()
+	var boot_was_queued: bool = boot_buffer > 0.0
 	shot_cd = maxf(0.0, shot_cd - delta)
+	boot_slow_time = maxf(0.0, boot_slow_time - delta)
+	action_hint_time = maxf(0.0, action_hint_time - delta)
+	boot_buffer = maxf(0.0, boot_buffer - delta)
 	deflect_cd = maxf(0.0, deflect_cd - delta)
 	ultimate_charge = minf(100.0, ultimate_charge + delta * 0.8)
 	if knives < t.knife_charges:
@@ -53,6 +66,13 @@ func tick(delta: float, input: CombatIntent) -> void:
 	if actor.state == "slayer_boot_start" and actor.state_time <= 0.0:
 		actor.state = "slayer_boot_active"
 		actor.resolver.record("active", actor, "boot")
+	if actor.state in ["slayer_knife", "slayer_trap"]:
+		action_age += delta
+		if not action_released:
+			if actor.state == "slayer_knife" and action_age >= t.knife_release_time:
+				release_knife()
+			elif actor.state == "slayer_trap" and action_age >= t.trap_release_time:
+				release_trap()
 	if actor.state == "slayer_axe_windup":
 		ultimate_age += delta
 		if actor.state_time <= 0.0:
@@ -62,16 +82,29 @@ func tick(delta: float, input: CombatIntent) -> void:
 	elif actor.state == "slayer_axe_release" and actor.state_time <= 0.0:
 		actor.state = "slayer_axe_recovery"
 		actor.state_time = t.axe_recovery
-	elif actor.state in ["slayer_knife", "slayer_trap", "slayer_boot_recovery", "slayer_axe_recovery"] and actor.state_time <= 0.0:
+	elif actor.state in ["slayer_knife", "slayer_trap", "slayer_axe_recovery"] and actor.state_time <= 0.0:
 		actor.state = "ready"
+	if input.deflect:
+		if actor.resolver.protected_room(actor):
+			hint("BOOT RUSH / LEAVE THE SAFE ROOM")
+		elif actor.statuses.movement_disabled():
+			hint("BOOT RUSH / MOBILITY DISABLED")
+		elif deflect_cd > 0.0:
+			hint("BOOT RUSH / %.1f s" % deflect_cd)
+		else:
+			boot_buffer = t.boot_input_buffer
+			if not actor.permits("boot") and actor.state != "guard": hint("BOOT RUSH / INPUT BUFFERED")
+	if boot_buffer > 0.0 and actor.state == "guard" and not actor.statuses.movement_disabled() and not actor.resolver.protected_room(actor):
+		actor.state = "ready"
+		actor.close.guard_cd = t.guard_cooldown
 	# Offensive cancels never reset the pump lock; all abilities respect commitments.
 	var cancel_window: bool = shot_cd <= t.shot_interval - t.shotgun_cancel_after
-	if input.hover and knives > 0 and cancel_window and actor.permits("knife"):
-		throw_knife()
-	elif input.deflect and deflect_cd <= 0.0 and actor.permits("boot"):
+	if boot_buffer > 0.0 and deflect_cd <= 0.0 and actor.permits("boot"):
 		start_boot()
+	elif input.hover and knives > 0 and cancel_window and actor.permits("knife"):
+		throw_knife()
 	elif input.bomb and snares > 0 and actor.permits("snare"):
-		deploy_trap(input.aim_held)
+		if not deploy_trap(): hint("SNARE / NO CLEAR GROUND NEARBY")
 	elif input.ultimate and ultimate_charge >= 100.0 and actor.permits("ultimate"):
 		ultimate_charge = 0.0
 		ultimate_age = 0.0
@@ -89,6 +122,15 @@ func tick(delta: float, input: CombatIntent) -> void:
 		start_reload()
 	if input.projectile_fire:
 		fire_projectile(input.aim)
+	if boot_was_queued and boot_buffer <= 0.0 and deflect_cd <= 0 and actor.state not in ["slayer_boot_start", "slayer_boot_active"]:
+		hint("BOOT RUSH / " + actor.state.replace("_", " ").to_upper())
+
+func hint(message: String) -> void:
+	action_hint = message
+	action_hint_time = 1.2
+
+func movement_scale() -> float:
+	return lerpf(1.0,data().boot_recovery_speed,clampf(boot_slow_time / maxf(.01,boot_slow_duration),0,1))
 
 func start_reload() -> void:
 	if ammo >= actor.tuning.magazine or actor.state == "reload":
@@ -157,7 +199,7 @@ func fire(_ultimate: bool = false) -> void:
 	if last_shot_damage > 0 and session != null and session.player == actor:
 		session.hud.hit_text = str(roundi(last_shot_damage)) + (" HEAD" if last_shot_head else "")
 		session.hud.hit_head = last_shot_head
-		session.hud.hit_timer = .25
+		session.hud.hit_timer = .8
 	actor.resolver.record("cast",actor,"street_sweeper","pellets=%d connected=%d applied=%.2f" % [t.pellets,last_shot_pellets,last_shot_damage])
 
 func throw_knife() -> void:
@@ -166,14 +208,27 @@ func throw_knife() -> void:
 	knives -= 1
 	actor.state = "slayer_knife"
 	actor.state_time = t.knife_recovery
+	action_age = 0.0
+	action_released = false
+	pending_knife_aim = aim_point(t.knife_range)
+	actor.resolver.record("cast",actor,"silver_knife")
+
+func release_knife() -> void:
+	action_released = true
+	var origin: Vector3 = throw_origin()
 	var projectile := SlayerProjectile.new()
 	projectile.source = actor
 	projectile.kind = "knife"
-	projectile.direction = (aim_point(t.knife_range) - safe_muzzle()).normalized()
+	projectile.direction = (pending_knife_aim - origin).normalized()
 	actor.get_parent().add_child(projectile)
-	projectile.global_position = safe_muzzle()
-	actor.resolver.record("cast",actor,"silver_knife")
+	projectile.global_position = origin
 	cue("knife")
+
+func throw_origin() -> Vector3:
+	var hand: Vector3 = actor.presentation.right_arm.get_node("Joint").to_global(Vector3(0,-.28,0))
+	var shoulder: Vector3 = actor.global_position + Vector3.UP * 1.36
+	var hit: Dictionary = actor.resolver.ray(shoulder,hand,[actor.get_rid()],1)
+	return hit.position + hit.normal * .12 if not hit.is_empty() else hand
 
 func start_boot() -> void:
 	var t: SlayerTuning = data()
@@ -186,6 +241,8 @@ func start_boot() -> void:
 	boot_remaining = t.boot_distance
 	boot_fall_velocity = actor.velocity.y
 	boot_connected = false
+	boot_buffer = 0.0
+	boot_slow_time = 0.0
 	deflect_cd = t.boot_cooldown
 	cast_id = actor.resolver.new_cast()
 	actor.state = "slayer_boot_start"
@@ -210,15 +267,10 @@ func boot_targets() -> bool:
 	return false
 
 func move_override(delta: float) -> bool:
-	if actor.state not in ["slayer_boot_active", "slayer_boot_recovery"]:
+	if actor.state != "slayer_boot_active":
 		return false
 	var t: SlayerTuning = data()
-	if actor.state == "slayer_boot_recovery":
-		actor.velocity.x = move_toward(actor.velocity.x,0,delta * t.braking)
-		actor.velocity.z = move_toward(actor.velocity.z,0,delta * t.braking)
-		actor.velocity.y -= t.gravity * delta
-		actor.move_and_slide()
-		return true
+	actor.motor.coyote = .1 if actor.motor.grounded() else maxf(0.0,actor.motor.coyote - delta)
 	var connected: bool = boot_targets()
 	if not connected and actor.state == "slayer_boot_active":
 		var travel: float = minf(boot_remaining,t.boot_speed * delta)
@@ -237,23 +289,33 @@ func move_override(delta: float) -> bool:
 				boot_remaining = 0.0
 		CombatEffect.line(actor.get_parent(),before + Vector3.UP * .5,actor.global_position + Vector3.UP * .5,Color("d8b4fa"),.045)
 	if actor.state == "slayer_boot_active" and (connected or boot_remaining <= .001):
-		actor.state = "slayer_boot_recovery"
-		actor.state_time = t.boot_hit_recovery if boot_connected else t.boot_miss_recovery
+		actor.state = "ready"
+		actor.state_time = 0.0
+		boot_slow_duration = t.boot_hit_recovery if boot_connected else t.boot_miss_recovery
+		boot_slow_time = boot_slow_duration
 		actor.velocity.x *= t.boot_momentum
 		actor.velocity.z *= t.boot_momentum
 		actor.resolver.record("recovery",actor,"boot","hit" if boot_connected else "miss_or_wall")
 	return true
 
-func deploy_trap(thrown: bool) -> bool:
-	var at: Vector3 = safe_muzzle()
-	var normal: Vector3 = Vector3.UP
-	if not thrown:
-		var intended: Vector3 = actor.global_position - actor.global_basis.z * .8
-		var hit: Dictionary = actor.resolver.ray(intended + Vector3.UP * 1.2,intended + Vector3.DOWN * 2,[actor.get_rid()],1)
-		if hit.is_empty() or (hit.normal as Vector3).y < .7: return false
-		at = hit.position + hit.normal * .12
-		normal = hit.normal
-		if not HunterSnare.placement_clear(actor,at): return false
+func deploy_trap() -> bool:
+	var intended: Vector3 = actor.global_position - actor.global_basis.z * .95
+	var hit: Dictionary = actor.resolver.ray(intended + Vector3.UP * 1.2,intended + Vector3.DOWN * 2,[actor.get_rid()],1)
+	if hit.is_empty() or (hit.normal as Vector3).y < .7: return false
+	if not HunterSnare.placement_clear(actor,hit.position + hit.normal * .2): return false
+	var t: SlayerTuning = data()
+	pending_trap_direction = -actor.global_basis.z
+	if snares == t.trap_limit: snare_timer = t.trap_recharge
+	snares -= 1
+	actor.state = "slayer_trap"
+	actor.state_time = t.trap_recovery
+	action_age = 0.0
+	action_released = false
+	actor.resolver.record("cast",actor,"snare_drop")
+	return true
+
+func release_trap() -> void:
+	action_released = true
 	var t: SlayerTuning = data()
 	for index: int in range(traps.size() - 1,-1,-1):
 		if not is_instance_valid(traps[index]) or traps[index].is_queued_for_deletion():
@@ -262,20 +324,15 @@ func deploy_trap(thrown: bool) -> bool:
 		traps.pop_front().queue_free()
 	var trap := HunterSnare.new()
 	trap.source = actor
-	trap.flying = thrown
+	trap.flying = true
 	actor.get_parent().add_child(trap)
-	trap.global_position = at
-	trap.align_surface(normal)
-	if thrown:
-		trap.velocity = (aim_point(25.0) - at).normalized() * t.trap_throw_speed + Vector3.UP * 2.0
+	var hand: Vector3 = throw_origin()
+	var obstruction: Dictionary = actor.resolver.ray(actor.global_position + Vector3.UP * 1.1,hand,[actor.get_rid()],1)
+	trap.global_position = obstruction.position + obstruction.normal * .2 if not obstruction.is_empty() else hand
+	trap.velocity = pending_trap_direction * t.trap_drop_forward + Vector3.DOWN * t.trap_drop_speed
 	traps.append(trap)
-	if snares == t.trap_limit: snare_timer = t.trap_recharge
-	snares -= 1
-	actor.state = "slayer_trap"
-	actor.state_time = t.trap_recovery
-	actor.resolver.record("cast",actor,"snare_throw" if thrown else "snare_place")
+	actor.resolver.record("release",actor,"snare_drop")
 	cue("snare")
-	return true
 
 func release_axe() -> void:
 	if axe_released: return
@@ -297,6 +354,9 @@ func cancel(clear_owned: bool = false) -> void:
 	super.cancel(clear_owned)
 	if clear_owned: traps.clear()
 	boot_remaining = 0.0
+	boot_buffer = 0.0
+	boot_slow_time = 0.0
+	action_released = true
 	axe_released = false
 
 func refill() -> void:
@@ -305,3 +365,6 @@ func refill() -> void:
 	snares = data().trap_limit
 	knife_timer = 0.0
 	snare_timer = 0.0
+	boot_slow_time = 0.0
+	boot_buffer = 0.0
+	action_hint_time = 0.0

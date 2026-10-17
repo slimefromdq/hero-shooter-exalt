@@ -18,8 +18,9 @@ func _ready() -> void:
 	add_to_group("traps")
 	cast_id = source.resolver.new_cast()
 	health = (source.tuning as SlayerTuning).trap_health
-	collision_layer = 2
-	collision_mask = 3 if flying else 1
+	# Shootable by combat traces, while character capsules can walk over it.
+	collision_layer = 16
+	collision_mask = 1
 	add_collision_exception_with(source)
 	var collider := CollisionShape3D.new()
 	var shape := SphereShape3D.new()
@@ -41,7 +42,7 @@ static func placement_clear(owner_actor: HeroActor, at: Vector3, exclude: Array[
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.shape = shape
 	query.transform = Transform3D(Basis.IDENTITY,at + Vector3.UP * .14)
-	query.collision_mask = 3
+	query.collision_mask = 19
 	query.exclude = exclude
 	return owner_actor.get_world_3d().direct_space_state.intersect_shape(query,1).is_empty()
 
@@ -64,13 +65,6 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= 15.0 * delta
 		var collision: KinematicCollision3D = move_and_collide(velocity * delta)
 		if collision != null:
-			var target := collision.get_collider() as HeroActor
-			if target != null:
-				if target.team != source.team:
-					trigger(target,true)
-				else:
-					add_collision_exception_with(target)
-				return
 			if collision.get_normal().y >= .7 and placement_clear(source,global_position,[get_rid()]):
 				flying = false
 				velocity = Vector3.ZERO
@@ -78,7 +72,7 @@ func _physics_process(delta: float) -> void:
 				align_surface(collision.get_normal())
 			else:
 				velocity = velocity.bounce(collision.get_normal()) * .4
-		visual.rotation.y += delta * 5.0
+		visual.rotation.x += delta * 8.0
 		indicator.visible = false
 		return
 	# Placed traps settle if their supporting platform is removed.
@@ -92,20 +86,19 @@ func _physics_process(delta: float) -> void:
 		if not armed or not target.alive or target.team == source.team: continue
 		var offset: Vector3 = target.global_position - global_position
 		if Vector2(offset.x,offset.z).length() <= t.trap_radius and absf(offset.y) < 1.15 and source.resolver.visible(global_position + Vector3.UP * .25,target,[get_rid()]):
-			trigger(target,false)
+			trigger(target)
 			break
 
-func trigger(target: HeroActor, direct: bool) -> void:
+func trigger(target: HeroActor) -> void:
 	var t := source.tuning as SlayerTuning
-	var result: String = source.resolver.damage(source,target,t.trap_direct_damage if direct else t.trap_damage,"snare",cast_id,false,false,global_position)
+	var result: String = source.resolver.damage(source,target,t.trap_damage,"snare",cast_id,false,false,global_position)
 	if result != "hit":
-		if direct: queue_free()
 		return
 	if target.state not in ["captured", "throw_pair"]:
-		target.statuses.apply("slow" if direct else "root",source,t.trap_slow_duration if direct else t.trap_root,t.trap_slow_multiplier if direct else 0.0)
+		target.statuses.apply("root",source,t.trap_root)
 	CombatEffect.pulse(get_parent(),target.global_position + Vector3.UP * .25,Color("ed79b2"),t.trap_radius)
 	source.presentation.sound.play_slayer("snare_hit")
-	source.resolver.record("trigger",source,"snare_direct" if direct else "snare_root","target=" + target.actor_id)
+	source.resolver.record("trigger",source,"snare_root","target=" + target.actor_id)
 	queue_free()
 
 func receive_damage(attacker: HeroActor, amount: float, id: int) -> void:

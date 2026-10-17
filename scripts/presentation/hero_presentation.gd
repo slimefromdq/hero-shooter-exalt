@@ -27,6 +27,8 @@ var slayer_axe: Node3D
 var muzzle_flash: MeshInstance3D
 var status_label: Label3D
 var status_ring: MeshInstance3D
+var held_knife: Node3D
+var held_trap: Node3D
 
 func _ready() -> void:
 	model = Node3D.new()
@@ -127,7 +129,9 @@ func _ready() -> void:
 	animator.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
 	add_child(animator)
 	animator.add_animation_library("", CloseCombatAnimations.library())
-	if actor.tuning is SlayerTuning: SlayerVisuals.remodel(self)
+	if actor.tuning is SlayerTuning:
+		SlayerVisuals.remodel(self)
+		animator.add_animation_library("slayer",SlayerAnimations.library())
 	status_label = Geometry.text3d(self,"",Vector3(0,2.3,0),23,Color("e3b8ff"))
 	status_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	status_label.no_depth_test = false
@@ -185,7 +189,12 @@ func _process(delta: float) -> void:
 		rifle.rotation.x = -0.7
 	var animation: String = ""
 	var progress: float = 0.0
-	if actor.state.begins_with("melee_"):
+	if actor.state in ["slayer_knife", "slayer_trap"]:
+		animation = "slayer/knife" if actor.state == "slayer_knife" else "slayer/drop"
+		var hunter := actor.kit as SlayerKit
+		var data := actor.tuning as SlayerTuning
+		progress = hunter.action_age / (data.knife_recovery if actor.state == "slayer_knife" else data.trap_recovery)
+	elif actor.state.begins_with("melee_"):
 		animation = "melee"
 		progress = actor.close.melee_progress()
 	elif actor.state == "stagger":
@@ -198,10 +207,11 @@ func _process(delta: float) -> void:
 		animation = "block"
 		progress = 1.0 - block_strength
 	elif actor.state == "throw_startup":
-		animation = "grab"
+		animation = "slayer/grab" if actor.tuning is SlayerTuning else "grab"
 		progress = 1.0 - actor.state_time / actor.tuning.throw_startup
 	elif actor.state in ["throw_pair","captured"]:
 		animation = "thrower" if actor.state == "throw_pair" else "victim"
+		if actor.state == "throw_pair" and actor.tuning is SlayerTuning: animation = "slayer/thrower"
 		progress = actor.close.pair_progress
 		var owner: HeroActor = actor if actor.close.pair_owner else actor.close.pair
 		if is_instance_valid(owner) and owner.close.sequence != null:

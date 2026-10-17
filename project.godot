@@ -150,6 +150,7 @@ aim={
 3d_physics/layer_2="Actors"
 3d_physics/layer_3="Lantern team entrance"
 3d_physics/layer_4="Crown team entrance"
+3d_physics/layer_5="Shootable deployables"
 
 [physics]
 

@@ -14,8 +14,7 @@ Run `Launch.ps1 -Slayer` for the city or `Launch.ps1 -Training -Slayer` for the 
 | R | Load individual shells; offensive actions interrupt |
 | Q | Silver Knife |
 | E | Boot Rush |
-| 1 | Place Hunter's Snare on valid nearby ground |
-| Right mouse + 1 | Throw a snare toward the crosshair |
+| 1 | Toss Hunter's Snare downward onto nearby valid ground; RMB does not change deployment |
 | 2 | Heads Will Roll; automatic release after windup |
 | 3 / Shift / Space | Shared dash / slide / jump, mantle and wall kick |
 | 5 / 6 / 4 | Shared melee / guard / throw and counterthrow |
@@ -26,29 +25,33 @@ Internal `hover`, `deflect` and `bomb` action names remain Q/E/1 slots. Slayer's
 
 Defaults are in `resources/slayer.tres` and exported `SlayerTuning` fields. Each actor gets its own resource copy.
 
-| Mechanic | Initial implementation |
+| Mechanic | Current tuning |
 | --- | --- |
-| Shotgun | 6 shells, 10 × 7 body damage, global 2× head multiplier, 1.1 s pump lock, 2.2° fixed disk spread |
-| Falloff | Full through 8 m; linear reduction to 15% at 14 m; 35 m trace limit |
+| Shotgun | 6 shells, 10 × 10 body damage, global 2× head multiplier, 1.1 s pump lock, 1.1° fixed disk spread |
+| Falloff | Full through 12 m; linear reduction to 40% at 24 m; 35 m trace limit |
 | Reload | First shell after 0.3 + 0.55 s; subsequent shells every 0.55 s |
-| Knives | 2 charges, sequential 7 s recharge, 30 direct damage, 35 m/s, 25 m range |
+| Knives | 2 charges, sequential 7 s recharge, 30 direct damage, 35 m/s, 25 m range; 0.09 s hand release, 0.22 s fading silver-blue trail |
 | Bleed | 8 DPS for 4 s in eight 4-damage ticks; refresh retains partial tick progress |
-| Boot Rush | 0.12 s startup, up to 8 m at 25 m/s, 55 damage, 8 m/s decaying displacement, 9 s cooldown |
-| Boot recovery | 0.18 s on contact; 0.35 s on miss/wall; 30% horizontal exit velocity before braking |
+| Boot Rush | 0.12 s startup, up to 12 m at 25 m/s, 55 damage, 8 m/s decaying displacement, 9 s cooldown; 0.22 s input buffer |
+| Boot recovery | Immediate control; speed returns from 35% to 100% over 0.4 s on hit or 0.7 s on miss/wall; 30% horizontal exit momentum |
 | Snare | 2 charges / active traps, sequential 12 s recharge, 0.5 s arm time, 1.4 m radius, 15 s lifetime, 25 HP |
 | Ground trigger | 25 damage, 1.5 s root and mobility lock; aim and shooting remain available |
-| Direct thrown hit | 12 damage, 50% slow and mobility lock for 1.5 s; early consumption |
+| Downward toss | One deployment regardless of RMB; 0.14 s hand release in a 0.36 s keyed throw, then physical flight and normal arming |
 | Instinct | Private 4 s marks within 32 m; wounded warning at 30% effective HP; ordinary visibility/depth tests |
 | Axe | 0.65 s windup, 0.2 s release, 0.55 s recovery; 20 m/s, 30 m range, 0.55 m collision radius |
 | Axe contact | 110 direct damage, then an 8 s wound reducing effective max HP by 50% of base maximum |
 
 Pellets trace from the muzzle with a shoulder obstruction check, individual resolver cast IDs, and one collision each. HUD feedback sums actual damage for the shot; events retain individual pellet/headshot/shield attribution. Existing team, spawn-room, invulnerability and paired-throw rules apply.
 
-Reload cancels preserve inserted shells. Knives can follow gunfire after 0.25 s. Knife/trap casts have 0.22/0.25 s recovery. Cancels never reset the pump lock. Boot and axe commitments reject other attacks through recovery; a successful boot opens normal shotgun, knife, melee and movement follow-ups after its shorter recovery. Boot never replenishes dash or wall-jump permissions.
+Reload cancels preserve inserted shells. Knives can follow gunfire after 0.25 s. Knife/trap casts take 0.28/0.36 s, release at the keyed hand frame, and retain ordinary movement. Cancels never reset the pump lock. Boot startup/travel remain committed, but recovery immediately permits aiming, shooting, steering and other legal actions while its movement slow decays. Axe recovery remains committed. Boot never replenishes dash, wall-jump or coyote-jump permissions.
+
+E is buffered briefly near the end of another action, can intentionally leave guard, and interrupts shell reload. A blocked input explains safe-room protection, cooldown or mobility disable on screen. Safe-room protections remain authoritative. Native input tests cover real E presses, movement during the fading slow, and the 4 throw input.
 
 Boot moves the existing CharacterBody through normal collision response. Ground entry uses flat camera aim; air entry retains committed 3D direction. Walls stop it, slopes use capsule sliding, and ledges lead to falls. Frontal guard uses the shared cost and attacker stagger. Knockback uses swept, decaying displacement rather than repeated velocity additions.
 
-Placement validates ground normals and overlap before spending a snare charge. Missed throws bounce off unsuitable surfaces, settle on walkable ground and arm. Friends cannot trigger/damage traps. Enemy hitscan, projectiles, axes and bombs can destroy them. New deployments above the active limit retire the oldest trap. Death, reset, selection and scene teardown remove owned attacks. Root/slow cancel active mobility while retaining cooldowns and preserving unrelated reloads and axe windups.
+Deployment validates nearby ground and overlap before spending a snare charge. Slayer draws the device, throws it down, and it settles and arms. It has no ranged or direct-impact alternate mode. Friends cannot trigger/damage traps. Character capsules walk over the device; a dedicated shootable collision layer keeps it hittable by hitscan, projectiles, axes and bombs without blocking players or bots. New deployments above the active limit retire the oldest trap. Death, reset, selection and scene teardown remove owned attacks. Root cancels active mobility while retaining cooldowns and preserving unrelated reloads and axe windups.
+
+The lower-screen HUD uses a broad green health strip with shields above it and a purple disabled-capacity segment for wounds. Damage numbers are larger, outlined and longer-lived; floating target numbers combine pellets from one shot. Reset clears stale hit feedback. Knife flight has a fading trail and a small silver-blue glint. Dedicated animation clips show the knife and trap in hand before release. The 4 throw stows the shotgun, reaches with both hands, crouches into the lift, pivots and slams at the existing physical impact frame.
 
 The piercing axe hits each actor once and stops at walls. It follows projectile defense rules: ordinary guard defaults to zero bullet reduction; Nimbus's frontal Deflect stops axe and wound. Invulnerability and protected rooms reject both. Remaining shields prevent the wound. Paired throw participants take existing 10% direct damage and cannot receive a full wound. Windup interruption spends the ultimate without refund.
 
@@ -62,11 +65,12 @@ Completed plan: inspect and preserve the architecture; implement kit/status rule
 
 - `tests/slayer_test.gd`: **108 checks** covering weapons, cancels, deterministic bleed, boot/trap collision and interruption, wounds, defenses, healing, marks and cleanup. Includes thin walls, doorways, slopes, ledges, falling momentum, moving/airborne enemies and a 500 HP target.
 - `tests/slayer_integration_test.gd`: **28 checks** using real scenes, paused selection, live bot attacks, finite resources, respawn economy, aggregate hit feedback and transition cleanup.
+- `tests/slayer_revision_test.gd`: **32 checks**, run headlessly and under Forward+. Covers actual E/4 input, buffering, guard/reload exits, rejection feedback, movement during recovery, no stale airborne coyote jump, timed hand release, trails, coalesced numbers, the keyed slam, and physically walking over a friendly but shootable trap.
 - All **530 previous checks** and **1,358 structural collision probes** pass. Native fullscreen adds **20 checks** with Slayer selected; its test now locates the actual display button instead of a positional index.
-- The final **600-second mixed-roster simulation passes 15 checks**, with five Slayers, 4/6 captures, 279 contested seconds and 147 deaths. Both teams use subway, arcade and high decks. No falls, persistent stalls or recovery teleports were recorded.
-- `tests/capture_slayer.gd` produces ten Forward+ renders covering silhouette, shotgun, boot, snare, axe windup/flight, wound, victim HUD and console. These were inspected. Original finite WAV cues and an `audio_cue` signal provide sound and replacement hooks. Final capture exits without script errors or leaked audio instances.
+- `tests/city_simulation_test.gd`: the final 600-second mixed-roster run passes **15 checks** with 6/7 captures, 253 contested seconds, 170 deaths and 90 health collections. Both teams use subway, arcade and high decks. Longest temporary stall is 2 s; persistent stalls, falls and recovery teleports are zero. The earlier trap collision failure was retained in a separate report and corrected with a focused physical traversal regression.
+- `tests/capture_slayer.gd` produces eighteen Forward+ renders covering silhouette, shotgun/damage feedback, knife windup/trail, boot, trap hand release/drop, snare, axe, wound HUD, grab/lift/slam and console. These were inspected. Original finite WAV cues and an `audio_cue` signal provide sound and replacement hooks. Final capture exits without script errors or leaked audio instances.
 
-Total: **666 headless correctness checks**, **20 native display checks**, **15 simulation checks**, plus **1,358 collision probes**. Verified in installed Godot **4.7.2 stable**.
+Correctness: **698 headless checks**, **32 native input checks**, **20 native display checks**, plus **1,358 collision probes**. The simulation contributes a separate 15-check stability report. Verified in installed Godot **4.7.2 stable**.
 
 Run `tools/verify.ps1`, adding `-Capture` for rendered checks. Reproduce the mixed-hero simulation with:
 
@@ -74,7 +78,7 @@ Run `tools/verify.ps1`, adding `-Capture` for rendered checks. Reproduce the mix
 godot --headless --path . --fixed-fps 60 --script res://tests/city_simulation_test.gd -- --hero=slayer --seconds=600 --seed=76
 ```
 
-Logs, JSON, WAV and PNG evidence are in ignored `artifacts/`. Focused reports: `slayer-results.json`, `slayer-integration-results.json`. Simulation report: `slayer-city-simulation-results.json`. The combined record is `slayer-validation-summary.json`.
+Logs, JSON, WAV and PNG evidence are in ignored `artifacts/`. Focused reports: `slayer-results.json`, `slayer-integration-results.json`, `slayer-revision-results.json`; real-input evidence is in `slayer-revision-native.log`. Simulation report: `slayer-revision-simulation-results.json`. The combined record is `slayer-validation-summary.json`.
 
 ## Human acceptance
 

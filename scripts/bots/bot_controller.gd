@@ -74,12 +74,11 @@ func gather_intent(delta: float) -> CombatIntent:
 		if not sees:
 			input.move = (input.move + Vector3(offset.z,0,-offset.x).normalized() * side * .7).limit_length(1.0)
 		if sees and action_timer <= 0.0:
-			input.primary = distance < 15.0
+			input.primary = distance < 21.0
 			input.reload = hunter.ammo == 0
 			input.hover = distance > 9.0 and hunter.knives > 0
-			input.deflect = distance > 4.0 and distance < 9.0 and hunter.deflect_cd <= 0
+			input.deflect = distance > 4.0 and distance < 13.0 and hunter.deflect_cd <= 0
 			input.bomb = distance < 12.0 and hunter.snares > 0 and int(time) % 5 == 0
-			input.aim_held = input.bomb
 			input.ultimate = distance < 12.0 and hunter.ultimate_charge >= 100.0
 			action_timer = .5 + reaction_delay
 		return input

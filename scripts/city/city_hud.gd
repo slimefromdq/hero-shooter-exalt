@@ -22,9 +22,10 @@ var panel_style: StyleBoxFlat
 var light_style: StyleBoxFlat
 var display_settings: Node
 var display_button: Button
+var numbers: DamageNumbers
 
 func show_hit(amount: float, head: bool, executed: bool = false) -> void:
-	hit_timer = .22
+	hit_timer = .8
 	hit_head = head
 	hit_text = "EXECUTED" if executed else str(roundi(amount))
 
@@ -49,6 +50,10 @@ func _ready() -> void:
 	canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(canvas)
 	canvas.draw.connect(draw_hud)
+	numbers = DamageNumbers.new()
+	numbers.viewer = match_controller.player
+	numbers.font = bold
+	canvas.add_child(numbers)
 	display_settings = get_node("/root/DisplaySettings")
 	build_menu()
 
@@ -170,59 +175,54 @@ func draw_crosshair(p: HeroActor) -> void:
 	if hit_timer > 0:
 		for direction: Vector2 in [Vector2(-1,-1),Vector2(1,-1),Vector2(-1,1),Vector2(1,1)]:
 			canvas.draw_line(center + direction * 17,center + direction * 24,coral if hit_head else mint,2.5,true)
-		text(hit_text,center + Vector2(30,-20),16,coral if hit_head else paper,true)
+		CombatHUD.hit(canvas,bold,hit_text,center,hit_head,hit_timer)
 	if p.state == "ultimate":
 		canvas.draw_arc(center,180,-PI/2,-PI/2 + TAU * minf(1,p.kit.ultimate_age / p.tuning.ultimate_preparation),72,mint,2,true)
 		centered("FINAL NOTICE / PREPARING" if p.kit.ultimate_age < p.tuning.ultimate_preparation else "FINAL NOTICE / ACQUIRED",Vector2(800,650),13,mint,true)
 
 func draw_player_rail(p: HeroActor) -> void:
-	panel(Vector2(28,760),Vector2(310,108))
-	text(p.tuning.hero_id.to_upper(),Vector2(46,789),22,paper,true)
-	text("LANTERN DIVISION",Vector2(167,787),10,mint)
-	text("%03d" % ceili(p.health),Vector2(46,829),30,paper,true)
-	text("/ %d HP" % int(p.tuning.max_health),Vector2(113,827),12,muted)
-	box(Vector2(46,846),Vector2(274,5),Color("3a4853"))
-	box(Vector2(46,846),Vector2(274 * clampf(p.health / p.tuning.max_health,0,1),5),mint if p.health > p.tuning.max_health * .25 else coral)
-	panel(Vector2(350,760),Vector2(150,108))
-	text("STREET SWEEPER" if p.kit is SlayerKit else "UMBRELLA RIFLE",Vector2(364,784),10,muted,true)
-	text("%02d" % p.kit.ammo,Vector2(364,826),34,paper,true)
-	text("/ %02d" % p.tuning.magazine,Vector2(423,822),15,muted)
-	text("R  RELOAD" if p.state != "reload" else "RELOADING %.1f" % p.state_time,Vector2(364,849),10,brass)
-	ability(512,"3","VECTOR DASH",p.motor.dash_cd,p.tuning.dash_cooldown)
+	CombatHUD.vitals(canvas,p,font,bold,Vector2(32,816))
+	panel(Vector2(450,760),Vector2(150,108))
+	text("STREET SWEEPER" if p.kit is SlayerKit else "UMBRELLA RIFLE",Vector2(464,784),10,muted,true)
+	text("%02d" % p.kit.ammo,Vector2(464,826),34,paper,true)
+	text("/ %02d" % p.tuning.magazine,Vector2(523,822),15,muted)
+	text("R  RELOAD" if p.state != "reload" else "RELOADING %.1f" % p.state_time,Vector2(464,849),10,brass)
+	ability(612,"3","VECTOR DASH",p.motor.dash_cd,p.tuning.dash_cooldown)
 	if p.kit is SlayerKit:
 		var hunter := p.kit as SlayerKit
 		var t := p.tuning as SlayerTuning
-		ability(644,TrainingInputs.key_label("hover"),"SILVER KNIVES %d/%d" % [hunter.knives,t.knife_charges],0 if hunter.knives > 0 else hunter.knife_timer,t.knife_recharge)
-		ability(776,TrainingInputs.key_label("deflect"),"BOOT RUSH",hunter.deflect_cd,t.boot_cooldown)
-		ability(908,TrainingInputs.key_label("bomb"),"SNARE %d/%d / RMB THROW" % [hunter.snares,t.trap_limit],0 if hunter.snares > 0 else hunter.snare_timer,t.trap_recharge)
+		ability(744,TrainingInputs.key_label("hover"),"SILVER KNIVES %d/%d" % [hunter.knives,t.knife_charges],0 if hunter.knives > 0 else hunter.knife_timer,t.knife_recharge)
+		ability(876,TrainingInputs.key_label("deflect"),"BOOT RUSH",hunter.deflect_cd,t.boot_cooldown)
+		ability(1008,TrainingInputs.key_label("bomb"),"DROP SNARE %d/%d" % [hunter.snares,t.trap_limit],0 if hunter.snares > 0 else hunter.snare_timer,t.trap_recharge)
 	else:
-		ability(644,"Q","UMBRELLA VAULT",p.motor.hover_cd,p.tuning.hover_cooldown)
-		ability(776,"E","DEFLECT",p.kit.deflect_cd,p.tuning.deflect_cooldown)
-		ability(908,"1","POCKET BOMB",p.kit.bomb_cd,p.tuning.bomb_cooldown)
-	panel(Vector2(1040,760),Vector2(186,108))
-	text("2  HEADS WILL ROLL" if p.kit is SlayerKit else "2  FINAL NOTICE",Vector2(1054,784),11,brass,true)
-	text("READY" if p.kit.ultimate_charge >= 100 else "%02d%%" % int(p.kit.ultimate_charge),Vector2(1054,824),28,mint if p.kit.ultimate_charge >= 100 else paper,true)
-	box(Vector2(1054,846),Vector2(158,4),Color("3a4853"))
-	box(Vector2(1054,846),Vector2(158 * p.kit.ultimate_charge / 100.0,4),brass)
-	panel(Vector2(1238,760),Vector2(334,108))
-	text("6  SHIELD",Vector2(1252,786),12,paper,true)
-	box(Vector2(1366,778),Vector2(190,4),Color("3a4853"))
-	box(Vector2(1366,778),Vector2(190 * p.close.guard_meter / 100.0,4),mint)
-	text("5  MELEE ENGAGE",Vector2(1252,817),11,muted)
-	text("4  THROW / COUNTER",Vector2(1404,817),10,muted)
-	text("SHIFT  CROUCH / SLIDE",Vector2(1252,849),11,brass)
+		ability(744,"Q","UMBRELLA VAULT",p.motor.hover_cd,p.tuning.hover_cooldown)
+		ability(876,"E","DEFLECT",p.kit.deflect_cd,p.tuning.deflect_cooldown)
+		ability(1008,"1","POCKET BOMB",p.kit.bomb_cd,p.tuning.bomb_cooldown)
+	panel(Vector2(1140,760),Vector2(186,108))
+	text("2  HEADS WILL ROLL" if p.kit is SlayerKit else "2  FINAL NOTICE",Vector2(1154,784),11,brass,true)
+	text("READY" if p.kit.ultimate_charge >= 100 else "%02d%%" % int(p.kit.ultimate_charge),Vector2(1154,824),28,mint if p.kit.ultimate_charge >= 100 else paper,true)
+	box(Vector2(1154,846),Vector2(158,4),Color("3a4853"))
+	box(Vector2(1154,846),Vector2(158 * p.kit.ultimate_charge / 100.0,4),brass)
+	panel(Vector2(1340,760),Vector2(232,108))
+	text("6  GUARD",Vector2(1352,786),12,paper,true)
+	box(Vector2(1450,778),Vector2(106,4),Color("3a4853"))
+	box(Vector2(1450,778),Vector2(106 * p.close.guard_meter / 100.0,4),mint)
+	text("5  MELEE",Vector2(1352,817),11,muted)
+	text("4  GRAB / SLAM",Vector2(1450,817),10,muted)
+	text("SHIFT  CROUCH / SLIDE",Vector2(1352,849),11,brass)
 	text("WASD  MOVE    SPACE  JUMP / WALL KICK    HOLD SPACE + MOVE  AUTO MANTLE",Vector2(30,889),10,muted)
 	text("F5  RESTART     M  MAP     F3  DEBUG",Vector2(1327,889),10,muted)
 	var status_text: String = ""
 	for kind: String in p.statuses.effects:
 		status_text += "%s %.1fs   " % [kind.replace("max_health","MAX HP WOUND").to_upper(),p.statuses.effects[kind].remaining]
 	if status_text != "": centered(status_text,Vector2(800,690),15,coral,true)
-	if p.effective_max_health() < p.tuning.max_health:
-		var ratio: float = p.effective_max_health() / p.tuning.max_health
-		box(Vector2(46 + 274 * ratio,846),Vector2(274 * (1-ratio),5),Color("b076c8"))
-		text("MAX %d" % p.effective_max_health(),Vector2(235,828),11,Color("e3b8ff"))
 	if p.kit is SlayerKit:
-		centered("HUNTER'S INSTINCT   /   1 PLACE SNARE   ·   RMB + 1 THROW",Vector2(800,730),11,muted)
+		var hunter := p.kit as SlayerKit
+		centered("Q KNIVES   /   E BOOT RUSH   /   1 DROP SNARE   /   4 GRAB AND SLAM",Vector2(800,730),11,muted)
+		if hunter.action_hint_time > 0:
+			centered(hunter.action_hint,Vector2(800,620),18,brass,true)
+		elif hunter.boot_slow_time > 0:
+			centered("BOOT RECOVERY / SPEED %d%%" % roundi(hunter.movement_scale() * 100),Vector2(800,690),14,paper,true)
 
 func ability(x: float, key: String, caption: String, cd: float, total: float) -> void:
 	panel(Vector2(x,760),Vector2(120,108))

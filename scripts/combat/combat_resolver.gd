@@ -85,7 +85,7 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 	confirmed_hit.emit(source, target, hp_damage + absorbed, head, executed)
 	return "execution" if executed else "hit"
 
-func ray(from: Vector3, to: Vector3, exclude: Array[RID] = [], mask: int = 3) -> Dictionary:
+func ray(from: Vector3, to: Vector3, exclude: Array[RID] = [], mask: int = 19) -> Dictionary:
 	var query := PhysicsRayQueryParameters3D.create(from, to, mask, exclude)
 	return get_viewport().world_3d.direct_space_state.intersect_ray(query)
 

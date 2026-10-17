@@ -6,6 +6,24 @@ var initial_lifetime: float = 0.2
 var expanding: bool = false
 var radius: float = 1.0
 var visual: MeshInstance3D
+var fading: bool = false
+
+static func streak(parent: Node3D, from: Vector3, to: Vector3, width: float, seconds: float) -> void:
+	if from.distance_to(to) < .001: return
+	var effect := CombatEffect.new()
+	effect.fading = true
+	effect.lifetime = seconds
+	effect.initial_lifetime = seconds
+	parent.add_child(effect)
+	effect.add_to_group("knife_trails")
+	effect.global_position = (from + to) * .5
+	var shape := BoxMesh.new()
+	shape.size = Vector3(width,width,from.distance_to(to))
+	var mat: StandardMaterial3D = Geometry.material(Color("c2f6ff"),1.4)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	effect.visual = Geometry.mesh(effect,shape,Vector3.ZERO,mat)
+	effect.look_at(to)
 
 static func line(parent: Node3D, from: Vector3, to: Vector3, color: Color, width: float = 0.025) -> void:
 	if from.distance_to(to) < 0.01:
@@ -43,5 +61,7 @@ func _process(delta: float) -> void:
 	lifetime -= delta
 	if expanding:
 		scale = Vector3.ONE * maxf(0.05, radius * (1.0 - lifetime / initial_lifetime))
+	if fading:
+		(visual.material_override as StandardMaterial3D).albedo_color.a = clampf(lifetime / initial_lifetime,0,1)
 	if lifetime <= 0.0:
 		queue_free()

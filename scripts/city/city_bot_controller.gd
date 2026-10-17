@@ -126,11 +126,10 @@ func gather_intent(delta: float) -> CombatIntent:
 				intent.ultimate = true
 			if actor.kit is SlayerKit:
 				var hunter := actor.kit as SlayerKit
-				intent.primary = distance < 15.0
+				intent.primary = distance < 21.0
 				intent.hover = distance > 10 and distance < 25 and hunter.knives > 0
-				intent.deflect = distance > 4 and distance < 9 and hunter.deflect_cd <= 0
+				intent.deflect = distance > 4 and distance < 13 and hunter.deflect_cd <= 0
 				intent.bomb = distance < 13 and hunter.snares > 0 and rng.randf() < .22
-				intent.aim_held = intent.bomb
 				intent.ultimate = distance < 14 and hunter.ultimate_charge >= 100
 	else:
 		if move.length_squared() > .03:

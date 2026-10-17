@@ -53,7 +53,7 @@ func run() -> void:
 	hunter.global_position = Vector3(0,.01,-5)
 	ai.action_timer = 0
 	request = ai.gather_intent(.5)
-	check(request.hover and not request.primary,"Slayer AI uses knives beyond shotgun engagement range")
+	check(request.hover and request.primary,"Slayer AI keeps knives available during stronger midrange gun pressure")
 	training.freeze_ai = false
 	training.god_mode = true
 	await step(1500)
@@ -70,7 +70,8 @@ func run() -> void:
 	training.select_hero("slayer")
 	training.player.global_position = Vector3(0,.01,11)
 	var kit := training.player.kit as SlayerKit
-	kit.deploy_trap(false)
+	kit.deploy_trap()
+	await step(12)
 	var old_trap: WeakRef = weakref(kit.traps.back())
 	var old_player: WeakRef = weakref(training.player)
 	training.toggle_menu()

@@ -157,6 +157,7 @@ func despawn_bots() -> void:
 	death_timers.clear()
 
 func reset_scenario() -> void:
+	if is_instance_valid(hud): hud.hit_timer = 0.0
 	despawn_bots()
 	for transient: Node in get_tree().get_nodes_in_group("transient"):
 		transient.queue_free()
@@ -254,7 +255,7 @@ func on_hit(source: HeroActor, _target: HeroActor, amount: float, head: bool, ex
 	if source == player:
 		hits += 1
 		damage_total += amount
-		hud.hit_timer = 0.25
+		hud.hit_timer = 0.8
 		hud.hit_head = head
 		hud.hit_text = "FINAL NOTICE" if executed else ("%d  HEADSHOT" % int(amount) if head else str(int(amount)))
 

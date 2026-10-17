@@ -2,7 +2,7 @@
 
 A playable offline **6v6 King of the Hill** hero shooter in a modern fantasy city, with **Nimbus and Slayer** and a separate hero training arena. Built with original modular geometry and synthesized sound. **Godot 4.7.2 stable** is the verified engine (`4.7.2.stable.official.ed1daf0bf`).
 
-**Play Slayer:** run `Launch.ps1 -Slayer` for the city, or `Launch.ps1 -Training -Slayer`. Both pause menus offer hero selection; training includes **Start Slayer hunt**. Q throws knives, E commits to Boot Rush, 1 places a snare, RMB + 1 throws it, and 2 launches Heads Will Roll after its windup. Shared movement and close-combat controls remain the same. See [Slayer controls, tuning and engine validation](docs/SLAYER.md).
+**Play Slayer:** run `Launch.ps1 -Slayer` for the city, or `Launch.ps1 -Training -Slayer`. Both pause menus offer hero selection; training includes **Start Slayer hunt**. Q throws trailing silver knives, E performs a 12 m Boot Rush with a fading recovery slow, 1 tosses a snare down in front of her, and 2 launches Heads Will Roll. The shotgun now deals 100 close-range body damage with tighter spread and stronger midrange reach. Health/shields use a broad lower-screen bar, hits show larger outlined damage numbers, and 4 performs her two-handed lift and slam. See [Slayer controls, tuning and engine validation](docs/SLAYER.md).
 
 The city includes a celestial conservatory, garden and market flanks, an underground shopping arcade with six through-shops and cover, accessible balconies and wizard's study, elevated promenades, monumental railway arches and moving scenic trains. Six small packs heal **75 HP**; two large packs heal **400 HP**, capped at maximum health. See [Meridian Gardens field guide and validation](docs/MERIDIAN_GARDENS.md) and the [geometry revision](docs/GEOMETRY_AUDIT.md).
 
@@ -62,7 +62,7 @@ While airborne within **0.72 m** of a wall, press **Space** to kick upward and a
 - Reload movement retains 85% of normal speed (5.1 m/s); shoulder aiming retains its usual 60% cap. Reload still takes 1.6 s and prevents firing until complete.
 - Six bot profiles; seven exercises including the stationary guard drill; spawn/despawn; 250/500 HP experiments; 19/20/21% target presets; shield/invulnerability controls; AI settings; resource refills; movement presets; live combat tuning; route timer; event export.
 - Cover, firing lane, slope, elevated traversal platforms, and a ranged projectile-emitter opponent. The crossfire exercise uses a third-faction probe to test damage on **both** throw participants while preserving friendly-fire rules.
-- Slayer's complete prototype kit: pellet shotgun and shell reload, bleeding knives, swept Boot Rush, destroyable placed/thrown snares, private pursuit marks, and a piercing axe with temporary max-health wounds. Includes distinct geometric art, action poses, effects, synth audio, AI, selection and HUD support.
+- Slayer's complete prototype kit: pellet shotgun and shell reload, bleeding knives with flight trails, swept Boot Rush, a single downward snare toss, private pursuit marks, and a piercing axe with temporary max-health wounds. Includes distinct geometric art, keyed throwing poses, effects, synth audio, AI, selection and HUD support.
 - All gameplay components and per-actor resources are shared by player and bots. Multiplayer and the roster beyond Nimbus and Slayer remain deferred.
 
 ## Verify
@@ -86,7 +86,7 @@ godot --headless --path . --script res://tests/mantle_exit_test.gd
 godot --headless --path . --script res://tests/integration_test.gd
 ```
 
-Results are written to `artifacts/`. The current suite passes **666 headless checks**, plus **1,358 structural collision probes**. Native display verification adds **20 checks** and a ten-minute mixed-hero simulation adds **15**. City checks cover healing, objective heights, protection, respawns, resets, traversal, navigation recovery and camera clearance. See [Slayer validation](docs/SLAYER.md), `docs/PLAYTESTS.md` and the city field guide for evidence and reproduction commands. Competitive balance and game feel still need human playtesting. Tune the hero resources or map definition through the Inspector.
+Results are written to `artifacts/`. The current suite passes **698 headless checks**, plus **1,358 structural collision probes**. Native input verification adds **32 checks** and fullscreen verification adds **20**. A separate ten-minute mixed-hero simulation checks stability. City checks cover healing, objective heights, protection, respawns, resets, traversal, navigation recovery and camera clearance. See [Slayer validation](docs/SLAYER.md), `docs/PLAYTESTS.md` and the city field guide for evidence and reproduction commands. Competitive balance and game feel still need human playtesting. Tune the hero resources or map definition through the Inspector.
 
 ## Layout
 

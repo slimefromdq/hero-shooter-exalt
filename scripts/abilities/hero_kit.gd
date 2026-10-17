@@ -16,6 +16,9 @@ func tick(_delta: float, _input: CombatIntent) -> void:
 func move_override(_delta: float) -> bool:
 	return false
 
+func movement_scale() -> float:
+	return 1.0
+
 func fire(_ultimate: bool) -> void:
 	pass
 

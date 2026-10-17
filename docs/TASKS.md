@@ -24,6 +24,7 @@ Implementation date: 2026-10-16. The project is playable; completion of human ac
 | MAP-02 | Implemented / structural audit, physical traversal and rendered review | Supported roof/arch/stair geometry, matching structural collision, six through-shops and cover beneath the hill, underground atlas and progress recovery; see GEOMETRY_AUDIT.md |
 | DISPLAY-01 | Implemented / 20 native display checks and rendered review | F11 / Alt+Enter, both pause menus, saved fullscreen preference, restored window geometry, proportional HUD and expanded widescreen/ultrawide viewport |
 | SLAYER-01 | Implemented / 108 focused checks, 28 scene checks and rendered review | Complete kit, statuses, selection, AI and training; see SLAYER.md |
+| SLAYER-FEEL-02 | Implemented / 32 focused + native input checks and rendered review | 12 m kick with fading recovery slow, E buffering/feedback, single downward snare toss, tighter 100-damage shotgun, knife trails, readable numbers, horizontal health strip and keyed throws |
 | SLAYER-STABILITY | Verified / mixed roster and native display | 15 simulation checks, 20 display checks, original 530 checks and 1,358 collision probes pass |
 | Later roster/networking | Deferred by design | Nimbus and Slayer are playable; preserve remaining references in DESIGN.md |
 

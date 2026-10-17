@@ -17,6 +17,7 @@ var check_controls: Dictionary = {}
 var scenario_control: OptionButton
 var display_settings: Node
 var display_button: Button
+var numbers: DamageNumbers
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -30,6 +31,10 @@ func _ready() -> void:
 	canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(canvas)
 	canvas.draw.connect(draw_hud)
+	numbers = DamageNumbers.new()
+	numbers.viewer = training.player
+	numbers.font = bold
+	canvas.add_child(numbers)
 	display_settings = get_node("/root/DisplaySettings")
 	build_menu()
 
@@ -107,30 +112,21 @@ func draw_hud() -> void:
 		if hit_timer > 0.0:
 			for d: Vector2 in [Vector2(-1,-1), Vector2(1,-1), Vector2(-1,1), Vector2(1,1)]:
 				canvas.draw_line(center + d * 17, center + d * 25, coral if hit_head else mint, 3, true)
-			label_at(hit_text, center + Vector2(30, -20), 16, coral if hit_head else paper, true)
+			CombatHUD.hit(canvas,bold,hit_text,center,hit_head,hit_timer)
 	# Health / magazine / ability rail.
-	rect(Vector2(30, 738), Vector2(340, 126), ink, 4)
-	label_at("01", Vector2(48, 773), 15, mint, true)
-	label_at(p.tuning.hero_id.to_upper(), Vector2(87, 777), 30, paper, true)
-	label_at("MONSTER HUNTER" if p.kit is SlayerKit else "FIELD AGENT", Vector2(87, 796), 10, Color("9ab9bb"))
-	label_at("%03d" % ceili(p.health), Vector2(48, 833), 29, paper, true)
-	label_at("/ %d HP" % int(p.tuning.max_health), Vector2(111, 832), 12, Color("9ab9bb"))
-	if p.shields > 0:
-		label_at("+%d SHIELD" % int(p.shields), Vector2(234, 832), 12, mint)
-	rect(Vector2(48, 844), Vector2(303, 5), Color("4c6269"))
-	rect(Vector2(48, 844), Vector2(303 * p.health / p.tuning.max_health, 5), mint if p.health > 50 else coral)
-	rect(Vector2(382, 738), Vector2(156, 126), paper, 4)
-	label_at("STREET SWEEPER" if p.kit is SlayerKit else "UMBRELLA RIFLE", Vector2(396, 763), 11, ink, true)
-	label_at("%02d" % p.kit.ammo, Vector2(396, 811), 44, ink, true)
-	label_at("/ %02d" % p.tuning.magazine, Vector2(465, 808), 17, ink)
-	label_at("R  RELOAD" if p.state != "reload" else "RELOADING %.1f" % p.state_time, Vector2(396, 844), 11, ink)
+	CombatHUD.vitals(canvas,p,font,bold,Vector2(32,816))
+	rect(Vector2(450, 738), Vector2(88, 126), paper, 4)
+	label_at("SWEEPER" if p.kit is SlayerKit else "RIFLE", Vector2(460, 763), 11, ink, true)
+	label_at("%02d" % p.kit.ammo, Vector2(460, 811), 37, ink, true)
+	label_at("/ %02d" % p.tuning.magazine, Vector2(503, 808), 13, ink)
+	label_at("R  LOAD" if p.state != "reload" else "LOAD %.1f" % p.state_time, Vector2(460, 844), 10, ink)
 	ability_card(550, TrainingInputs.key_label("dash"), "VECTOR", "DASH", p.motor.dash_cd, p.tuning.dash_cooldown)
 	if p.kit is SlayerKit:
 		var hunter := p.kit as SlayerKit
 		var t := p.tuning as SlayerTuning
 		ability_card(663,TrainingInputs.key_label("hover"),"SILVER KNIVES","%d / %d" % [hunter.knives,t.knife_charges],0 if hunter.knives > 0 else hunter.knife_timer,t.knife_recharge)
 		ability_card(776,TrainingInputs.key_label("deflect"),"BOOT","RUSH",hunter.deflect_cd,t.boot_cooldown)
-		ability_card(889,TrainingInputs.key_label("bomb"),"SNARE / RMB","%d / %d" % [hunter.snares,t.trap_limit],0 if hunter.snares > 0 else hunter.snare_timer,t.trap_recharge)
+		ability_card(889,TrainingInputs.key_label("bomb"),"DROP SNARE","%d / %d" % [hunter.snares,t.trap_limit],0 if hunter.snares > 0 else hunter.snare_timer,t.trap_recharge)
 	else:
 		ability_card(663, TrainingInputs.key_label("hover"), "UMBRELLA", "HOVER", p.motor.hover_cd, p.tuning.hover_cooldown)
 		ability_card(776, TrainingInputs.key_label("deflect"), "RETURN", "DEFLECT", p.kit.deflect_cd, p.tuning.deflect_cooldown)
@@ -176,14 +172,14 @@ func draw_statuses(p: HeroActor) -> void:
 	for kind: String in p.statuses.effects:
 		status += "%s %.1fs   " % [kind.replace("max_health","MAX HP WOUND").to_upper(),p.statuses.effects[kind].remaining]
 	if status != "": label_at(status,Vector2(475,675),16,coral,true)
-	if p.effective_max_health() < p.tuning.max_health:
-		var ratio: float = p.effective_max_health() / p.tuning.max_health
-		rect(Vector2(48 + 303 * ratio,844),Vector2(303 * (1-ratio),5),Color("b076c8"))
-		label_at("MAX %d / %d" % [p.effective_max_health(),p.tuning.max_health],Vector2(215,815),12,Color("e3b8ff"))
 	if p.kit is SlayerKit:
-		label_at("HUNTER'S INSTINCT   ·   Q KNIVES   ·   E BOOT   ·   1 PLACE / RMB + 1 THROW",Vector2(430,706),11,paper,true)
+		var hunter := p.kit as SlayerKit
+		label_at("Q KNIVES   ·   E BOOT RUSH   ·   1 DROP SNARE   ·   4 GRAB / SLAM",Vector2(430,706),12,paper,true)
+		if hunter.action_hint_time > 0:
+			label_at(hunter.action_hint,Vector2(470,620),18,coral,true)
+		elif hunter.boot_slow_time > 0:
+			label_at("BOOT RECOVERY  /  SPEED %d%%" % roundi(hunter.movement_scale() * 100),Vector2(475,675),14,paper,true)
 		if training.debug_view:
-			var hunter := p.kit as SlayerKit
 			label_at("SHOT %.1f HP / %d PELLETS   ·   KNIFE %.1fs   SNARE %.1fs" % [hunter.last_shot_damage,hunter.last_shot_pellets,hunter.knife_timer,hunter.snare_timer],Vector2(430,650),12,paper)
 
 func rebuild_menu() -> void:

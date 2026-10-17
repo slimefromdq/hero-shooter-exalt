@@ -72,7 +72,7 @@ func _physics_process(delta: float) -> void:
 	if not alive:
 		return
 	if state not in ["captured", "throw_pair", "mantle"]:
-		if state.begins_with("slayer_boot") and state != "slayer_boot_recovery":
+		if state in ["slayer_boot_start", "slayer_boot_active"]:
 			aim_direction = (kit as SlayerKit).boot_direction
 		else:
 			aim_direction = close.melee_direction if state.begins_with("melee_") else intent.aim.normalized()

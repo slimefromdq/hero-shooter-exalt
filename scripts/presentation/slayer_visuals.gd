@@ -115,27 +115,42 @@ static func remodel(p: HeroPresentation) -> void:
 	p.muzzle_flash = Geometry.mesh(p.rifle,SphereMesh.new(),Vector3(0,.03,-.9),Geometry.material(Color("ffd394"),3.0))
 	p.muzzle_flash.scale = Vector3(.18,.18,.3)
 	p.muzzle_flash.visible = false
+	p.held_knife = Node3D.new()
+	p.right_arm.get_node("Joint").add_child(p.held_knife)
+	p.held_knife.position = Vector3(0,-.28,0)
+	knife(p.held_knife)
+	p.held_trap = Node3D.new()
+	p.right_arm.get_node("Joint").add_child(p.held_trap)
+	p.held_trap.position = Vector3(0,-.28,0)
+	p.held_trap.scale = Vector3.ONE * .8
+	trap(p.held_trap)
+	p.held_knife.visible = false
+	p.held_trap.visible = false
 
 static func animate(p: HeroPresentation) -> void:
 	var a: HeroActor = p.actor
 	var t := a.tuning as SlayerTuning
+	var hunter := a.kit as SlayerKit
+	p.held_knife.visible = a.state == "slayer_knife" and not hunter.action_released
+	p.held_trap.visible = a.state == "slayer_trap" and not hunter.action_released
 	p.muzzle_flash.visible = p.fire_flash > .08
 	p.rifle.position.z += p.fire_flash * .7
 	p.rifle.rotation.x += p.fire_flash * 1.5
 	if a.state == "ready":
 		p.rifle.rotation.x += asin(clampf(a.aim_direction.y,-1,1))
 		p.left_arm.rotation = Vector3(1.0,-.5,.4)
+		if hunter.boot_slow_time > 0:
+			var weight: float = hunter.boot_slow_time / maxf(.01,hunter.boot_slow_duration)
+			p.model.rotation.x += weight * .12
+			p.right_leg.rotation.x = lerpf(p.right_leg.rotation.x,.45,weight)
 	p.slayer_axe.visible = not a.state.begins_with("slayer_axe") or a.state == "slayer_axe_windup"
 	p.slayer_axe.position = Vector3(-.1,1.04,.3)
 	p.slayer_axe.rotation = Vector3(0,0,-.6)
 	if a.state == "reload":
 		p.left_arm.rotation.x = .8 + sin(a.state_time / t.shell_time * TAU) * .35
-	elif a.state == "slayer_knife":
-		p.left_arm.rotation = Vector3(2.1,-.2,-.5)
-		p.model.rotation.z = -.12
-	elif a.state == "slayer_trap":
-		p.left_arm.rotation.x = 1.7
-		p.model.rotation.x = .2
+	elif a.state in ["slayer_knife", "slayer_trap"]:
+		p.rifle.position = Vector3(-.22,1.12,.32)
+		p.rifle.rotation = Vector3(-.4,0,.6)
 	elif a.state.begins_with("slayer_boot"):
 		p.rifle.position = Vector3(.3,1.3,.15)
 		p.rifle.rotation.x = -.6
