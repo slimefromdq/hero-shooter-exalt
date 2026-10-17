@@ -15,7 +15,7 @@ extends HeroTuning
 @export var recoil_degrees: float = 2.4
 @export_category("Silver Knives")
 @export var knife_damage: float = 30.0
-@export var knife_speed: float = 50.0
+@export var knife_speed: float = 75.0
 @export var knife_range: float = 25.0
 @export_range(1,8,1) var knife_charges: int = 2
 @export var knife_recharge: float = 7.0
