@@ -46,6 +46,8 @@ try {
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_navigation_regression.gd
     if ($LASTEXITCODE -ne 0) { throw 'City navigation recovery or healing route failed.' }
     if ($Capture) {
+        & $taskEngine --path $taskRoot --script res://tests/fullscreen_test.gd --resolution 1280x800 --audio-driver Dummy
+        if ($LASTEXITCODE -ne 0) { throw 'Native fullscreen, paused shortcuts or display transitions failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture.gd --resolution 1440x900 --audio-driver Dummy
         if ($LASTEXITCODE -ne 0) { throw 'Rendered capture failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_city.gd --resolution 1920x1080 --audio-driver Dummy --fixed-fps 60

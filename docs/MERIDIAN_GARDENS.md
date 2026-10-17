@@ -2,6 +2,8 @@
 
 A playable offline 6v6 King of the Hill district for Godot 4.7.2. You play Nimbus with five Nimbus allies against six Nimbus opponents. The project launches into the city; the pause menu opens the original training arena. `Launch.ps1 -Training` starts training directly.
 
+First launch uses borderless desktop fullscreen at native resolution. **F11 / Alt+Enter** toggles it during play or from either pause menu, and the choice persists across launches and scene changes. Returning to windowed restores its size and position. `Launch.ps1 -Windowed` / `-Fullscreen` overrides the saved choice for that launch. HUD and atlas scaling remain proportional on widescreen, ultrawide and 4:3 views.
+
 ## Field guide
 
 **WASD / mouse** move and look. **Space** jumps or wall kicks; hold Space while moving into a ledge to mantle. **3** dash, **Q** umbrella vault, **E** deflect, **1** bomb, **2** ultimate, **Shift** slide, **5** melee, **4** throw/counter, **6** shield. **M** opens the district atlas, **B** switches its surface/underground layer, **F3** adds live route/resource telemetry, **Tab / Esc** pauses, **F5** restarts the match. Opening the atlas underground selects the Exchange plan automatically. The pause menu includes exploration and return to training. Exploration freezes bots and the match clock and gives the player unlimited resources and invulnerability; restart restores ordinary rules.

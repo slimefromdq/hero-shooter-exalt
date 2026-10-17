@@ -20,6 +20,8 @@ var brass := Color("d7b884")
 var health_green := Color("8ef7a7")
 var panel_style: StyleBoxFlat
 var light_style: StyleBoxFlat
+var display_settings: Node
+var display_button: Button
 
 func show_hit(amount: float, head: bool, executed: bool = false) -> void:
 	hit_timer = .22
@@ -47,7 +49,11 @@ func _ready() -> void:
 	canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(canvas)
 	canvas.draw.connect(draw_hud)
+	display_settings = get_node("/root/DisplaySettings")
 	build_menu()
+
+func refresh_display_button() -> void:
+	display_button.text = display_settings.button_text()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("city_map") and not event.is_echo():
@@ -81,7 +87,7 @@ func centered(caption: String, at: Vector2, size: int = 16, color: Color = Color
 func draw_hud() -> void:
 	if not is_instance_valid(match_controller) or not is_instance_valid(match_controller.player):
 		return
-	canvas.draw_set_transform(Vector2.ZERO,0,canvas.size / Vector2(1600,900))
+	canvas.draw_set_transform_matrix(HUDLayout.fit(canvas.size, Vector2(1600,900)))
 	var m: Node = match_controller
 	var p: HeroActor = m.player
 	var hill: Node = m.hill
@@ -415,6 +421,8 @@ func build_menu() -> void:
 	menu_label(root,"MATCH CONSOLE  /  SESSION PAUSED",12,brass)
 	menu_label(root,"6 v 6  ·  Nimbus  ·  First to 100%",15,muted)
 	menu_button(root,"RETURN TO THE CITY  /  TAB",func() -> void: match_controller.toggle_menu())
+	display_button = menu_button(root,display_settings.button_text(),display_settings.toggle_fullscreen)
+	display_settings.display_mode_changed.connect(refresh_display_button)
 	menu_button(root,"DISTRICT ATLAS  /  ROUTES & HEALTH",func() -> void: overview_open = true; match_controller.toggle_menu())
 	menu_button(root,"RESTART MATCH  /  F5",func() -> void: match_controller.restart_match())
 	menu_button(root,"TOGGLE EXPLORATION  /  FREEZE CITY BOTS",func() -> void: match_controller.toggle_exploration())
@@ -431,7 +439,7 @@ func menu_label(parent: Node, caption: String, size: int, color: Color) -> void:
 	label.add_theme_color_override("font_color",color)
 	parent.add_child(label)
 
-func menu_button(parent: Node, caption: String, callback: Callable) -> void:
+func menu_button(parent: Node, caption: String, callback: Callable) -> Button:
 	var button := Button.new()
 	button.text = caption
 	button.custom_minimum_size.y = 43
@@ -451,3 +459,4 @@ func menu_button(parent: Node, caption: String, callback: Callable) -> void:
 	button.add_theme_stylebox_override("pressed",hover)
 	parent.add_child(button)
 	button.pressed.connect(callback)
+	return button

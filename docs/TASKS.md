@@ -22,6 +22,7 @@ Implementation date: 2026-10-16. The project is playable; completion of human ac
 | NIM-ACCEPT | Automated checks and rendered review; human playtest pending | See PLAYTESTS.md; no claim of completed feel evaluation |
 | MAP-01 | Implemented / integration, traversal, simulations and rendered benchmarks | Offline 6v6 Meridian Gardens, fixed-hill rules, protected spawns, health, respawns, nav roles, atlas, scenic railway and retained training |
 | MAP-02 | Implemented / structural audit, physical traversal and rendered review | Supported roof/arch/stair geometry, matching structural collision, six through-shops and cover beneath the hill, underground atlas and progress recovery; see GEOMETRY_AUDIT.md |
+| DISPLAY-01 | Implemented / 20 native display checks and rendered review | F11 / Alt+Enter, both pause menus, saved fullscreen preference, restored window geometry, proportional HUD and expanded widescreen/ultrawide viewport |
 | Later roster/networking | Deferred by design | Preserve the established roster references in DESIGN.md |
 
 Next work should evaluate the 4.8 m melee engage/finisher and use Tab → Start guard drill to practice holding 6 inside the range ring. Check the block clang/impact, attacker recoil, reload strafing, commitment, whiff punishment and throw readability under fire. Do not infer accepted balance from passing correctness tests.

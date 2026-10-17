@@ -15,6 +15,8 @@ var mint: Color = Color("a0eed7")
 var coral: Color = Color("f4947e")
 var check_controls: Dictionary = {}
 var scenario_control: OptionButton
+var display_settings: Node
+var display_button: Button
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -28,7 +30,11 @@ func _ready() -> void:
 	canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(canvas)
 	canvas.draw.connect(draw_hud)
+	display_settings = get_node("/root/DisplaySettings")
 	build_menu()
+
+func refresh_display_button() -> void:
+	display_button.text = display_settings.button_text()
 
 func _process(delta: float) -> void:
 	hit_timer = maxf(0.0, hit_timer - delta)
@@ -49,7 +55,7 @@ func label_at(text: String, at: Vector2, size: int = 18, color: Color = Color.WH
 func draw_hud() -> void:
 	if not is_instance_valid(training.player):
 		return
-	canvas.draw_set_transform(Vector2.ZERO, 0.0, canvas.size / Vector2(1440, 900))
+	canvas.draw_set_transform_matrix(HUDLayout.fit(canvas.size, Vector2(1440,900)))
 	var p: HeroActor = training.player
 	# Masthead, division insignia and live-session marker.
 	rect(Vector2(30, 28), Vector2(48, 48), ink, 3)
@@ -173,8 +179,9 @@ func draw_debug(p: HeroActor) -> void:
 	var camera: Camera3D = (p.controller as PlayerController).camera
 	for bot: HeroActor in training.bots:
 		if not bot.alive or camera.is_position_behind(bot.global_position): continue
-		var head: Vector2 = camera.unproject_position(bot.global_position + Vector3.UP * 1.9) * Vector2(1440,900) / canvas.size
-		var feet: Vector2 = camera.unproject_position(bot.global_position) * Vector2(1440,900) / canvas.size
+		var inverse: Transform2D = HUDLayout.fit(canvas.size, Vector2(1440,900)).affine_inverse()
+		var head: Vector2 = inverse * camera.unproject_position(bot.global_position + Vector3.UP * 1.9)
+		var feet: Vector2 = inverse * camera.unproject_position(bot.global_position)
 		var height: float = feet.y - head.y
 		canvas.draw_rect(Rect2(head.x - height * 0.22, head.y, height * 0.44, height), coral, false, 1)
 		canvas.draw_line(Vector2(head.x - height * 0.22, head.y + height * 0.21), Vector2(head.x + height * 0.22, head.y + height * 0.21), mint, 1)
@@ -211,6 +218,8 @@ func build_menu() -> void:
 	scroll.add_child(root)
 	menu_label(root, "TRAINING CONSOLE", 30)
 	menu_label(root, "Session paused · defaults are experiments · TAB / ESC returns to the field", 14)
+	display_button = button(root, display_settings.button_text(), display_settings.toggle_fullscreen)
+	display_settings.display_mode_changed.connect(refresh_display_button)
 	var columns := HBoxContainer.new()
 	columns.add_theme_constant_override("separation", 42)
 	root.add_child(columns)
@@ -313,7 +322,7 @@ func menu_label(parent: Node, caption: String, size: int) -> void:
 	label.add_theme_color_override("font_color", ink)
 	parent.add_child(label)
 
-func button(parent: Node, caption: String, callback: Callable) -> void:
+func button(parent: Node, caption: String, callback: Callable) -> Button:
 	var result := Button.new()
 	result.text = caption
 	result.custom_minimum_size.y = 34
@@ -322,6 +331,7 @@ func button(parent: Node, caption: String, callback: Callable) -> void:
 	result.add_theme_font_size_override("font_size", 14)
 	parent.add_child(result)
 	result.pressed.connect(callback)
+	return result
 
 func check(parent: Node, caption: String, checked: bool, callback: Callable) -> void:
 	var result := CheckButton.new()

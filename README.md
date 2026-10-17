@@ -14,6 +14,8 @@ powershell -ExecutionPolicy Bypass -File .\Launch.ps1
 
 `Launch.ps1 -Editor` opens the editor; `Launch.ps1 -Training` starts the original arena directly. The launcher finds the installed 4.7.2 console executable in Downloads or `GODOT_BIN`. Click the game to capture the mouse. **Tab / Esc** opens the pause menu, including exploration, match restart and return to training. **M** opens the tactical atlas; **F3** adds route/resource debugging.
 
+The game starts in **borderless fullscreen** at your monitor's native resolution. **F11** or **Alt+Enter** toggles fullscreen/windowed in both city and training, including while paused; both pause menus also have a display button. Your choice is saved for the next launch, and returning to windowed restores its previous size and position. Use `Launch.ps1 -Windowed` or `-Fullscreen` to override the saved preference for one launch. The game fills widescreen/ultrawide displays while the HUD keeps its proportions and centred aim point.
+
 ## Controls
 
 | Input | Action |
@@ -34,6 +36,7 @@ powershell -ExecutionPolicy Bypass -File .\Launch.ps1
 | Tab or Esc | Pause menu / training console / return to play |
 | M | City district atlas with routes, levels and shared health locations |
 | B | Switch the open city atlas between surface and underground plans |
+| F11 / Alt+Enter | Toggle borderless fullscreen / windowed; also available in pause menus |
 | F3 / F5 / F6 | Telemetry / match or exercise restart / training-only refill |
 
 Bindings use named InputMap actions in `scripts/training/input_bindings.gd`; the saved project map contains the user's requested controls. Existing editor-configured bindings take precedence, and HUD prompts read the actual map. A downward dash automatically enters a momentum slide. Jump ends a slide; holding and then releasing Shift can also end an automatic dash slide. Guard limits movement and does **not** reduce bullets at the default setting.
