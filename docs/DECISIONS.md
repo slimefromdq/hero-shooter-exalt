@@ -124,3 +124,20 @@ Substantial architectural slabs now create collision by default; structural arch
 Lower Meridian Exchange occupies the 42 × 42 m room beneath the park at −5 m, with six shops connecting gallery and perimeter aisles. A structural drum beneath the orrery, tall kiosk backs and low counters give different cover choices. It keeps four street stairs, two protected station connections and the existing two 75 HP caches, with no direct access or capture onto the hill. Subway bot assignments cross the central gallery rather than bypassing it. The map definition stores its bounds and shop centres; the M atlas selects the underground layer below ground, and B switches layers.
 
 Stair geometry renders the same complete volume used for collision. The inner flights terminate at square, level landings instead of overlapping a promenade side below deck height, and they stop short of the open subway trenches. Progress recovery measures net displacement from a stable anchor, including empty steering results, so crowd oscillation cannot indefinitely suppress a navigation detour. It preserves ordinary finite resources, shared movement and the 5 Hz / 2 Hz scheduling limits.
+
+## MAP-03 · Open point and fast Exchange rotations
+
+Remove the conservatory glass canopy and its overhead ribs to expose the hill to the accessible 6.5 m promenades. Lower a four-metre firing section of each inner promenade railing to 0.45 m so standing shots clear it. Preserve perimeter arches, the orrery and existing cover so high-ground pressure still has counters. Add two mirrored 5.6 m wide, 14 m long stairs from the underground gallery to the north/south hill approaches. Segment both ground and mall ceiling at the actual openings. Thin stair slabs keep the existing station passages usable beneath the upper flights; shorten their ceilings and split crossing beams for head clearance. Retain four corner street stairs, two station connections, all shops and health caches. Subway bot routes exit through the opposite hill stair; the atlas marks both openings. Capture remains restricted to the original street-level rectangle.
+
+The physical acceptance test covers ascent/descent of both new flights, station passage beneath them, open sky, and promenade-to-point fire lanes alongside existing mall and stair routes. Competitive fight frequency and team coordination require human playtesting.
+
+
+## ROSTER-02 - User-directed main tank and main support
+
+October 17, 2026. The user requested two new characters, separate from Annex/Ahab: a male arcane team leader with a magnificent moustache and large held shield, and a prim Edwardian female doctor with an accessible beam-healing role. The revised approved plan establishes a heavy short-range tank gun, 8 x 4.5 m / 1,200-durability barrier, enemy-launching advance, progressing 3D explosion line and 10 m slam. The doctor uses right-hold healing and left-hold shooting, lingering care plus team pulse, 4 s ally escape, cleanse plus brief heavy resistance, and an independent single-target damage/speed/resistance ultimate. Names and all tuning remain proposed defaults. Full behavior, integration and validation commands are in MARSHAL_DOCTOR.md.
+
+## ROSTER-03 · Huddle colony off-tank
+
+Implemented October 17, 2026 from the accepted revised kit: 600 health without personal shield HP; RMB Regroup healing; two 10 m Scatterbound charges with sequential five-second recharge; a short-lived ally/self screen; radial wingbeat; and Nobody Gets Squished!, a steerable ground-following wave. No resistance aura or ultimate flight refill. The shared barrier interface supports Marshal and Huddle; healing can opt out of charge awards. Full rules and controls are in [HUDDLE.md](HUDDLE.md).
+
+Teams now use Marshal/Huddle/Doctor/Nimbus/Slayer/Slayer. Keep a Nimbus subway runner when possible, with a Slayer fallback when Nimbus is the player. Huddle uses the existing actor, traversal and combat authority; scattering and transforming preserve its single hitbox and health pool.

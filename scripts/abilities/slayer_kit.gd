@@ -171,11 +171,11 @@ func fire(_ultimate: bool = false) -> void:
 		var radius: float = sqrt((index + .5) / t.pellets) * tan(deg_to_rad(t.spread_degrees))
 		var angle: float = index * 2.39996323
 		var pellet: Vector3 = (direction + (right * cos(angle) + up * sin(angle)) * radius).normalized()
-		var hit: Dictionary = obstruction if not obstruction.is_empty() else actor.resolver.ray(muzzle, muzzle + pellet * t.weapon_range, [actor.get_rid()])
+		var hit: Dictionary = obstruction if not obstruction.is_empty() else actor.resolver.attack_ray(actor, muzzle, muzzle + pellet * t.weapon_range, [actor.get_rid()])
 		var endpoint: Vector3 = hit.get("position", muzzle + pellet * t.weapon_range)
 		if not hit.is_empty():
 			var target: HeroActor = hit.get("collider") as HeroActor
-			var pellet_cast: int = actor.resolver.new_cast()
+			var pellet_cast: int = actor.resolver.new_cast(actor)
 			var amount: float = t.pellet_damage * damage_scale(muzzle.distance_to(endpoint))
 			if target != null:
 				var head: bool = endpoint.y - target.global_position.y >= 1.5
@@ -185,6 +185,8 @@ func fire(_ultimate: bool = false) -> void:
 				if result == "hit":
 					last_shot_pellets += 1
 					last_shot_head = last_shot_head or head
+			elif hit.get("collider") is CombatBarrier:
+				hit.collider.receive_damage(actor,amount,pellet_cast)
 			elif hit.get("collider") is HunterSnare:
 				(hit.collider as HunterSnare).receive_damage(actor,amount,pellet_cast)
 			CombatEffect.pulse(actor.get_parent(), endpoint, Color("ffad63") if target == null else Color("ff5979"), .13)
@@ -244,7 +246,7 @@ func start_boot() -> void:
 	boot_buffer = 0.0
 	boot_slow_time = 0.0
 	deflect_cd = t.boot_cooldown
-	cast_id = actor.resolver.new_cast()
+	cast_id = actor.resolver.new_cast(actor)
 	actor.state = "slayer_boot_start"
 	actor.state_time = t.boot_startup
 	actor.resolver.record("cast",actor,"boot_rush")

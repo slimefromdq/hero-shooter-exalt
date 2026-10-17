@@ -15,7 +15,7 @@ func _ready() -> void:
 	collision_layer = 0
 	collision_mask = 19
 	add_collision_exception_with(source)
-	cast_id = source.resolver.new_cast()
+	cast_id = source.resolver.new_cast(source)
 	var collider := CollisionShape3D.new()
 	var shape := SphereShape3D.new()
 	shape.radius = .07 if kind == "knife" else (source.tuning as SlayerTuning).axe_radius
@@ -49,6 +49,13 @@ func _physics_process(delta: float) -> void:
 	# Resolve remainder after piercing; exceptions guarantee once per actor per axe.
 	var motion: Vector3 = direction * distance
 	for iteration: int in 16:
+		var barrier_hit: Dictionary = source.resolver.barrier_ray(source,global_position,global_position + motion)
+		if not barrier_hit.is_empty():
+			var probe: KinematicCollision3D = move_and_collide(motion,true)
+			if probe == null or global_position.distance_to(barrier_hit.position) <= probe.get_travel().length():
+				barrier_hit.collider.receive_damage(source,t.knife_damage if kind == "knife" else t.axe_damage,cast_id)
+				queue_free()
+				return
 		var hit: KinematicCollision3D = move_and_collide(motion)
 		if hit == null: break
 		if kind == "knife": CombatEffect.streak(get_parent(),previous,global_position,t.knife_trail_width,t.knife_trail_time)

@@ -106,7 +106,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		debug_view = not debug_view
 
 func _spawn_teams() -> void:
-	var roles: Array[String] = ["frontline", "frontline", "frontline", "flank_left", "flank_right", "high_ground"]
 	for team: int in 2:
 		var positions: Array[Vector3] = definition.team_spawns(team)
 		for slot: int in 6:
@@ -115,14 +114,14 @@ func _spawn_teams() -> void:
 			var actor := preload("res://scenes/actors/hero_actor.tscn").instantiate() as HeroActor
 			actor.team = team
 			actor.actor_id = "%s_%02d" % ["lantern" if team == 0 else "crown", slot + 1]
-			actor.tuning = HeroRoster.tuning_for("slayer" if HeroRoster.selected == "slayer" and slot in [1,3] else "nimbus")
+			actor.tuning = HeroRoster.tuning_for(HeroRoster.team_hero(slot,HeroRoster.selected))
 			actor.position = positions[slot]
 			arena.add_child(actor)
 			var controller_script: Script = load("res://scripts/city/city_bot_controller.gd")
 			var controller: Node = controller_script.new()
 			controller.actor = actor
 			controller.match_controller = self
-			controller.role = roles[slot]
+			controller.role = HeroRoster.bot_role(slot,HeroRoster.selected)
 			controller.slot = slot
 			actor.add_child(controller)
 			actor.controller = controller
@@ -298,7 +297,8 @@ func select_hero(id: String) -> void:
 	player.actor_id = id.capitalize()
 	for bot: HeroActor in bots:
 		var slot: int = int(_spawn_indices.get(bot.get_instance_id(),0))
-		bot.select_hero("slayer" if id == "slayer" and slot in [1,3] else "nimbus")
+		bot.select_hero(HeroRoster.team_hero(slot,id))
+		bot.controller.role = HeroRoster.bot_role(slot,id)
 	restart_match()
 	show_notice(id.to_upper() + " SELECTED / MATCH RESTARTED")
 

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DoctorTuning" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/actors/doctor_tuning.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+hero_id = "doctor"
+max_health = 250.0
+rifle_damage = 24.0
+shot_interval = 0.3
+magazine = 12
+reload_time = 1.4
+head_multiplier = 1.5

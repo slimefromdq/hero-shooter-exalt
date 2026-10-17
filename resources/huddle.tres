@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="HuddleTuning" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/actors/huddle_tuning.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+hero_id = "huddle"
+max_health = 600.0
+ground_speed = 6.0
+shot_interval = 0.45
+magazine = 10
+reload_time = 1.6
+head_multiplier = 1.0

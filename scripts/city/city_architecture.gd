@@ -198,10 +198,12 @@ func polyhedron(vertices: PackedVector3Array, faces: PackedInt32Array, at: Vecto
 		var b: Vector3 = vertices[faces[index + 1]]
 		var c: Vector3 = vertices[faces[index + 2]]
 		var normal: Vector3 = (b - a).cross(c - a).normalized()
-		for point: Vector3 in [a, b, c]:
+		# Authored faces use outward cross-product normals. Godot renders clockwise
+		# front faces, so reverse only the visual order while retaining that normal.
+		for point: Vector3 in [a, c, b]:
 			tool.set_normal(normal)
 			tool.add_vertex(point)
-			collision_faces.append(point)
+		collision_faces.append_array(PackedVector3Array([a, b, c]))
 	var visual := MeshInstance3D.new()
 	visual.mesh = tool.commit()
 	visual.position = at
@@ -273,23 +275,33 @@ func tree(at: Vector3, scale_factor: float = 1.0, pale: bool = false) -> void:
 		line(at + Vector3(0, 2.5 * scale_factor, 0), branch_end, 0.18 * scale_factor, "trunk")
 		piece("sphere", Vector3(2.0 + (i % 2) * 0.25, 2.5, 1.9) * scale_factor, branch_end + Vector3(0, 0.5, 0), "leaf_light" if pale and i % 3 != 0 else "leaf", Vector3(0.1 * i, angle, 0.12 * (i % 3)))
 
-func railing(a: Vector3, b: Vector3, height: float = 1.1, solid: bool = true) -> void:
-	line(a + Vector3.UP * height, b + Vector3.UP * height, 0.11, "brass")
-	line(a + Vector3.UP * 0.45, b + Vector3.UP * 0.45, 0.065, "iron")
-	var count := maxi(1, int(a.distance_to(b) / 1.2))
+func railing(a: Vector3, b: Vector3, height: float = 1.1, solid: bool = true, stair_risers: int = 0) -> void:
+	line(a + Vector3.UP * height, b + Vector3.UP * height, .11, "brass")
+	var crossbar_height: float = minf(.45, height * .45)
+	line(a + Vector3.UP * crossbar_height, b + Vector3.UP * crossbar_height, .065, "iron")
+	var count := maxi(1, ceili(a.distance_to(b) / 1.2))
 	for i in count + 1:
-		var at := a.lerp(b, float(i) / count)
-		box(Vector3(0.08, height, 0.08), at + Vector3.UP * height * 0.5, "iron")
+		var fraction: float = float(i) / count
+		var at := a.lerp(b, fraction)
+		var top: float = at.y + height
+		if stair_risers > 0 and i > 0 and i < count:
+			# Posts meet the actual treads while the handrail remains straight.
+			var tread: int = mini(int(fraction * stair_risers), stair_risers - 1)
+			at.y = lerpf(a.y, b.y, (tread + .5) / stair_risers)
+		box(Vector3(.08, top - at.y, .08), at + Vector3.UP * (top - at.y) * .5, "iron")
 	if solid:
-		var delta := b - a
-		var tangent := delta.normalized()
-		var side := tangent.cross(Vector3.UP).normalized()
-		var normal := side.cross(tangent).normalized()
-		var shape := BoxShape3D.new()
-		shape.size = Vector3(delta.length(), height, 0.12)
+		# Vertical posts sweep a parallelogram on slopes. A rotated box tilts
+		# their collision, protrudes beyond landings and misses the visible rail.
+		var side := Vector3(b.z-a.z, 0, a.x-b.x).normalized() * .06
+		var shape := ConvexPolygonShape3D.new()
+		shape.points = PackedVector3Array([a-side, a+side, b-side, b+side,
+			a-side+Vector3.UP*height, a+side+Vector3.UP*height,
+			b-side+Vector3.UP*height, b+side+Vector3.UP*height])
 		var collider := CollisionShape3D.new()
 		collider.shape = shape
-		collider.transform = Transform3D(Basis(tangent, normal, side), (a + b) * 0.5 + Vector3.UP * height * 0.5)
+		collider.set_meta("rail_a", a)
+		collider.set_meta("rail_b", b)
+		collider.set_meta("rail_height", height)
 		collision_body.add_child(collider)
 
 func label(caption: String, at: Vector3, font_size: int = 54, color: Color = Color("f1d3a3"), turn: float = 0.0) -> Label3D:
