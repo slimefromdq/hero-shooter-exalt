@@ -36,6 +36,7 @@ func _ready() -> void:
 	floor_max_angle = deg_to_rad(48.0)
 	spawn_position = position
 	var shape := CollisionShape3D.new()
+	shape.name = "BodyCollision"
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = 0.38
 	capsule.height = 1.9
@@ -63,7 +64,7 @@ func _physics_process(delta: float) -> void:
 		intent = controller.gather_intent(delta)
 	if not alive:
 		return
-	if state not in ["captured", "throw_pair"]:
+	if state not in ["captured", "throw_pair", "mantle"]:
 		aim_direction = close.melee_direction if state.begins_with("melee_") else intent.aim.normalized()
 		if Vector2(aim_direction.x, aim_direction.z).length() > 0.01:
 			rotation.y = atan2(-aim_direction.x, -aim_direction.z)

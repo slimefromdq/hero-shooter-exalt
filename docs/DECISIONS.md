@@ -19,7 +19,9 @@ All fields live in `HeroTuning`. Values can be changed through the Resource Insp
 | Dash | 0.16 s buildup; direction sampled at end; 22 m/s; 26 m/s² decay; 0.38 s burst; 4.5 s cooldown; one charge; air use allowed; no invulnerability |
 | Slide | 5 m/s ordinary entry; slope entry at 8°; 3.6 m/s² friction; gravity acts on floor tangent; 26 m/s global speed cap; automatic continuation after ground dash |
 | Movement | 6 m/s ground; 30 m/s² acceleration; 24 braking; 7.5 air steering; 8 m/s jump; 22 m/s² gravity; 0.1 s edge forgiveness, 0.12 s jump buffer |
-| Hover | 8.5 m/s ascent for 0.3 s, then up to 2.5 s glide approaching 1.6 m/s descent; cooldown after end |
+| Hover / umbrella vault | 12 m/s ascent for 0.4 s, then up to 2.5 s glide approaching 1.6 m/s descent; roughly 8 m open-space apex; cooldown after end |
+| Mantle | Space toward a ledge; 0.95 m forward probe; 0.3–2.2 m rise above feet; 0.55 s lift then traversal onto supported standing space; full-capsule path checks and live sweeps |
+| Wall jump | Space in air within 0.72 m of a near-vertical environment wall; 9.5 m/s upward, 7.5 m/s outward plus up to 2 m/s tangent steering; 0.2 s cooldown; same facing wall cannot rearm until grounded |
 | Melee | 75 HP; 2.6 m hit reach plus up to 4.8 m collision-limited travel; 0.24 s startup / 0.2 s active / 0.4 s recovery; no action cancels. Lunge starts at 0.06 s and lasts 0.36 s. Direction is fixed on input. |
 | Reload movement | 85% of ordinary ground speed: 5.1 m/s, previously 35% / 2.1 m/s. Aim still caps movement at 60%. Reload duration stays 1.6 s. |
 | Guard | 100 meter; 24/s drain; 35/s immediate regen after release; 28 per blocked strike; 2 s re-block cooldown; 15% movement; 0 bullet reduction |
@@ -36,6 +38,7 @@ The actor state table is authoritative; procedural animation never applies damag
 | --- | --- |
 | Ready, ground/air/slide/Hover | Rifle, aim, reload, kit, jump, shared combat; dash additionally requires cooldown |
 | Dash buildup / dash | Steering intent is suppressed during the burst; no other combat casts |
+| Mantle | Fixed climb path and facing; no competing movement/combat casts; stagger, capture, death, reset, removed support or new obstruction can interrupt |
 | Melee startup / active / recovery | Swept, committed forward lunge during startup/active; limited normal translation in recovery; no rifle, guard, throw, dash or ability cancels |
 | Guard | Slow translation, release; responding counterthrow input; no gun/kit casts |
 | Throw startup / whiff | Limited translation, no new casts; damage interrupts startup |
@@ -83,3 +86,11 @@ The user requested stronger successful-block feedback, a more obvious attacking-
 The resolver emits `confirmed_block` only after a frontal melee block passes hit deduplication. The defender plays a dedicated original 0.36 s metallic clang on a separate sound channel, flashes its translucent shield, braces and spawns a 0.32 s world-space ring/spark burst. Guard hold, gunfire, rear hits and duplicate cast resolution cannot trigger success feedback. A meter-exhausting block still receives feedback. Transient presentation clears on reset/death; audio players explicitly stop and release their streams on exit.
 
 The attacker uses an authored AnimationPlayer recoil with backward torso displacement/lean, outward arms, buckled knees and weapon knockback, plus rotating overhead daze markers and a STAGGERED label. Only the visual model recoils; the stationary trainer's collision capsule stays planted. Gameplay stagger remains 0.55 s. Shield opacity is reduced so the response remains visible from the shoulder camera. Presentation never applies damage or extends control locks.
+
+## MOVE-03 · Mantle, wall jump and higher umbrella vault
+
+The user requested these three traversal changes. Space keeps its ordinary jump and gains contextual mantle / airborne wall-kick behavior. Mantling takes priority when the requested movement or flat aim faces a reachable ledge. A low wall probe and top-down ray locate a walkable roof; five support rays and a standing-capsule overlap check reject narrow or blocked landings. The entire lift-then-over path is validated before commitment, and every actual move is swept. A new obstacle, removed support or combat interruption releases the actor safely. Physics controls position; a keyed two-arm pull-up poses the body and stows the rifle behind it. Camera freelook cannot redirect the path or facing.
+
+Wall jumps use nearby environment walls, excluding actors and horizontal surfaces. They provide an explicit upward/outward kick and short authored leg pose. A 0.2 s cooldown and last-normal comparison prevent repeated kicks from the same flat wall; a wall facing at least 60 degrees differently can rearm, allowing alternating jumps. Real grounded support rearms the jump. `is_on_floor()` is confirmed with a short downward body sweep because teleports and mantle's `move_and_collide` can otherwise leave its old cached result. Coyote time still applies to ordinary departures from a floor.
+
+Nimbus's ascent changes from 8.5 m/s × 0.3 s to 12 m/s × 0.4 s. Remaining upward velocity naturally decays into the existing glide; the measured rendered height near its apex is 8.17 m. Duration, cooldown lifecycle, ceiling handling and other kit values remain intact. Mantling out of the ascent ends Hover and starts its normal cooldown. A marked 2 m ledge and 5.5 m kick wall sit beside the existing east-side tower route, with Space/Q instructions in its HUD.

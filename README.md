@@ -18,10 +18,11 @@ powershell -ExecutionPolicy Bypass -File .\Launch.ps1
 | --- | --- |
 | WASD / mouse | Move / look |
 | Left click / right hold | Semi-auto umbrella rifle / shoulder aim |
-| R / Space | Reload / jump |
+| R | Reload |
+| Space | Jump; mantle toward a nearby ledge; wall jump while airborne beside a wall |
 | 3 | Crosshair-directed 3D dash, after a short buildup |
 | Shift hold | Momentum slide; downhill entry works from low speed |
-| Q | Ability 1 — Hover: upward burst, then glide; press again to end |
+| Q | Ability 1 — Hover: higher umbrella vault, then glide; press again to end |
 | E | Ability 2 — frontal Deflect |
 | 1 | Ability 3 — bouncing Pocket Bomb |
 | 2, then left click | Final Notice stance, then one shot after preparation; 2 cancels |
@@ -37,10 +38,16 @@ Bindings use named InputMap actions in `scripts/training/input_bindings.gd`; the
 
 Press **Tab → Start guard drill**, walk inside the coral ring, face the stationary bot and hold **6**. The bot starts strikes within **2.4 m**, repeating at a **1.6 s** interval after its normal reaction/startup. A successful block produces a metallic clang, shield flash, expanding rings and sparks. The attacker snaps backward, spreads its arms, buckles its knees and shows rotating daze markers during the existing 0.55 s stagger. It uses the shared melee and stagger rules but stays planted. Change **Strike trigger range** and **Strike interval** under **Stationary guard drill** in the training console. The same bot is available as the **Guard trainer** spawn profile. Starting the dedicated drill clears AI freeze.
 
+## Climbing and wall jumps
+
+Face a wall or tower within about **0.95 m** and press **Space** to mantle a ledge up to **2.2 m above your feet**, provided the top has room to stand. You can mantle from the ground, a jump or umbrella ascent. Higher towers need a jump or Q first; press Space again near the lip. The climb takes about **0.55 s**, with continuous collision checks and a two-arm pull-up pose.
+
+While airborne within **0.72 m** of a wall, press **Space** to kick upward and away. Landing or reaching a differently facing wall enables another wall jump. Try the marked ledge and kick wall beside the east-side traversal route. Q now launches at **12 m/s for 0.4 s** and reaches roughly **8 m** above its starting point in open space before descending into the glide; ceilings stop the ascent safely.
+
 ## Included
 
 - Nimbus's complete prototype kit: 45/90 body/head rifle, upward Hover, timed projectile reflection and hitscan blocking, 80-peak bomb with falloff and cover checks, and 150-damage Final Notice with a pre-hit 20% execution check.
-- Shared acceleration, braking, air steering, jump buffering/coyote time, fixed-direction dash, both slide entries, and collision-aware shoulder camera.
+- Shared acceleration, braking, air steering, jump buffering/coyote time, collision-checked mantling, wall jumps, fixed-direction dash, both slide entries, and collision-aware shoulder camera.
 - A 4.8 m committed melee lunge for engages/finishers, finite frontal guard with attacker stagger, interruptible 2.8 m throws, counterthrows, and an articulated pull/hip-lift/turn/slam/get-up animation. Slam damage occurs at impact; both participants retain 90% outside-damage reduction during the pair.
 - Reload movement retains 85% of normal speed (5.1 m/s); shoulder aiming retains its usual 60% cap. Reload still takes 1.6 s and prevents firing until complete.
 - Six bot profiles; seven exercises including the stationary guard drill; spawn/despawn; 250/500 HP experiments; 19/20/21% target presets; shield/invulnerability controls; AI settings; resource refills; movement presets; live combat tuning; route timer; event export.
@@ -62,6 +69,7 @@ godot --headless --path . --script res://tests/rules_test.gd
 godot --headless --path . --script res://tests/close_combat_test.gd
 godot --headless --path . --script res://tests/guard_drill_test.gd
 godot --headless --path . --script res://tests/block_feedback_test.gd
+godot --headless --path . --script res://tests/traversal_test.gd
 godot --headless --path . --script res://tests/integration_test.gd
 ```
 

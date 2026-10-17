@@ -175,6 +175,9 @@ func _process(delta: float) -> void:
 	elif actor.state == "stagger":
 		animation = "stagger"
 		progress = 1.0 - actor.state_time / maxf(.01, actor.tuning.stagger_duration)
+	elif actor.state == "mantle":
+		animation = "mantle"
+		progress = actor.motor.traversal.progress
 	elif actor.state == "guard" and block_flash > 0:
 		animation = "block"
 		progress = 1.0 - block_strength
@@ -191,13 +194,16 @@ func _process(delta: float) -> void:
 				progress = lerpf(.72,1.0,(progress - impact) / (1.0 - impact))
 			elif progress > .46:
 				progress = lerpf(.46,.72,(progress - .46) / (impact - .46))
+	elif actor.state == "ready" and actor.motor.mode == "air" and actor.motor.traversal.wall_pose > 0:
+		animation = "wall_jump"
+		progress = 1.0 - actor.motor.traversal.wall_pose / .28
 	if animation != "":
 		if animator.current_animation != animation:
 			animator.play(animation)
 		animator.seek(clampf(progress,0,.9999), true)
 	else:
 		animator.stop(true)
-	if actor.state in ["throw_startup","throw_pair","captured"]:
+	if actor.state in ["throw_startup","throw_pair","captured","mantle"]:
 		rifle.position = Vector3(.22,1.12,.32)
 		rifle.rotation = Vector3(-.4,0,-.6)
 	if actor.team != 0:

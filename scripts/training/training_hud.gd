@@ -131,13 +131,14 @@ func draw_hud() -> void:
 	rect(Vector2(1231, 776), Vector2(164 * p.close.guard_meter / 100.0, 4), mint)
 	label_at("%s   UMBRELLA STRIKE" % TrainingInputs.key_label("melee"), Vector2(1231, 809), 11, paper)
 	label_at("%s   THROW / COUNTER" % TrainingInputs.key_label("throw"), Vector2(1231, 842), 11, paper)
-	label_at("W A S D  MOVE    SPACE  JUMP    %s  SLIDE    RMB  AIM" % TrainingInputs.key_label("slide"), Vector2(32, 889), 11, ink, true)
+	label_at("W A S D  MOVE    SPACE  JUMP / MANTLE / WALL JUMP    %s  SLIDE    RMB  AIM" % TrainingInputs.key_label("slide"), Vector2(32, 889), 11, ink, true)
 	label_at("F5  RESET    F6  REFILL    F3  TELEMETRY", Vector2(1098, 889), 10, ink)
 	if p.state != "ready" or p.motor.mode not in ["ground", "air"]:
 		label_at(p.state.to_upper().replace("_", " ") + "  /  " + p.motor.mode.to_upper(), Vector2(600, 721), 13, paper, true)
 	if training.route_running or training.scenario == 5:
 		label_at("ROUTE  %.2f s    BEST  %.2f s" % [training.route_time, training.route_best], Vector2(32, 240), 18, ink, true)
 		label_at("Falls %d / Overshoots %d / Landing %.2f m" % [training.route_falls, training.route_overshoots, training.route_accuracy], Vector2(32, 265), 12, ink)
+		label_at("SPACE toward a ledge: MANTLE   /   SPACE in air by a wall: WALL JUMP   /   %s: UMBRELLA VAULT" % TrainingInputs.key_label("hover"),Vector2(32,288),11,ink)
 	if training.debug_view:
 		draw_debug(p)
 	if p.last_hit_age < 0.3:

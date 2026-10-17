@@ -1,6 +1,6 @@
 # Hero Shooter Design and Prototype Plan
 
-Version 0.12 · Working draft · October 16, 2026
+Version 0.13 · Working draft · October 16, 2026
 
 Build a hero shooter around expressive characters whose weapons, movement, and utility create different ways to enter, shape, and finish a fight. This is a living design contract for Lucy and Codex: preserve the fantasy, prototype the uncertain interaction, and revise from play.
 
@@ -52,6 +52,8 @@ Health, damage, distance, seconds, and cooldowns must appear in one consistent s
 - **Skill through control and judgment.** Reward route choice, timing, aim during motion, and knowing when to commit. Use small input buffers and edge forgiveness to reduce accidental failures; they must not automate route selection or ability timing.
 
 ### Shared traversal foundation
+
+**User-directed extension, October 16:** Add mantling near walls/towers, wall jumping and more Nimbus umbrella-vault height. Space now prioritizes a nearby clear ledge, then a wall kick in air, then the ordinary grounded jump. Proposed defaults: 0.95 m mantle probe, ledge up to 2.2 m above the feet, 0.55 s swept climb; 0.72 m wall proximity, 9.5 m/s upward and 7.5 m/s outward kick, 0.2 s repeat cooldown. Landing or a differently facing wall rearms the kick. Mantles need supported standing clearance and abort on obstruction or interruption. Nimbus's Q launch increases to 12 m/s for 0.4 s, reaching roughly 8 m in open space before glide descent. Existing personal combat keys remain unchanged.
 
 **Established:** Every hero can perform some advanced traversal. Hero abilities extend that baseline and give characters distinctive movement identities.
 
@@ -408,6 +410,7 @@ Change one important variable at a time when isolating a failure. Keep the last 
 
 | Version | Change |
 | --- | --- |
+| 0.13 | Shared collision-checked mantle and wall jump on Space, marked traversal practice geometry, higher Nimbus umbrella vault |
 | 0.12 | Successful-block sound and impact burst; obvious keyed attacker recoil and daze markers; 4.8 m melee travel and 85% reload movement |
 | 0.11 | Increased proposed melee travel to 3.6 m; added stationary, range-triggered guard trainer and the user's requested key bindings |
 | 0.10 | Playtest feedback establishes forward-traveling melee for engages/finishers, larger throw reach, and a fully animated paired throw; initial experiment is 2.2 m lunge / 2.8 m grab |

@@ -64,6 +64,13 @@ func build_environment() -> void:
 	Geometry.box(self, Vector3(2.2, 3.5, 4), Vector3(18, 1.75, -11), Color("617d80"))
 	Geometry.box(self, Vector3(6, 4.5, 6), Vector3(18, 2.25, -20), Color("506b73"))
 	Geometry.text3d(self, "02   /   TRAVERSAL", Vector3(18, 5.5, -23), 45, Color("d7f4dc"))
+	# A reachable ledge and a taller kick wall beside the existing tower route.
+	Geometry.box(self,Vector3(3,2,3),Vector3(12,1,6),Color("617d80"))
+	Geometry.box(self,Vector3(3.08,.06,3.08),Vector3(12,2.03,6),Color("8be0c4"),false)
+	Geometry.text3d(self,"SPACE / MANTLE",Vector3(12,2.8,6),24,Color("d7f4dc"))
+	Geometry.box(self,Vector3(.5,5.5,5),Vector3(11,2.75,-2),Color("506b73"))
+	var kick_sign := Geometry.text3d(self,"AIR + SPACE\nWALL JUMP",Vector3(11.3,4,-2),23,Color("d7f4dc"))
+	kick_sign.rotation_degrees.y = 90
 	Geometry.text3d(self, "03   /   MOMENTUM", Vector3(-18, 3.6, -15), 45, Color("d7f4dc"))
 	for x: float in [-25.0, 25.0]:
 		for z: float in [-24.0, -4.0, 16.0]:

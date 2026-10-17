@@ -32,6 +32,25 @@ static func library() -> AnimationLibrary:
 	track(block,"Model:rotation",[0,.16,.45,1],[Vector3.ZERO,Vector3(-.16,0,.06),Vector3(-.08,0,0),Vector3.ZERO])
 	track(block,"Model/Geometry/LeftArm:rotation",[0,.16,.45,1],[Vector3(.1,0,-.15),Vector3(1.3,0,-.35),Vector3(1.1,0,-.2),Vector3(.1,0,-.15)])
 	result.add_animation("block",block)
+	var mantle := Animation.new()
+	mantle.length = 1
+	var climb: Array = [0,.2,.6,.8,1]
+	track(mantle,"Model:rotation",climb,[Vector3(.15,0,0),Vector3(.28,0,0),Vector3(.4,0,0),Vector3(.2,0,0),Vector3.ZERO])
+	track(mantle,"Model/Geometry/LeftArm:rotation",climb,[Vector3(1.6,0,-.2),Vector3(2.7,0,-.2),Vector3(1.9,0,-.3),Vector3(.8,0,-.2),Vector3(.1,0,-.15)])
+	track(mantle,"Model/Geometry/RightArm:rotation",climb,[Vector3(1.6,0,.2),Vector3(2.7,0,.2),Vector3(1.9,0,.3),Vector3(.8,0,.2),Vector3(1.1,0,0)])
+	track(mantle,"Model/Geometry/LeftArm/Joint:rotation",climb,[Vector3.ZERO,Vector3(-.2,0,0),Vector3(-1.1,0,0),Vector3(-.5,0,0),Vector3.ZERO])
+	track(mantle,"Model/Geometry/RightArm/Joint:rotation",climb,[Vector3.ZERO,Vector3(-.2,0,0),Vector3(-1.1,0,0),Vector3(-.5,0,0),Vector3.ZERO])
+	track(mantle,"Model/Geometry/LeftLeg:rotation",climb,[Vector3.ZERO,Vector3(.3,0,0),Vector3(1.1,0,0),Vector3(.7,0,0),Vector3.ZERO])
+	track(mantle,"Model/Geometry/LeftLeg/Joint:rotation",climb,[Vector3.ZERO,Vector3(.4,0,0),Vector3(1.3,0,0),Vector3(.5,0,0),Vector3.ZERO])
+	track(mantle,"Model/Geometry/RightLeg:rotation",climb,[Vector3.ZERO,Vector3(-.2,0,0),Vector3(.3,0,0),Vector3(.8,0,0),Vector3.ZERO])
+	result.add_animation("mantle",mantle)
+	var kick := Animation.new()
+	kick.length = 1
+	track(kick,"Model:rotation",[0,.2,.6,1],[Vector3.ZERO,Vector3(-.3,0,-.15),Vector3(-.15,0,0),Vector3.ZERO])
+	track(kick,"Model/Geometry/LeftLeg:rotation",[0,.2,.6,1],[Vector3.ZERO,Vector3(1.25,0,0),Vector3(.5,0,0),Vector3.ZERO])
+	track(kick,"Model/Geometry/RightLeg:rotation",[0,.2,.6,1],[Vector3.ZERO,Vector3(-.6,0,0),Vector3(-.2,0,0),Vector3.ZERO])
+	track(kick,"Model/Geometry/LeftArm:rotation",[0,.2,.6,1],[Vector3(.1,0,-.15),Vector3(.6,0,-.9),Vector3(.3,0,-.5),Vector3(.1,0,-.15)])
+	result.add_animation("wall_jump",kick)
 	var grab := Animation.new()
 	grab.length = 1.0
 	track(grab,"Model:rotation",[0,.45,1],[Vector3.ZERO,Vector3(.12,-.1,0),Vector3(.18,-.15,0)])

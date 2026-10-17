@@ -7,6 +7,7 @@ Implementation date: 2026-10-16. The project is playable; completion of human ac
 | BOOT-01 | Implemented / engine launch checked | Fresh scene, pinned Godot 4.7.2, README and launcher |
 | MOVE-01 | Implemented / automated physics checks | Acceleration, jump, air control, shoulder camera, route geometry |
 | MOVE-02 | Implemented / automated collision checks | 3D sampled dash, floor transition, ordinary and slope sliding, friction, cooldown isolation |
+| MOVE-03 | Implemented / 34 focused traversal checks and rendered review | Ground/air mantle, safe lift-over path, wall jump and alternating-wall rearm, higher Nimbus umbrella launch, authored poses and marked practice geometry |
 | NIM-01 | Implemented / actual ray checks | 45/90 once per shot, ammunition/reload, cover and muzzle obstruction |
 | CQ-01 | Implemented / automated interaction checks | Windup/active/recovery, frontal guard, meter, rear bypass, bullet baseline, stagger |
 | CQ-02 | Implemented / automated pair checks | Startup interrupt, whiff, counter, simultaneous grabs, mitigation, scripted damage and release |
@@ -20,3 +21,5 @@ Implementation date: 2026-10-16. The project is playable; completion of human ac
 | Later roster/networking | Deferred by design | Preserve the established roster references in DESIGN.md |
 
 Next work should evaluate the 4.8 m melee engage/finisher and use Tab → Start guard drill to practice holding 6 inside the range ring. Check the block clang/impact, attacker recoil, reload strafing, commitment, whiff punishment and throw readability under fire. Do not infer accepted balance from passing correctness tests.
+
+Traversal follow-up: try Space into the marked ledge, jump then Space near higher lips, and Space beside a wall while airborne. Combine Q's higher launch with the towers. Evaluate grab reach, climb duration, wall-kick push and camera comfort before accepting these tuning values.

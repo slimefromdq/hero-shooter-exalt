@@ -23,6 +23,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Guard drill or personal key bindings failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/block_feedback_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Block feedback or reload mobility failed.' }
+    & $taskEngine --headless --path $taskRoot --script res://tests/traversal_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Mantle, wall jump or umbrella vault checks failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/integration_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Training integration tests failed.' }
     if ($Capture) {
