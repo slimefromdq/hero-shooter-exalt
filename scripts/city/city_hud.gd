@@ -366,7 +366,7 @@ func draw_overview() -> void:
 			map_rect(Vector3(wing * 24,0,side * 48),Vector2(16,12),bounds,Color("293a46"))
 			route_line([Vector3(wing*8,0,side*60),Vector3(wing*8,0,side*40),Vector3(wing*8,0,side*28),Vector3(wing*8,0,side*10)],bounds,Color(.8,.78,.66,.8),6)
 			route_line([Vector3(wing*34,0,side*40),Vector3(wing*34,0,0),Vector3(wing*15,0,0)],bounds,Color(.42,.64,.49,.8),5)
-			route_line([Vector3(wing*42,0,side*46),Vector3(wing*42,6.5,side*20),Vector3(wing*23,6.5,side*20),Vector3(wing*23,6.5,side*21)],bounds,Color(.73,.56,.86,.85),3)
+			route_line([Vector3(wing*37.5,0,side*24),Vector3(wing*37.5,3.25,side*36.25),Vector3(wing*42,3.25,side*36.25),Vector3(wing*42,6.5,side*20),Vector3(wing*23,6.5,side*20),Vector3(wing*23,6.5,side*21)],bounds,Color(.73,.56,.86,.85),3)
 			route_line([Vector3(wing*18,0,side*38),Vector3(wing*18,-5,side*18),Vector3(0,-5,side*18)],bounds,Color(.27,.76,.84,.8),2)
 			route_line([Vector3(wing*23,6.5,-21),Vector3(wing*23,6.5,21)],bounds,Color(.73,.56,.86,.85),3)
 		route_line([Vector3(-18,-5,side*18),Vector3(18,-5,side*18)],bounds,Color(.27,.76,.84,.8),2)

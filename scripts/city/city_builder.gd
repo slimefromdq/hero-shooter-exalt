@@ -142,7 +142,7 @@ func _build_ground_and_subway() -> void:
 			architecture.box(Vector3(xa.y - xa.x, 0.035, za.y - za.x), Vector3((xa.x + xa.y) * 0.5, 0.02, (za.x + za.y) * 0.5), "paving_light")
 	for sx: float in [-1.0, 1.0]:
 		for sz: float in [-1.0, 1.0]:
-			architecture.box(Vector3(14, 0.035, 16), Vector3(sx * 8.0, 0.025, sz * 43.0), "paving")
+			architecture.box(Vector3(12, 0.035, 16), Vector3(sx * 9.0, 0.025, sz * 43.0), "paving")
 			_ramp(Vector3(sx * 18, -5, sz * 18), Vector3(sx * 18, 0, sz * 38), 5.6, "ivory", true)
 			_subway_stair_portal(Vector3(sx * 18, 0, sz * 38), sz)
 	for sign: float in [-1.0, 1.0]:
@@ -514,9 +514,20 @@ func _build_high_routes() -> void:
 		# Parallel covered viaduct promenades, with two long approaches apiece.
 		architecture.box(Vector3(4.6, 0.45, 44.5), Vector3(sx * 23, 6.275, 0), "ivory", true)
 		for sz: float in [-1.0, 1.0]:
-			_ramp(Vector3(sx * 42, 0, sz * 46), Vector3(sx * 42, 6.5, sz * 22.25), 4.5, "ivory", true, true)
+			# Courtyard-facing switchback: climb away from the point, turn on a
+			# level landing, then return to the bridge. No entrance behind homes.
+			_ramp(Vector3(sx * 37.5, 0, sz * 24), Vector3(sx * 37.5, 3.25, sz * 34), 4.5, "ivory", true, true)
+			architecture.box(Vector3(9, .45, 4.5), Vector3(sx * 39.75, 3.025, sz * 36.25), "ivory", true)
+			for x: float in [35.65, 43.85]:
+				architecture.box(Vector3(.65, 2.8, .65), Vector3(sx * x, 1.4, sz * 37.8), "ivory", true)
+			architecture.railing(Vector3(sx * 35.25, 3.25, sz * 34), Vector3(sx * 35.25, 3.25, sz * 38.5))
+			architecture.railing(Vector3(sx * 44.25, 3.25, sz * 34), Vector3(sx * 44.25, 3.25, sz * 38.5))
+			architecture.railing(Vector3(sx * 35.25, 3.25, sz * 38.5), Vector3(sx * 44.25, 3.25, sz * 38.5))
+			_ramp(Vector3(sx * 42, 3.25, sz * 34), Vector3(sx * 42, 6.5, sz * 22.25), 4.5, "ivory", true, true)
 			architecture.box(Vector3(21.5, 0.45, 4.5), Vector3(sx * 33.75, 6.275, sz * 20), "ivory", true)
-			architecture.box(Vector3(1.0, 6.05, 1.0), Vector3(sx * 37.5, 3.025, sz * 20), "ivory", true)
+			# Keep the courtyard-facing stair entrance visible and unobstructed.
+			for support_x: float in [32.5, 43.6]:
+				architecture.box(Vector3(1.0, 6.05, 1.0), Vector3(sx * support_x, 3.025, sz * 20), "ivory", true)
 			architecture.railing(Vector3(sx * 20.8, 6.5, sz * 22.25), Vector3(sx * 39.75, 6.5, sz * 22.25))
 			architecture.railing(Vector3(sx * 20.8, 6.5, sz * 18), Vector3(sx * 20.8, 6.5, sz * 22.25))
 			architecture.railing(Vector3(sx * 25.2, 6.5, sz * 17.9), Vector3(sx * 44.25, 6.5, sz * 17.9))
@@ -628,7 +639,7 @@ func _build_street_details() -> void:
 			architecture.box(Vector3(3.8, 2.0, 1.3), Vector3(sx * 10, 1, sz * 23), "ivory", true)
 			architecture.box(Vector3(3.8, 0.16, 1.4), Vector3(sx * 10, 2.1, sz * 23), "brass")
 			architecture.tree(Vector3(sx * 13, 0, sz * 44), 0.85)
-			architecture.lamp(Vector3(sx * 35.5, 0, sz * 38), 4.4)
+			architecture.lamp(Vector3(sx * 33.5, 0, sz * 38), 4.4)
 			# Flush road inlays and crossing marks aid navigation without collision.
 			for i in 5:
 				architecture.box(Vector3(2, 0.018, 0.38), Vector3(sx * 7.5, 0.05, sz * (42 + i * 0.85)), "trim")
@@ -645,8 +656,12 @@ func _build_street_details() -> void:
 	# Canal-like illuminated garden details and plaza paving seams.
 	for x: float in [-11.0, -5.5, 5.5, 11.0]:
 		architecture.box(Vector3(0.035, 0.018, 36), Vector3(x, 0.045, 0), "stone_dark")
-	for z: float in [-18.0, -12.0, -6.0, 6.0, 12.0, 18.0]:
-		architecture.box(Vector3(42, 0.018, 0.035), Vector3(0, 0.045, z), "stone_dark")
+	for z: float in [-17.98, -12.0, -6.0, 6.0, 12.0, 17.98]:
+		if absf(z) >= 10:
+			for side: float in [-1.0, 1.0]:
+				architecture.box(Vector3(18, .018, .035), Vector3(side * 12, .045, z), "stone_dark")
+		else:
+			architecture.box(Vector3(42, .018, .035), Vector3(0, .045, z), "stone_dark")
 
 func _build_navigation() -> void:
 	navigation_region = NavigationRegion3D.new()

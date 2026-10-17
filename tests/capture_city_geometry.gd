@@ -24,6 +24,9 @@ func run() -> void:
 	await photograph("geometry-08-promenade-corner", Vector3(-40,9,-24), Vector3(-23,6.5,-20), 76)
 	await photograph("geometry-09-arcade-approach", Vector3(24,2.1,37), Vector3(26,3,26), 76)
 	await photograph("geometry-10-exchange-shop-join", Vector3(-18,-2,5), Vector3(-13,-2,-1), 76)
+	await photograph("geometry-11-courtyard-stair-entry", Vector3(37.5,2.1,17), Vector3(39,3.5,32), 76)
+	await photograph("geometry-12-switchback-landing", Vector3(32,12,40), Vector3(40,4,31), 76)
+	await photograph("geometry-13-spawn-stair-width", Vector3(2,2.1,57), Vector3(0,-2,43), 76)
 	arena.queue_free()
 	await process_frame
 	quit()

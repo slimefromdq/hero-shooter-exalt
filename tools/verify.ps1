@@ -47,6 +47,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'City/training scene transitions or cleanup failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_railing_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'City sloped railing or landing clearance failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_stair_openings_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Street paving overhangs an underground stair opening.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_route_audit.gd
     if ($LASTEXITCODE -ne 0) { throw 'Full-city stair width, traversal or route joins failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_geometry_audit.gd

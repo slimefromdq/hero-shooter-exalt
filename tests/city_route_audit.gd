@@ -47,9 +47,32 @@ func run() -> void:
 		if not shell.has_meta("stair_shell"): continue
 		number += 1
 		await inspect_flight(shell, number)
-	check(number == 18, "all eighteen stair flights were audited")
+	check(number == 22, "all twenty-two stair flights were audited")
 	for sx: float in [-1.0, 1.0]:
 		for sz: float in [-1.0, 1.0]:
+			var entrance_clear: bool = true
+			var entry_shape := CapsuleShape3D.new()
+			entry_shape.height = 1.8
+			entry_shape.radius = .35
+			for lane: float in [-1.4,0,1.4]:
+				var query := PhysicsShapeQueryParameters3D.new()
+				query.shape = entry_shape
+				query.collision_mask = 1
+				query.transform = Transform3D(Basis.IDENTITY,Vector3(sx*37.5+lane,1.04,sz*17))
+				query.motion = Vector3(0,0,sz*6)
+				var sweep: PackedFloat32Array = arena.get_world_3d().direct_space_state.cast_motion(query)
+				if sweep[0] < .999: entrance_clear = false
+			check(entrance_clear,"courtyard approach has three unobstructed standing lanes")
+			var entry := Vector3(sx*37.5,0,sz*22)
+			var exit := Vector3(sx*42,6.5,sz*20)
+			var path: PackedVector3Array = NavigationServer3D.map_get_path(arena.get_world_3d().navigation_map,entry,exit,true)
+			var uses_landing: bool = false
+			for point: Vector3 in path:
+				if point.y > 2.8 and point.y < 3.8 and absf(point.z) > 34 and absf(point.z) < 38.6:
+					uses_landing = true
+			check(uses_landing, "courtyard entry routes through its switchback landing")
+			await walk_route("Courtyard switchback ascent %s" % str(Vector2(sx,sz)), entry, exit)
+			await walk_route("Courtyard switchback descent %s" % str(Vector2(sx,sz)), exit, entry)
 			await walk_route("Promenade corner join %s" % str(Vector2(sx,sz)), Vector3(sx*42,6.5,sz*20), Vector3(sx*23,6.5,sz*15))
 			# Floor and continuous guard at the formerly open inside corner.
 			check(not ray(Vector3(sx*21.8,7,sz*21.7), Vector3(sx*21.8,6,sz*21.7)).is_empty(), "promenade corner has continuous deck support")

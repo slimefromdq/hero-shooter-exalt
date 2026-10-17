@@ -73,7 +73,7 @@ func run() -> void:
 	session.set_physics_process(false)
 	await walk_route("Garden terrace 2 m", Vector3(-45, 0, 33), Vector3(-45, 2, 21))
 	await walk_route("Wizard study 4 m", Vector3(49, 0, 12), Vector3(49, 4.2, 28))
-	await walk_route("Arcane promenade 6.5 m", Vector3(42, 0, 46), Vector3(23, 6.5, 10))
+	await walk_route("Arcane promenade 6.5 m", Vector3(37.5, 0, 23), Vector3(23, 6.5, 10))
 	await walk_route("Lower Meridian -5 m", Vector3(18, 0, 40), Vector3(0, -5, 18))
 	await walk_route("Subway return to street", Vector3(0, -5, 18), Vector3(-18, 0, 40))
 	var sphere := SphereShape3D.new()

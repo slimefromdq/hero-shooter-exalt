@@ -2,6 +2,16 @@
 
 The original revision audited the physical city and rebuilt the space beneath the control point as **Lower Meridian Exchange**, a covered shopping concourse at Y = −5 m.
 
+## Courtyard stair access and clear spawn openings - 17 October 2026
+
+The four outer promenade stairs now face the inner courtyard. Each lower flight runs from `(±37.5, 0, ±24)` to `(±37.5, 3.25, ±34)`, enters a 9 x 4.5 m level turning landing, and returns on an upper flight at X = ±42 to the existing 6.5 m bridge. Landing rails keep both flight mouths open. Bridge supports move outside the entrance lanes and nearby lamps clear the landing. Bot high-ground waypoints and the atlas follow the switchbacks.
+
+The floating ground at the spawn stairwells came from the thin approach paving, which extended inward to X = ±1 despite the stair opening continuing to X = ±3. Those tiles now stop at ±3. Ground inlays are split around the hill openings and inset at corner stair edges. Collision ramps alone could not expose the paving bug, because these visual dressings have no collider.
+
+`city_stair_openings_test.gd` inspects the actual authored MultiMesh transforms, rejects visible paving or paint overlapping any underground stair opening, and ray-checks the full width of both spawn flights. It is included in `tools/verify.ps1`. The route audit now covers 22 flights in both directions, direct courtyard entrance clearance and paths through all four turning landings. Close renders `geometry-11` through `geometry-13` show the entrance, turning landing and open spawn stairs.
+
+Validation: 226 route checks, 32 visible-opening/width checks, 17 city traversal checks, 110 arcade checks and 70 city integration checks pass (455 total). The final structural audit passes 2,516 exposed surface probes and 4,420 winding checks. The final courtyard-entry, landing and spawn-width renders were reviewed.
+
 ## Whole-district follow-up - 17 October 2026
 
 The wider pass covers all 18 authored flights, their approach lanes and landing exits, all four promenade corners, garden terraces, both study entries, approach arcades, shops, balconies and spawn thresholds.
