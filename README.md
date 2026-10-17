@@ -35,7 +35,7 @@ The table shows Nimbus's kit; [Marshal and Doctor](docs/MARSHAL_DOCTOR.md) and [
 | R | Reload |
 | Space | Press to jump / wall kick; hold while moving into a ledge to mantle automatically |
 | Scroll wheel up | Horizontal ground dash / crosshair-directed 3D air dash, after a short buildup |
-| Shift hold | Momentum slide; downhill entry works from low speed |
+| Shift hold | Crouch / half-speed crouch walk; momentum or a downhill slope takes priority as a slide |
 | Q | Ability 1 — Hover: higher umbrella vault, then glide; press again to end |
 | E | Ability 2 — frontal Deflect |
 | 1 | Ability 3 — bouncing Pocket Bomb |

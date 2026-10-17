@@ -67,7 +67,7 @@ func fire_projectile(direction: Vector3) -> void:
 	actor.resolver.record("cast", actor, "projectile")
 
 func safe_muzzle() -> Vector3:
-	var shoulder: Vector3 = actor.global_position + Vector3.UP * 1.36
+	var shoulder: Vector3 = actor.body_point(1.36)
 	var obstruction: Dictionary = actor.resolver.ray(shoulder, actor.muzzle(), [actor.get_rid()], 1)
 	if not obstruction.is_empty():
 		return obstruction["position"] + obstruction["normal"] * 0.16

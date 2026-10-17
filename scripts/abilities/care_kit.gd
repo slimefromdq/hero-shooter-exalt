@@ -27,7 +27,7 @@ func weapon(amount: float, spread: float = 0.0, pellets: int = 1) -> void:
 	consume_ammo()
 	shot_cd = actor.tuning.shot_interval
 	var origin: Vector3 = actor.intent.aim_origin
-	if origin == Vector3.ZERO: origin = actor.global_position + Vector3.UP * 1.6
+	if origin == Vector3.ZERO: origin = actor.body_point(1.6)
 	var view: Dictionary = actor.resolver.ray(origin,origin + actor.aim_direction * 70,[actor.get_rid()])
 	var end: Vector3 = view.get("position",origin + actor.aim_direction * 70)
 	var muzzle: Vector3 = safe_muzzle()
@@ -48,7 +48,7 @@ func weapon(amount: float, spread: float = 0.0, pellets: int = 1) -> void:
 			damage *= lerpf(1,t.cannon_minimum,clampf((muzzle.distance_to(endpoint) - t.cannon_falloff_start) / (t.cannon_falloff_end - t.cannon_falloff_start),0,1))
 		var target: HeroActor = hit.get("collider") as HeroActor
 		if target != null:
-			var head: bool = endpoint.y - target.global_position.y >= 1.5
+			var head: bool = endpoint.y - target.global_position.y >= target.headshot_height()
 			actor.resolver.damage(actor,target,damage * (actor.tuning.head_multiplier if head else 1.0),"cannon" if pellets > 1 else "sidearm",id,head,false,muzzle)
 		elif hit.get("collider") is CombatBarrier or hit.get("collider") is HunterSnare:
 			hit.collider.receive_damage(actor,damage,id)

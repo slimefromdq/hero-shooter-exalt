@@ -102,3 +102,7 @@ static func animate(p: HeroPresentation) -> void:
 	if a.state == "huddle_wave_start": p.huddle_colony.scale = Vector3(1.2,.8,1.2)
 	elif a.state == "huddle_pulse": p.huddle_colony.scale = Vector3.ONE*1.15
 	else: p.huddle_colony.scale = Vector3.ONE
+	# A colony crouches by compressing its stack, keeping the lowest bugs above
+	# the floor while the shared camera, muzzle and collision move down.
+	p.huddle_colony.position.y = a.motor.posture_lowering()
+	if a.motor.crouched: p.huddle_colony.scale *= Vector3(1.1,.6,1.1)

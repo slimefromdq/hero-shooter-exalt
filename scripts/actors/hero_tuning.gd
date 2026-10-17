@@ -25,6 +25,8 @@ extends Resource
 @export var slide_entry_speed: float = 5.0
 @export var slide_friction: float = 3.6
 @export var slide_slope: float = 8.0
+@export var crouch_speed_scale: float = 0.5
+@export var crouch_height: float = 1.2
 @export var speed_limit: float = 26.0
 @export_category("Nimbus")
 @export var max_health: float = 250.0

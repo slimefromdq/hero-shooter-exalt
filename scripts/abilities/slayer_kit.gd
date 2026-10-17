@@ -129,7 +129,7 @@ func movement_scale() -> float:
 func aim_point(distance: float) -> Vector3:
 	var origin: Vector3 = actor.intent.aim_origin
 	if origin == Vector3.ZERO:
-		origin = actor.global_position + Vector3.UP * 1.4
+		origin = actor.body_point(1.4)
 	var hit: Dictionary = actor.resolver.ray(origin, origin + actor.aim_direction * distance, [actor.get_rid()])
 	return hit.get("position", origin + actor.aim_direction * distance)
 
@@ -149,7 +149,7 @@ func fire(_ultimate: bool = false) -> void:
 	var right: Vector3 = direction.cross(Vector3.UP).normalized()
 	if right.is_zero_approx(): right = Vector3.RIGHT
 	var up: Vector3 = right.cross(direction).normalized()
-	var obstruction: Dictionary = actor.resolver.ray(actor.global_position + Vector3.UP * 1.36, muzzle, [actor.get_rid()], 1)
+	var obstruction: Dictionary = actor.resolver.ray(actor.body_point(1.36), muzzle, [actor.get_rid()], 1)
 	last_shot_damage = 0.0
 	last_shot_pellets = 0
 	last_shot_head = false
@@ -165,7 +165,7 @@ func fire(_ultimate: bool = false) -> void:
 			var pellet_cast: int = actor.resolver.new_cast(actor)
 			var amount: float = t.pellet_damage * damage_scale(muzzle.distance_to(endpoint))
 			if target != null:
-				var head: bool = endpoint.y - target.global_position.y >= 1.5
+				var head: bool = endpoint.y - target.global_position.y >= target.headshot_height()
 				var before: float = target.health + target.shields
 				var result: String = actor.resolver.damage(actor,target,amount * (t.head_multiplier if head else 1.0),"shotgun",pellet_cast,head,false,muzzle)
 				last_shot_damage += before - target.health - target.shields
@@ -215,7 +215,7 @@ func release_knife() -> void:
 
 func throw_origin() -> Vector3:
 	var hand: Vector3 = actor.presentation.right_arm.get_node("Joint").to_global(Vector3(0,-.28,0))
-	var shoulder: Vector3 = actor.global_position + Vector3.UP * 1.36
+	var shoulder: Vector3 = actor.body_point(1.36)
 	var hit: Dictionary = actor.resolver.ray(shoulder,hand,[actor.get_rid()],1)
 	return hit.position + hit.normal * .12 if not hit.is_empty() else hand
 
@@ -333,7 +333,7 @@ func release_trap() -> void:
 	var hand: Vector3 = throw_origin()
 	# Sweep the actual device from the shoulder to the hand; a thin wall cannot
 	# be skipped by the release animation. Actors remain free to walk over traps.
-	trap.global_position = actor.global_position + Vector3.UP * 1.36
+	trap.global_position = actor.body_point(1.36)
 	trap.move_and_collide(hand - trap.global_position)
 	if not HunterSnare.placement_clear(actor,trap.global_position,[actor.get_rid(),trap.get_rid()]):
 		trap.queue_free()

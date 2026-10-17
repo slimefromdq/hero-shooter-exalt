@@ -18,17 +18,17 @@ func sight(target: HeroActor) -> bool:
 	if not is_instance_valid(target) or not target.alive or target == actor or target.team != actor.team: return false
 	if actor.resolver.protected_room(actor) or actor.resolver.protected_room(target): return false
 	# Other teammates do not occlude care; environment and hostile barriers do.
-	var from: Vector3 = actor.global_position + Vector3.UP * 1.4
-	return actor.resolver.attack_ray(actor,from,target.global_position + Vector3.UP * 1.2,[],1).is_empty()
+	var from: Vector3 = actor.body_point(1.4)
+	return actor.resolver.attack_ray(actor,from,target.body_point(1.2),[],1).is_empty()
 
 func targeted(maximum: float, angle: float = 12.0) -> HeroActor:
 	var best: HeroActor = null
 	var score: float = cos(deg_to_rad(angle))
 	var origin: Vector3 = actor.intent.aim_origin
-	if origin == Vector3.ZERO: origin = actor.global_position + Vector3.UP * 1.4
+	if origin == Vector3.ZERO: origin = actor.body_point(1.4)
 	for other: HeroActor in actor.get_tree().get_nodes_in_group("actors"):
 		if actor.global_position.distance_to(other.global_position) > maximum or not sight(other): continue
-		var direction: Vector3 = (other.global_position + Vector3.UP * 1.2 - origin).normalized()
+		var direction: Vector3 = (other.body_point(1.2) - origin).normalized()
 		var dot: float = direction.dot(actor.aim_direction)
 		if dot > score:
 			score = dot
@@ -95,8 +95,8 @@ func update_beam(delta: float) -> void:
 		patient = candidate
 		obstruction_age = 0
 	if is_instance_valid(patient):
-		var origin: Vector3 = actor.intent.aim_origin if actor.intent.aim_origin != Vector3.ZERO else actor.global_position + Vector3.UP * 1.4
-		var dot: float = (patient.global_position + Vector3.UP * 1.2 - origin).normalized().dot(actor.aim_direction)
+		var origin: Vector3 = actor.intent.aim_origin if actor.intent.aim_origin != Vector3.ZERO else actor.body_point(1.4)
+		var dot: float = (patient.body_point(1.2) - origin).normalized().dot(actor.aim_direction)
 		if not patient.alive or patient.team != actor.team or actor.global_position.distance_to(patient.global_position) > t.beam_range or dot < cos(deg_to_rad(t.beam_retain)):
 			disconnect_beam()
 	if not is_instance_valid(patient): return
@@ -111,7 +111,7 @@ func update_beam(delta: float) -> void:
 	beam_draw_age -= delta
 	if beam_draw_age <= 0:
 		beam_draw_age = .045
-		CombatEffect.streak(actor.get_parent(),actor.muzzle(),patient.global_position + Vector3.UP * 1.2,.055,.08)
+		CombatEffect.streak(actor.get_parent(),actor.muzzle(),patient.body_point(1.2),.055,.08)
 
 func start_call() -> bool:
 	var target: HeroActor = targeted(data().call_range)

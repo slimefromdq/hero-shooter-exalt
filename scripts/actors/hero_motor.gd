@@ -17,8 +17,13 @@ var slide_rearmed: bool = true
 var slide_velocity: Vector3 = Vector3.ZERO
 var traversal: TraversalMotion
 var external_velocity: Vector3 = Vector3.ZERO
+var crouched: bool = false
+var body_collision: CollisionShape3D
+var standing_capsule: CapsuleShape3D
 
 func _ready() -> void:
+	body_collision = actor.get_node("BodyCollision") as CollisionShape3D
+	standing_capsule = body_collision.shape.duplicate() as CapsuleShape3D
 	traversal = TraversalMotion.new()
 	traversal.actor = actor
 
@@ -40,6 +45,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 func tick_motion(delta: float, input: CombatIntent) -> void:
 	var t: HeroTuning = actor.tuning
 	var was_floor: bool = grounded()
+	update_posture(was_floor and input.slide and mode not in ["dash","dash_windup","mantle"] and actor.state not in ["captured","throw_pair","boot_attached","boot_captured","stagger","counterthrow","throw_release"])
 	slide_press_age += delta
 	if input.slide_pressed: slide_press_age = 0.0
 	if not input.slide and mode not in ["dash","dash_windup"]: slide_rearmed = true
@@ -131,9 +137,13 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			if (tangent.length() < 2.0 and rad_to_deg(actor.get_floor_angle()) < t.slide_slope) or not input.slide:
 				transition("ground")
 	else:
+		# Test incoming momentum before crouch braking. Slide takes priority,
+		# including downhill entry, but cannot bypass the dash landing gate.
+		var enter_slide: bool = input.slide and slide_rearmed and was_floor and can_move and actor.state == "ready" and (Vector2(actor.velocity.x,actor.velocity.z).length() >= t.slide_entry_speed or rad_to_deg(actor.get_floor_angle()) >= t.slide_slope)
 		var scale: float = 1.0
+		if crouched and not enter_slide: scale = t.crouch_speed_scale
 		if input.aim_held and actor.tuning.hero_id in ["nimbus","slayer"]:
-			scale = 0.6
+			scale = minf(scale,0.6)
 		if actor.state == "guard":
 			scale = 0.15
 		elif actor.state not in ["ready", "slayer_knife", "slayer_trap", "marshal_shield", "huddle_regroup"]:
@@ -158,10 +168,10 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 		else:
 			actor.velocity.y -= t.gravity * delta
 			mode = "ground" if was_floor else "air"
-		if input.slide and slide_rearmed and was_floor and can_move and actor.state == "ready":
-			var slope: float = rad_to_deg(actor.get_floor_angle())
-			if current.length() >= t.slide_entry_speed or slope >= t.slide_slope:
-				transition("slide")
+		if enter_slide:
+			transition("slide")
+		elif crouched and was_floor:
+			mode = "crouch"
 	var can_traverse: bool = can_move and actor.permits("jump") and mode not in ["dash", "dash_windup"]
 	var mantle_request: bool = jump_buffer > 0.0 or (input.jump_held and (wish * Vector3(1,0,1)).length_squared() >= .1)
 	if mantle_request and can_traverse:
@@ -209,6 +219,35 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 				break
 	if mode == "hover_ascent" and actor.is_on_ceiling():
 		transition("hover", t.hover_duration)
+	if mode == "ground" and crouched: mode = "crouch"
+
+func posture_lowering() -> float:
+	return standing_capsule.height - (body_collision.shape as CapsuleShape3D).height
+
+func try_stand() -> bool:
+	if not crouched: return true
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = standing_capsule
+	query.transform = actor.global_transform
+	query.transform.origin += Vector3.UP * (standing_capsule.height * .5)
+	query.collision_mask = actor.collision_mask
+	query.exclude = [actor.get_rid()]
+	query.margin = 0.0
+	if not actor.get_world_3d().direct_space_state.intersect_shape(query,1).is_empty(): return false
+	set_crouched(false)
+	return true
+
+func update_posture(requested: bool) -> void:
+	if requested:
+		set_crouched(true)
+	else:
+		try_stand()
+
+func set_crouched(value: bool) -> void:
+	crouched = value
+	var capsule := body_collision.shape as CapsuleShape3D
+	capsule.height = clampf(actor.tuning.crouch_height,capsule.radius * 2,standing_capsule.height) if value else standing_capsule.height
+	body_collision.position.y = capsule.height * .5
 
 func finish_mantle(delta: float) -> void:
 	# The checked landing supplies ground permission immediately. Continue the
@@ -237,6 +276,7 @@ func transition(next: String, duration: float = 0.0) -> void:
 	mode = next
 	if next == "slide":
 		slide_velocity = actor.velocity
+		set_crouched(true)
 	if next != "slide":
 		dash_slide = false
 	timer = duration
@@ -247,6 +287,7 @@ func end_hover() -> void:
 		transition("air")
 
 func cancel() -> void:
+	set_crouched(false)
 	external_velocity = Vector3.ZERO
 	if traversal != null:
 		traversal.reset()

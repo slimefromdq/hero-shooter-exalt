@@ -55,7 +55,7 @@ func try_mantle(wish: Vector3) -> bool:
 	if not supported(landing):
 		return false
 	var shape := PhysicsShapeQueryParameters3D.new()
-	shape.shape = (actor.get_node("BodyCollision") as CollisionShape3D).shape
+	shape.shape = actor.motor.standing_capsule
 	shape.transform = actor.global_transform
 	shape.transform.origin = landing + Vector3.UP * .95
 	shape.collision_mask = actor.collision_mask
@@ -63,10 +63,13 @@ func try_mantle(wish: Vector3) -> bool:
 	shape.margin = .01
 	if not actor.get_world_3d().direct_space_state.intersect_shape(shape,1).is_empty():
 		return false
+	var was_crouched: bool = actor.motor.crouched
+	if not actor.motor.try_stand(): return false
 	var transform: Transform3D = actor.global_transform
 	for index: int in range(1,25):
 		var point: Vector3 = sample(float(index) / 24.0)
 		if actor.test_move(transform,point - transform.origin):
+			actor.motor.set_crouched(was_crouched)
 			return false
 		transform.origin = point
 	actor.motor.end_hover()

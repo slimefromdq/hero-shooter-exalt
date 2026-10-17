@@ -16,7 +16,7 @@ Run `Launch.ps1 -Slayer` for the city or `Launch.ps1 -Training -Slayer` for the 
 | E | Boot Rush |
 | 1 | Aim and toss Hunter's Snare; arms on a timer in flight or on the ground; RMB does not change deployment |
 | 2 | Heads Will Roll; automatic release after windup |
-| Wheel up / Shift / Space | Shared dash / slide / jump, mantle and wall kick |
+| Wheel up / Shift / Space | Shared dash / crouch or momentum slide / jump, mantle and wall kick |
 | 5 / 6 / 4 | Shared melee / guard / throw and counterthrow |
 
 Internal `hover`, `deflect` and `bomb` action names remain Q/E/1 slots. Slayer's Q cannot activate Nimbus's Hover. Sprint remains undecided in the design; both heroes retain the same 6 m/s baseline and shared traversal.
@@ -30,14 +30,14 @@ Defaults are in `resources/slayer.tres` and exported `SlayerTuning` fields. Each
 | Health | 275 HP; Nimbus retains 250 HP |
 | Shotgun | 6 shells, 10 × 9 body damage, global 2× head multiplier, 1.1 s pump lock, 1.1° fixed disk spread |
 | Falloff | Full through 12 m; linear reduction to 40% at 24 m; 35 m trace limit |
-| Reload | First shell after 0.3 + 0.55 s; subsequent shells every 0.55 s |
-| Knives | 2 charges, sequential 7 s recharge, 30 direct damage, 75 m/s, 25 m range; 0.09 s hand release, 0.22 s fading silver-blue trail |
+| Reload | First shell after 0.15 + 0.22 s; subsequent shells every 0.22 s; firing waits for the full sequence |
+| Knives | 2 charges, sequential 7 s recharge, 30 direct damage, 110 m/s, 25 m range, 0.14 m collision radius; 0.09 s hand release, 0.22 s fading silver-blue trail |
 | Bleed | 8 DPS for 4 s in eight 4-damage ticks; refresh retains partial tick progress |
-| Boot Rush | 0.12 s startup, up to 12 m at 32 m/s, 55 damage, 11 m/s decaying displacement, 9 s cooldown; 0.22 s input buffer |
+| Boot Rush | 0.06 s startup, up to 12 m at 32 m/s, 55 damage once, 0.45 s turning hold then 18 m/s horizontal + 3 m/s upward launch, 9 s cooldown; 0.22 s input buffer |
 | Boot recovery | Immediate control; speed returns from 35% to 100% over 0.4 s on hit or 0.7 s on miss/wall; 30% horizontal exit momentum |
 | Snare | 2 charges / active traps, sequential 12 s recharge, 0.75 s arm time from release, 1.4 m radius, 15 s lifetime, 25 HP |
 | Armed trigger | 25 damage, 1.5 s root and mobility lock; aim and shooting remain available; can trigger in flight |
-| Aimed toss | One deployment regardless of RMB; 0.14 s hand release in a 0.36 s keyed throw; 11 m/s launch plus 3 m/s lift, 15 m/s² gravity |
+| Aimed toss | One deployment regardless of RMB; 0.14 s hand release in a 0.36 s keyed throw; 18 m/s launch plus 3 m/s lift, 15 m/s² gravity |
 | Instinct | Private 4 s marks within 32 m; wounded warning at 30% effective HP; ordinary visibility/depth tests |
 | Axe | 0.55 s windup, 0.2 s release, 0.55 s recovery; 20 m/s, 30 m range, 0.55 m collision radius |
 | Axe contact | 110 direct damage, then an 8 s wound reducing effective max HP by 50% of base maximum |

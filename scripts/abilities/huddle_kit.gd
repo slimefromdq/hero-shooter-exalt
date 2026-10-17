@@ -105,7 +105,7 @@ func cast_screen() -> void:
 	var recipient: HeroActor = actor
 	var score: float = cos(deg_to_rad(12))
 	var origin: Vector3 = actor.intent.aim_origin
-	if origin == Vector3.ZERO: origin = actor.global_position+Vector3.UP*1.4
+	if origin == Vector3.ZERO: origin = actor.body_point(1.4)
 	for other: HeroActor in actor.get_tree().get_nodes_in_group("actors"):
 		if other == actor or not other.alive or other.team != actor.team or actor.resolver.protected_room(other): continue
 		if actor.global_position.distance_to(other.global_position) > data().screen_range: continue

@@ -16,6 +16,7 @@ var active: bool = true
 var recoil: float = 0.0
 var dash_queued: bool = false
 var slide_queued: bool = false
+var posture_offset: float = 0.0
 @export var normal_fov: float = 82.0
 @export var aim_fov: float = 60.0
 
@@ -55,7 +56,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if rig == null:
 		return
-	rig.global_position = actor.global_position + Vector3.UP * camera_height
+	posture_offset = lerpf(posture_offset,actor.motor.posture_lowering(),minf(1.0,delta * 16.0))
+	rig.global_position = actor.global_position + Vector3.UP * (camera_height - posture_offset)
 	recoil = move_toward(recoil,0,delta * .22)
 	rig.rotation = Vector3(pitch + recoil, yaw, 0.0)
 	arm.position.x = shoulder_offset
@@ -107,6 +109,7 @@ func clear_action_queue() -> void:
 	slide_queued = false
 
 func reset_controller() -> void:
+	posture_offset = 0.0
 	clear_action_queue()
 	recoil = 0.0
 	yaw = 0.0

@@ -147,7 +147,7 @@ func draw_hud() -> void:
 	rect(Vector2(1231, 776), Vector2(164 * p.close.guard_meter / 100.0, 4), mint)
 	label_at("%s   MELEE ENGAGE" % TrainingInputs.key_label("melee"), Vector2(1231, 809), 11, paper)
 	label_at("%s   THROW / COUNTER" % TrainingInputs.key_label("throw"), Vector2(1231, 842), 11, paper)
-	label_at("W A S D  MOVE    SPACE  JUMP / WALL KICK    HOLD SPACE + MOVE  MANTLE    %s  SLIDE    %s" % [TrainingInputs.key_label("slide"),CareHUD.secondary_label(p)], Vector2(32, 889), 11, ink, true)
+	label_at("W A S D  MOVE    SPACE  JUMP / WALL KICK    HOLD SPACE + MOVE  MANTLE    %s  CROUCH / SLIDE    %s" % [TrainingInputs.key_label("slide"),CareHUD.secondary_label(p)], Vector2(32, 889), 11, ink, true)
 	label_at("F5  RESET    F6  REFILL    F3  TELEMETRY", Vector2(1098, 889), 10, ink)
 	if p.state != "ready" or p.motor.mode not in ["ground", "air"]:
 		label_at(p.state.to_upper().replace("_", " ") + "  /  " + p.motor.mode.to_upper(), Vector2(600, 721), 13, paper, true)

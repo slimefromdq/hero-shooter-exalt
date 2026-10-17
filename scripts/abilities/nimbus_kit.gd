@@ -61,19 +61,19 @@ func fire(ultimate: bool) -> void:
 	var t: HeroTuning = actor.tuning
 	var origin: Vector3 = actor.intent.aim_origin
 	if origin == Vector3.ZERO:
-		origin = actor.global_position + Vector3.UP * 1.6
+		origin = actor.body_point(1.6)
 	var view_hit: Dictionary = actor.resolver.weapon_ray(actor, origin, origin + actor.aim_direction * 100.0, [actor.get_rid()])
 	var aim_point: Vector3 = view_hit.get("position", origin + actor.aim_direction * 100.0)
 	var muzzle: Vector3 = actor.muzzle()
 	# Reject a muzzle already poked through a thin wall before tracing to the aim point.
-	var shoulder: Vector3 = actor.global_position + Vector3.UP * 1.36
+	var shoulder: Vector3 = actor.body_point(1.36)
 	var blocked: Dictionary = actor.resolver.ray(shoulder, muzzle, [actor.get_rid()], 1)
 	var hit: Dictionary = blocked if not blocked.is_empty() else actor.resolver.weapon_ray(actor, muzzle, aim_point + (aim_point - muzzle).normalized() * 0.05, [actor.get_rid()])
 	var endpoint: Vector3 = hit.get("position", aim_point)
 	cast_id = actor.resolver.new_cast(actor)
 	if not hit.is_empty() and hit.get("collider") is HeroActor:
 		var target: HeroActor = hit["collider"] as HeroActor
-		var head: bool = not ultimate and endpoint.y - target.global_position.y >= 1.5
+		var head: bool = not ultimate and endpoint.y - target.global_position.y >= target.headshot_height()
 		var amount: float = t.ultimate_damage if ultimate else t.rifle_damage * (t.head_multiplier if head else 1.0)
 		actor.resolver.damage(actor, target, amount, "ultimate" if ultimate else "rifle", cast_id, head, ultimate)
 	elif hit.get("collider") is CombatBarrier:

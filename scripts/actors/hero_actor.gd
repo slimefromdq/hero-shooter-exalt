@@ -128,7 +128,13 @@ func permits(action: String) -> bool:
 	return true
 
 func muzzle() -> Vector3:
-	return global_position + Vector3.UP * 1.36 + global_basis.x * 0.32 + aim_direction * 0.55
+	return body_point(1.36) + global_basis.x * 0.32 + aim_direction * 0.55
+
+func body_point(standing_height: float) -> Vector3:
+	return global_position + Vector3.UP * (standing_height - motor.posture_lowering())
+
+func headshot_height() -> float:
+	return 1.5 - motor.posture_lowering()
 
 func on_damage(amount: float, head: bool) -> void:
 	last_hit_age = 0.0

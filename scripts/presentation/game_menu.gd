@@ -152,9 +152,10 @@ func show_settings() -> void:
 	label("WASD move · Space jump / wall kick · Hold Space + move to mantle",14)
 	var bindings := PackedStringArray()
 	for action: String in ["dash","slide","reload","melee","throw","guard","hover","deflect","bomb","ultimate","interact"]:
-		bindings.append("%s: %s" % [action.capitalize(),TrainingInputs.key_label(action)])
+		bindings.append("%s: %s" % ["Crouch / slide" if action == "slide" else action.capitalize(),TrainingInputs.key_label(action)])
 	label("  /  ".join(bindings),13)
 	label("Air-dash slide: press Shift in the last 0.12 s before impact. Slide shots cost no ammo while loaded.",13)
+	label("Hold Shift at low speed to crouch; WASD crouch-walks at half speed. Enough momentum takes priority as a slide.",13)
 	button("RESTORE DEFAULTS",func() -> void: settings_store.restore_defaults(); show_settings())
 	button("BACK",show_home)
 

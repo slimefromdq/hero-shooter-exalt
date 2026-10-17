@@ -205,11 +205,13 @@ func _process(delta: float) -> void:
 	left_leg.rotation = Vector3(sin(walk_phase) * .4 if actor.is_on_floor() else -.25,0,0)
 	right_leg.rotation = Vector3(-left_leg.rotation.x,0,0)
 	right_leg.scale = Vector3.ONE
+	left_leg.position.y = .8
+	right_leg.position.y = .8
 	left_arm.rotation = Vector3(.1,0,-.15)
 	right_arm.rotation = Vector3(1.1,0,0)
 	for limb: Node3D in [left_arm,right_arm,left_leg,right_leg]:
 		(limb.get_node("Joint") as Node3D).rotation = Vector3.ZERO
-	model.position = Vector3(0,.5 if actor.motor.mode == "slide" else 1.0,0)
+	model.position = Vector3(0,1.0 - actor.motor.posture_lowering(),0)
 	model.rotation = Vector3(-.28 if actor.motor.mode == "slide" else 0,0,-.85 if not actor.alive else 0)
 	umbrella.visible = actor.motor.mode in ["hover", "hover_ascent"]
 	shield.visible = actor.state in ["guard", "deflect"] or block_flash > 0
@@ -318,6 +320,20 @@ func _process(delta: float) -> void:
 	if actor.tuning is SlayerTuning: SlayerVisuals.animate(self)
 	if actor.kit is HuddleKit: HuddleVisuals.animate(self)
 	elif actor.kit is CareKit: CareVisuals.animate(self)
+	if actor.motor.mode == "slide":
+		left_leg.position.y = 1.0
+		right_leg.position.y = 1.0
+		left_leg.rotation.x = 1.4
+		right_leg.rotation.x = 1.4
+	if actor.motor.crouched and actor.motor.mode != "slide" and actor.state not in ["captured","throw_pair","boot_attached","boot_captured","mantle"] and not actor.state.begins_with("slayer_boot"):
+		# Fold both legs under the lowered torso; retain aiming and kit arm poses.
+		var stride: float = sin(walk_phase) * .16 if actor.motor.grounded() else 0.0
+		left_leg.position.y = .95
+		right_leg.position.y = .95
+		left_leg.rotation.x = 1.25 + stride
+		right_leg.rotation.x = 1.25 - stride
+		(left_leg.get_node("Joint") as Node3D).rotation.x = -2.5 - stride
+		(right_leg.get_node("Joint") as Node3D).rotation.x = -2.5 + stride
 	var status_text: String = ControlFeedback.caption(actor)
 	if status_text != "": status_text += "\n"
 	status_text += CareHUD.status(actor)

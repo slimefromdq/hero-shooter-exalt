@@ -42,6 +42,15 @@ func run() -> void:
 			check(bounds.has_point(feet),"%s %s: full hero fits within wider framing" % [hero,size])
 			check(head.x < bounds.get_center().x,"%s %s: shoulder offset keeps hero left of aim" % [hero,size])
 			check(is_equal_approx(controller.camera.fov,82.0),"%s %s: normal view uses wider 82 degree FOV" % [hero,size])
+			actor.motor.set_crouched(true)
+			actor.motor.mode = "crouch"
+			await step(40)
+			var low_head: Vector2 = controller.camera.unproject_position(actor.global_position + Vector3.UP * (1.95-actor.motor.posture_lowering()))
+			var low_feet: Vector2 = controller.camera.unproject_position(actor.global_position + Vector3.UP * .1)
+			check(bounds.has_point(low_head) and bounds.has_point(low_feet),"%s %s: crouched hero fits the lowered camera" % [hero,size])
+			check(absf(controller.rig.global_position.y-actor.global_position.y-(controller.camera_height-.7)) < .01,"%s %s: crouch camera settles 0.7 m lower" % [hero,size])
+			actor.motor.set_crouched(false)
+			actor.motor.mode = "ground"
 	var wall: Node3D = Geometry.box(world,Vector3(5,5,.15),Vector3(0,1.75,.9),Color.GRAY)
 	await step()
 	check(controller.arm.get_hit_length() < controller.camera_distance * .75,"camera pulls in before entering a nearby wall")
