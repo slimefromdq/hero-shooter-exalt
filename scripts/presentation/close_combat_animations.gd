@@ -13,6 +13,25 @@ static func library() -> AnimationLibrary:
 	track(swing, "Model/Geometry/LeftLeg:rotation", [0,.15,.36,.6,1], [Vector3.ZERO,Vector3(-.3,0,0),Vector3(.75,0,0),Vector3(.3,0,0),Vector3.ZERO])
 	track(swing, "Model/Geometry/RightLeg:rotation", [0,.26,.45,1], [Vector3.ZERO,Vector3(.4,0,0),Vector3(-.45,0,0),Vector3.ZERO])
 	result.add_animation("melee", swing)
+	var stagger := Animation.new()
+	stagger.length = 1.0
+	var recoil: Array = [0,.12,.28,.56,.8,1]
+	track(stagger,"Model:position",recoil,[Vector3(0,1,0),Vector3(0,.83,.32),Vector3(0,.77,.38),Vector3(0,.8,.26),Vector3(0,.9,.1),Vector3(0,1,0)])
+	track(stagger,"Model:rotation",recoil,[Vector3.ZERO,Vector3(-.8,-.2,.18),Vector3(-.7,-.25,.15),Vector3(-.5,-.1,-.12),Vector3(.16,0,-.06),Vector3.ZERO])
+	track(stagger,"Model/Geometry/LeftArm:rotation",recoil,[Vector3(.1,0,-.15),Vector3(.45,0,-1.5),Vector3(.3,-.2,-1.3),Vector3(.2,0,-1.0),Vector3(.4,0,-.4),Vector3(.1,0,-.15)])
+	track(stagger,"Model/Geometry/RightArm:rotation",recoil,[Vector3(1.1,0,0),Vector3(.3,0,1.5),Vector3(.15,.3,1.3),Vector3(.2,0,1),Vector3(.5,0,.4),Vector3(1.1,0,0)])
+	track(stagger,"Model/Geometry/LeftLeg:rotation",recoil,[Vector3.ZERO,Vector3(.55,0,-.15),Vector3(.65,0,-.12),Vector3(.45,0,-.08),Vector3(-.2,0,0),Vector3.ZERO])
+	track(stagger,"Model/Geometry/RightLeg:rotation",recoil,[Vector3.ZERO,Vector3(-.45,0,.15),Vector3(-.35,0,.12),Vector3(-.2,0,.08),Vector3(.15,0,0),Vector3.ZERO])
+	track(stagger,"Model/Geometry/LeftLeg/Joint:rotation",recoil,[Vector3.ZERO,Vector3(.9,0,0),Vector3(1.0,0,0),Vector3(.8,0,0),Vector3(.3,0,0),Vector3.ZERO])
+	track(stagger,"Model/Geometry/RightLeg/Joint:rotation",recoil,[Vector3.ZERO,Vector3(.65,0,0),Vector3(.8,0,0),Vector3(.5,0,0),Vector3(.2,0,0),Vector3.ZERO])
+	track(stagger,"Model/Geometry/Rifle:rotation",recoil,[Vector3.ZERO,Vector3(-.4,.3,1.1),Vector3(-.3,.25,.9),Vector3(-.1,0,.7),Vector3(.15,0,.3),Vector3.ZERO])
+	result.add_animation("stagger",stagger)
+	var block := Animation.new()
+	block.length = 1.0
+	track(block,"Model:position",[0,.16,.45,1],[Vector3(0,1,0),Vector3(0,.93,.12),Vector3(0,.95,.06),Vector3(0,1,0)])
+	track(block,"Model:rotation",[0,.16,.45,1],[Vector3.ZERO,Vector3(-.16,0,.06),Vector3(-.08,0,0),Vector3.ZERO])
+	track(block,"Model/Geometry/LeftArm:rotation",[0,.16,.45,1],[Vector3(.1,0,-.15),Vector3(1.3,0,-.35),Vector3(1.1,0,-.2),Vector3(.1,0,-.15)])
+	result.add_animation("block",block)
 	var grab := Animation.new()
 	grab.length = 1.0
 	track(grab,"Model:rotation",[0,.45,1],[Vector3.ZERO,Vector3(.12,-.1,0),Vector3(.18,-.15,0)])

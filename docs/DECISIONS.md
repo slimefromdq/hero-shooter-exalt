@@ -20,7 +20,8 @@ All fields live in `HeroTuning`. Values can be changed through the Resource Insp
 | Slide | 5 m/s ordinary entry; slope entry at 8°; 3.6 m/s² friction; gravity acts on floor tangent; 26 m/s global speed cap; automatic continuation after ground dash |
 | Movement | 6 m/s ground; 30 m/s² acceleration; 24 braking; 7.5 air steering; 8 m/s jump; 22 m/s² gravity; 0.1 s edge forgiveness, 0.12 s jump buffer |
 | Hover | 8.5 m/s ascent for 0.3 s, then up to 2.5 s glide approaching 1.6 m/s descent; cooldown after end |
-| Melee | 75 HP; 2.6 m hit reach plus up to 3.6 m collision-limited travel; 0.24 s startup / 0.2 s active / 0.4 s recovery; no action cancels. Lunge starts at 0.06 s and lasts 0.34 s. Direction is fixed on input. |
+| Melee | 75 HP; 2.6 m hit reach plus up to 4.8 m collision-limited travel; 0.24 s startup / 0.2 s active / 0.4 s recovery; no action cancels. Lunge starts at 0.06 s and lasts 0.36 s. Direction is fixed on input. |
+| Reload movement | 85% of ordinary ground speed: 5.1 m/s, previously 35% / 2.1 m/s. Aim still caps movement at 60%. Reload duration stays 1.6 s. |
 | Guard | 100 meter; 24/s drain; 35/s immediate regen after release; 28 per blocked strike; 2 s re-block cooldown; 15% movement; 0 bullet reduction |
 | Throw | 2.8 m; 0.3 s startup; 0.65 s whiff; 0.24 s counter window; 1.1 s pair; 1.05 m lift; impact at 72% of the pair; 95 HP scripted damage; outside damage ×0.1 on both; 0.8 s re-grab grace |
 | Ultimate economy | Starts ready for training; +0.8%/s and +0.09% per HP damage. Consumed on stance entry, no cancellation refund. This economy is a sandbox assumption. |
@@ -39,7 +40,7 @@ The actor state table is authoritative; procedural animation never applies damag
 | Guard | Slow translation, release; responding counterthrow input; no gun/kit casts |
 | Throw startup / whiff | Limited translation, no new casts; damage interrupts startup |
 | Captured / throw pair | No translation or unrelated actions; outside damage ×0.1; scripted throw damage bypasses only pair mitigation |
-| Deflect / reload | Limited translation; no competing casts |
+| Deflect / reload | Deflect uses 35% translation; reload uses 85% (60% while aiming); no competing casts |
 | Final Notice | Aim and prepared primary shot; X cancels; slow movement |
 | Stagger / counter break | Brief explicit control restriction; no casts |
 | Release | Clears at next physics update with no added timed stun |
@@ -74,3 +75,11 @@ The user requested more melee travel, a stationary bot that strikes at a specifi
 The Guard trainer profile issues zero movement intent and requests a stationary version of the shared melee action. This suppresses that cast's lunge without modifying shared tuning resources. It strikes inside the smaller of its configured trigger range and actual melee hit reach. Default range is 2.4 m; interval 1.6 s; both are editable. Normal windup, hit deduplication, facing, line of sight, damage, guard and stagger all apply. The range ring and bot/HUD prompts expose the exercise rules. The dedicated start button resets the exercise and enables AI.
 
 Saved bindings are now 3 dash; Q Hover; E Deflect; 1 bomb; 2 ultimate; Shift slide; 5 melee; 4 throw/counter; 6 guard. The old V/C/F/G/X/Ctrl combat bindings are removed. Runtime defaults and the persisted project map agree; ability cards, guard/counter prompts and preview labels derive their keys from the actual InputMap.
+
+## CQ-FEEL-04 · Block impact, readable stagger and freer reloads
+
+The user requested stronger successful-block feedback, a more obvious attacking-bot stagger, further melee travel and less reload slowdown. Melee now travels 4.8 m over 0.36 s; its 75 damage, reach and commitment timings stay the same. A focused physics check finishes a damaged target initially 7 m away. Reload retains 85% movement, with the ordinary aim cap still applying; this is exposed as `reload_move_multiplier` in live tuning.
+
+The resolver emits `confirmed_block` only after a frontal melee block passes hit deduplication. The defender plays a dedicated original 0.36 s metallic clang on a separate sound channel, flashes its translucent shield, braces and spawns a 0.32 s world-space ring/spark burst. Guard hold, gunfire, rear hits and duplicate cast resolution cannot trigger success feedback. A meter-exhausting block still receives feedback. Transient presentation clears on reset/death; audio players explicitly stop and release their streams on exit.
+
+The attacker uses an authored AnimationPlayer recoil with backward torso displacement/lean, outward arms, buckled knees and weapon knockback, plus rotating overhead daze markers and a STAGGERED label. Only the visual model recoils; the stationary trainer's collision capsule stays planted. Gameplay stagger remains 0.55 s. Shield opacity is reduced so the response remains visible from the shoulder camera. Presentation never applies damage or extends control locks.

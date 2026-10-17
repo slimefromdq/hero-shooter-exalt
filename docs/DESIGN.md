@@ -1,6 +1,6 @@
 # Hero Shooter Design and Prototype Plan
 
-Version 0.11 · Working draft · October 16, 2026
+Version 0.12 · Working draft · October 16, 2026
 
 Build a hero shooter around expressive characters whose weapons, movement, and utility create different ways to enter, shape, and finish a fight. This is a living design contract for Lucy and Codex: preserve the fantasy, prototype the uncertain interaction, and revise from play.
 
@@ -82,7 +82,7 @@ Compare two tuning presets on the same route. Record completion time, falls, ove
 
 ## Shared close combat
 
-**Playtest direction, October 16:** Melee must travel forward so it can serve as an engage or finisher. Increase throw reach and give successful throws an actual paired animation. After a further request for more travel, the current experiment uses a 3.6 m committed lunge and 2.8 m grab, followed by a pull, hip lift, turn, slam, and get-up. These numerical defaults remain tunable; the forward movement and readable throw sequence implement Lucy's requested direction. Guard, counterthrow, startup interruption, paired mitigation and safe release still apply.
+**Playtest direction, October 16:** Melee must travel forward so it can serve as an engage or finisher. Increase throw reach and give successful throws an actual paired animation. After further requests for more travel, the current experiment uses a 4.8 m committed lunge and 2.8 m grab, followed by a pull, hip lift, turn, slam, and get-up. Successful blocks now need a clear sound and impact effect, with obvious attacker stagger: the implementation adds a dedicated metallic clang, shield flash, radial rings/sparks, keyed recoil and daze markers. Reload movement increases to 85% of ground speed while retaining the ordinary aiming cap. These numerical defaults remain tunable; the forward movement and readable feedback implement Lucy's requested direction. Guard, counterthrow, startup interruption, paired mitigation and safe release still apply.
 
 **Established for the initial build:** Include the melee, block, and throw concept alongside guns, movement, and hero abilities. Melee is a committed attack with meaningful windup and recovery, dealing substantial damage at close to midrange. Block primarily defends against melee. Holding it slows or immobilizes its user, draws on a regenerating meter, and blocks melee with an attacker-stagger response. Protection against gunfire is a separate tuning question, not the primary purpose of guard. Very-close-range throws threaten block; attacks can interrupt their startup, and a responding throw can counterthrow. Successful throws use a paired animation with heavy incoming damage mitigation for both participants.
 
@@ -408,6 +408,7 @@ Change one important variable at a time when isolating a failure. Keep the last 
 
 | Version | Change |
 | --- | --- |
+| 0.12 | Successful-block sound and impact burst; obvious keyed attacker recoil and daze markers; 4.8 m melee travel and 85% reload movement |
 | 0.11 | Increased proposed melee travel to 3.6 m; added stationary, range-triggered guard trainer and the user's requested key bindings |
 | 0.10 | Playtest feedback establishes forward-traveling melee for engages/finishers, larger throw reach, and a fully animated paired throw; initial experiment is 2.2 m lunge / 2.8 m grab |
 | 0.9 | Nimbus rifle gains established 2× headshots; Pocket Bomb peak damage becomes 80; Final Notice base damage becomes 150 |

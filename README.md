@@ -35,13 +35,14 @@ Bindings use named InputMap actions in `scripts/training/input_bindings.gd`; the
 
 ## Guard practice
 
-Press **Tab → Start guard drill**, walk inside the coral ring, face the stationary bot and hold **6**. The bot starts strikes within **2.4 m**, repeating at a **1.6 s** interval after its normal reaction/startup. It uses the shared melee and stagger rules but stays planted. Change **Strike trigger range** and **Strike interval** under **Stationary guard drill** in the training console. The same bot is available as the **Guard trainer** spawn profile. Starting the dedicated drill clears AI freeze.
+Press **Tab → Start guard drill**, walk inside the coral ring, face the stationary bot and hold **6**. The bot starts strikes within **2.4 m**, repeating at a **1.6 s** interval after its normal reaction/startup. A successful block produces a metallic clang, shield flash, expanding rings and sparks. The attacker snaps backward, spreads its arms, buckles its knees and shows rotating daze markers during the existing 0.55 s stagger. It uses the shared melee and stagger rules but stays planted. Change **Strike trigger range** and **Strike interval** under **Stationary guard drill** in the training console. The same bot is available as the **Guard trainer** spawn profile. Starting the dedicated drill clears AI freeze.
 
 ## Included
 
 - Nimbus's complete prototype kit: 45/90 body/head rifle, upward Hover, timed projectile reflection and hitscan blocking, 80-peak bomb with falloff and cover checks, and 150-damage Final Notice with a pre-hit 20% execution check.
 - Shared acceleration, braking, air steering, jump buffering/coyote time, fixed-direction dash, both slide entries, and collision-aware shoulder camera.
-- A 3.6 m committed melee lunge for engages/finishers, finite frontal guard with attacker stagger, interruptible 2.8 m throws, counterthrows, and an articulated pull/hip-lift/turn/slam/get-up animation. Slam damage occurs at impact; both participants retain 90% outside-damage reduction during the pair.
+- A 4.8 m committed melee lunge for engages/finishers, finite frontal guard with attacker stagger, interruptible 2.8 m throws, counterthrows, and an articulated pull/hip-lift/turn/slam/get-up animation. Slam damage occurs at impact; both participants retain 90% outside-damage reduction during the pair.
+- Reload movement retains 85% of normal speed (5.1 m/s); shoulder aiming retains its usual 60% cap. Reload still takes 1.6 s and prevents firing until complete.
 - Six bot profiles; seven exercises including the stationary guard drill; spawn/despawn; 250/500 HP experiments; 19/20/21% target presets; shield/invulnerability controls; AI settings; resource refills; movement presets; live combat tuning; route timer; event export.
 - Cover, firing lane, slope, elevated traversal platforms, and a ranged projectile-emitter opponent. The crossfire exercise uses a third-faction probe to test damage on **both** throw participants while preserving friendly-fire rules.
 - All gameplay components and per-actor resources are shared by player and bots. Multiplayer and the remaining roster are deferred.
@@ -60,6 +61,7 @@ godot --headless --path . --editor --import --quit
 godot --headless --path . --script res://tests/rules_test.gd
 godot --headless --path . --script res://tests/close_combat_test.gd
 godot --headless --path . --script res://tests/guard_drill_test.gd
+godot --headless --path . --script res://tests/block_feedback_test.gd
 godot --headless --path . --script res://tests/integration_test.gd
 ```
 

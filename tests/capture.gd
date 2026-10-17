@@ -45,12 +45,20 @@ func capture() -> void:
 	root.get_texture().get_image().save_png("res://artifacts/guard-drill.png")
 	arena.player.reset_actor(arena.training.bots[0].global_position + Vector3(0,0,2.2))
 	arena.player.intent.guard = true
-	for index: int in 40:
+	for index: int in 60:
+		await physics_frame
+		await process_frame
+		if arena.player.presentation.block_flash > 0:
+			break
+	await RenderingServer.frame_post_draw
+	root.get_texture().get_image().save_png("res://artifacts/guard-impact.png")
+	for index: int in 7:
 		await physics_frame
 		await process_frame
 	await RenderingServer.frame_post_draw
 	root.get_texture().get_image().save_png("res://artifacts/guard-block.png")
 	print("GUARD CAPTURE: player HP=",arena.player.health," bot state=",arena.training.bots[0].state)
+	ProceduralSound.guard_clang().save_to_wav("res://artifacts/guard-clang.wav")
 	print("CAPTURED: artifacts/training.png, training-console.png and hover.png")
 	arena.queue_free()
 	await process_frame

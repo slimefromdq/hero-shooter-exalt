@@ -105,6 +105,7 @@ func die() -> void:
 	if not alive:
 		return
 	alive = false
+	presentation.clear_feedback()
 	close.cancel()
 	kit.cancel(true)
 	motor.cancel()
@@ -115,6 +116,7 @@ func die() -> void:
 	died.emit()
 
 func reset_actor(at: Vector3 = Vector3.INF) -> void:
+	presentation.clear_feedback()
 	close.cancel()
 	kit.cancel(true)
 	motor.cancel()

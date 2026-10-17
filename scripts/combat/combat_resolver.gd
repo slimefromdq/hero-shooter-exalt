@@ -3,6 +3,7 @@ extends Node
 
 signal event_logged(entry: Dictionary)
 signal confirmed_hit(source: HeroActor, target: HeroActor, amount: float, head: bool, executed: bool)
+signal confirmed_block(attacker: HeroActor, defender: HeroActor)
 var events: Array[Dictionary] = []
 var cast_serial: int = 0
 var resolved: Dictionary = {}
@@ -52,6 +53,7 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 		record("block", target, tag)
 		if target.close.guard_meter <= 0.0:
 			target.close.stagger()
+		confirmed_block.emit(source, target)
 		return "blocked"
 	var amount: float = base
 	var executed: bool = execute and target.shields <= 0.0 and target.health / target.tuning.max_health <= source.tuning.execute_threshold

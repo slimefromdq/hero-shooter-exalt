@@ -18,6 +18,10 @@ var left_arm: Node3D
 var right_arm: Node3D
 var animator: AnimationPlayer
 var sound: ProceduralSound
+var block_sound: ProceduralSound
+var block_flash: float = 0.0
+var block_effect: BlockImpact
+var stagger_marks: Node3D
 var was_grounded: bool = false
 
 func _ready() -> void:
@@ -93,8 +97,25 @@ func _ready() -> void:
 	nameplate.no_depth_test = false
 	debug_label = Geometry.text3d(self, "", Vector3(0, 3.1, 0), 23, trim)
 	debug_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	stagger_marks = Node3D.new()
+	stagger_marks.position.y = 2.25
+	add_child(stagger_marks)
+	for index: int in 3:
+		var star := Node3D.new()
+		star.position = Vector3(cos(TAU * index / 3.0) * .42,0,sin(TAU * index / 3.0) * .42)
+		stagger_marks.add_child(star)
+		for angle: float in [0.0, PI / 2]:
+			var shape := BoxMesh.new()
+			shape.size = Vector3(.05,.22,.05)
+			var star_mat: StandardMaterial3D = Geometry.material(Color("ffce65"),1.0)
+			star_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			Geometry.mesh(star,shape,Vector3.ZERO,star_mat).rotation.z = angle
+	stagger_marks.visible = false
 	sound = ProceduralSound.new()
 	add_child(sound)
+	block_sound = ProceduralSound.new()
+	add_child(block_sound)
+	actor.resolver.confirmed_block.connect(on_block)
 	animator = AnimationPlayer.new()
 	animator.name = "CloseCombatAnimation"
 	animator.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
@@ -122,6 +143,7 @@ func make_limb(caption: String, at: Vector3, upper: float, lower: float, radius:
 
 func _process(delta: float) -> void:
 	fire_flash = maxf(0.0, fire_flash - delta)
+	block_flash = maxf(0.0, block_flash - delta)
 	walk_phase += Vector2(actor.velocity.x, actor.velocity.z).length() * delta * 1.8
 	left_leg.rotation = Vector3(sin(walk_phase) * .4 if actor.is_on_floor() else -.25,0,0)
 	right_leg.rotation = Vector3(-left_leg.rotation.x,0,0)
@@ -132,8 +154,15 @@ func _process(delta: float) -> void:
 	model.position = Vector3(0,.5 if actor.motor.mode == "slide" else 1.0,0)
 	model.rotation = Vector3(-.28 if actor.motor.mode == "slide" else 0,0,-.85 if not actor.alive else 0)
 	umbrella.visible = actor.motor.mode in ["hover", "hover_ascent"]
-	shield.visible = actor.state in ["guard", "deflect"]
-	shield.scale = Vector3.ONE * (1.0 if actor.state == "deflect" else 0.7)
+	shield.visible = actor.state in ["guard", "deflect"] or block_flash > 0
+	var block_strength: float = block_flash / BlockImpact.DURATION
+	shield.scale = Vector3.ONE * ((1.0 if actor.state == "deflect" else 0.7) + block_strength * .2)
+	var shield_mat := shield.material_override as StandardMaterial3D
+	var trim: Color = Color("80e1d0") if actor.team == 0 else Color("ffd4b4")
+	shield_mat.albedo_color = trim.lerp(Color("fff5cd"), block_strength)
+	shield_mat.albedo_color.a = (.55 if actor.state == "deflect" else .28) + block_strength * .24
+	stagger_marks.visible = actor.alive and actor.state == "stagger"
+	stagger_marks.rotation.y = (1.0 - actor.state_time / maxf(.01,actor.tuning.stagger_duration)) * TAU
 	rifle.rotation = Vector3.ZERO
 	rifle.position = Vector3(.34,1.38,-.25)
 	if actor.state == "reload":
@@ -143,6 +172,12 @@ func _process(delta: float) -> void:
 	if actor.state.begins_with("melee_"):
 		animation = "melee"
 		progress = actor.close.melee_progress()
+	elif actor.state == "stagger":
+		animation = "stagger"
+		progress = 1.0 - actor.state_time / maxf(.01, actor.tuning.stagger_duration)
+	elif actor.state == "guard" and block_flash > 0:
+		animation = "block"
+		progress = 1.0 - block_strength
 	elif actor.state == "throw_startup":
 		animation = "grab"
 		progress = 1.0 - actor.state_time / actor.tuning.throw_startup
@@ -170,6 +205,7 @@ func _process(delta: float) -> void:
 		if actor.state == "melee_windup": marker = "  /  STRIKE"
 		elif actor.state == "throw_startup": marker = "  /  GRAB!  [%s]" % TrainingInputs.key_label("throw")
 		elif actor.state == "guard": marker = "  /  GUARD"
+		elif actor.state == "stagger": marker = "  /  STAGGERED"
 		nameplate.text = "%s    %d HP%s" % [actor.actor_id.to_upper(), ceili(actor.health), marker]
 		nameplate.modulate = Color("ffd096") if marker != "" else Color("fff1db")
 	else:
@@ -180,6 +216,33 @@ func _process(delta: float) -> void:
 	if actor.is_on_floor() and not was_grounded and actor.velocity.length() > 1.0:
 		sound.play_tone(70.0, 0.07, 0.1)
 	was_grounded = actor.is_on_floor()
+
+func on_block(attacker: HeroActor, defender: HeroActor) -> void:
+	if defender != actor:
+		return
+	block_flash = BlockImpact.DURATION
+	block_sound.play_guard_clang()
+	if is_instance_valid(block_effect):
+		block_effect.queue_free()
+	var toward: Vector3 = (attacker.global_position - actor.global_position).normalized()
+	toward.y = 0
+	toward = toward.normalized()
+	if toward.is_zero_approx():
+		toward = -actor.global_basis.z
+	block_effect = BlockImpact.spawn(actor.get_parent(), actor.global_position + Vector3.UP * 1.3 + toward * .72, toward)
+
+func clear_feedback() -> void:
+	block_flash = 0.0
+	if is_instance_valid(stagger_marks):
+		stagger_marks.visible = false
+	if is_instance_valid(block_sound):
+		block_sound.stop()
+	if is_instance_valid(block_effect):
+		block_effect.queue_free()
+		block_effect = null
+
+func _exit_tree() -> void:
+	clear_feedback()
 
 func slam_impact(at: Vector3) -> void:
 	CombatEffect.pulse(actor.get_parent(), at + Vector3.UP * .1, Color("f8d3a0"), .9)

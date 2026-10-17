@@ -87,6 +87,8 @@ func tick(delta: float, input: CombatIntent) -> void:
 			scale = 0.6
 		if actor.state == "guard":
 			scale = 0.15
+		elif actor.state == "reload":
+			scale = minf(scale, t.reload_move_multiplier)
 		elif actor.state != "ready":
 			scale = minf(scale, 0.35)
 		var current := Vector3(actor.velocity.x, 0.0, actor.velocity.z)
