@@ -8,6 +8,8 @@ The city includes a celestial conservatory, garden and market flanks, an undergr
 
 ## Play
 
+Team spawn rooms rapidly restore **200 HP per second** to their own living players. Cyan shoulder/chest bands, ground rings and **[+] ALLY / LANTERN** labels identify your team; red bands and **[!] ENEMY / CROWN** labels identify opponents. The city HUD shows the five latest eliminations with weapon and assist credit, plus your kills, assists and current life streak. Damage within **8 seconds** earns an assist; the most recent enemy hit earns an environmental elimination. Final blows within **4 seconds** build double, triple, quadruple and higher multi-kills. Original synth cues rise with your streak, with separate multi-kill arpeggios and streak fanfares from three kills onward. Death resets streaks; restarting clears all combat feedback.
+
 Import **project.godot** in Godot 4.7.2 and press **F5** to enter Meridian Gardens. On Windows, run:
 
 ```powershell
@@ -77,6 +79,7 @@ Or use Godot directly:
 ```text
 godot --headless --path . --editor --import --quit
 godot --headless --path . --script res://tests/rules_test.gd
+godot --headless --path . --script res://tests/match_feedback_test.gd
 godot --headless --path . --script res://tests/close_combat_test.gd
 godot --headless --path . --script res://tests/guard_drill_test.gd
 godot --headless --path . --script res://tests/block_feedback_test.gd

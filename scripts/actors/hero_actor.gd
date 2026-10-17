@@ -132,10 +132,12 @@ func die() -> void:
 	state = "dead"
 	velocity = Vector3.ZERO
 	collision_layer = 0
+	resolver.resolve_death(self)
 	resolver.record("death", self, "health")
 	died.emit()
 
 func reset_actor(at: Vector3 = Vector3.INF) -> void:
+	resolver.contributions.erase(get_instance_id())
 	statuses.clear()
 	presentation.clear_feedback()
 	close.cancel()

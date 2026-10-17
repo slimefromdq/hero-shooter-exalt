@@ -25,6 +25,8 @@ var round_serial: int = 0
 var _spawn_indices: Dictionary = {}
 var _nav_check_timer: float = 0.0
 var _pickup_order: int = 0
+const SPAWN_HEAL_PER_SECOND: float = 200.0
+var feedback: MatchFeedback
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -49,6 +51,10 @@ func _ready() -> void:
 		add_child(hud)
 	player.resolver.confirmed_hit.connect(_on_confirmed_hit)
 	player.resolver.event_logged.connect(_on_combat_event)
+	feedback = MatchFeedback.new()
+	feedback.player = player
+	add_child(feedback)
+	player.resolver.elimination.connect(feedback.on_elimination)
 	restart_match()
 
 func _physics_process(delta: float) -> void:
@@ -69,6 +75,7 @@ func _physics_process(delta: float) -> void:
 		if not is_instance_valid(actor):
 			continue
 		actor.spawn_protected = is_protected(actor)
+		heal_in_spawn(actor, delta)
 		if actor != player and is_instance_valid(actor.controller):
 			actor.controller.frozen = freeze_ai or exploration or winner >= 0 or not navigation_ready
 	if not navigation_ready or exploration or winner >= 0:
@@ -196,6 +203,7 @@ func restart_match() -> void:
 	for transient: Node in get_tree().get_nodes_in_group("transient"):
 		transient.queue_free()
 	player.resolver.clear_round()
+	feedback.reset()
 	for actor: HeroActor in actors:
 		var slot: int = int(_spawn_indices.get(actor.get_instance_id(), 0))
 		actor.spawn_position = definition.team_spawns(actor.team)[slot]
@@ -233,6 +241,10 @@ func respawn_remaining(actor: HeroActor) -> float:
 
 func spawn_contains(position: Vector3, team: int) -> bool:
 	return definition.spawn_bounds(team).has_point(position)
+
+func heal_in_spawn(actor: HeroActor, delta: float) -> void:
+	if actor.alive and spawn_contains(actor.global_position, actor.team):
+		actor.health = minf(actor.effective_max_health(), actor.health + SPAWN_HEAL_PER_SECOND * delta)
 
 func is_protected(actor: HeroActor) -> bool:
 	if not is_instance_valid(actor) or not actor.alive:

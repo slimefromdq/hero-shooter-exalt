@@ -4,6 +4,38 @@ extends AudioStreamPlayer
 static var guard_wave: AudioStreamWAV
 static var slayer_waves: Dictionary = {}
 var spatial_owner: Node3D
+static var reward_waves: Dictionary = {}
+
+static func reward_wave(kind: String, level: int) -> AudioStreamWAV:
+	level = clampi(level, 1, 12)
+	var key: String = "%s_%d" % [kind, level]
+	if reward_waves.has(key): return reward_waves[key]
+	var notes: int = 1 if kind in ["kill", "assist"] else mini(6, level)
+	var step: float = .075 if kind == "multi" else .105
+	var seconds: float = .22 + step * (notes - 1)
+	var base: float = 440.0 * pow(2.0, float(level - 1) / 24.0)
+	if kind == "assist": base = 330.0
+	if kind == "streak": base *= .75
+	if kind == "multi": base *= 1.5
+	var rate: int = 22050
+	var bytes := PackedByteArray()
+	bytes.resize(int(seconds * rate) * 2)
+	for index: int in bytes.size() / 2:
+		var time: float = float(index) / rate
+		var sample: float = 0.0
+		for note: int in notes:
+			var age: float = time - note * step
+			if age < 0.0 or age > .22: continue
+			var hz: float = base * pow(2.0, float(note * 3) / 12.0)
+			var envelope: float = minf(1.0, age / .004) * exp(-age * 22.0) * clampf((.22 - age) / .02, 0, 1)
+			sample += (sin(TAU * hz * age) + .22 * sin(TAU * hz * 2 * age)) * envelope * .42
+		bytes.encode_s16(index * 2, int(clampf(sample, -.9, .9) * 32767))
+	var wave := AudioStreamWAV.new()
+	wave.format = AudioStreamWAV.FORMAT_16_BITS
+	wave.mix_rate = rate
+	wave.data = bytes
+	reward_waves[key] = wave
+	return wave
 
 func distance_gain() -> float:
 	if not is_instance_valid(spatial_owner):

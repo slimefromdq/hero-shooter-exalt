@@ -29,6 +29,7 @@ var status_label: Label3D
 var status_ring: MeshInstance3D
 var held_knife: Node3D
 var held_trap: Node3D
+var team_ring: MeshInstance3D
 
 func _ready() -> void:
 	model = Node3D.new()
@@ -132,6 +133,23 @@ func _ready() -> void:
 	if actor.tuning is SlayerTuning:
 		SlayerVisuals.remodel(self)
 		animator.add_animation_library("slayer",SlayerAnimations.library())
+	# Applied after hero remodeling so both silhouettes carry the same team language.
+	var team_colour := Color("38dfff") if actor.team == 0 else Color("ff4f65")
+	var team_material: StandardMaterial3D = Geometry.material(team_colour, .65)
+	team_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	for side: float in [-1.0, 1.0]:
+		var badge := BoxMesh.new()
+		badge.size = Vector3(.14, .18, .37)
+		Geometry.mesh(body, badge, Vector3(side * .31, 1.44, 0), team_material)
+	for z: float in [-.23, .23]:
+		var band := BoxMesh.new()
+		band.size = Vector3(.5, .09, .04)
+		Geometry.mesh(body, band, Vector3(0, 1.25, z), team_material)
+	var team_shape := TorusMesh.new()
+	team_shape.inner_radius = .43
+	team_shape.outer_radius = .49
+	team_ring = Geometry.mesh(self, team_shape, Vector3(0, .07, 0), team_material)
+	team_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	status_label = Geometry.text3d(self,"",Vector3(0,2.3,0),23,Color("e3b8ff"))
 	status_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	status_label.no_depth_test = false
@@ -235,7 +253,8 @@ func _process(delta: float) -> void:
 	var session: Node = get_tree().get_first_node_in_group("game_session")
 	var city_play: bool = get_tree().get_first_node_in_group("city_match") != null
 	model.visible = actor.alive if city_play else true
-	nameplate.visibility_range_end = 40.0 if city_play else 0.0
+	nameplate.visibility_range_end = 65.0 if city_play else 0.0
+	team_ring.visible = actor.alive and (not city_play or session.player != actor)
 	if actor.team != 0 or (city_play and session.player != actor):
 		var marker: String = ""
 		if actor.state == "melee_windup": marker = "  /  STRIKE"
@@ -244,12 +263,13 @@ func _process(delta: float) -> void:
 		elif actor.state == "stagger": marker = "  /  STAGGERED"
 		nameplate.text = "%s    %d HP%s" % [actor.actor_id.to_upper(), ceili(actor.health), marker]
 		if city_play:
-			nameplate.text = "%s%s   %d%s" % ["L" if actor.team == 0 else "C", actor.actor_id.get_slice("_", 1), ceili(actor.health), marker]
-			nameplate.font_size = 24
+			var ally: bool = actor.team == session.player.team
+			nameplate.text = "%s / %s\n%s  %d HP%s" % ["[+] ALLY" if ally else "[!] ENEMY", "LANTERN" if actor.team == 0 else "CROWN", actor.actor_id.to_upper(), ceili(actor.health), marker]
+			nameplate.font_size = 28
 			nameplate.pixel_size = .0045
 			nameplate.outline_size = 4
 			nameplate.outline_modulate = Color("152333")
-		nameplate.modulate = Color("8ee7ed") if actor.team == 0 else (Color("ffd096") if marker != "" else Color("ffb5a3"))
+		nameplate.modulate = Color("38dfff") if actor.team == 0 else Color("ff4f65")
 		nameplate.visible = actor.alive
 	else:
 		nameplate.visible = false

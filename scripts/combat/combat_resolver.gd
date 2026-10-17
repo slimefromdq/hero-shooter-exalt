@@ -4,12 +4,45 @@ extends Node
 signal event_logged(entry: Dictionary)
 signal confirmed_hit(source: HeroActor, target: HeroActor, amount: float, head: bool, executed: bool)
 signal confirmed_block(attacker: HeroActor, defender: HeroActor)
+signal elimination(killer: HeroActor, victim: HeroActor, assistants: Array[HeroActor], ability: String)
+const ASSIST_WINDOW: float = 8.0
+var combat_time: float = 0.0
+var contributions: Dictionary = {}
+var damage_serial: int = 0
 var events: Array[Dictionary] = []
 var cast_serial: int = 0
 var resolved: Dictionary = {}
 
 func _ready() -> void:
 	add_to_group("combat_resolver")
+
+func _physics_process(delta: float) -> void:
+	combat_time += delta
+
+func track_damage(source: HeroActor, target: HeroActor, amount: float, tag: String) -> void:
+	if amount <= 0.0: return
+	var key: int = target.get_instance_id()
+	if not contributions.has(key): contributions[key] = {}
+	damage_serial += 1
+	contributions[key][source.get_instance_id()] = {"actor": source, "time": combat_time, "ability": tag, "order": damage_serial}
+
+func resolve_death(victim: HeroActor) -> void:
+	var hits: Dictionary = contributions.get(victim.get_instance_id(), {})
+	var killer: HeroActor = null
+	var latest: float = -INF
+	var ability: String = "world"
+	var assistants: Array[HeroActor] = []
+	for hit: Dictionary in hits.values():
+		var source: HeroActor = hit.actor as HeroActor
+		if not is_instance_valid(source) or source.team == victim.team or combat_time - float(hit.time) > ASSIST_WINDOW: continue
+		assistants.append(source)
+		if float(hit.order) > latest:
+			latest = float(hit.order)
+			killer = source
+			ability = str(hit.ability)
+	assistants.erase(killer)
+	contributions.erase(victim.get_instance_id())
+	elimination.emit(killer, victim, assistants, ability)
 
 func new_cast() -> int:
 	cast_serial += 1
@@ -77,6 +110,7 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 	var hp_damage: float = minf(target.health, maxf(0.0, amount - absorbed))
 	target.health = maxf(0.0, target.health - hp_damage)
 	source.kit.ultimate_charge = minf(100.0, source.kit.ultimate_charge + (hp_damage + absorbed) * 0.09)
+	track_damage(source, target, hp_damage + absorbed, tag)
 	target.on_damage(hp_damage + absorbed, head)
 	if source.tuning is SlayerTuning and hp_damage + absorbed > 0.0:
 		target.statuses.mark(source,(source.tuning as SlayerTuning).mark_duration)
@@ -102,3 +136,5 @@ func visible(from: Vector3, target: HeroActor, exclude: Array[RID] = []) -> bool
 
 func clear_round() -> void:
 	resolved.clear()
+	contributions.clear()
+	combat_time = 0.0

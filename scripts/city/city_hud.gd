@@ -14,8 +14,8 @@ var hit_text: String = ""
 var ink := Color("101c2a")
 var paper := Color("eeeedf")
 var muted := Color("acbcc7")
-var mint := Color("8ed7e5")
-var coral := Color("f29177")
+var mint := Color("38dfff")
+var coral := Color("ff4f65")
 var brass := Color("d7b884")
 var health_green := Color("8ef7a7")
 var panel_style: StyleBoxFlat
@@ -141,12 +141,13 @@ func draw_hud() -> void:
 		text("%d FPS  ·  %02d:%02d" % [Engine.get_frames_per_second(),int(m.elapsed) / 60,int(m.elapsed) % 60],Vector2(1374,96),13,mint)
 		text("F3  ROUTES / RESOURCES",Vector2(1374,118),10,muted)
 	if p.spawn_protected and p.alive:
-		centered("PROTECTED ARRIVAL  /  WEAPONS LOCKED",Vector2(800,154),13,mint,true)
+		centered("SPAWN / +200 HP PER SECOND / WEAPONS LOCKED" if m.spawn_contains(p.global_position,p.team) else "PROTECTED ARRIVAL / WEAPONS LOCKED",Vector2(800,154),13,mint,true)
 	elif m.notice_time > 0:
 		centered(m.notice,Vector2(800,154),14,brass,true)
 	if p.alive and not m.menu_open and not overview_open:
 		draw_crosshair(p)
 	draw_player_rail(p)
+	draw_combat_feed(p)
 	if not p.alive:
 		panel(Vector2(555,355),Vector2(490,155))
 		centered("AGENT DOWN",Vector2(800,400),35,paper,true)
@@ -163,6 +164,28 @@ func draw_hud() -> void:
 		draw_overview()
 	elif m.debug_view:
 		draw_debug(p)
+
+func draw_combat_feed(p: HeroActor) -> void:
+	var feedback: MatchFeedback = match_controller.feedback
+	if feedback == null: return
+	panel(Vector2(28,98),Vector2(500,48))
+	text("[+] CYAN: LANTERN / YOUR TEAM     [!] RED: CROWN / ENEMY",Vector2(32,114),11,paper,true)
+	text("%d KILLS   %d ASSISTS   /   %d STREAK" % [feedback.kills,feedback.assists,int(feedback.streaks.get(p.get_instance_id(),0))],Vector2(32,136),11,mint,true)
+	for index: int in feedback.feed.size():
+		var entry: Dictionary = feedback.feed[feedback.feed.size() - 1 - index]
+		var y: float = 175 + index * 68
+		panel(Vector2(1112,y),Vector2(460,61))
+		box(Vector2(1112,y),Vector2(3,61),brass if entry.personal else muted)
+		text(str(entry.killer),Vector2(1124,y+19),12,mint if entry.killer_team == 0 else (coral if entry.killer_team == 1 else muted),true)
+		text("  >  " + str(entry.victim),Vector2(1345,y+19),12,mint if entry.victim_team == 0 else coral,true)
+		text(str(entry.ability),Vector2(1124,y+36),10,muted)
+		if entry.assistants != "":
+			text("ASSIST: " + str(entry.assistants),Vector2(1124,y+51),9,brass)
+	if feedback.banner_time > 0.0:
+		var lines: PackedStringArray = feedback.banner.split("\n")
+		panel(Vector2(530,527),Vector2(540,38 + (lines.size()-1)*27))
+		for index: int in lines.size():
+			centered(lines[index],Vector2(800,552+index*27),21 if index == 0 else 15,brass,true)
 
 func draw_crosshair(p: HeroActor) -> void:
 	var center := Vector2(800,450)
