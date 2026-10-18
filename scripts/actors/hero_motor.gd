@@ -20,10 +20,16 @@ var external_velocity: Vector3 = Vector3.ZERO
 var crouched: bool = false
 var body_collision: CollisionShape3D
 var standing_capsule: CapsuleShape3D
+var standing_clearance_capsule: CapsuleShape3D
 
 func _ready() -> void:
 	body_collision = actor.get_node("BodyCollision") as CollisionShape3D
 	standing_capsule = body_collision.shape.duplicate() as CapsuleShape3D
+	standing_clearance_capsule = standing_capsule.duplicate() as CapsuleShape3D
+	# CharacterBody's resting contact can sit a few millimeters into a floor.
+	# Exclude only the bottom 2 cm from the clearance probe, preserving the
+	# standing head height so floor contact cannot masquerade as a low ceiling.
+	standing_clearance_capsule.height -= .02
 	traversal = TraversalMotion.new()
 	traversal.actor = actor
 
@@ -227,9 +233,9 @@ func posture_lowering() -> float:
 func try_stand() -> bool:
 	if not crouched: return true
 	var query := PhysicsShapeQueryParameters3D.new()
-	query.shape = standing_capsule
+	query.shape = standing_clearance_capsule
 	query.transform = actor.global_transform
-	query.transform.origin += Vector3.UP * (standing_capsule.height * .5)
+	query.transform.origin += Vector3.UP * (standing_capsule.height * .5 + .01)
 	query.collision_mask = actor.collision_mask
 	query.exclude = [actor.get_rid()]
 	query.margin = 0.0

@@ -132,9 +132,8 @@ func collider_box(size: Vector3, at: Vector3, rotation: Vector3 = Vector3.ZERO) 
 
 func line(a: Vector3, b: Vector3, thickness: float, material_key: String) -> void:
 	var along := b - a
-	var orient := Basis.looking_at(along.normalized(), Vector3.UP)
-	if absf(along.normalized().dot(Vector3.UP)) > 0.99:
-		orient = Basis.looking_at(along.normalized(), Vector3.RIGHT)
+	var up: Vector3 = Vector3.RIGHT if absf(along.normalized().dot(Vector3.UP)) > 0.99 else Vector3.UP
+	var orient := Basis.looking_at(along.normalized(), up)
 	var key := "box:" + material_key
 	if not batches.has(key):
 		batches[key] = []

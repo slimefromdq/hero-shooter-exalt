@@ -18,6 +18,7 @@ static func placement_clear(actor: HeroActor, at: Vector3, yaw: float) -> bool:
 	var room_extents := Vector3(absf(cos(yaw))*shape.size.x+absf(sin(yaw))*shape.size.z,shape.size.y,absf(sin(yaw))*shape.size.x+absf(cos(yaw))*shape.size.z)
 	for center: Vector3 in positions(at,yaw,t):
 		if city != null:
+			if city.has_method("track_intersects") and city.track_intersects(AABB(center-room_extents/2,room_extents)): return false
 			for team: int in 2:
 				if city.definition.spawn_bounds(team).intersects(AABB(center-room_extents/2,room_extents)): return false
 		for x: float in [-.45,.45]:

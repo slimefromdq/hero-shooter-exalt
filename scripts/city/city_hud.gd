@@ -117,7 +117,7 @@ func draw_hud() -> void:
 	if m.winner >= 0:
 		panel(Vector2(555,320),Vector2(490,158))
 		centered("VICTORY" if m.winner == p.team else "DEFEAT",Vector2(800,378),42,mint if m.winner == p.team else coral,true)
-		centered("FIRST TO 100  /  MERIDIAN GARDENS",Vector2(800,414),12,brass)
+		centered("CAPTURE + ESCORT  /  MERIDIAN MUSEUM" if m.is_in_group("museum_match") else "FIRST TO 100  /  MERIDIAN GARDENS",Vector2(800,414),12,brass)
 		centered("F5  PLAY AGAIN     ·     TAB  MATCH CONSOLE",Vector2(800,450),12,paper)
 	if p.last_hit_age < .25:
 		canvas.draw_rect(Rect2(4,4,1592,892),Color(1,.28,.16,(.25 - p.last_hit_age) * 2),false,5)

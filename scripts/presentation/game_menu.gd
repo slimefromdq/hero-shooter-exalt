@@ -76,9 +76,10 @@ func button(caption: String, action: Callable, parent: Node = null) -> Button:
 
 func show_home() -> void:
 	page = "home"
-	clear("EXALT  /  MERIDIAN GARDENS" if session == null else "SESSION PAUSED", "Celestial streets. Five heroes. One hill." if session == null else "Choose your next move.")
+	clear("EXALT" if session == null else "SESSION PAUSED", "Eight heroes. Celestial streets and living history." if session == null else "Choose your next move.")
 	if session == null:
 		button("PLAY MATCH  /  6 v 6 KING OF THE HILL",func() -> void: mode = "city"; show_heroes())
+		button("MUSEUM  /  CAPTURE + PAYLOAD",show_museum)
 		button("TRAINING  /  PRACTICE RANGE",func() -> void: mode = "training"; show_heroes())
 	else:
 		button("RESUME",session.toggle_menu)
@@ -162,10 +163,22 @@ func show_settings() -> void:
 	button("RESTORE DEFAULTS",func() -> void: settings_store.restore_defaults(); show_settings())
 	button("BACK",show_home)
 
+func show_museum() -> void:
+	page = "museum"
+	clear("MERIDIAN MUSEUM","Capture the Astrolabe in three thirds, then escort the artifact through three checkpoints.")
+	for choice: String in ["ATTACK","DEFEND","EXPLORE"]:
+		button(choice,func() -> void:
+			MuseumMatch.selected_side = 1 if choice == "DEFEND" else 0
+			MuseumMatch.start_exploring = choice == "EXPLORE"
+			mode = "museum"
+			show_heroes())
+	button("BACK",show_home)
+
 func launch() -> void:
 	get_tree().paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	get_tree().change_scene_to_file.call_deferred("res://scenes/training/combat_sandbox.tscn" if mode == "training" else "res://scenes/city/meridian_gardens.tscn")
+	var scene: String = "res://scenes/training/combat_sandbox.tscn" if mode == "training" else ("res://scenes/museum/meridian_museum.tscn" if mode == "museum" else "res://scenes/city/meridian_gardens.tscn")
+	get_tree().change_scene_to_file.call_deferred(scene)
 
 func go_main() -> void:
 	get_tree().paused = false

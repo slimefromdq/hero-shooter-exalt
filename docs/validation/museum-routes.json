@@ -1,0 +1,57 @@
+[
+  {
+    "connected": true,
+    "distance_m": 60.444306248799,
+    "spawn": "A0",
+    "target": "(6.0, 0.0, 3.0)",
+    "walk_seconds": 10.0740510414665
+  },
+  {
+    "connected": true,
+    "distance_m": 55.7084867507219,
+    "spawn": "A1",
+    "target": "(12.0, 0.0, 0.0)",
+    "walk_seconds": 9.28474779178699
+  },
+  {
+    "connected": true,
+    "distance_m": 54.2767600556836,
+    "spawn": "A2",
+    "target": "(62.0, 0.0, 0.0)",
+    "walk_seconds": 9.04612667594726
+  },
+  {
+    "connected": true,
+    "distance_m": 58.1620404720306,
+    "spawn": "A3",
+    "target": "(107.9998, 1.499985, 0.0)",
+    "walk_seconds": 9.69367341200511
+  },
+  {
+    "connected": true,
+    "distance_m": 67.0031132232398,
+    "spawn": "D0",
+    "target": "(6.0, 0.0, 3.0)",
+    "walk_seconds": 11.1671855372066
+  },
+  {
+    "connected": true,
+    "distance_m": 84.3826091401279,
+    "spawn": "D1",
+    "target": "(12.0, 0.0, 0.0)",
+    "walk_seconds": 14.0637681900213
+  },
+  {
+    "connected": true,
+    "distance_m": 80.7684982601786,
+    "spawn": "D2",
+    "target": "(62.0, 0.0, 0.0)",
+    "walk_seconds": 13.4614163766964
+  },
+  {
+    "connected": true,
+    "distance_m": 106.030601886683,
+    "spawn": "D2 final return",
+    "walk_seconds": 17.6717669811139
+  }
+]
