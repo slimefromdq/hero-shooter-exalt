@@ -143,7 +143,7 @@ func fire(_ultimate: bool = false) -> void:
 		return
 	actor.state = "ready"
 	consume_ammo()
-	shot_cd = t.shot_interval
+	shot_cd = primary_interval()
 	var muzzle: Vector3 = actor.muzzle()
 	var direction: Vector3 = (aim_point(t.weapon_range) - muzzle).normalized()
 	var right: Vector3 = direction.cross(Vector3.UP).normalized()
@@ -174,8 +174,8 @@ func fire(_ultimate: bool = false) -> void:
 					last_shot_head = last_shot_head or head
 			elif hit.get("collider") is CombatBarrier:
 				hit.collider.receive_damage(actor,amount,pellet_cast)
-			elif hit.get("collider") is HunterSnare:
-				(hit.collider as HunterSnare).receive_damage(actor,amount,pellet_cast)
+			elif hit.get("collider") is HunterSnare or hit.get("collider") is CombatStructure:
+				actor.resolver.hit_object(hit.collider,actor,amount,pellet_cast)
 			CombatEffect.pulse(actor.get_parent(), endpoint, Color("ffad63") if target == null else Color("ff5979"), .13)
 		if index % 2 == 0:
 			CombatEffect.line(actor.get_parent(), safe_muzzle(), endpoint, Color("ffd5a0"), .015)

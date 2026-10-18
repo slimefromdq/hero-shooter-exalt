@@ -15,6 +15,8 @@ Push-Location -LiteralPath $taskRoot
 try {
     & $taskEngine --headless --path $taskRoot --editor --import --quit
     if ($LASTEXITCODE -ne 0) { throw 'Godot import failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/roster_expansion_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Relay, Dynamo or Wisp combat and integration failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/crouch_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Crouch, low cover, slide priority or stronger boot failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/health_bars_test.gd
@@ -75,6 +77,10 @@ try {
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_navigation_regression.gd
     if ($LASTEXITCODE -ne 0) { throw 'City navigation recovery or healing route failed.' }
     if ($Capture) {
+        & $taskEngine --path $taskRoot --script res://tests/roster_input_test.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Relay, Dynamo or Wisp native input failed.' }
+        & $taskEngine --path $taskRoot --script res://tests/capture_roster.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Roster rendered capture failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_crouch.gd --windowed --resolution 1600x900 --audio-driver Dummy --fixed-fps 60
         if ($LASTEXITCODE -ne 0) { throw 'Crouch and slide rendered capture failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_health_bars.gd --windowed --resolution 1600x900 --audio-driver Dummy --fixed-fps 60

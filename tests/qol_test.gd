@@ -111,7 +111,7 @@ func reloads() -> void:
 		check(a.velocity.x >= a.tuning.ground_speed-.1,hero+" reload has no speed penalty")
 		a.state = "stagger"
 		a.state_time = .3
-		await step(100)
+		await step(maxi(100,ceili(a.kit.reload_remaining*60)+3))
 		check(not a.kit.reloading and a.kit.ammo == a.tuning.magazine,hero+" reload finishes through CC")
 		a.kit.ammo = 0
 		a.kit.start_reload()

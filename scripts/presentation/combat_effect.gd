@@ -41,7 +41,7 @@ static func streak(parent: Node3D, from: Vector3, to: Vector3, width: float, sec
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	effect.visual = Geometry.mesh(effect,shape,Vector3.ZERO,mat)
-	effect.look_at(to)
+	effect.look_at(to,Vector3.RIGHT if absf((to-from).normalized().dot(Vector3.UP)) > .99 else Vector3.UP)
 
 static func line(parent: Node3D, from: Vector3, to: Vector3, color: Color, width: float = 0.025) -> void:
 	if from.distance_to(to) < 0.01:
@@ -52,7 +52,7 @@ static func line(parent: Node3D, from: Vector3, to: Vector3, color: Color, width
 	var shape := BoxMesh.new()
 	shape.size = Vector3(width, width, from.distance_to(to))
 	effect.visual = Geometry.mesh(effect, shape, Vector3.ZERO, Geometry.material(color, 1.5))
-	effect.look_at(to)
+	effect.look_at(to,Vector3.RIGHT if absf((to-from).normalized().dot(Vector3.UP)) > .99 else Vector3.UP)
 
 static func pulse(parent: Node3D, at: Vector3, color: Color, size: float) -> void:
 	var effect := CombatEffect.new()

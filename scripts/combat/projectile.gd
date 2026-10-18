@@ -12,6 +12,9 @@ var traveled: float = 0.0
 var color: Color = Color("ff765e")
 var reflections: int = 0
 var reflected_events: Dictionary = {}
+var headshots: bool = false
+var head_multiplier: float = 1.0
+var blast_radius: float = 0.0
 
 func _ready() -> void:
 	add_to_group("owned_attacks")
@@ -22,8 +25,10 @@ func _ready() -> void:
 	Geometry.mesh(self, ball, Vector3.ZERO, Geometry.material(color, 1.5))
 
 func _physics_process(delta: float) -> void:
+	if is_queued_for_deletion(): return
 	lifetime -= delta
 	if lifetime <= 0.0 or traveled >= max_distance or not is_instance_valid(source) or not source.alive:
+		if blast_radius > 0 and is_instance_valid(source) and source.alive: explode(global_position)
 		queue_free()
 		return
 	var distance: float = minf(speed*delta,max_distance-traveled)
@@ -34,8 +39,13 @@ func _physics_process(delta: float) -> void:
 		global_position = next
 		return
 	var target: HeroActor = hit.get("collider") as HeroActor
+	if blast_radius > 0:
+		explode(hit.position+hit.normal*.04)
+		queue_free()
+		return
 	if target != null:
-		var result: String = source.resolver.damage(source, target, damage_amount, "projectile", cast_id, false, false, global_position)
+		var head: bool = headshots and hit.position.y-target.global_position.y >= target.headshot_height()
+		var result: String = source.resolver.damage(source, target, damage_amount*(head_multiplier if head else 1.0), "projectile", cast_id, head, false, global_position)
 		if result == "deflect":
 			var event_key: String = "%d:%d" % [target.get_instance_id(), target.kit.cast_id]
 			if reflections < 2 and not reflected_events.has(event_key):
@@ -49,6 +59,10 @@ func _physics_process(delta: float) -> void:
 	CombatEffect.pulse(get_parent(), hit["position"], Color("ffae81"), 0.28)
 	if hit.get("collider") is CombatBarrier:
 		hit.collider.receive_damage(source,damage_amount,cast_id)
-	if hit.get("collider") is HunterSnare:
-		(hit.collider as HunterSnare).receive_damage(source,damage_amount,cast_id)
+	if hit.get("collider") is HunterSnare or hit.get("collider") is CombatStructure:
+		source.resolver.hit_object(hit.collider,source,damage_amount,cast_id)
 	queue_free()
+
+func explode(at: Vector3) -> void:
+	source.resolver.splash(source,at,blast_radius,damage_amount,"spectral_finale",cast_id,true)
+	CombatEffect.pulse(get_parent(),at,color,blast_radius)

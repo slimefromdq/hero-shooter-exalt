@@ -14,6 +14,7 @@ var events: Array[Dictionary] = []
 var cast_serial: int = 0
 var resolved: Dictionary = {}
 var cast_powers: Dictionary = {}
+var ultimate_casts: Dictionary = {}
 
 func _ready() -> void:
 	add_to_group("combat_resolver")
@@ -49,7 +50,9 @@ func resolve_death(victim: HeroActor) -> void:
 func new_cast(source: HeroActor = null) -> int:
 	cast_serial += 1
 	cast_powers.erase(cast_serial - 16384)
+	ultimate_casts.erase(cast_serial - 16384)
 	cast_powers[cast_serial] = source.benefits.damage_multiplier() if is_instance_valid(source) and source.benefits != null else 1.0
+	if is_instance_valid(source) and is_instance_valid(source.kit) and source.kit.ultimate_active(): ultimate_casts[cast_serial] = true
 	return cast_serial
 
 func cast_multiplier(id: int, _source: HeroActor) -> float:
@@ -78,7 +81,7 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 		head: bool = false, execute: bool = false, incoming_from: Vector3 = Vector3.INF) -> String:
 	if not is_instance_valid(source) or not is_instance_valid(target) or not target.alive:
 		return "invalid"
-	if source.team == target.team or target.invulnerable:
+	if source.team == target.team or target.invulnerable or target.state == "wisp_phase":
 		return "immune"
 	# Query positions at the authority boundary, including attacks already in flight.
 	if protected_room(source) or protected_room(target):
@@ -118,7 +121,7 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 	target.shields -= absorbed
 	var hp_damage: float = minf(target.health, maxf(0.0, amount - absorbed))
 	target.health = maxf(0.0, target.health - hp_damage)
-	source.kit.ultimate_charge = minf(100.0, source.kit.ultimate_charge + minf(base,hp_damage + absorbed) * 0.09)
+	if not source.kit.ultimate_active() and not ultimate_casts.has(cast_id): source.kit.ultimate_charge = minf(100.0, source.kit.ultimate_charge + minf(base,hp_damage + absorbed) * 0.09)
 	track_damage(source, target, hp_damage + absorbed, tag)
 	target.on_damage(hp_damage + absorbed, head)
 	if source.tuning is SlayerTuning and hp_damage + absorbed > 0.0:
@@ -129,7 +132,7 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 	return "execution" if executed else "hit"
 
 func knockback(source: HeroActor, target: HeroActor, impulse: Vector3, tag: String) -> void:
-	if not target.alive or target.invulnerable or source.team == target.team or protected_room(source) or protected_room(target): return
+	if not target.alive or target.invulnerable or target.state == "wisp_phase" or source.team == target.team or protected_room(source) or protected_room(target): return
 	if target.boot_pair != null: target.boot_pair.release(false)
 	if target.state in ["captured", "throw_pair"]: return
 	if target.motor.traversal.active: target.motor.traversal.abort()
@@ -157,6 +160,7 @@ func clear_round() -> void:
 	combat_time = 0.0
 
 	cast_powers.clear()
+	ultimate_casts.clear()
 
 
 func heal(source: HeroActor, target: HeroActor, amount: float, tag: String, award_charge: bool = true) -> float:
@@ -165,10 +169,10 @@ func heal(source: HeroActor, target: HeroActor, amount: float, tag: String, awar
 	var restored: float = minf(amount,maxf(0,target.effective_max_health() - target.health))
 	if restored <= 0: return 0.0
 	target.health += restored
-	if award_charge: source.kit.ultimate_charge = minf(100,source.kit.ultimate_charge + restored * .06)
+	if award_charge and not source.kit.ultimate_active(): source.kit.ultimate_charge = minf(100,source.kit.ultimate_charge + restored * .06)
 	confirmed_heal.emit(source,target,restored)
 	# Beam ticks would otherwise crowd out useful combat history every frame.
-	if tag not in ["attending_care","aftercare","ward","regroup"]: record("heal",source,tag,"target=%s applied=%.1f" % [target.actor_id,restored])
+	if tag not in ["attending_care","aftercare","ward","regroup","drone","circuit"]: record("heal",source,tag,"target=%s applied=%.1f" % [target.actor_id,restored])
 	return restored
 
 func barrier_ray(source: HeroActor, from: Vector3, to: Vector3) -> Dictionary:
@@ -203,6 +207,11 @@ func splash(source: HeroActor, origin: Vector3, radius: float, amount: float, ta
 		if not target.alive or target.team == source.team: continue
 		var to: Vector3 = target.global_position + Vector3.UP * .9
 		if origin.distance_to(to) <= radius and attack_ray(source,origin,to,[],1).is_empty(): victims.append(target)
+	var structures: Array[CombatStructure] = []
+	for structure: CombatStructure in get_tree().get_nodes_in_group("structures"):
+		var at: Vector3 = structure.nearest_point(origin)
+		var hit: Dictionary = ray(origin,at,[],1)
+		if origin.distance_to(at) <= radius and (hit.is_empty() or hit.get("collider") == structure): structures.append(structure)
 	# Damage nearby barriers once even when nobody stands behind them.
 	for barrier: CombatBarrier in get_tree().get_nodes_in_group("barriers"):
 		if not barrier.active() or barrier.source.team == source.team: continue
@@ -211,3 +220,8 @@ func splash(source: HeroActor, origin: Vector3, radius: float, amount: float, ta
 	for target: HeroActor in victims:
 		var distance: float = origin.distance_to(target.global_position + Vector3.UP * .9)
 		damage(source,target,amount * (maxf(0,1-distance/radius) if falloff else 1.0),tag,id,false,false,origin)
+	for structure: CombatStructure in structures: structure.receive_damage(source,amount,id)
+
+func hit_object(collider: Object, source: HeroActor, amount: float, id: int) -> void:
+	if is_instance_valid(collider) and collider.has_method("receive_damage"):
+		collider.receive_damage(source,amount,id)

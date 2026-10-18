@@ -8,7 +8,7 @@ func tick_common(delta: float) -> void:
 	mobility_cd = maxf(0,mobility_cd - delta)
 	deflect_cd = maxf(0,deflect_cd - delta)
 	bomb_cd = maxf(0,bomb_cd - delta)
-	ultimate_charge = minf(100,ultimate_charge + delta * .8)
+	if not ultimate_active(): ultimate_charge = minf(100,ultimate_charge + delta * .8)
 	if actor.infinite_resources:
 		ammo = actor.tuning.magazine
 		mobility_cd = 0
@@ -25,7 +25,7 @@ func weapon(amount: float, spread: float = 0.0, pellets: int = 1) -> void:
 		reload_weapon()
 		return
 	consume_ammo()
-	shot_cd = actor.tuning.shot_interval
+	shot_cd = primary_interval()
 	var origin: Vector3 = actor.intent.aim_origin
 	if origin == Vector3.ZERO: origin = actor.body_point(1.6)
 	var view: Dictionary = actor.resolver.ray(origin,origin + actor.aim_direction * 70,[actor.get_rid()])
@@ -50,7 +50,7 @@ func weapon(amount: float, spread: float = 0.0, pellets: int = 1) -> void:
 		if target != null:
 			var head: bool = endpoint.y - target.global_position.y >= target.headshot_height()
 			actor.resolver.damage(actor,target,damage * (actor.tuning.head_multiplier if head else 1.0),"cannon" if pellets > 1 else "sidearm",id,head,false,muzzle)
-		elif hit.get("collider") is CombatBarrier or hit.get("collider") is HunterSnare:
+		elif hit.get("collider") is CombatBarrier or hit.get("collider") is HunterSnare or hit.get("collider") is CombatStructure:
 			hit.collider.receive_damage(actor,damage,id)
 		CombatEffect.line(actor.get_parent(),muzzle,endpoint,Color("f5cc88") if pellets > 1 else Color("b5f2e3"))
 	actor.presentation.fire_flash = .16

@@ -145,3 +145,13 @@ October 17, 2026. The user requested two new characters, separate from Annex/Aha
 Implemented October 17, 2026 from the accepted revised kit: 600 health without personal shield HP; RMB Regroup healing; two 10 m Scatterbound charges with sequential five-second recharge; a short-lived ally/self screen; radial wingbeat; and Nobody Gets Squished!, a steerable ground-following wave. No resistance aura or ultimate flight refill. The shared barrier interface supports Marshal and Huddle; healing can opt out of charge awards. Full rules and controls are in [HUDDLE.md](HUDDLE.md).
 
 Teams now use Marshal/Huddle/Doctor/Nimbus/Slayer/Slayer. Keep a Nimbus subway runner when possible, with a Slayer fallback when Nimbus is the player. Huddle uses the existing actor, traversal and combat authority; scattering and transforming preserve its single hitbox and health pool.
+
+## ROSTER-04 · Relay, Dynamo and Wisp
+
+Implemented October 17, 2026 from the accepted three-hero plan and increased ability values. Relay is a 250-HP offensive engineer with an indestructible battery-managed drone, 6 m shock and 80 HP/s team overclock. Dynamo is a 650-HP minigun tank with chain lightning, physical segmented walls, a 28 m / 4 m magnetic pull and a 35 m / 40-per-tick storm. Wisp is a 225-HP aerial burst DPS with source-specific soul marks, dash-loaded shotgun shells, phase, lift/glide and a four-second barrage ultimate.
+
+This supersedes ROSTER-03's fixed team composition. New matches select seeded 2 tank / 2 support / 2 DPS teams from all eight heroes and include the selected player. A DPS covers the subway; a second DPS or mobile tank/support retains the high-ground route. Existing bots and progress remain intact during mid-match hero changes; restarting a round refreshes composition.
+
+Keep physical cover separate from the friendly-pass-through analytic shield contract. All weapon families, melee and explosions can damage hostile wall sections; cover is sampled before section destruction. Bounded pull displacement uses collision and grants no stun. Active new ultimates cannot charge themselves; delayed ultimate casts retain this restriction after expiry. Per-life cleanup stops old effect physics before deferred deletion.
+
+See [complete kits and validation](RELAY_DYNAMO_WISP.md) and [recorded results](validation/roster-results.json). Remaining reserved concepts and multiplayer remain deferred.

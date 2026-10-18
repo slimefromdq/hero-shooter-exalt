@@ -143,7 +143,7 @@ func fire(_ultimate: bool = false) -> void:
 		reload_weapon()
 		return
 	consume_ammo()
-	shot_cd = actor.tuning.shot_interval
+	shot_cd = primary_interval()
 	var muzzle: Vector3 = safe_muzzle()
 	var origin: Vector3 = actor.intent.aim_origin
 	if origin == Vector3.ZERO: origin = actor.global_position+Vector3.UP*1.4

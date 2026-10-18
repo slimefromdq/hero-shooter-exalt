@@ -28,6 +28,9 @@ static func enemy(a: HeroActor) -> HeroActor:
 
 static func apply(a: HeroActor, input: CombatIntent) -> void:
 	if not a.kit is CareKit: return
+	if a.kit is ExpansionKit:
+		RosterTactics.apply(a,input)
+		return
 	if a.kit is HuddleKit:
 		HuddleTactics.apply(a,input)
 		return

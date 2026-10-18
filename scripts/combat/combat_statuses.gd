@@ -4,9 +4,10 @@ extends RefCounted
 var actor: HeroActor
 var effects: Dictionary = {}
 var marks: Dictionary = {}
+var souls: Dictionary = {}
 
 func apply(kind: String, source: HeroActor, duration: float, strength: float = 0.0) -> bool:
-	if not actor.alive or actor.invulnerable or source.team == actor.team or actor.resolver.protected_room(actor) or actor.resolver.protected_room(source):
+	if not actor.alive or actor.invulnerable or actor.state == "wisp_phase" or source.team == actor.team or actor.resolver.protected_room(actor) or actor.resolver.protected_room(source):
 		return false
 	# Refresh retains the DoT clock, preventing repeated hits from postponing ticks.
 	var clock: float = float(effects.get(kind, {}).get("clock", 0.0))
@@ -20,6 +21,10 @@ func apply(kind: String, source: HeroActor, duration: float, strength: float = 0
 	return true
 
 func tick(delta: float) -> void:
+	for key: int in souls.keys():
+		souls[key].remaining -= delta
+		var owner_actor: HeroActor = souls[key].source.get_ref() as HeroActor
+		if souls[key].remaining <= 0 or not is_instance_valid(owner_actor) or not owner_actor.alive: souls.erase(key)
 	for kind: String in effects.keys():
 		if not actor.alive:
 			break
@@ -62,10 +67,25 @@ func movement_scale() -> float:
 func cleanse() -> void:
 	if actor.boot_pair != null and actor.boot_pair.victim == actor: actor.boot_pair.release(false)
 	effects.clear()
+	souls.clear()
 
 func clear() -> void:
 	effects.clear()
 	marks.clear()
+	souls.clear()
 	# Also retire this attacker's information immediately, including same-tick respawns.
 	for other: HeroActor in actor.get_tree().get_nodes_in_group("actors"):
 		if other.statuses != null: other.statuses.marks.erase(actor.get_instance_id())
+		if other.statuses != null: other.statuses.souls.erase(actor.get_instance_id())
+
+func add_soul(source: HeroActor, limit: int, seconds: float) -> void:
+	var key: int = source.get_instance_id()
+	souls[key] = {"source":weakref(source),"count":mini(limit,soul_count(source)+1),"remaining":seconds}
+
+func soul_count(source: HeroActor) -> int:
+	return int(souls.get(source.get_instance_id(),{}).get("count",0))
+
+func take_souls(source: HeroActor) -> int:
+	var result: int = soul_count(source)
+	souls.erase(source.get_instance_id())
+	return result

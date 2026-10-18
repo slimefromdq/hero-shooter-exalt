@@ -56,7 +56,7 @@ func run() -> void:
 		actor.kit.consume_ammo()
 		check(actor.kit.ammo == 0,hero+" crouch shot consumes loaded round")
 		actor.kit.start_reload()
-		await step(100)
+		await step(maxi(100,ceili(actor.kit.reload_total*60)+3))
 		check(not actor.kit.reloading and actor.kit.ammo == actor.tuning.magazine,hero+" reload completes while crouch-walking")
 		actor.intent.slide = false
 		await step(20)

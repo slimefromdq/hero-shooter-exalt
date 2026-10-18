@@ -38,6 +38,7 @@ var huddle_bugs: Array[Node3D] = []
 var care_tool: Node3D
 var held_trap: Node3D
 var team_ring: MeshInstance3D
+var roster_parts: Dictionary = {}
 
 func _ready() -> void:
 	model = Node3D.new()
@@ -150,7 +151,8 @@ func _ready() -> void:
 	if actor.tuning is SlayerTuning:
 		SlayerVisuals.remodel(self)
 		animator.add_animation_library("slayer",SlayerAnimations.library())
-	if actor.kit is HuddleKit: HuddleVisuals.remodel(self)
+	if actor.kit is ExpansionKit: RosterVisuals.remodel(self)
+	elif actor.kit is HuddleKit: HuddleVisuals.remodel(self)
 	elif actor.kit is CareKit: CareVisuals.remodel(self)
 	# Applied after hero remodeling so both silhouettes carry the same team language.
 	var team_colour := Color("38dfff") if actor.team == 0 else Color("ff4f65")
@@ -318,7 +320,8 @@ func _process(delta: float) -> void:
 		sound.play_tone(70.0, 0.07, 0.1)
 	was_grounded = actor.is_on_floor()
 	if actor.tuning is SlayerTuning: SlayerVisuals.animate(self)
-	if actor.kit is HuddleKit: HuddleVisuals.animate(self)
+	if actor.kit is ExpansionKit: RosterVisuals.animate(self,delta)
+	elif actor.kit is HuddleKit: HuddleVisuals.animate(self)
 	elif actor.kit is CareKit: CareVisuals.animate(self)
 	if actor.motor.mode == "slide":
 		left_leg.position.y = 1.0
@@ -341,6 +344,8 @@ func _process(delta: float) -> void:
 		if effect in ["root","slow"]: continue
 		status_text += "%s %.1f  " % [effect.replace("max_health","MAX HP WOUND").to_upper(),actor.statuses.effects[effect].remaining]
 	var viewer: HeroActor = session.player if session != null else null
+	if is_instance_valid(viewer) and viewer.kit is WispKit and actor.statuses.soul_count(viewer) > 0:
+		status_text += "SOULS " + str(actor.statuses.soul_count(viewer))
 	if is_instance_valid(viewer) and viewer.tuning is SlayerTuning and actor.statuses.marked_for(viewer):
 		var slayer_data := viewer.tuning as SlayerTuning
 		if viewer.global_position.distance_to(actor.global_position) <= slayer_data.mark_range and actor.resolver.visible(viewer.global_position + Vector3.UP * 1.5,actor,[viewer.get_rid()]):

@@ -200,6 +200,15 @@ func restart_match() -> void:
 	eliminations = [0, 0]
 	_pickup_order = 0
 	round_serial += 1
+	if pending_hero != "": apply_pending_hero()
+	# Rebuild composition only between rounds; mid-match selection preserves bots.
+	for actor: HeroActor in bots:
+		var slot: int = int(_spawn_indices.get(actor.get_instance_id(),0))
+		var desired: String = HeroRoster.team_hero(slot,player.tuning.hero_id)
+		if actor.tuning.hero_id != desired: actor.select_hero(desired)
+		if actor.controller is CityBotController:
+			actor.controller.role = HeroRoster.bot_role(slot,player.tuning.hero_id)
+			actor.controller.navagent.max_speed = actor.tuning.ground_speed
 	for transient: Node in get_tree().get_nodes_in_group("transient"):
 		transient.queue_free()
 	player.resolver.clear_round()

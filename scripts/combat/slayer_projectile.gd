@@ -83,8 +83,8 @@ func _physics_process(delta: float) -> void:
 				return
 			add_collision_exception_with(target)
 			motion = hit.get_remainder()
-		elif hit.get_collider() is HunterSnare:
-			(hit.get_collider() as HunterSnare).receive_damage(source,t.knife_damage if kind == "knife" else t.axe_damage,cast_id)
+		elif hit.get_collider() is HunterSnare or hit.get_collider() is CombatStructure:
+			source.resolver.hit_object(hit.get_collider(),source,t.knife_damage if kind == "knife" else t.axe_damage,cast_id)
 			queue_free()
 			return
 		else:

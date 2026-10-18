@@ -13,6 +13,7 @@ var invulnerable: bool = false
 var spawn_protected: bool = false
 var infinite_resources: bool = false
 var alive: bool = true
+var life_serial: int = 0
 var state: String = "ready"
 var state_time: float = 0.0
 var aim_direction: Vector3 = Vector3.FORWARD
@@ -102,6 +103,9 @@ func _physics_process(delta: float) -> void:
 
 # One authority boundary: controllers request actions; only components resolve them.
 func permits(action: String) -> bool:
+	if kit is ExpansionKit:
+		if action in ["step","lift","kickstart"] and statuses.movement_disabled(): return false
+		if action in ["secondary","step","lift","kickstart","phase","assign","wall"] and resolver.protected_room(self): return false
 	if state in ["boot_attached","boot_captured"]: return false
 	if action == "primary" and kit != null and kit.reloading: return false
 	if tuning.hero_id == "huddle" and action in ["scatter","screen","regroup","wave"]:
@@ -128,7 +132,8 @@ func permits(action: String) -> bool:
 	return true
 
 func muzzle() -> Vector3:
-	return body_point(1.36) + global_basis.x * 0.32 + aim_direction * 0.55
+	var shoulder: float = -.32 if kit is WispKit and kit.ammo%2 == 0 else .32
+	return body_point(1.36) + global_basis.x * shoulder + aim_direction * 0.55
 
 func body_point(standing_height: float) -> Vector3:
 	return global_position + Vector3.UP * (standing_height - motor.posture_lowering())
@@ -148,6 +153,7 @@ func die() -> void:
 	if not alive:
 		return
 	alive = false
+	life_serial += 1
 	if boot_pair != null: boot_pair.release(false)
 	benefits.clear_owned()
 	benefits.clear()
@@ -164,6 +170,8 @@ func die() -> void:
 	died.emit()
 
 func reset_actor(at: Vector3 = Vector3.INF) -> void:
+	life_serial += 1
+	if has_meta("structure_route"): remove_meta("structure_route")
 	if boot_pair != null: boot_pair.release(false)
 	resolver.contributions.erase(get_instance_id())
 
@@ -185,7 +193,7 @@ func reset_actor(at: Vector3 = Vector3.INF) -> void:
 	velocity = Vector3.ZERO
 	global_position = spawn_position if at == Vector3.INF else at
 	collision_layer = 2
-	kit.refill()
+	kit.reset_life()
 	close.refill()
 	intent = CombatIntent.new()
 	if controller != null and controller.has_method("reset_controller"):
@@ -194,6 +202,7 @@ func reset_actor(at: Vector3 = Vector3.INF) -> void:
 
 func _exit_tree() -> void:
 	if boot_pair != null: boot_pair.release(false)
+	if is_instance_valid(kit): kit.cancel(true)
 	if benefits != null: benefits.clear_owned()
 	if is_instance_valid(close):
 		close.cancel()
@@ -212,7 +221,7 @@ func select_hero(id: String) -> void:
 	kit = HeroRoster.kit_for(id)
 	kit.actor = self
 	add_child(kit)
-	kit.refill()
+	kit.reset_life()
 	presentation = HeroPresentation.new()
 	presentation.actor = self
 	add_child(presentation)

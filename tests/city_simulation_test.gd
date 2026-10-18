@@ -54,6 +54,8 @@ func check(condition: bool, description: String) -> void:
 
 func run() -> void:
 	seed(simulation_seed)
+	HeroRoster.composition_seed = simulation_seed
+	print("ROSTER ",HeroRoster.composition_for(HeroRoster.selected))
 	arena = load("res://scenes/city/meridian_gardens.tscn").instantiate() as Node3D
 	root.add_child(arena)
 	current_scene = arena
@@ -148,7 +150,7 @@ func run() -> void:
 		total_travel += controller.distance_travelled
 		decisions_within_budget = decisions_within_budget and controller.decision_count <= duration * 5 + 50
 		paths_within_budget = paths_within_budget and controller.path_update_count <= duration * 2 + 50
-		bot_statistics.append({"actor":actor.actor_id,"role":controller.role,"active_seconds":controller.elapsed,"tactical_decisions":controller.decision_count,"path_updates":controller.path_update_count,"distance_m":controller.distance_travelled,"detours":controller.stuck_events,"warps":controller.recovery_warps})
+		bot_statistics.append({"actor":actor.actor_id,"hero":actor.tuning.hero_id,"role":controller.role,"active_seconds":controller.elapsed,"tactical_decisions":controller.decision_count,"path_updates":controller.path_update_count,"distance_m":controller.distance_travelled,"detours":controller.stuck_events,"warps":controller.recovery_warps})
 	check(warps == 0,"bot recovery uses navigation detours without teleporting")
 	check(decisions_within_budget,"tactical decision counters stay within the five hertz budget")
 	check(paths_within_budget,"navigation retarget counters stay within the two hertz budget")

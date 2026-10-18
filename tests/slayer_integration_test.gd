@@ -85,7 +85,7 @@ func run() -> void:
 	var slayers: int = 0
 	for bot: HeroActor in city.bots:
 		if bot.kit is SlayerKit: slayers += 1
-	check(slayers == 3,"Slayer city roster has two hunters per team including the player")
+	check(slayers == 1,"balanced city roster has one Slayer per team including the player")
 	var start: int = Time.get_ticks_msec()
 	while not city.navigation_ready and Time.get_ticks_msec() - start < 20000:
 		await process_frame

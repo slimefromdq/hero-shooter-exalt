@@ -7,6 +7,7 @@ var aim_origin: Vector3 = Vector3.ZERO
 var primary: bool = false
 var primary_held: bool = false
 var secondary_held: bool = false
+var secondary_pressed: bool = false
 var projectile_fire: bool = false
 var aim_held: bool = false
 var jump: bool = false

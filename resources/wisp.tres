@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="WispTuning" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/actors/wisp_tuning.gd" id="1"]
+[resource]
+script = ExtResource("1")
+hero_id = "wisp"
+max_health = 225.0
+ground_speed = 6.5
+air_steering = 12.0
+rifle_damage = 14.0
+shot_interval = 0.08333333
+magazine = 36
+reload_time = 1.1
+head_multiplier = 1.5

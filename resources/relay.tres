@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="RelayTuning" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/actors/relay_tuning.gd" id="1"]
+[resource]
+script = ExtResource("1")
+hero_id = "relay"
+max_health = 250.0
+rifle_damage = 14.0
+shot_interval = 0.1
+magazine = 30
+reload_time = 1.2
+head_multiplier = 1.5

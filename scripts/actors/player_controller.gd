@@ -86,6 +86,7 @@ func gather_intent(_delta: float) -> CombatIntent:
 	input.primary = Input.is_action_just_pressed("primary")
 	input.primary_held = Input.is_action_pressed("primary")
 	input.secondary_held = Input.is_action_pressed("aim")
+	input.secondary_pressed = Input.is_action_just_pressed("aim")
 	input.aim_held = input.secondary_held and actor.tuning.hero_id in ["nimbus","slayer"]
 	input.jump = Input.is_action_just_pressed("jump")
 	input.jump_held = Input.is_action_pressed("jump")

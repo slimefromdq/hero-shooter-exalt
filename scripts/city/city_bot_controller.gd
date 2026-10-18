@@ -71,6 +71,7 @@ func load_route() -> void:
 
 func gather_intent(delta: float) -> CombatIntent:
 	var intent := CombatIntent.new()
+	var care_fresh: bool = false
 	intent.aim = remembered_aim
 	intent.aim_origin = actor.global_position + Vector3.UP * 1.45
 	if not active or frozen or not actor.alive or not is_instance_valid(match_controller):
@@ -87,6 +88,7 @@ func gather_intent(delta: float) -> CombatIntent:
 		think_timer += .2
 		decide()
 		if actor.kit is CareKit:
+			care_fresh = true
 			care_request = CombatIntent.new()
 			care_request.aim_origin = actor.global_position + Vector3.UP * 1.45
 			CareTactics.apply(actor,care_request)
@@ -156,8 +158,10 @@ func gather_intent(delta: float) -> CombatIntent:
 		if actor.kit.ammo < actor.tuning.magazine and actor.state == "ready":
 			intent.reload = true
 	if actor.kit is CareKit and care_request != null:
-		for action: String in ["aim","primary","primary_held","secondary_held","aim_held","reload","hover","deflect","bomb","ultimate","melee","guard","throw_action"]:
+		for action: String in ["aim","primary","primary_held","secondary_held","secondary_pressed","jump_held","aim_held","reload","hover","deflect","bomb","ultimate","melee","guard","throw_action"]:
 			intent.set(action,care_request.get(action))
+		if not care_fresh:
+			for action: String in ["primary","secondary_pressed","reload","hover","deflect","bomb","ultimate","melee","throw_action"]: intent.set(action,false)
 		if not recovering and not care_request.move.is_zero_approx(): intent.move = avoid_wall(care_request.move)
 	watch_progress(delta, intent.move)
 	return intent
@@ -226,6 +230,7 @@ func follow_path() -> Vector3:
 	return direction.normalized() if direction.length_squared() > .04 else Vector3.ZERO
 
 func avoid_wall(move: Vector3) -> Vector3:
+	move = StructureAvoidance.steer(actor,move,destination)
 	if move.length_squared() < .01:
 		return move
 	var origin: Vector3 = actor.global_position + Vector3.UP * .6

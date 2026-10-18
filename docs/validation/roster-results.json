@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-17",
+  "engine": "4.7.2.stable.official.ed1daf0bf",
+  "headless_checks": 1938,
+  "focused_checks": 255,
+  "native_input_checks": 27,
+  "structural_surface_probes": 2516,
+  "winding_checks": 4420,
+  "rendered_frames": 16,
+  "failures": [],
+  "simulations": [
+    {
+      "seed": 76,
+      "seconds": 600,
+      "checks": 17,
+      "failures": [],
+      "captures": [
+        6,
+        6
+      ],
+      "deaths": 134,
+      "health_collections": 11,
+      "worst_stall": 4.0,
+      "falls": [],
+      "high_ground_teams": [
+        true,
+        true
+      ],
+      "subway_teams": [
+        true,
+        true
+      ],
+      "arcade_teams": [
+        true,
+        true
+      ]
+    },
+    {
+      "seed": 971,
+      "seconds": 600,
+      "checks": 17,
+      "failures": [],
+      "captures": [
+        5,
+        6
+      ],
+      "deaths": 161,
+      "health_collections": 24,
+      "worst_stall": 2.0,
+      "falls": [],
+      "high_ground_teams": [
+        true,
+        true
+      ],
+      "subway_teams": [
+        true,
+        true
+      ],
+      "arcade_teams": [
+        true,
+        true
+      ]
+    }
+  ]
+}

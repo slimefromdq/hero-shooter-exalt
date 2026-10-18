@@ -13,7 +13,10 @@ const HEROES := {
 	"slayer":["MONSTER HUNTER","Shotgun pressure, bleeding knives and directional boot captures.","Q Silver Knives · E Boot Rush · 1 Snare · 2 Heads Will Roll"],
 	"marshal":["MAIN TANK","Lead the advance behind an arcane barrier.","Q Forward March · E Iron Resolve · 1 Breach Line · 2 Verdict"],
 	"doctor":["MAIN SUPPORT","Hold RMB to heal allies; use LMB for precise sidearm fire.","Q House Call · E Ward Round · 1 Prescription · 2 Exemplary Condition"],
-	"huddle":["MOBILE OFF-TANK","A colony with seed fire, two flight bursts and ally protection.","Q Scatterbound · E Screen · 1 Personal Space · 2 Nobody Gets Squished"]}
+	"huddle":["MOBILE OFF-TANK","A colony with seed fire, two flight bursts and ally protection.","Q Scatterbound · E Screen · 1 Personal Space · 2 Nobody Gets Squished"],
+	"relay":["DRONE SUPPORT","RMB assigns the healing drone. Recall to recharge; attack while it heals.","Q Kickstart · E Shock Delivery · 1 Recall / Self · 2 Full Circuit"],
+	"dynamo":["STORM TANK","Prespin a ramping minigun, build physical walls and gather enemies.","Q Stormcharge · E Wall · 1 Lodestone · 2 Storm Dominion"],
+	"wisp":["GHOST DPS","Pistols mark souls; dashes load shotgun shells. Land the core to detonate.","Q Ghoststep · E Phase · 1 Spectral Lift · 2 Death Ballet"]}
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS

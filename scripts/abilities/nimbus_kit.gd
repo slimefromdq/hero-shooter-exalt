@@ -81,7 +81,9 @@ func fire(ultimate: bool) -> void:
 	elif hit.get("collider") is PocketBomb:
 		hit.collider.receive_shot(actor)
 	elif hit.get("collider") is HunterSnare:
-		(hit.collider as HunterSnare).receive_damage(actor,t.ultimate_damage if ultimate else t.rifle_damage,cast_id)
+		actor.resolver.hit_object(hit.collider,actor,t.ultimate_damage if ultimate else t.rifle_damage,cast_id)
+	elif hit.get("collider") is CombatStructure:
+		actor.resolver.hit_object(hit.collider,actor,t.ultimate_damage if ultimate else t.rifle_damage,cast_id)
 	CombatEffect.line(actor.get_parent(), muzzle, endpoint, Color("fce7ab") if not ultimate else Color("9dfbe2"), 0.04 if not ultimate else 0.09)
 	actor.presentation.fire_flash = 0.18
 	actor.presentation.sound.play_tone(220.0 if not ultimate else 90.0, 0.11, 0.22)
@@ -90,5 +92,5 @@ func fire(ultimate: bool) -> void:
 		if ultimate_remaining <= 0: actor.state = "ready"
 	else:
 		consume_ammo()
-	shot_cd = t.shot_interval
+	shot_cd = t.shot_interval if ultimate else primary_interval()
 	actor.resolver.record("cast", actor, "ultimate_shot" if ultimate else "rifle", "cast=%d" % cast_id)

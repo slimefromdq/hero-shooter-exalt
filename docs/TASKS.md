@@ -49,3 +49,11 @@ Implemented October 17, 2026: new shield main tank and beam main support, with d
 ## ROSTER-03 · Huddle
 
 Implemented the mobile colony off-tank, original procedural model/portrait, healing, charged flight, interception screen, wingbeat and wave ultimate. Includes bot tactics, both menus, launcher switch, training profile/exercise and automated focused/native verification. See [Huddle](HUDDLE.md). Competitive tuning remains a human playtest task.
+
+## ROSTER-04 · Relay, Dynamo and Wisp
+
+Implemented all three heroes with editable tuning, original procedural models/portraits, combat effects and audio, kit-aware bots, startup/city/training selection, launcher switches, resource HUDs, dedicated exercises and training profiles. Relay's drone heals without ongoing sightline/distance checks; Dynamo's five-section walls block both teams physically; Wisp combines source-specific marks with dash-loaded precision burst.
+
+Verification passes 1,938 headless checks, including the final 255-check hero suite, plus 2,516 structural surface probes and 4,420 winding checks. Twenty-seven native engine input checks pass. Sixteen rendered review frames include portraits, active abilities, menus and city camera. Two 600-second simulations pass all 17 checks each, with both teams capturing, traversing subway/arcade/high-ground routes, no falls, no persistent stalls and no recovery teleports. Human balance and game-feel acceptance remain pending.
+
+See [kits and commands](RELAY_DYNAMO_WISP.md) and [machine-readable evidence](validation/roster-results.json).

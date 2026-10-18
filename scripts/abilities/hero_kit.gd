@@ -13,6 +13,12 @@ var reloading: bool = false
 var reload_remaining: float = 0.0
 var reload_total: float = 0.0
 
+func ultimate_active() -> bool:
+	return false
+
+func primary_interval(base: float = -1.0) -> float:
+	return (actor.tuning.shot_interval if base < 0 else base) / actor.benefits.fire_rate_multiplier()
+
 func start_reload() -> void:
 	if reloading or ammo >= actor.tuning.magazine or not actor.permits("reload"): return
 	reloading = true
@@ -83,6 +89,7 @@ func cancel(clear_owned: bool = false) -> void:
 	if clear_owned:
 		for effect: Node in actor.get_tree().get_nodes_in_group("owned_attacks"):
 			if effect.get("source") == actor:
+				effect.set_physics_process(false)
 				effect.queue_free()
 
 func refill() -> void:
@@ -93,3 +100,6 @@ func refill() -> void:
 	deflect_cd = 0.0
 	bomb_cd = 0.0
 	ultimate_charge = 100.0
+
+func reset_life() -> void:
+	refill()

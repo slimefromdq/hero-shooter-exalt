@@ -2,6 +2,9 @@ class_name CareHUD
 extends RefCounted
 
 static func labels(a: HeroActor) -> Array[String]:
+	if a.kit is RelayKit: return ["KICKSTART","SHOCK DELIVERY","RECALL / SELF"]
+	if a.kit is DynamoKit: return ["STORMCHARGE","RAISE THE LINE","LODESTONE"]
+	if a.kit is WispKit: return ["GHOSTSTEP","BETWEEN WORLDS","SPECTRAL LIFT"]
 	if a.kit is HuddleKit: return ["SCATTERBOUND","WE'VE GOT YOU!","PERSONAL SPACE!"]
 	var result: Array[String] = []
 	result.assign(["FORWARD MARCH","IRON RESOLVE","BREACH LINE"] if a.kit is MarshalKit else ["HOUSE CALL","WARD ROUND","PRESCRIPTION"])
@@ -12,6 +15,15 @@ static func cooldowns(a: HeroActor) -> Array[float]:
 	return [k.mobility_cd,k.deflect_cd,k.bomb_cd]
 
 static func durations(a: HeroActor) -> Array[float]:
+	if a.tuning is RelayTuning:
+		var t := a.tuning as RelayTuning
+		return [t.jump_cooldown,t.shock_cooldown,t.transfer_cooldown]
+	if a.tuning is DynamoTuning:
+		var t := a.tuning as DynamoTuning
+		return [t.charge_cooldown,t.wall_cooldown,t.stone_cooldown]
+	if a.tuning is WispTuning:
+		var t := a.tuning as WispTuning
+		return [t.step_recharge,t.phase_cooldown,t.lift_cooldown]
 	if a.tuning is HuddleTuning:
 		var h := a.tuning as HuddleTuning
 		return [h.scatter_recharge,h.screen_cooldown,h.pulse_cooldown]
@@ -23,6 +35,9 @@ static func durations(a: HeroActor) -> Array[float]:
 
 static func ultimate_label(a: HeroActor) -> String:
 	match a.tuning.hero_id:
+		"relay": return "FULL CIRCUIT"
+		"dynamo": return "STORM DOMINION"
+		"wisp": return "DEATH BALLET"
 		"huddle": return "NOBODY GETS SQUISHED!"
 		"marshal": return "MARSHAL'S VERDICT"
 		"doctor": return "EXEMPLARY CONDITION"
@@ -31,6 +46,9 @@ static func ultimate_label(a: HeroActor) -> String:
 
 static func ultimate_detail(a: HeroActor) -> String:
 	match a.tuning.hero_id:
+		"relay": return "%d HP/S / +%d%% FIRE" % [roundi((a.tuning as RelayTuning).circuit_heal),roundi((a.tuning as RelayTuning).circuit_haste*100)]
+		"dynamo": return "%dM / %dM STORM / %d DPS" % [roundi((a.tuning as DynamoTuning).storm_range),roundi((a.tuning as DynamoTuning).storm_radius),roundi((a.tuning as DynamoTuning).storm_damage/(a.tuning as DynamoTuning).storm_interval)]
+		"wisp": return "%sS BARRAGE + FINALE" % String.num((a.tuning as WispTuning).ballet_duration,1)
 		"huddle": return "5M WAVE / STEER TO PUSH"
 		"marshal": return "%d m / LEAP SLAM" % (a.tuning as MarshalTuning).verdict_range
 		"doctor": return "ALLY DAMAGE / SPEED / RESIST"
@@ -39,6 +57,9 @@ static func ultimate_detail(a: HeroActor) -> String:
 
 static func weapon_label(a: HeroActor) -> String:
 	match a.tuning.hero_id:
+		"relay": return "CARBINE"
+		"dynamo": return "MINIGUN"
+		"wisp": return "DUAL PISTOLS"
 		"huddle": return "SEEDS"
 		"marshal": return "CANNON"
 		"doctor": return "SIDEARM"
@@ -46,12 +67,24 @@ static func weapon_label(a: HeroActor) -> String:
 	return "RIFLE"
 
 static func secondary_label(a: HeroActor) -> String:
+	if a.kit is RelayKit: return "RMB ASSIGN DRONE / 1 RECALL OR SELF"
+	if a.kit is DynamoKit: return "RMB PRESPIN / WALL: LMB PLACE, RMB ROTATE, E CANCEL"
+	if a.kit is WispKit: return "RMB SOULBREAKER / DASH TO LOAD SHELLS"
 	if a.kit is HuddleKit: return "RMB HOLD REGROUP / LMB HOLD FIRE"
 	if a.kit is MarshalKit: return "RMB HOLD SHIELD / LMB HOLD FIRE"
 	if a.kit is DoctorKit: return "RMB HOLD HEAL / LMB HOLD FIRE"
 	return "RMB AIM"
 
 static func detail(a: HeroActor) -> String:
+	if a.kit is RelayKit:
+		var k := a.kit as RelayKit
+		return "BATTERY %d/%d / %s%s" % [ceili(k.battery),ceili(k.data().battery_capacity),k.recipient.actor_id.to_upper() if is_instance_valid(k.recipient) else "DOCKED / CHARGING"," / CIRCUIT %.1fs" % k.circuit_left if k.ultimate_active() else " / TRANSFER" if k.transfer_left > 0 else ""]
+	if a.kit is DynamoKit:
+		var k := a.kit as DynamoKit
+		return "SPIN %d%% / %s%s" % [roundi(k.spin*100),"WALL: PLACE / ROTATE" if k.previewing else "WALL %.1fs" % k.wall.remaining if is_instance_valid(k.wall) else "NO WALL"," / LIGHTNING %.1fs" % k.charge_left if k.charge_left > 0 else ""]
+	if a.kit is WispKit:
+		var k := a.kit as WispKit
+		return "DASH %d/%d %.1fs / SHELLS %d/%d%s" % [k.steps,k.data().step_charges,k.recharge,k.shells,k.data().shell_limit," / BALLET %.1fs" % k.ballet_left if k.ultimate_active() else ""]
 	if a.kit is HuddleKit:
 		var k := a.kit as HuddleKit
 		var shield: String = "SCREEN %d / %.1fs" % [ceili(k.screen.health),k.screen.remaining] if is_instance_valid(k.screen) and k.screen.active() else "SCREEN READY" if k.deflect_cd <= 0 else "SCREEN %.1fs" % k.deflect_cd
@@ -68,7 +101,7 @@ static func detail(a: HeroActor) -> String:
 static func status(a: HeroActor) -> String:
 	if a.benefits == null: return ""
 	var result: String = ""
-	for kind: String in ["exemplary","prescription","resolve","aftercare","ward"]:
+	for kind: String in ["exemplary","prescription","resolve","aftercare","ward","circuit"]:
 		var duration: float = a.benefits.remaining(kind)
-		if duration > 0: result += "%s %.1fs  " % [kind.to_upper(),duration]
+		if duration > 0: result += "OVERCLOCKED  " if kind == "circuit" else "%s %.1fs  " % [kind.to_upper(),duration]
 	return result

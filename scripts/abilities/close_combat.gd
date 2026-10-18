@@ -61,6 +61,12 @@ func tick(delta: float, input: CombatIntent) -> void:
 				actor.state = "melee_active"
 				actor.state_time = t.melee_active
 		"melee_active":
+			for structure: CombatStructure in actor.get_tree().get_nodes_in_group("structures"):
+				var point: Vector3 = structure.nearest_point(actor.body_point(1))
+				var offset: Vector3 = point-actor.body_point(1)
+				if offset.length() <= t.melee_range and offset.normalized().dot(melee_direction) > .35:
+					var hit: Dictionary = actor.resolver.ray(actor.body_point(1),point,[actor.get_rid()],1)
+					if hit.is_empty() or hit.get("collider") == structure: structure.receive_damage(actor,t.melee_damage,cast_id)
 			for target: HeroActor in actor.get_tree().get_nodes_in_group("actors"):
 				if valid_target(target, t.melee_range, 0.35):
 					actor.resolver.damage(actor, target, t.melee_damage, "melee", cast_id)
@@ -106,7 +112,7 @@ func melee_progress() -> float:
 	return clampf(melee_age / (t.melee_windup + t.melee_active + t.melee_recovery), 0, 1)
 
 func valid_target(target: HeroActor, reach: float, facing: float) -> bool:
-	if target == actor or not target.alive or target.team == actor.team:
+	if target == actor or not target.alive or target.team == actor.team or target.state == "wisp_phase":
 		return false
 	if actor.resolver.protected_room(actor) or actor.resolver.protected_room(target):
 		return false
