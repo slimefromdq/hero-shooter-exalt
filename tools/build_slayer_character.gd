@@ -5,6 +5,7 @@ var rig: Skeleton3D
 var bones: Dictionary = {}
 var rests: Dictionary = {}
 var source_scale: float = .98242
+var head_lowering: float = 0.0
 
 func _initialize() -> void: call_deferred("build")
 
@@ -31,7 +32,7 @@ func weights(group: String, point: Vector3) -> Dictionary:
  var y: float = (point.y+.004912)/source_scale
  if group in ["Face","Head","Hair"]: return {"Head":1.0}
  if group == "Neck":
-  var t: float = smoothstep(1.48,1.59,y)
+  var t: float = smoothstep(1.48,1.59-head_lowering,y)
   return {"Chest":1-t,"Head":t}
  if group.begins_with("UpperArm"):
   var elbow: float = 1-smoothstep(1.245,1.31,y)
@@ -98,6 +99,8 @@ func bake_mesh(source: MeshInstance3D, group: String, transform: Transform3D, sk
  return mesh
 
 func build() -> void:
+ var source_report: Dictionary=JSON.parse_string(FileAccess.get_file_as_string("res://assets/characters/slayer/model-report.json"))
+ head_lowering=float(source_report.get("neck_shortening",.035))-.035
  var source: Node3D=load("res://assets/characters/slayer/slayer.glb").instantiate()
  root.add_child(source)
  var character:=Node3D.new(); character.name="SlayerCharacter"
@@ -109,7 +112,7 @@ func build() -> void:
  bone("Root","",to_world*Vector3(0,.93,0))
  bone("Spine","Root",to_world*Vector3(0,1.18,0))
  bone("Chest","Spine",to_world*Vector3(0,1.43,0))
- bone("Head","Chest",to_world*Vector3(0,1.58,0))
+ bone("Head","Chest",to_world*Vector3(0,1.58-head_lowering,0))
  for side: String in ["Left","Right"]:
   var sign_x: float=-1 if side=="Left" else 1
   bone(side+"UpperArm","Chest",to_world*Vector3(sign_x*.235,1.445,0))
@@ -142,7 +145,7 @@ func build() -> void:
  var packed:=PackedScene.new()
  assert(packed.pack(character)==OK)
  assert(ResourceSaver.save(packed,OUTPUT+"slayer_character.tscn")==OK)
- var report={"source_sha256":FileAccess.get_sha256("res://assets/characters/slayer/slayer.glb"),"source":"res://assets/characters/slayer/slayer.glb","bones":rig.get_bone_count(),"skinned_groups":19,"facial_morphs":9,"max_influences":4,"gameplay_modified":false}
+ var report={"neck_shortening":source_report.get("neck_shortening",.035),"visual_height_m":source_report.height_m,"source_sha256":FileAccess.get_sha256("res://assets/characters/slayer/slayer.glb"),"source":"res://assets/characters/slayer/slayer.glb","bones":rig.get_bone_count(),"skinned_groups":19,"facial_morphs":9,"max_influences":4,"gameplay_modified":false}
  FileAccess.open(OUTPUT+"rig-report.json",FileAccess.WRITE).store_string(JSON.stringify(report,"\t"))
  print("SLAYER_GAME_RIG_BUILT ",report)
  source.queue_free(); character.queue_free(); await process_frame

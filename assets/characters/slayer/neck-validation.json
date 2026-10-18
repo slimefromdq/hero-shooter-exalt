@@ -1,0 +1,32 @@
+{
+  "completed_utc": "2026-10-18T22:04:46.374370+00:00",
+  "additional_neck_reduction_m": 0.03929679632186889,
+  "neck_shortening_parameter": 0.075,
+  "visual_height_m": 1.86070311069489,
+  "physics_capsule_height_m": 1.9,
+  "body_scale_unchanged": true,
+  "original_body_outfit_equipment_hashes_preserved": 197,
+  "face_hair_earrings_moved_together": true,
+  "facial_geometry_and_nine_morphs_preserved": true,
+  "blend_sha256": "62364de865198c9ce6726b4d954b99e516208a989e5d3d828983b6e463c2d107",
+  "glb_sha256": "c57108a1e118278e4a3aa8cb37ad24b61228df40bc1afe31b17259e403ef592a",
+  "runtime_scene_sha256": "a217337c43688daa0305a1f06b724d999e75e132478abeb1ce8504c0fe8d9fe0",
+  "saved_blend_checks": 11,
+  "glb_checks": 20511,
+  "godot_source_headless_checks": 164,
+  "godot_source_rendered_checks": 180,
+  "live_headless_checks": 45,
+  "live_rendered_checks": 56,
+  "city_rendered_slayers": 2,
+  "failures": 0,
+  "full_suite_scope": "Prior integration baseline at 5807d81; this localized proportion change reran focused source, rig, lifecycle and rendered checks.",
+  "inspected_views": [
+    "previews/front.png",
+    "previews/face-neutral.png",
+    "previews/face-three-quarter.png",
+    "previews/face-profile.png",
+    "previews/neck-bust.png",
+    "artifacts/slayer-integration/face-in-arena.png",
+    "artifacts/slayer-integration/city-character.png"
+  ]
+}

@@ -1,28 +1,28 @@
 {
-  "completed_utc": "2026-10-18T21:06:41.706082+00:00",
+  "completed_utc": "2026-10-18T22:04:46.374370+00:00",
   "objective": "Implement the authored Slayer model in Exalt",
   "live_actor_replaced": true,
   "training_verified": true,
   "city_player_and_opponent_verified": true,
-  "source_glb_sha256": "5a4c4a78532765ac092caffa3fda42177d78a33753de6b4f5b2b5bb95a02c8c3",
-  "runtime_scene_sha256": "a9138157b99a00019034a86589d81bedd2fe9f405278b08e895625b80d01bee7",
+  "source_glb_sha256": "c57108a1e118278e4a3aa8cb37ad24b61228df40bc1afe31b17259e403ef592a",
+  "runtime_scene_sha256": "a217337c43688daa0305a1f06b724d999e75e132478abeb1ce8504c0fe8d9fe0",
   "driver_sha256": "c2f8de0c9a2edce40c2f9c023a2a7f541f8b2fe4b3c9899b2d9f218f7a840f7c",
   "runtime_mesh_sha256": {
     "back_axe.res": "8cec01335fdc2f6302dbd8bd4eda2be9c5381fa95c25c7bd761b42838fb2681c",
     "calf_l.res": "8f80ca9135e364681a095e048d4a96534bc7452abab9e274b193a2a358ae9e42",
     "calf_r.res": "a184dee3843f6240ce70cfb1868ce23121e08de0a4d919cbd9897c87d2c36e51",
-    "face.res": "ccbad46998a918ac63435e1606f4dd78993993b4260d348f7f2cf6e530e0e1dd",
+    "face.res": "9b1e10695af7a9e8b140db3ec3dc047e44703ecda67d1618bdba291c35616ee4",
     "foot_l.res": "85e1c3ba43f8374d662d85a8876db363742fc98065058ca979776bcf5853b917",
     "foot_r.res": "f3c2191228cbd3d5a0c8a3326b5a1aca5a93e384017919239e59703b3446ea82",
     "forearm_l.res": "6c8c3c2b2d771cb65bd0a6dc3c5d16875957ab0fd1788928319f8ba03ffd2f5b",
     "forearm_r.res": "46c891ba442d15367c8872699df3c973c1a26a5ebe24943f551228b2344eea29",
-    "hair.res": "e825d8243917ac85b06097900faaccc4f94c8a0fb005085d3bd4bb76faab2d00",
+    "hair.res": "2afd4b0e09260eb25da8162a3a535b5f7ec40884fb44fee266cb0de753fb9cc5",
     "hand_l.res": "4a2c8e10b6c391556c248e66647e11870e9fece4c027c4a464787163e303ece5",
     "hand_r.res": "40a60653db02d0a8f8e7b08193c6965b219ef6eef0da92a0d245b95c30b25fdc",
-    "head.res": "994c0fed0a8022605962f6f138f9e255c6de959d69afd1aba29384e5d0e0bbfa",
+    "head.res": "dbd54586231e9d559e77586ca7735428bb0766e1dea39295bf7453e865251251",
     "jacket_torso.res": "a29f0f0e607e3dde8c5fdd938e599e20d3225e508d022fb12955eca146dcea53",
-    "neck.res": "756d432a690c2ef96e63647f1942e794611df19e1454c2b04b4b08fd53acead4",
-    "pelvis.res": "ae93fa6b8053e9a1da183fb0bf499b259e718584d5365fa9365879cce2bfb305",
+    "neck.res": "d4bc8827b61b2ce6557450fda197ba85632e929bc38f381ada6e1f72920e7fef",
+    "pelvis.res": "02bba0ecae46ea7f1ac9cdcccca3d8cbd7c609e51557e3f560d712b984a1d2a8",
     "shotgun.res": "554d05b846710ef722c73cabb131606aa9e9347ff1df62f92d5e908f9224e3db",
     "thigh_l.res": "cfa9a87caf630211292bfc7dbd7800f341cf4c5b9580b72cc6e3f063f6ce119e",
     "thigh_r.res": "8fb829ab6d716399f6f6c6978b3da67f870d78245b53e904ec4c5388597370b1",
@@ -51,13 +51,14 @@
     "command": "powershell -ExecutionPolicy Bypass -File ./tools/verify.ps1",
     "exit_code": 0,
     "error_lines": 0,
-    "log": "artifacts/slayer-integration/verify.log"
+    "log": "artifacts/slayer-integration/verify.log",
+    "scope": "Prior integration baseline at 5807d81; this localized proportion change reran focused source, rig, lifecycle and rendered checks."
   },
   "latest_live_checks": {
     "headless": 45,
     "rendered": 56,
     "failures": 0,
-    "log_directory": "artifacts/slayer-integration"
+    "log_directory": "artifacts/slayer-integration/neck-*.log"
   },
   "latest_slayer_regressions": {
     "presentation": 27,
@@ -96,5 +97,6 @@
     "Combined expression timing",
     "Close camera intersections",
     "Varied lighting and low-end hardware performance"
-  ]
+  ],
+  "neck_revision": "../neck-validation.json"
 }

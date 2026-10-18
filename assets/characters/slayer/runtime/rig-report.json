@@ -3,7 +3,9 @@
 	"facial_morphs": 9,
 	"gameplay_modified": false,
 	"max_influences": 4,
+	"neck_shortening": 0.075,
 	"skinned_groups": 19,
 	"source": "res://assets/characters/slayer/slayer.glb",
-	"source_sha256": "5a4c4a78532765ac092caffa3fda42177d78a33753de6b4f5b2b5bb95a02c8c3"
+	"source_sha256": "c57108a1e118278e4a3aa8cb37ad24b61228df40bc1afe31b17259e403ef592a",
+	"visual_height_m": 1.86070311069489
 }

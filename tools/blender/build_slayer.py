@@ -662,6 +662,7 @@ def render_previews(camera, names=None, samples=None):
         "equipment":((1.7,3.9,1.60),(0,.02,1.16),"ORTHO",1.10),
         "face-neutral":((0,2.1,1.73),(0,.015,1.72),"ORTHO",.40),
         "face-three-quarter":((-.9,1.7,1.76),(0,.015,1.72),"ORTHO",.43),
+        "neck-bust":((-.65,2.1,1.68),(0,.015,1.61),"ORTHO",.65),
         "face-profile":((-2,.02,1.74),(0,.015,1.72),"ORTHO",.43),
         "face-smile":((-.35,2.1,1.75),(0,.015,1.72),"ORTHO",.40),
         "face-determined":((-.35,2.1,1.75),(0,.015,1.72),"ORTHO",.40),
@@ -778,7 +779,7 @@ def export_asset():
     info={"blender":bpy.app.version_string,"source_objects":len(PARTS),
           "export_meshes":len(copies),"triangles":triangles,"materials":len(MATS)-1,
           "bounds_blender":bounds(copies),"facing_blender":"+Y","facing_godot":"-Z",
-          "height_m":1.9,"rigged":False,"generated_with_seed":7419,
+          "height_m":bounds(copies)[1][2]-bounds(copies)[0][2],"neck_shortening":float(CHAR.get("neck_shortening",BASE_NECK_SHORTENING)),"rigged":False,"generated_with_seed":7419,
           "blender_mesh_validation_passed":True,
           "facial_shape_keys":list(slayer_face.KEYS),
           "face_config":json.loads(bpy.data.objects["Slayer expressive face"]["face_config"])}
@@ -832,12 +833,51 @@ def preserved_fingerprint():
     return result
 
 
+BASE_NECK_SHORTENING = .035
+DEFAULT_NECK_SHORTENING = .075
+
+
+def set_neck_shortening(amount):
+    """Shorten from saved rest coordinates; never scale the body or facial mesh."""
+    if not math.isfinite(amount) or not .0 <= amount <= .095:
+        raise ValueError("neck shortening must be finite and in [0, .095] metres")
+    previous=float(CHAR.get("neck_shortening",BASE_NECK_SHORTENING))
+    delta=amount-previous
+    for obj in PARTS:
+        if obj["rig_group"] in {"Head","Face","Hair"}: obj.location.z-=delta
+    neck=bpy.data.objects["Neck"]
+    rest=neck.data.attributes.get("SlayerNeckRest")
+    if rest is None:
+        rest=neck.data.attributes.new("SlayerNeckRest","FLOAT_VECTOR","POINT")
+        for value,vertex in zip(rest.data,neck.data.vertices):
+            x,y,z=vertex.co
+            if z>=1.60-previous: original=z+previous
+            else: original=1.48+(z-1.48)/(1-previous/.12)
+            value.vector=(x,y,original)
+    for vertex,value in zip(neck.data.vertices,rest.data):
+        x,y,z=value.vector
+        vertex.co=(x,y,z-max(0,min(1,(z-1.48)/.12))*amount)
+    neck.data.update()
+    CHAR["neck_shortening"]=amount
+    bpy.context.view_layer.update()
+
+
+def save_preservation(after):
+    (OUT/"face-preservation.json").write_text(json.dumps({"unchanged":True,"objects":len(after),
+        "method":"Current accepted component hashes; facial rebuilds preserve these. Neck revision explicitly translates Head/Hair and compresses Neck only; original body/outfit/weapon hashes retained.",
+        "adjusted_front_hair":[obj.name for obj in PARTS if obj.name.startswith(FRAMING_PREFIXES)],
+        "neck_shortening":float(CHAR.get("neck_shortening",BASE_NECK_SHORTENING)),
+        "object_hashes":after},indent=2)+"\n")
+
+
 def main():
     global CHAR
     parser=argparse.ArgumentParser()
     parser.add_argument("--views",nargs="*")
     parser.add_argument("--samples",type=int,default=48)
     parser.add_argument("--face-only",action="store_true",help="Rebuild only the face in the saved editable asset")
+    parser.add_argument("--neck-only",action="store_true",help="Adjust neck/head placement in the saved source without rebuilding the face or body")
+    parser.add_argument("--neck-shortening",type=float,default=DEFAULT_NECK_SHORTENING,help="Total reduction for --neck-only or a full rebuild; .035 was the previous model")
     parser.add_argument("--face-config",type=Path,help="JSON overrides for slayer_face.FaceConfig")
     parser.add_argument("--skip-renders",action="store_true",help="Save/export only; keep existing preview images")
     args=parser.parse_args(sys.argv[sys.argv.index("--")+1:] if "--" in sys.argv else [])
@@ -846,26 +886,45 @@ def main():
     bpy.context.preferences.filepaths.save_version=0
     config=slayer_face.FaceConfig(**(json.loads(args.face_config.read_text()) if args.face_config else {}))
     config.validate()
-    if args.face_only:
+    if args.face_only or args.neck_only:
         bpy.ops.wm.open_mainfile(filepath=str(OUT/"slayer.blend"))
         CHAR=bpy.data.objects["Slayer - editable modular source"]
         MATS.update({m.name:m for m in bpy.data.materials})
         PARTS.extend(o for o in bpy.data.objects if "rig_group" in o)
         before=preserved_fingerprint()
+        if args.neck_only:
+            permitted={obj.name for obj in PARTS if obj["rig_group"] in {"Head","Face","Hair","Neck"}}
+            old_amount=float(CHAR.get("neck_shortening",BASE_NECK_SHORTENING))
+            set_neck_shortening(args.neck_shortening)
+            after=preserved_fingerprint()
+            protected={name:value for name,value in before.items() if name not in permitted}
+            assert protected=={name:value for name,value in after.items() if name not in permitted}, "Neck edit changed body, outfit or equipment"
+            first={obj.name:[tuple(v.co) for v in obj.data.vertices] for obj in PARTS if obj.type=="MESH" and obj["rig_group"]=="Neck"}
+            set_neck_shortening(args.neck_shortening)
+            assert first=={obj.name:[tuple(v.co) for v in obj.data.vertices] for obj in PARTS if obj.type=="MESH" and obj["rig_group"]=="Neck"}, "Neck adjustment is not idempotent"
+            save_preservation(after)
+            (OUT/"neck-adjustment.json").write_text(json.dumps({"previous_shortening":old_amount,
+                "neck_shortening":args.neck_shortening,"additional_reduction_from_original_m":(args.neck_shortening-BASE_NECK_SHORTENING)*CHAR.scale.z,
+                "body_scale_unchanged":True,"protected_components":len(protected),"protected_hashes":protected,
+                "morph_geometry_unchanged":True,"idempotent":True},indent=2)+"\n")
+            camera=bpy.context.scene.camera
+            bpy.ops.wm.save_as_mainfile(filepath=str(OUT/"slayer.blend"))
+            export_asset()
+            if not args.skip_renders: render_previews(camera,args.views,args.samples)
+            bpy.ops.wm.save_as_mainfile(filepath=str(OUT/"slayer.blend"))
+            print("SLAYER_NECK_COMPLETE",str(OUT),flush=True)
+            return
         adjust_front_hair()
         for obj in list(PARTS):
             if obj["rig_group"] in {"Face","Head"}:
                 PARTS.remove(obj); bpy.data.objects.remove(obj,do_unlink=True)
         start=len(PARTS)
         face(config)
-        for obj in PARTS[start:]: obj.location.z-=.035
+        for obj in PARTS[start:]: obj.location.z-=float(CHAR.get("neck_shortening",BASE_NECK_SHORTENING))
         bpy.context.view_layer.update()
         after=preserved_fingerprint()
         if before!=after: raise RuntimeError("Face-only rebuild changed preserved geometry")
-        (OUT/"face-preservation.json").write_text(json.dumps({"unchanged":True,"objects":len(before),
-            "method":"SHA256 of evaluated world-space vertices, topology and material colour/roughness/metallic; includes original ears/earrings; excludes facial construction and ten explicitly permitted front hair clumps; rest coordinates retained in SlayerFramingRest",
-            "adjusted_front_hair":[obj.name for obj in PARTS if obj.name.startswith(FRAMING_PREFIXES)],
-            "object_hashes":after},indent=2)+"\n")
+        save_preservation(after)
         camera=bpy.context.scene.camera
         bpy.ops.wm.save_as_mainfile(filepath=str(OUT/"slayer.blend"))
         export_asset()
@@ -909,6 +968,8 @@ def main():
     CHAR.scale=(1.9/(maximum[2]-minimum[2]),)*3
     CHAR.location.z=-minimum[2]*CHAR.scale.z
     bpy.context.view_layer.update()
+    CHAR["neck_shortening"]=BASE_NECK_SHORTENING
+    set_neck_shortening(args.neck_shortening)
     camera=studio()
     bpy.ops.wm.save_as_mainfile(filepath=str(OUT/"slayer.blend"))
     export_asset()

@@ -5,7 +5,7 @@ Original Slayer hunter, generated with Blender 5.2.2 LTS. This reconstruction re
 ## Open the result
 
 - [Editable Blender source](slayer.blend), with modular body/equipment, studio lighting and nine facial shape keys.
-- [Self-contained Godot GLB](slayer.glb), 1.9 m tall, ground at zero, Blender +Y / Godot -Z facing.
+- [Self-contained Godot GLB](slayer.glb), 1.861 m visual height after neck shortening, ground at zero, Blender +Y / Godot -Z facing.
 - [Face settings](face-config.json), [generator](../../../tools/blender/slayer_face.py) and [model report](model-report.json).
 - [Previous source and export](rollback/pre-reconstruction/), including the prior generator, settings and three matching before renders.
 
@@ -102,3 +102,11 @@ Reports record generator geometry/parameter checks, saved source/rollback compar
 The face-only reconstruction record is in `face-validation-summary.json`. The later playable-model integration has its own runtime checks and verification record under `runtime/`; both the source asset check and live character check are included in `tools/verify.ps1`.
 
 Remaining human review: approve the artistic direction, tune expression timing and combined morph extremes during animation, and judge readability and animation polish under varied arena lighting and camera motion. At the actual gameplay distance the face occupies few pixels; portrait detail is primarily visible in close-ups. Rollback copies are available for comparison or restoration.
+
+## Shorter neck revision
+
+The head, hair and earrings sit approximately 3.93 cm lower than the first playable-model commit. The visible neck compresses into the existing collar from stored rest coordinates, preserving the face, body scale, outfit, weapons and all nine facial morphs. The visual crown is now approximately 1.861 m above ground; the gameplay capsule remains exactly 1.9 m. The game rig derives its head anchor and neck weights from the source report.
+
+Regenerate just this proportional change with `--neck-only --neck-shortening .075`; `.035` is the previous baseline, so `.075` adds 4 cm in authored coordinates. Reapplying the same value is idempotent. Use a face-only rebuild to retain the saved neck setting. Run `tools/build_slayer_character.gd` afterward to refresh the live asset.
+
+Current neck inspection views are `neck-bust`, `front`, `face-neutral`, `face-three-quarter` and `face-profile`, plus refreshed Godot source/live views and city captures. Other Blender pose previews retain the preceding neck placement until the full preview set is regenerated. `neck-validation.json` records this localized revision; the earlier face/full-suite records remain historical baselines.

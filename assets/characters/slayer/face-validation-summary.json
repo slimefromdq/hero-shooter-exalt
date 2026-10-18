@@ -108,5 +108,7 @@
     "Artistic approval of the new face",
     "Combined morph extremes and expression timing during later animation",
     "Arena lighting and moving-camera readability after rigging and live integration"
-  ]
+  ],
+  "superseded_by": "neck-validation.json",
+  "scope": "Historical facial reconstruction before neck shortening; historical hashes are retained."
 }

@@ -1,7 +1,7 @@
 {
-	"bounds_max": "(0.455843, 1.9, 0.194028)",
+	"bounds_max": "(0.455843, 1.860703, 0.194028)",
 	"bounds_min": "(-0.47893, 0.0, -0.200414)",
-	"checks": 164,
+	"checks": 180,
 	"engine": "4.7.2-stable (official)",
 	"facial_shape_keys": [
 		"Blink",
@@ -15,7 +15,7 @@
 		"Smirk"
 	],
 	"failures": [],
-	"height": 1.89999997615814,
+	"height": 1.86070311069489,
 	"live_actor_replaced": false,
 	"meshes": 21,
 	"surfaces": 77,

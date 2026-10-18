@@ -73,7 +73,7 @@ func run() -> void:
 	check(face != null,"expressive face mesh exists")
 	check(skin_tint_imported,"skin warmth and socket shadows survive as vertex colour albedo")
 	check(absf(lower.y) < .005,"feet and model ground origin are at zero")
-	check(absf(upper.y-lower.y-1.9) < .015,"imported height is 1.9 metres")
+	check(absf(upper.y-lower.y-1.8607) < .005,"shorter neck lowers the visual crown without rescaling the body")
 	check(triangles > 70000 and triangles < 95000,"geometry stays within the detailed-face review triangle budget")
 	var forward := model.find_child("Slayer_Forward",true,false) as Node3D
 	check(forward != null and forward.global_position.z < -.25,"Blender +Y converts to Godot -Z facing")
