@@ -133,9 +133,14 @@ static func animate(p: HeroPresentation) -> void:
 	var hunter := a.kit as SlayerKit
 	p.held_knife.visible = a.state == "slayer_knife" and not hunter.action_released
 	p.held_trap.visible = a.state == "slayer_trap" and not hunter.action_released
-	p.muzzle_flash.visible = p.fire_flash > .08
-	p.rifle.position.z += p.fire_flash * .7
-	p.rifle.rotation.x += p.fire_flash * 1.5
+	p.muzzle_flash.visible = not p.slayer_shot.enabled and p.fire_flash > .08
+	var age: float = p.slayer_shot.shot_age
+	# Fast mechanical kick, damped return and a small pump dip; visual transform only.
+	var kick: float = (1.0 - exp(-age * 200.0)) * exp(-age * 24.0)
+	var pump: float = sin(clampf((age - .10) / .28, 0, 1) * PI)
+	p.rifle.position.z += kick * .22 + pump * .025
+	p.rifle.rotation.x += kick * .30 - pump * .045
+	p.rifle.rotation.z += kick * -.035
 	if a.state == "ready":
 		p.rifle.rotation.x += asin(clampf(a.aim_direction.y,-1,1))
 		p.left_arm.rotation = Vector3(1.0,-.5,.4)

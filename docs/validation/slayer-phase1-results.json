@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-18",
+  "engine": "4.7.2.stable.official.ed1daf0bf",
+  "regression": {
+    "command": "powershell -ExecutionPolicy Bypass -File tools/verify.ps1",
+    "exit_code": 0,
+    "diagnostics": 0,
+    "log": "slayer-phase1-final-verification.log",
+    "structural_probes": 2516,
+    "winding_checks": 4420
+  },
+  "focused": {
+    "headless_checks": 27,
+    "vulkan_checks": 27,
+    "failures": 0,
+    "logs": [
+      "slayer-presentation-focused.log",
+      "slayer-phase1-rendered-checks.log"
+    ],
+    "note": "Final focused runs include the additional mixed confirmed/post-lethal contact regression."
+  },
+  "captures": {
+    "renderer": "Forward+ Vulkan, NVIDIA GeForce RTX 3080",
+    "resolution": [
+      1440,
+      900
+    ],
+    "frames": [
+      "artifacts/slayer-phase1-muzzle.png",
+      "artifacts/slayer-phase1-recovery.png",
+      "artifacts/slayer-phase1-target-impact.png",
+      "artifacts/slayer-phase1-impact-tail.png",
+      "artifacts/slayer-phase1-fallback.png"
+    ],
+    "log": "slayer-phase1-capture.log",
+    "audio_driver": "Dummy"
+  },
+  "audio": {
+    "source": "original cached procedural synthesis",
+    "replacement_profile": "resources/slayer_audio.tres",
+    "isolated_wav_layers": [
+      "artifacts/slayer-phase1-shotgun.wav",
+      "artifacts/slayer-phase1-shotgun_mechanism.wav",
+      "artifacts/slayer-phase1-shotgun_hit.wav",
+      "artifacts/slayer-phase1-shotgun_surface.wav"
+    ]
+  },
+  "manual_remaining": [
+    "Headphone/speaker mix and overlapping Slayers",
+    "Recoil recovery and camera comfort during movement and aiming",
+    "Target/head/guard impact readability in varied lighting",
+    "Low-end GPU performance"
+  ],
+  "gameplay": "No balance/tuning, pellet math, damage authority, ammunition, controller recoil or physics changes."
+}

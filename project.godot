@@ -18,6 +18,8 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+SlayerEffectPool="*res://scripts/presentation/slayer_effect_pool.gd"
+
 DisplaySettings="*res://scripts/presentation/display_settings.gd"
 GameSettings="*res://scripts/presentation/game_settings.gd"
 

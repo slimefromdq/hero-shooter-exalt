@@ -209,8 +209,7 @@ func restart_match() -> void:
 		if actor.controller is CityBotController:
 			actor.controller.role = HeroRoster.bot_role(slot,player.tuning.hero_id)
 			actor.controller.navagent.max_speed = actor.tuning.ground_speed
-	for transient: Node in get_tree().get_nodes_in_group("transient"):
-		transient.queue_free()
+	CombatEffect.clear_transients(get_tree())
 	player.resolver.clear_round()
 	feedback.reset()
 	for actor: HeroActor in actors:

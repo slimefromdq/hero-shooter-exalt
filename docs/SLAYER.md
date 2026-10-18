@@ -1,5 +1,7 @@
 # Slayer · playable hero
 
+The [Phase 1 combat presentation notes](slayer-presentation-phase1.md) cover pooled shotgun effects, layered original audio, replacement asset slots, fallback visuals, and validation/manual checks.
+
 Slayer is playable in Meridian Gardens and the training arena. Both heroes use `HeroActor`, `HeroMotor`, `CloseCombat`, `CombatResolver`, `PlayerController`, and the same ultimate economy. The supplied portraits informed her original geometric layered hair, cropped jacket, silver equipment and reinforced boots. No external models are required.
 
 ## Play

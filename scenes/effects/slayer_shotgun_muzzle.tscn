@@ -1,0 +1,98 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/presentation/slayer_burst_effect.gd" id="1"]
+
+[sub_resource type="StandardMaterial3D" id="Glow"]
+shading_mode = 0
+albedo_color = Color(1, 0.78, 0.4, 1)
+emission_enabled = true
+emission = Color(1, 0.6, 0.2, 1)
+emission_energy_multiplier = 3.0
+
+[sub_resource type="StandardMaterial3D" id="SparkMaterial"]
+shading_mode = 0
+albedo_color = Color(1, 0.68, 0.32, 1)
+emission_enabled = true
+emission = Color(1, 0.42, 0.13, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="ParticleProcessMaterial" id="Sparks"]
+direction = Vector3(0, 0, -1)
+spread = 24.0
+gravity = Vector3(0, -3, 0)
+initial_velocity_min = 2.475
+initial_velocity_max = 5.5
+scale_min = 0.5
+scale_max = 1.0
+
+[sub_resource type="BoxMesh" id="SparkMesh"]
+material = SubResource("SparkMaterial")
+size = Vector3(0.018, 0.018, 0.065)
+
+[sub_resource type="CylinderMesh" id="FlashShape"]
+top_radius = 0.015
+bottom_radius = 0.12
+height = 0.38
+radial_segments = 8
+
+[sub_resource type="StandardMaterial3D" id="SmokeMaterial"]
+shading_mode = 0
+transparency = 1
+albedo_color = Color(0.5, 0.42, 0.34, 0.09)
+
+[sub_resource type="SphereMesh" id="SmokeMesh"]
+material = SubResource("SmokeMaterial")
+radius = 0.055
+height = 0.11
+radial_segments = 8
+rings = 4
+
+[sub_resource type="ParticleProcessMaterial" id="SmokeProcess"]
+direction = Vector3(0, 0.2, -1)
+spread = 30.0
+gravity = Vector3(0, 0.7, 0)
+initial_velocity_min = 0.4
+initial_velocity_max = 1.2
+scale_min = 0.7
+scale_max = 1.8
+
+[node name="SlayerShotgunMuzzle" type="Node3D"]
+script = ExtResource("1")
+duration = 0.42
+flash_duration = 0.065
+
+[node name="Flash" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0, -0.16)
+rotation = Vector3(1.5707963, 0, 0)
+cast_shadow = 0
+mesh = SubResource("FlashShape")
+material_override = SubResource("Glow")
+
+[node name="Sparks" type="GPUParticles3D" parent="."]
+emitting = false
+use_fixed_seed = true
+seed = 7419
+amount = 12
+lifetime = 0.24
+one_shot = true
+explosiveness = 1.0
+local_coords = true
+visibility_aabb = AABB(-2, -2, -3, 4, 4, 5)
+process_material = SubResource("Sparks")
+draw_pass_1 = SubResource("SparkMesh")
+cast_shadow = 0
+
+
+[node name="Smoke" type="GPUParticles3D" parent="."]
+emitting = false
+use_fixed_seed = true
+seed = 7419
+amount = 6
+lifetime = 0.32
+one_shot = true
+explosiveness = 1.0
+local_coords = true
+visibility_aabb = AABB(-1, -1, -2, 2, 2, 3)
+process_material = SubResource("SmokeProcess")
+draw_pass_1 = SubResource("SmokeMesh")
+cast_shadow = 0

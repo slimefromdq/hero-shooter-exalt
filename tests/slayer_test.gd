@@ -33,7 +33,7 @@ func spawn(id: String, team: int, at: Vector3, hero: String = "nimbus") -> HeroA
 	return actor
 
 func reset(at_b: Vector3 = Vector3(0,.01,-6)) -> void:
-	for effect: Node in get_nodes_in_group("transient"): effect.queue_free()
+	CombatEffect.clear_transients(self)
 	a.reset_actor(Vector3(0,.01,0))
 	a.intent.aim_origin = a.global_position + Vector3.UP * 1.05
 	b.reset_actor(at_b)

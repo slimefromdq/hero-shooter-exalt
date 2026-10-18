@@ -39,6 +39,7 @@ var care_tool: Node3D
 var held_trap: Node3D
 var team_ring: MeshInstance3D
 var roster_parts: Dictionary = {}
+var slayer_shot: SlayerShotPresentation
 
 func _ready() -> void:
 	model = Node3D.new()
@@ -150,6 +151,9 @@ func _ready() -> void:
 	animator.add_animation_library("", CloseCombatAnimations.library())
 	if actor.tuning is SlayerTuning:
 		SlayerVisuals.remodel(self)
+		slayer_shot = SlayerShotPresentation.new()
+		slayer_shot.presentation = self
+		add_child(slayer_shot)
 		animator.add_animation_library("slayer",SlayerAnimations.library())
 	if actor.kit is ExpansionKit: RosterVisuals.remodel(self)
 	elif actor.kit is HuddleKit: HuddleVisuals.remodel(self)
@@ -423,6 +427,9 @@ func on_block(attacker: HeroActor, defender: HeroActor) -> void:
 	block_effect = BlockImpact.spawn(actor.get_parent(), actor.global_position + Vector3.UP * 1.3 + toward * .72, toward)
 
 func clear_feedback() -> void:
+	fire_flash = 0.0
+	if is_instance_valid(slayer_shot): slayer_shot.clear()
+	if is_instance_valid(sound): sound.stop_slayer_voices()
 	boot_release = 0
 	cc_previous = ""
 	if is_instance_valid(control_sound): control_sound.stop()

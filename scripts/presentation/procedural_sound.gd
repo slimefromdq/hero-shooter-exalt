@@ -4,10 +4,15 @@ extends AudioStreamPlayer
 static var marshal_wave: AudioStreamWAV
 static var guard_wave: AudioStreamWAV
 static var slayer_waves: Dictionary = {}
+const MAX_SLAYER_VOICES: int = 8
+@export var slayer_audio: SlayerAudioProfile = preload("res://resources/slayer_audio.tres")
+var slayer_voices: Array[Dictionary] = []
 var spatial_owner: Node3D
 
 func _ready() -> void:
 	bus = "Combat"
+	if spatial_owner is HeroActor and spatial_owner.tuning is SlayerTuning:
+		for cue: String in ["shotgun", "shotgun_mechanism", "shotgun_hit", "shotgun_surface"]: slayer_wave(cue)
 static var reward_waves: Dictionary = {}
 
 static func reward_wave(kind: String, level: int) -> AudioStreamWAV:
@@ -82,18 +87,95 @@ func play_guard_clang() -> void:
 		play()
 
 func _exit_tree() -> void:
+	stop_slayer_voices()
 	stop()
 	stream = null
 
 func play_slayer(cue: String) -> void:
-	stop()
-	stream = null
-	stream = slayer_wave(cue)
-	volume_db = -5.0 + distance_gain()
-	if DisplayServer.get_name() != "headless": play()
+	var replacement: AudioStream
+	var gain: float = -5.0
+	match cue:
+		"shotgun":
+			replacement = slayer_audio.blast
+			gain = slayer_audio.blast_db
+		"shotgun_mechanism":
+			replacement = slayer_audio.mechanism
+			gain = slayer_audio.mechanism_db
+		"shotgun_hit":
+			replacement = slayer_audio.target_impact
+			gain = slayer_audio.impact_db
+		"shotgun_surface":
+			replacement = slayer_audio.surface_impact
+			gain = slayer_audio.impact_db
+	while slayer_voices.size() >= MAX_SLAYER_VOICES:
+		var oldest: Dictionary = slayer_voices.pop_front()
+		oldest.player.stop()
+		oldest.player.queue_free()
+	var voice := AudioStreamPlayer.new()
+	voice.bus = bus
+	voice.stream = replacement if replacement != null else slayer_wave(cue)
+	voice.volume_db = gain + distance_gain()
+	add_child(voice)
+	# Finite TTL also cleans up in headless tests and rejects looping replacement assets.
+	slayer_voices.append({"player": voice, "remaining": minf(3.0, maxf(.1, voice.stream.get_length()))})
+	if DisplayServer.get_name() != "headless": voice.play()
+	if cue == "shotgun": play_slayer("shotgun_mechanism")
+
+func _process(delta: float) -> void:
+	for index: int in range(slayer_voices.size() - 1, -1, -1):
+		slayer_voices[index].remaining -= delta
+		if slayer_voices[index].remaining <= 0.0:
+			slayer_voices[index].player.stop()
+			slayer_voices[index].player.queue_free()
+			slayer_voices.remove_at(index)
+
+func stop_slayer_voices() -> void:
+	for voice: Dictionary in slayer_voices:
+		voice.player.stop()
+		voice.player.queue_free()
+	slayer_voices.clear()
+
+# Original blast layers: broadband crack, descending low body, filtered air tail.
+# Mechanism has authored silence before two metal clicks. All noise is local and seeded.
+static func shotgun_layer(cue: String) -> AudioStreamWAV:
+	var rate: int = 22050
+	var seconds: float = .48 if cue in ["shotgun", "shotgun_mechanism"] else .18
+	var bytes := PackedByteArray()
+	bytes.resize(int(seconds * rate) * 2)
+	var noise := RandomNumberGenerator.new()
+	noise.seed = cue.hash()
+	var filtered: float = 0.0
+	for index: int in bytes.size() / 2:
+		var time: float = float(index) / rate
+		var grit: float = noise.randf_range(-1, 1)
+		filtered = lerpf(filtered, grit, .12)
+		var sample: float = 0.0
+		if cue == "shotgun":
+			var crack: float = grit * .66 * exp(-time * 125.0)
+			var body: float = sin(TAU * (58 * time + 1.9 * (1 - exp(-time * 35)))) * .55 * exp(-time * 17)
+			var air: float = filtered * .8 * exp(-time * 13)
+			sample = crack + body + air
+		elif cue == "shotgun_mechanism":
+			for offset: float in [.16, .29]:
+				var age: float = time - offset
+				if age >= 0:
+					sample += (grit * .4 + sin(TAU * 1370 * age) * .3 + sin(TAU * 2311 * age) * .12) * exp(-age * 70)
+		else:
+			var hz: float = 170.0 if cue == "shotgun_hit" else 710.0
+			sample = (sin(TAU * hz * time) * .45 + grit * .38) * exp(-time * 36)
+		var envelope: float = minf(1.0, time / .0008) * clampf((seconds - time) / .02, 0, 1)
+		bytes.encode_s16(index * 2, int(clampf(sample * envelope, -.93, .93) * 32767))
+	var wave := AudioStreamWAV.new()
+	wave.format = AudioStreamWAV.FORMAT_16_BITS
+	wave.mix_rate = rate
+	wave.data = bytes
+	return wave
 
 static func slayer_wave(cue: String) -> AudioStreamWAV:
 	if slayer_waves.has(cue): return slayer_waves[cue]
+	if cue.begins_with("shotgun"):
+		slayer_waves[cue] = shotgun_layer(cue)
+		return slayer_waves[cue]
 	var seconds: float = .28 if cue == "shotgun" else (.45 if cue.begins_with("axe") else .16)
 	var hz: float = 85.0 if cue in ["shotgun","boot_hit","axe_hit"] else (460.0 if cue in ["shell","knife_hit","snare_hit"] else 210.0)
 	var rate: int = 22050

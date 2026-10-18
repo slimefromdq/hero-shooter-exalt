@@ -8,6 +8,13 @@ var radius: float = 1.0
 var visual: MeshInstance3D
 var fading: bool = false
 
+static func clear_transients(tree: SceneTree) -> void:
+	for effect: Node in tree.get_nodes_in_group("transient"):
+		if effect is SlayerBurstEffect:
+			tree.root.get_node("SlayerEffectPool").recycle(effect)
+		else:
+			effect.queue_free()
+
 static func cone_warning(parent: Node3D, origin: Vector3, forward: Vector3, reach: float, seconds: float) -> CombatEffect:
 	var effect := CombatEffect.new()
 	effect.lifetime = seconds

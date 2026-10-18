@@ -183,8 +183,7 @@ func reset_scenario() -> void:
 	if is_instance_valid(practice_range): practice_range.queue_free()
 	if is_instance_valid(hud): hud.hit_timer = 0.0
 	despawn_bots()
-	for transient: Node in get_tree().get_nodes_in_group("transient"):
-		transient.queue_free()
+	CombatEffect.clear_transients(get_tree())
 	player.tuning.max_health = player_max_health
 	player.reset_actor(Vector3(0, 0.1, 11))
 	player.invulnerable = god_mode

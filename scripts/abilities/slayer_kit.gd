@@ -153,6 +153,8 @@ func fire(_ultimate: bool = false) -> void:
 	last_shot_damage = 0.0
 	last_shot_pellets = 0
 	last_shot_head = false
+	var contacts: Array[Dictionary] = []
+	var endpoints := PackedVector3Array()
 	for index: int in t.pellets:
 		# Fixed equal-area disk: deterministic across frame rates; each pellet gets its own cast.
 		var radius: float = sqrt((index + .5) / t.pellets) * tan(deg_to_rad(t.spread_degrees))
@@ -160,8 +162,11 @@ func fire(_ultimate: bool = false) -> void:
 		var pellet: Vector3 = (direction + (right * cos(angle) + up * sin(angle)) * radius).normalized()
 		var hit: Dictionary = obstruction if not obstruction.is_empty() else actor.resolver.attack_ray(actor, muzzle, muzzle + pellet * t.weapon_range, [actor.get_rid()])
 		var endpoint: Vector3 = hit.get("position", muzzle + pellet * t.weapon_range)
+		endpoints.append(endpoint)
 		if not hit.is_empty():
 			var target: HeroActor = hit.get("collider") as HeroActor
+			var confirmed: bool = false
+			var hit_head: bool = false
 			var pellet_cast: int = actor.resolver.new_cast(actor)
 			var amount: float = t.pellet_damage * damage_scale(muzzle.distance_to(endpoint))
 			if target != null:
@@ -170,17 +175,17 @@ func fire(_ultimate: bool = false) -> void:
 				var result: String = actor.resolver.damage(actor,target,amount * (t.head_multiplier if head else 1.0),"shotgun",pellet_cast,head,false,muzzle)
 				last_shot_damage += before - target.health - target.shields
 				if result == "hit":
+					confirmed = before > target.health + target.shields
+					hit_head = head
 					last_shot_pellets += 1
 					last_shot_head = last_shot_head or head
 			elif hit.get("collider") is CombatBarrier:
 				hit.collider.receive_damage(actor,amount,pellet_cast)
 			elif hit.get("collider") is HunterSnare or hit.get("collider") is CombatStructure:
 				actor.resolver.hit_object(hit.collider,actor,amount,pellet_cast)
-			CombatEffect.pulse(actor.get_parent(), endpoint, Color("ffad63") if target == null else Color("ff5979"), .13)
-		if index % 2 == 0:
-			CombatEffect.line(actor.get_parent(), safe_muzzle(), endpoint, Color("ffd5a0"), .015)
+			contacts.append({"position": endpoint, "normal": hit.get("normal", -pellet), "id": hit.collider.get_instance_id(), "actor": target != null, "confirmed": confirmed, "head": hit_head})
 	actor.presentation.fire_flash = .18
-	CombatEffect.pulse(actor.get_parent(), safe_muzzle(), Color("ffc983"), .28)
+	actor.presentation.slayer_shot.discharge(safe_muzzle(), direction, contacts, endpoints)
 	if actor.controller is PlayerController:
 		(actor.controller as PlayerController).add_recoil(deg_to_rad(t.recoil_degrees))
 	cue("shotgun")
