@@ -7,6 +7,9 @@ var knife_timer: float = 0.0
 var snares: int = 2
 var snare_timer: float = 0.0
 var boot_direction: Vector3 = Vector3.FORWARD
+var boot_launch_direction: Vector3 = Vector3.FORWARD
+var boot_steer_angle: float = 0.0
+var boot_turn_delta: float = 0.0
 var boot_remaining: float = 0.0
 var boot_connected: bool = false
 var boot_fall_velocity: float = 0.0
@@ -216,6 +219,7 @@ func release_knife() -> void:
 	projectile.direction = (pending_knife_aim - origin).normalized()
 	actor.get_parent().add_child(projectile)
 	projectile.global_position = origin
+	actor.presentation.slayer_abilities.burst(origin,projectile.direction,Color("e6faff"),.38)
 	cue("knife")
 
 func throw_origin() -> Vector3:
@@ -232,6 +236,9 @@ func start_boot() -> void:
 	if actor.motor.grounded():
 		boot_direction = Vector3(boot_direction.x,0,boot_direction.z).normalized()
 	if boot_direction.is_zero_approx(): boot_direction = -actor.global_basis.z
+	boot_launch_direction = boot_direction
+	boot_steer_angle = 0.0
+	boot_turn_delta = 0.0
 	boot_remaining = t.boot_distance
 	boot_fall_velocity = actor.velocity.y
 	boot_connected = false
@@ -242,6 +249,7 @@ func start_boot() -> void:
 	actor.state = "slayer_boot_start"
 	actor.state_time = t.boot_startup
 	actor.resolver.record("cast",actor,"boot_rush")
+	actor.presentation.slayer_abilities.begin_boot()
 	cue("boot_start")
 
 func boot_targets() -> bool:
@@ -260,16 +268,33 @@ func boot_targets() -> bool:
 			if result == "hit" and target.alive:
 				var attachment := BootAttachment.new()
 				attachment.configure(actor,target)
-			CombatEffect.pulse(actor.get_parent(),target.global_position + Vector3.UP,Color("f7bb65"),.9)
+			actor.presentation.slayer_abilities.boot_contact(target)
 			cue("boot_hit")
 			return true
 	return false
+
+func steer_boot(delta: float) -> void:
+	# CombatIntent.move is live world-space WASD; aim_direction is locked by HeroActor.
+	var move := Vector3(actor.intent.move.x, 0, actor.intent.move.z)
+	var launch := Vector3(boot_launch_direction.x, 0, boot_launch_direction.z)
+	var previous: float = boot_steer_angle
+	if move.length_squared() > .001 and launch.length_squared() > .001:
+		var desired: float = launch.signed_angle_to(move, Vector3.UP)
+		# Pure backward input cannot reverse or choose an arbitrary turning side.
+		if absf(desired) < PI - .01:
+			desired = clampf(desired, -deg_to_rad(data().boot_max_steer_angle), deg_to_rad(data().boot_max_steer_angle))
+			boot_steer_angle = move_toward(boot_steer_angle, desired, deg_to_rad(data().boot_turn_rate) * delta)
+	boot_turn_delta = (boot_steer_angle - previous) / maxf(delta, .00001)
+	boot_direction = boot_launch_direction.rotated(Vector3.UP, boot_steer_angle)
+	actor.aim_direction = boot_direction
+	if launch.length_squared() > .001: actor.rotation.y = atan2(-boot_direction.x, -boot_direction.z)
 
 func move_override(delta: float) -> bool:
 	if actor.state != "slayer_boot_active":
 		return false
 	var t: SlayerTuning = data()
 	actor.motor.coyote = .1 if actor.motor.grounded() else maxf(0.0,actor.motor.coyote - delta)
+	steer_boot(delta)
 	var connected: bool = boot_targets()
 	if not connected and actor.state == "slayer_boot_active":
 		var travel: float = minf(boot_remaining,t.boot_speed * delta)
@@ -299,7 +324,7 @@ func move_override(delta: float) -> bool:
 			var normal: Vector3 = actor.get_slide_collision(index).get_normal()
 			if normal.dot(boot_direction) < -.2 and normal.y < cos(actor.floor_max_angle):
 				boot_remaining = 0.0
-		CombatEffect.line(actor.get_parent(),before + Vector3.UP * .5,actor.global_position + Vector3.UP * .5,Color("d8b4fa"),.045)
+		actor.presentation.slayer_abilities.boot_path(before, actor.global_position)
 	if actor.state == "slayer_boot_active" and (connected or boot_remaining <= .001):
 		actor.state = "ready"
 		actor.state_time = 0.0
@@ -308,6 +333,7 @@ func move_override(delta: float) -> bool:
 		actor.velocity.x *= t.boot_momentum
 		actor.velocity.z *= t.boot_momentum
 		actor.resolver.record("recovery",actor,"boot","hit" if boot_connected else "miss_or_wall")
+		if not boot_connected: actor.presentation.slayer_abilities.boot_miss()
 	return true
 
 func deploy_trap() -> bool:
@@ -359,6 +385,7 @@ func release_axe() -> void:
 	projectile.direction = (aim_point(data().axe_range) - safe_muzzle()).normalized()
 	actor.get_parent().add_child(projectile)
 	projectile.global_position = safe_muzzle()
+	actor.presentation.slayer_abilities.burst(projectile.global_position,projectile.direction,Color("c6a0ff"),1.1)
 	actor.resolver.record("release",actor,"heads_will_roll")
 	cue("axe_release")
 
@@ -367,6 +394,7 @@ func cue(id: String) -> void:
 	actor.presentation.sound.play_slayer(id)
 
 func cancel(clear_owned: bool = false) -> void:
+	if is_instance_valid(actor.presentation) and is_instance_valid(actor.presentation.slayer_abilities): actor.presentation.slayer_abilities.interrupt()
 	if actor.boot_pair != null: actor.boot_pair.release(false)
 	super.cancel(clear_owned)
 	if clear_owned: traps.clear()

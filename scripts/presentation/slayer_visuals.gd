@@ -2,20 +2,10 @@ class_name SlayerVisuals
 extends RefCounted
 ## Original articulated prototype, guided by the supplied layered-hair streetwear references.
 static func knife(parent: Node3D) -> void:
-	Geometry.box(parent,Vector3(.06,.035,.28),Vector3(0,0,-.16),Color("d4dce5"),false)
-	Geometry.box(parent,Vector3(.11,.05,.035),Vector3.ZERO,Color("a6a4ba"),false)
-	Geometry.box(parent,Vector3(.04,.05,.14),Vector3(0,0,.08),Color("312735"),false)
+	Geometry.mesh(parent,SlayerWeaponMeshes.build_knife(),Vector3.ZERO,null)
 
 static func axe(parent: Node3D) -> void:
-	Geometry.cylinder(parent,.035,1.8,Vector3(0,.15,0),Color("3c3040"))
-	Geometry.cylinder(parent,.052,.55,Vector3(0,-.43,0),Color("8d354c"))
-	for side: float in [-1.0,1.0]:
-		var blade := PrismMesh.new()
-		blade.size = Vector3(.63,.68,.14)
-		var mesh: MeshInstance3D = Geometry.mesh(parent,blade,Vector3(side * .31,.8,0),Geometry.material(Color("c9cad9"),.18))
-		mesh.rotation.z = side * PI / 2
-		Geometry.box(parent,Vector3(.04,.52,.16),Vector3(side * .61,.8,0),Color("b98bce"),false)
-	Geometry.box(parent,Vector3(.13,.38,.19),Vector3(0,.82,0),Color("674568"),false)
+	Geometry.mesh(parent,SlayerWeaponMeshes.build_axe(),Vector3.ZERO,null)
 
 static func trap(parent: Node3D) -> void:
 	Geometry.cylinder(parent,.24,.06,Vector3.ZERO,Color("4c4253"))
@@ -111,7 +101,7 @@ static func remodel(p: HeroPresentation) -> void:
 	axe(p.slayer_axe)
 	p.slayer_axe.position = Vector3(-.1,1.04,.3)
 	p.slayer_axe.rotation.z = -.6
-	p.slayer_axe.scale = Vector3.ONE * .7
+	p.slayer_axe.scale = Vector3.ONE * .82
 	p.muzzle_flash = Geometry.mesh(p.rifle,SphereMesh.new(),Vector3(0,.03,-.9),Geometry.material(Color("ffd394"),3.0))
 	p.muzzle_flash.scale = Vector3(.18,.18,.3)
 	p.muzzle_flash.visible = false
@@ -147,6 +137,9 @@ static func animate(p: HeroPresentation) -> void:
 		if hunter.boot_slow_time > 0:
 			var weight: float = hunter.boot_slow_time / maxf(.01,hunter.boot_slow_duration)
 			p.model.rotation.x += weight * .12
+			if not hunter.boot_connected:
+				p.model.position.y -= sin(weight * PI) * .12
+				p.left_arm.rotation.x = .6 + weight * .3
 			p.right_leg.rotation.x = lerpf(p.right_leg.rotation.x,.45,weight)
 	p.slayer_axe.visible = not a.state.begins_with("slayer_axe") or a.state == "slayer_axe_windup"
 	p.slayer_axe.position = Vector3(-.1,1.04,.3)
@@ -159,7 +152,9 @@ static func animate(p: HeroPresentation) -> void:
 	elif a.state.begins_with("slayer_boot"):
 		p.rifle.position = Vector3(.3,1.3,.15)
 		p.rifle.rotation.x = -.6
-		p.model.rotation.x = -.24 if a.state == "slayer_boot_active" else .18
+		p.model.rotation.x = -.28 if a.state == "slayer_boot_active" else .27
+		p.model.position.y -= .12 if a.state == "slayer_boot_start" else .04
+		p.model.rotation.z = clampf(hunter.boot_turn_delta / maxf(.01,deg_to_rad(t.boot_turn_rate)),-1,1) * -.18
 		p.right_leg.rotation.x = 1.45 if a.state == "slayer_boot_active" else .7
 		(p.right_leg.get_node("Joint") as Node3D).rotation.x = .12 if a.state == "slayer_boot_active" else -1.2
 		p.left_leg.rotation.x = -.55
@@ -173,3 +168,11 @@ static func animate(p: HeroPresentation) -> void:
 		p.slayer_axe.position = Vector3(.1,1.85,-.1)
 		p.slayer_axe.rotation = Vector3(-.7 - progress * .5,0,.15)
 		p.model.rotation.z = -.15
+		if a.state == "slayer_axe_windup":
+			p.model.position.y -= sin(progress * PI) * .12
+			p.left_arm.rotation.x = 2.1 + progress * .35
+			p.right_arm.get_node("Joint").rotation.x = -.65
+		else:
+			p.model.rotation.x = .25
+			p.right_arm.rotation.x = .5
+			p.left_arm.rotation.x = .7

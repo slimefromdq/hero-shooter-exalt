@@ -57,5 +57,5 @@ func release(kick: bool) -> void:
 		if forward.is_zero_approx(): forward = -attacker.global_basis.z
 		attacker.resolver.knockback(attacker,victim,forward*t.boot_knockback+Vector3.UP*t.boot_lift,"boot_release")
 		attacker.presentation.boot_release = .18
-		attacker.presentation.sound.play_slayer("boot_hit")
+		attacker.presentation.slayer_abilities.boot_kick(victim,forward)
 		attacker.resolver.record("release",attacker,"boot_kick")

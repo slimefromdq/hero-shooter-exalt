@@ -1,0 +1,101 @@
+{
+  "date": "2026-10-18",
+  "engine": "4.7.2.stable.official.ed1daf0bf",
+  "intentional_gameplay_changes": {
+    "boot_turn_degrees_per_second": 40,
+    "boot_max_launch_deviation_degrees": 15,
+    "knife_gravity_m_per_s_squared": 12
+  },
+  "preserved": {
+    "boot_speed": 32,
+    "boot_range": 12,
+    "boot_damage": 55,
+    "boot_hold_seconds": 0.45,
+    "boot_cooldown_seconds": 9,
+    "knife_initial_speed": 110,
+    "knife_damage": 30,
+    "knife_range": 25,
+    "knife_radius": 0.14,
+    "axe_damage": 110,
+    "axe_range": 30,
+    "axe_speed": 20,
+    "axe_radius": 0.55,
+    "axe_wound_seconds": 8,
+    "axe_max_health_reduction": 0.5
+  },
+  "regression": {
+    "command": "powershell -ExecutionPolicy Bypass -File tools/verify.ps1",
+    "exit_code": 0,
+    "errors": 0,
+    "log": "slayer-task2-verification.log",
+    "phase1_presentation_checks": 27,
+    "structural_probes": 2516,
+    "winding_checks": 4420
+  },
+  "focused": {
+    "headless_checks": 71,
+    "vulkan_checks": 71,
+    "failures": [],
+    "trajectories": {
+      "boot_144": "(1.659883, 0.000563, -11.92251)",
+      "boot_30": "(1.730898, 0.000842, -11.84529)",
+      "boot_60": "(1.680097, 0.000843, -11.85437)",
+      "knife_144": "(0.0, 4.8056, -19.8)",
+      "knife_30": "(0.0, 4.8056, -19.8)",
+      "knife_60": "(0.0, 4.8056, -19.8)"
+    },
+    "logs": [
+      "slayer-task2-focused.log",
+      "slayer-task2-rendered-checks.log"
+    ]
+  },
+  "rendered": {
+    "renderer": "Vulkan Forward+, NVIDIA GeForce RTX 3080",
+    "resolution": [
+      1440,
+      900
+    ],
+    "frames": [
+      "artifacts/slayer-task2-axe-front.png",
+      "artifacts/slayer-task2-axe-hit.png",
+      "artifacts/slayer-task2-axe-side-0.png",
+      "artifacts/slayer-task2-axe-side-1.png",
+      "artifacts/slayer-task2-axe-side-2.png",
+      "artifacts/slayer-task2-axe-side-3.png",
+      "artifacts/slayer-task2-axe-trailing.png",
+      "artifacts/slayer-task2-axe-windup.png",
+      "artifacts/slayer-task2-boot-contact.png",
+      "artifacts/slayer-task2-boot-curve.png",
+      "artifacts/slayer-task2-boot-kick.png",
+      "artifacts/slayer-task2-boot-start.png",
+      "artifacts/slayer-task2-knife-arc.png",
+      "artifacts/slayer-task2-knife-detail.png",
+      "artifacts/slayer-task2-knife-hit.png"
+    ],
+    "log": "slayer-task2-capture.log",
+    "audio_driver": "Dummy"
+  },
+  "audio": {
+    "external_assets": false,
+    "replacement_slots": "resources/slayer_audio.tres: ability_cues",
+    "wav_layers": [
+      "artifacts/slayer-task2-axe_draw.wav",
+      "artifacts/slayer-task2-axe_hit.wav",
+      "artifacts/slayer-task2-axe_release.wav",
+      "artifacts/slayer-task2-boot_hit.wav",
+      "artifacts/slayer-task2-boot_kick.wav",
+      "artifacts/slayer-task2-boot_start.wav",
+      "artifacts/slayer-task2-boot_wind.wav",
+      "artifacts/slayer-task2-knife.wav",
+      "artifacts/slayer-task2-knife_hit.wav"
+    ]
+  },
+  "visual_collision_mismatch": "Axe visual scale 1.215 is 35 percent larger than old 0.9; visible head extends roughly 1.81 m from pivot, while damaging sphere stays radius 0.55 m.",
+  "manual_remaining": [
+    "Headphones/speakers and overlapping cue mix",
+    "Steering comfort and animation transitions during active play",
+    "Axe silhouette versus unchanged physical sphere",
+    "Trail and knife contact readability from moving cameras",
+    "Low-end GPU profiling"
+  ]
+}

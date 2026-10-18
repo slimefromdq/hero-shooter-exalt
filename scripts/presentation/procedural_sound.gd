@@ -12,7 +12,7 @@ var spatial_owner: Node3D
 func _ready() -> void:
 	bus = "Combat"
 	if spatial_owner is HeroActor and spatial_owner.tuning is SlayerTuning:
-		for cue: String in ["shotgun", "shotgun_mechanism", "shotgun_hit", "shotgun_surface"]: slayer_wave(cue)
+		for cue: String in ["shotgun", "shotgun_mechanism", "shotgun_hit", "shotgun_surface", "boot_start", "boot_wind", "boot_hit", "boot_kick", "boot_recover", "axe_draw", "axe_release", "axe_hit", "knife", "knife_hit"]: slayer_wave(cue)
 static var reward_waves: Dictionary = {}
 
 static func reward_wave(kind: String, level: int) -> AudioStreamWAV:
@@ -107,6 +107,7 @@ func play_slayer(cue: String) -> void:
 		"shotgun_surface":
 			replacement = slayer_audio.surface_impact
 			gain = slayer_audio.impact_db
+	if slayer_audio.ability_cues.has(cue): replacement = slayer_audio.ability_cues[cue]
 	while slayer_voices.size() >= MAX_SLAYER_VOICES:
 		var oldest: Dictionary = slayer_voices.pop_front()
 		oldest.player.stop()
@@ -117,14 +118,22 @@ func play_slayer(cue: String) -> void:
 	voice.volume_db = gain + distance_gain()
 	add_child(voice)
 	# Finite TTL also cleans up in headless tests and rejects looping replacement assets.
-	slayer_voices.append({"player": voice, "remaining": minf(3.0, maxf(.1, voice.stream.get_length()))})
+	slayer_voices.append({"player": voice, "cue": cue, "gain": gain, "remaining": minf(3.0, maxf(.1, voice.stream.get_length()))})
 	if DisplayServer.get_name() != "headless": voice.play()
 	if cue == "shotgun": play_slayer("shotgun_mechanism")
 
 func _process(delta: float) -> void:
 	for index: int in range(slayer_voices.size() - 1, -1, -1):
+		if slayer_voices[index].cue == "boot_wind": slayer_voices[index].player.volume_db = slayer_voices[index].gain + distance_gain()
 		slayer_voices[index].remaining -= delta
 		if slayer_voices[index].remaining <= 0.0:
+			slayer_voices[index].player.stop()
+			slayer_voices[index].player.queue_free()
+			slayer_voices.remove_at(index)
+
+func stop_slayer_cue(cue: String) -> void:
+	for index: int in range(slayer_voices.size()-1,-1,-1):
+		if slayer_voices[index].cue == cue:
 			slayer_voices[index].player.stop()
 			slayer_voices[index].player.queue_free()
 			slayer_voices.remove_at(index)
@@ -171,10 +180,47 @@ static func shotgun_layer(cue: String) -> AudioStreamWAV:
 	wave.data = bytes
 	return wave
 
+# Original ability layers: tuned noise envelopes, metal partials and pitch sweeps.
+static func ability_wave(cue: String) -> AudioStreamWAV:
+	var rate: int = 22050
+	var seconds: float = .6 if cue in ["boot_wind","axe_draw"] else (.52 if cue.begins_with("axe") else .25)
+	var bytes := PackedByteArray()
+	bytes.resize(int(seconds * rate) * 2)
+	var noise := RandomNumberGenerator.new()
+	noise.seed = cue.hash()
+	var filtered: float = 0.0
+	for index: int in bytes.size()/2:
+		var time: float = float(index)/rate
+		var grit: float = noise.randf_range(-1,1)
+		filtered = lerpf(filtered,grit,.09)
+		var sample: float
+		if cue == "boot_wind":
+			sample = (filtered * .8 + grit * .08) * sin(PI * time/seconds) * .5
+		elif cue == "axe_draw":
+			sample = (sin(TAU * (130*time + 180*time*time))*.24 + filtered*.2) * pow(time/seconds,.7)
+		elif cue.begins_with("boot") or cue.begins_with("axe"):
+			var hz: float = 52.0 if cue.begins_with("axe") else (83.0 if cue in ["boot_hit","boot_kick"] else 180.0)
+			var body: float = sin(TAU * (hz*time + 1.2*(1-exp(-time*28)))) * .52 * exp(-time*12)
+			var metal: float = (sin(TAU*1193*time)*.18 + sin(TAU*2011*time)*.1) * exp(-time*28)
+			sample = body + metal + grit*.32*exp(-time*65) + filtered*.28*exp(-time*9)
+		else:
+			var metal: float = 1630.0 if cue.ends_with("hit") else (2850.0 if cue != "knife" else 4400.0)
+			sample = (sin(TAU*metal*time)*.25 + sin(TAU*metal*1.61*time)*.12 + grit*.3) * exp(-time*32)
+		var envelope: float = minf(1,time/.002) * clampf((seconds-time)/.02,0,1)
+		bytes.encode_s16(index*2,int(clampf(sample*envelope,-.9,.9)*32767))
+	var wave := AudioStreamWAV.new()
+	wave.format = AudioStreamWAV.FORMAT_16_BITS
+	wave.mix_rate = rate
+	wave.data = bytes
+	return wave
+
 static func slayer_wave(cue: String) -> AudioStreamWAV:
 	if slayer_waves.has(cue): return slayer_waves[cue]
 	if cue.begins_with("shotgun"):
 		slayer_waves[cue] = shotgun_layer(cue)
+		return slayer_waves[cue]
+	if cue.begins_with("boot") or cue.begins_with("axe") or cue.begins_with("knife"):
+		slayer_waves[cue] = ability_wave(cue)
 		return slayer_waves[cue]
 	var seconds: float = .28 if cue == "shotgun" else (.45 if cue.begins_with("axe") else .16)
 	var hz: float = 85.0 if cue in ["shotgun","boot_hit","axe_hit"] else (460.0 if cue in ["shell","knife_hit","snare_hit"] else 210.0)

@@ -40,6 +40,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Slayer combat, status or collision rules failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/slayer_integration_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Slayer hero selection, AI or scene integration failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/slayer_abilities_overhaul_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Slayer steering, ballistic knives or axe orientation failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/slayer_presentation_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Slayer presentation parity, budgets or cleanup failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/slayer_revision_test.gd
@@ -79,6 +81,8 @@ try {
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_navigation_regression.gd
     if ($LASTEXITCODE -ne 0) { throw 'City navigation recovery or healing route failed.' }
     if ($Capture) {
+        & $taskEngine --path $taskRoot --script res://tests/capture_slayer_abilities.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Slayer ability overhaul rendered capture failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_slayer_presentation.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
         if ($LASTEXITCODE -ne 0) { throw 'Slayer Phase 1 rendered capture failed.' }
         & $taskEngine --path $taskRoot --script res://tests/roster_input_test.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60

@@ -8,3 +8,5 @@ extends Resource
 @export_range(-30, 0) var blast_db: float = -7.0
 @export_range(-30, 0) var mechanism_db: float = -14.0
 @export_range(-30, 0) var impact_db: float = -12.0
+
+@export var ability_cues: Dictionary[String, AudioStream] = {}

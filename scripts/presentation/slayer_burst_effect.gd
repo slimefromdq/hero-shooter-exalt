@@ -42,4 +42,8 @@ func _process(delta: float) -> void:
 	var flash := get_node("Flash") as MeshInstance3D
 	flash.visible = age < flash_duration
 	flash.scale = Vector3.ONE * lerpf(1.0, .35, clampf(age / flash_duration, 0, 1))
+	if has_node("Shockwave"):
+		var ring := get_node("Shockwave") as MeshInstance3D
+		ring.scale = Vector3.ONE * lerpf(.2, 7.0, clampf(age / duration,0,1))
+		(ring.material_override as StandardMaterial3D).albedo_color.a = .35 * clampf(1.0-age/duration,0,1)
 	if age >= duration: get_node("/root/SlayerEffectPool").recycle(self)

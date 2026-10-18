@@ -4,6 +4,8 @@ The [Phase 1 combat presentation notes](slayer-presentation-phase1.md) cover poo
 
 Slayer is playable in Meridian Gardens and the training arena. Both heroes use `HeroActor`, `HeroMotor`, `CloseCombat`, `CombatResolver`, `PlayerController`, and the same ultimate economy. The supplied portraits informed her original geometric layered hair, cropped jacket, silver equipment and reinforced boots. No external models are required.
 
+See the [ability/projectile overhaul notes](SLAYER_ABILITIES_OVERHAUL.md) for limited Boot Rush steering, ballistic silver knives, corrected axe tumble, art, effects and validation.
+
 ## Play
 
 Run `Launch.ps1 -Slayer` for the city or `Launch.ps1 -Training -Slayer` for the sandbox. Both pause menus offer **Play Slayer**. City selection applies in spawn or queues for respawn, without restarting the match, and resets the player's ultimate charge; training selection resets the exercise. Selection survives scene transitions. Ordinary launch opens the main menu and dedicated hero selection.

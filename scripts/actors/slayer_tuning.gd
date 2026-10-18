@@ -16,6 +16,7 @@ extends HeroTuning
 @export_category("Silver Knives")
 @export var knife_damage: float = 30.0
 @export var knife_speed: float = 110.0
+@export_range(0,40) var knife_gravity: float = 12.0
 @export var knife_radius: float = 0.14
 @export var knife_range: float = 25.0
 @export_range(1,8,1) var knife_charges: int = 2
@@ -29,6 +30,8 @@ extends HeroTuning
 @export_category("Boot Rush")
 @export var boot_distance: float = 12.0
 @export var boot_speed: float = 32.0
+@export_range(0,180) var boot_turn_rate: float = 40.0
+@export_range(0,45) var boot_max_steer_angle: float = 15.0
 @export var boot_startup: float = 0.06
 @export var boot_damage: float = 55.0
 @export var boot_reach: float = 1.65
@@ -68,5 +71,6 @@ extends HeroTuning
 @export var axe_release: float = 0.2
 @export var axe_recovery: float = 0.55
 @export var axe_speed: float = 20.0
+@export_range(0,60) var axe_spin_rate: float = 20.0
 @export var axe_range: float = 30.0
 @export var axe_radius: float = 0.55
