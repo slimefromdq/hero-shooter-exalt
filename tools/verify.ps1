@@ -44,6 +44,10 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Slayer steering, ballistic knives or axe orientation failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/slayer_presentation_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Slayer presentation parity, budgets or cleanup failed.' }
+    & $taskEngine --headless --path $taskRoot --script res://tests/slayer_model_asset_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Slayer model import, facial morphs or material preservation failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/slayer_character_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Live Slayer rig, attachments, skin weights or lifecycle failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/slayer_revision_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Slayer input buffering, trap toss, feedback or throw checks failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/close_combat_test.gd
@@ -81,6 +85,10 @@ try {
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_navigation_regression.gd
     if ($LASTEXITCODE -ne 0) { throw 'City navigation recovery or healing route failed.' }
     if ($Capture) {
+        & $taskEngine --path $taskRoot --script res://tests/slayer_character_test.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Live Slayer model rendered inspection failed.' }
+        & $taskEngine --path $taskRoot --script res://tests/capture_slayer_character_city.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Authored Slayer city render failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_slayer_abilities.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
         if ($LASTEXITCODE -ne 0) { throw 'Slayer ability overhaul rendered capture failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_slayer_presentation.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60

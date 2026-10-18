@@ -1,0 +1,17 @@
+{
+  "eye_scale": 1.25,
+  "eye_width": 0.80,
+  "eye_height": 1.15,
+  "head_width": 1.055,
+  "chin_lift": 0.0075,
+  "eye_tilt": 0.11,
+  "eye_spacing": 0.047,
+  "iris_scale": 1.07,
+  "eyebrow_angle": 0.12,
+  "cheek_fullness": 1.12,
+  "jaw_taper": 0.95,
+  "nose_size": 0.90,
+  "mouth_curvature": 1.15,
+  "eyelid_thickness": 0.0008,
+  "lip_fullness": 1.6
+}

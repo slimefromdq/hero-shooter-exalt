@@ -40,6 +40,7 @@ var held_trap: Node3D
 var team_ring: MeshInstance3D
 var roster_parts: Dictionary = {}
 var slayer_shot: SlayerShotPresentation
+var slayer_model: SlayerCharacterDriver
 var slayer_abilities: SlayerAbilityPresentation
 
 func _ready() -> void:
@@ -152,6 +153,7 @@ func _ready() -> void:
 	animator.add_animation_library("", CloseCombatAnimations.library())
 	if actor.tuning is SlayerTuning:
 		SlayerVisuals.remodel(self)
+		slayer_model = SlayerCharacterDriver.attach(self)
 		slayer_shot = SlayerShotPresentation.new()
 		slayer_shot.presentation = self
 		add_child(slayer_shot)
@@ -168,12 +170,13 @@ func _ready() -> void:
 	team_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	for side: float in [-1.0, 1.0]:
 		var badge := BoxMesh.new()
-		badge.size = Vector3(.14, .18, .37)
-		Geometry.mesh(body, badge, Vector3(side * .31, 1.44, 0), team_material)
+		badge.size = Vector3(.065,.10,.055) if is_instance_valid(slayer_model) else Vector3(.14, .18, .37)
+		Geometry.mesh(body, badge, Vector3(side * (.225 if is_instance_valid(slayer_model) else .31),1.44,0),team_material)
 	for z: float in [-.23, .23]:
 		var band := BoxMesh.new()
 		band.size = Vector3(.5, .09, .04)
-		Geometry.mesh(body, band, Vector3(0, 1.25, z), team_material)
+		if is_instance_valid(slayer_model): band.size = Vector3(.29,.025,.012)
+		Geometry.mesh(body,band,Vector3(0,1.33,z*.61) if is_instance_valid(slayer_model) else Vector3(0,1.25,z),team_material)
 	var team_shape := TorusMesh.new()
 	team_shape.inner_radius = .43
 	team_shape.outer_radius = .49
@@ -234,7 +237,7 @@ func _process(delta: float) -> void:
 	stagger_marks.visible = actor.alive and actor.state == "stagger"
 	stagger_marks.rotation.y = (1.0 - actor.state_time / maxf(.01,actor.tuning.stagger_duration)) * TAU
 	rifle.rotation = Vector3.ZERO
-	rifle.position = Vector3(.34,1.38,-.25)
+	rifle.position = Vector3(.10,1.30,0) if is_instance_valid(slayer_model) and slayer_model.active else Vector3(.34,1.38,-.25)
 	if actor.kit.reloading and actor.state == "ready":
 		rifle.rotation.x = -0.7
 	var animation: String = ""
@@ -416,6 +419,8 @@ func _process(delta: float) -> void:
 		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA if obstructing else BaseMaterial3D.TRANSPARENCY_DISABLED
 		material.albedo_color.a = .2 if obstructing else 1.0
 
+	if is_instance_valid(slayer_model): slayer_model.update(delta)
+
 func on_block(attacker: HeroActor, defender: HeroActor) -> void:
 	if defender != actor:
 		return
@@ -432,6 +437,7 @@ func on_block(attacker: HeroActor, defender: HeroActor) -> void:
 
 func clear_feedback() -> void:
 	fire_flash = 0.0
+	if is_instance_valid(slayer_model): slayer_model.reset_feedback()
 	if is_instance_valid(slayer_shot): slayer_shot.clear()
 	if is_instance_valid(slayer_abilities): slayer_abilities.clear()
 	if is_instance_valid(sound): sound.stop_slayer_voices()

@@ -1,0 +1,16 @@
+{
+  "checks": 40,
+  "failures": 0,
+  "blender": "5.2.2 LTS",
+  "shape_keys": [
+    "Blink",
+    "BrowRaise",
+    "BrowLower",
+    "Smile",
+    "Frown",
+    "MouthOpen",
+    "Relaxed",
+    "Focused",
+    "Smirk"
+  ]
+}

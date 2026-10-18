@@ -1,0 +1,321 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/back_axe.res" id="1_js0bu"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/calf_l.res" id="2_r2efw"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/calf_r.res" id="3_ksq6e"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/face.res" id="4_oonqa"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/foot_l.res" id="5_xivxy"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/foot_r.res" id="6_7jeau"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/forearm_l.res" id="7_3vrir"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/forearm_r.res" id="8_bq1nq"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/hair.res" id="9_ikgfh"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/hand_l.res" id="10_hepbd"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/hand_r.res" id="11_8mt30"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/head.res" id="12_6r36e"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/jacket_torso.res" id="13_b01u3"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/neck.res" id="14_rsfsi"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/pelvis.res" id="15_7vy24"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/shotgun.res" id="16_hfgi6"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/thigh_l.res" id="17_405jl"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/thigh_r.res" id="18_iqtb4"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/torso.res" id="19_o47k6"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/upper_arm_l.res" id="20_w50du"]
+[ext_resource type="ArrayMesh" path="res://assets/characters/slayer/runtime/upper_arm_r.res" id="21_yiggb"]
+
+[sub_resource type="Skin" id="Skin_dmyss"]
+bind_count = 16
+bind/0/name = &"Root"
+bind/0/bone = -1
+bind/0/pose = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.90873843, 0)
+bind/1/name = &"Spine"
+bind/1/bone = -1
+bind/1/pose = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.1543432, 0)
+bind/2/name = &"Chest"
+bind/2/bone = -1
+bind/2/pose = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.3999482, 0)
+bind/3/name = &"Head"
+bind/3/bone = -1
+bind/3/pose = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.5473113, 0)
+bind/4/name = &"LeftUpperArm"
+bind/4/bone = -1
+bind/4/pose = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.23086868, -1.4146847, 0)
+bind/5/name = &"LeftForearm"
+bind/5/bone = -1
+bind/5/pose = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.30847988, -1.2476733, 0.012771459)
+bind/6/name = &"LeftHand"
+bind/6/bone = -1
+bind/6/pose = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.39198554, -1.0217166, 0.043226477)
+bind/7/name = &"LeftThigh"
+bind/7/bone = -1
+bind/7/pose = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.103154086, -0.90873843, 0)
+bind/8/name = &"LeftCalf"
+bind/8/bone = -1
+bind/8/pose = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.11789039, -0.53541887, 0.024560498)
+bind/9/name = &"LeftFoot"
+bind/9/bone = -1
+bind/9/pose = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.11789039, -0.1719235, -0.0039296797)
+bind/10/name = &"RightUpperArm"
+bind/10/bone = -1
+bind/10/pose = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.23086868, -1.4146847, 0)
+bind/11/name = &"RightForearm"
+bind/11/bone = -1
+bind/11/pose = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.30847988, -1.2476733, 0.012771459)
+bind/12/name = &"RightHand"
+bind/12/bone = -1
+bind/12/pose = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.39198554, -1.0217166, 0.043226477)
+bind/13/name = &"RightThigh"
+bind/13/bone = -1
+bind/13/pose = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.103154086, -0.90873843, 0)
+bind/14/name = &"RightCalf"
+bind/14/bone = -1
+bind/14/pose = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.11789039, -0.53541887, 0.024560498)
+bind/15/name = &"RightFoot"
+bind/15/bone = -1
+bind/15/pose = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.11789039, -0.1719235, -0.0039296797)
+
+[node name="SlayerCharacter" type="Node3D" unique_id=1954996788]
+
+[node name="Rig" type="Skeleton3D" parent="." unique_id=1587352252]
+bones/0/name = "Root"
+bones/0/parent = -1
+bones/0/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.90873843, 0)
+bones/0/enabled = true
+bones/0/position = Vector3(0, 0, 0)
+bones/0/rotation = Quaternion(0, 0, 0, 1)
+bones/0/scale = Vector3(1, 1, 1)
+bones/1/name = "Spine"
+bones/1/parent = 0
+bones/1/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.24560481, 0)
+bones/1/enabled = true
+bones/1/position = Vector3(0, 0, 0)
+bones/1/rotation = Quaternion(0, 0, 0, 1)
+bones/1/scale = Vector3(1, 1, 1)
+bones/2/name = "Chest"
+bones/2/parent = 1
+bones/2/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.24560499, 0)
+bones/2/enabled = true
+bones/2/position = Vector3(0, 0, 0)
+bones/2/rotation = Quaternion(0, 0, 0, 1)
+bones/2/scale = Vector3(1, 1, 1)
+bones/3/name = "Head"
+bones/3/parent = 2
+bones/3/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.14736307, 0)
+bones/3/enabled = true
+bones/3/position = Vector3(0, 0, 0)
+bones/3/rotation = Quaternion(0, 0, 0, 1)
+bones/3/scale = Vector3(1, 1, 1)
+bones/4/name = "LeftUpperArm"
+bones/4/parent = 2
+bones/4/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.23086868, 0.014736414, 0)
+bones/4/enabled = true
+bones/4/position = Vector3(0, 0, 0)
+bones/4/rotation = Quaternion(0, 0, 0, 1)
+bones/4/scale = Vector3(1, 1, 1)
+bones/5/name = "LeftForearm"
+bones/5/parent = 4
+bones/5/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.07761119, -0.16701138, -0.012771459)
+bones/5/enabled = true
+bones/5/position = Vector3(0, 0, 0)
+bones/5/rotation = Quaternion(0, 0, 0, 1)
+bones/5/scale = Vector3(1, 1, 1)
+bones/6/name = "LeftHand"
+bones/6/parent = 5
+bones/6/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.08350566, -0.22595668, -0.030455017)
+bones/6/enabled = true
+bones/6/position = Vector3(0, 0, 0)
+bones/6/rotation = Quaternion(0, 0, 0, 1)
+bones/6/scale = Vector3(1, 1, 1)
+bones/7/name = "LeftThigh"
+bones/7/parent = 0
+bones/7/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.103154086, 0, 0)
+bones/7/enabled = true
+bones/7/position = Vector3(0, 0, 0)
+bones/7/rotation = Quaternion(0, 0, 0, 1)
+bones/7/scale = Vector3(1, 1, 1)
+bones/8/name = "LeftCalf"
+bones/8/parent = 7
+bones/8/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.014736302, -0.37331957, -0.024560498)
+bones/8/enabled = true
+bones/8/position = Vector3(0, 0, 0)
+bones/8/rotation = Quaternion(0, 0, 0, 1)
+bones/8/scale = Vector3(1, 1, 1)
+bones/9/name = "LeftFoot"
+bones/9/parent = 8
+bones/9/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.36349535, 0.028490178)
+bones/9/enabled = true
+bones/9/position = Vector3(0, 0, 0)
+bones/9/rotation = Quaternion(0, 0, 0, 1)
+bones/9/scale = Vector3(1, 1, 1)
+bones/10/name = "RightUpperArm"
+bones/10/parent = 2
+bones/10/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.23086868, 0.014736414, 0)
+bones/10/enabled = true
+bones/10/position = Vector3(0, 0, 0)
+bones/10/rotation = Quaternion(0, 0, 0, 1)
+bones/10/scale = Vector3(1, 1, 1)
+bones/11/name = "RightForearm"
+bones/11/parent = 10
+bones/11/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.07761119, -0.16701138, -0.012771459)
+bones/11/enabled = true
+bones/11/position = Vector3(0, 0, 0)
+bones/11/rotation = Quaternion(0, 0, 0, 1)
+bones/11/scale = Vector3(1, 1, 1)
+bones/12/name = "RightHand"
+bones/12/parent = 11
+bones/12/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.08350566, -0.22595668, -0.030455017)
+bones/12/enabled = true
+bones/12/position = Vector3(0, 0, 0)
+bones/12/rotation = Quaternion(0, 0, 0, 1)
+bones/12/scale = Vector3(1, 1, 1)
+bones/13/name = "RightThigh"
+bones/13/parent = 0
+bones/13/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.103154086, 0, 0)
+bones/13/enabled = true
+bones/13/position = Vector3(0, 0, 0)
+bones/13/rotation = Quaternion(0, 0, 0, 1)
+bones/13/scale = Vector3(1, 1, 1)
+bones/14/name = "RightCalf"
+bones/14/parent = 13
+bones/14/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.014736302, -0.37331957, -0.024560498)
+bones/14/enabled = true
+bones/14/position = Vector3(0, 0, 0)
+bones/14/rotation = Quaternion(0, 0, 0, 1)
+bones/14/scale = Vector3(1, 1, 1)
+bones/15/name = "RightFoot"
+bones/15/parent = 14
+bones/15/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.36349535, 0.028490178)
+bones/15/enabled = true
+bones/15/position = Vector3(0, 0, 0)
+bones/15/rotation = Quaternion(0, 0, 0, 1)
+bones/15/scale = Vector3(1, 1, 1)
+
+[node name="Slayer_BackAxe" type="MeshInstance3D" parent="." unique_id=2037952441]
+extra_cull_margin = 1.8
+mesh = ExtResource("1_js0bu")
+
+[node name="Slayer_Calf_L" type="MeshInstance3D" parent="." unique_id=647573027]
+extra_cull_margin = 1.8
+mesh = ExtResource("2_r2efw")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")
+
+[node name="Slayer_Calf_R" type="MeshInstance3D" parent="." unique_id=411488287]
+extra_cull_margin = 1.8
+mesh = ExtResource("3_ksq6e")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")
+
+[node name="Slayer_Face" type="MeshInstance3D" parent="." unique_id=895148758]
+extra_cull_margin = 1.8
+mesh = ExtResource("4_oonqa")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")
+blend_shapes/Blink = 0.0
+blend_shapes/BrowRaise = 0.0
+blend_shapes/BrowLower = 0.0
+blend_shapes/Smile = 0.0
+blend_shapes/Frown = 0.0
+blend_shapes/MouthOpen = 0.0
+blend_shapes/Relaxed = 0.0
+blend_shapes/Focused = 0.0
+blend_shapes/Smirk = 0.0
+
+[node name="Slayer_Foot_L" type="MeshInstance3D" parent="." unique_id=693781331]
+extra_cull_margin = 1.8
+mesh = ExtResource("5_xivxy")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")
+
+[node name="Slayer_Foot_R" type="MeshInstance3D" parent="." unique_id=367601680]
+extra_cull_margin = 1.8
+mesh = ExtResource("6_7jeau")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")
+
+[node name="Slayer_Forearm_L" type="MeshInstance3D" parent="." unique_id=1179673007]
+extra_cull_margin = 1.8
+mesh = ExtResource("7_3vrir")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")
+
+[node name="Slayer_Forearm_R" type="MeshInstance3D" parent="." unique_id=603832540]
+extra_cull_margin = 1.8
+mesh = ExtResource("8_bq1nq")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")
+
+[node name="Slayer_Hair" type="MeshInstance3D" parent="." unique_id=849714994]
+extra_cull_margin = 1.8
+mesh = ExtResource("9_ikgfh")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")
+
+[node name="Slayer_Hand_L" type="MeshInstance3D" parent="." unique_id=805177339]
+extra_cull_margin = 1.8
+mesh = ExtResource("10_hepbd")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")
+
+[node name="Slayer_Hand_R" type="MeshInstance3D" parent="." unique_id=230138421]
+extra_cull_margin = 1.8
+mesh = ExtResource("11_8mt30")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")
+
+[node name="Slayer_Head" type="MeshInstance3D" parent="." unique_id=217164735]
+extra_cull_margin = 1.8
+mesh = ExtResource("12_6r36e")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")
+
+[node name="Slayer_Jacket_Torso" type="MeshInstance3D" parent="." unique_id=748814380]
+extra_cull_margin = 1.8
+mesh = ExtResource("13_b01u3")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")
+
+[node name="Slayer_Neck" type="MeshInstance3D" parent="." unique_id=661518691]
+extra_cull_margin = 1.8
+mesh = ExtResource("14_rsfsi")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")
+
+[node name="Slayer_Pelvis" type="MeshInstance3D" parent="." unique_id=1536343068]
+extra_cull_margin = 1.8
+mesh = ExtResource("15_7vy24")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")
+
+[node name="Slayer_Shotgun" type="MeshInstance3D" parent="." unique_id=1902175641]
+extra_cull_margin = 1.8
+mesh = ExtResource("16_hfgi6")
+
+[node name="Slayer_Thigh_L" type="MeshInstance3D" parent="." unique_id=538217814]
+extra_cull_margin = 1.8
+mesh = ExtResource("17_405jl")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")
+
+[node name="Slayer_Thigh_R" type="MeshInstance3D" parent="." unique_id=670811894]
+extra_cull_margin = 1.8
+mesh = ExtResource("18_iqtb4")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")
+
+[node name="Slayer_Torso" type="MeshInstance3D" parent="." unique_id=809844481]
+extra_cull_margin = 1.8
+mesh = ExtResource("19_o47k6")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")
+
+[node name="Slayer_UpperArm_L" type="MeshInstance3D" parent="." unique_id=1250801269]
+extra_cull_margin = 1.8
+mesh = ExtResource("20_w50du")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")
+
+[node name="Slayer_UpperArm_R" type="MeshInstance3D" parent="." unique_id=696970502]
+extra_cull_margin = 1.8
+mesh = ExtResource("21_yiggb")
+skin = SubResource("Skin_dmyss")
+skeleton = NodePath("../Rig")

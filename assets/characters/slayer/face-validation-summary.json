@@ -1,0 +1,112 @@
+{
+  "revision": "facial_reconstruction_socket_topology_v2",
+  "completed_utc": "2026-10-18T20:30:13.263631+00:00",
+  "blender": "5.2.2 LTS",
+  "godot": "4.7.2-stable (official)",
+  "blend_sha256": "1833f53c5d517c1d6c88b30d0a6c15dd0a4a54e2423056cf7aa4dd11c3a32d11",
+  "glb_sha256": "5a4c4a78532765ac092caffa3fda42177d78a33753de6b4f5b2b5bb95a02c8c3",
+  "generator_sha256": "3529bf4561dd07a429bc622afd404a0b26414a3f3e1ea14230231bf9813b4e7e",
+  "face_config_sha256": "83c68b46c7bc920fb7d94f352e280baca25d1180971b2d1edc10ccaaea579f8c",
+  "generator_checks": 40,
+  "saved_blend_checks": 11,
+  "glb_checks": 20511,
+  "godot_headless_checks": 164,
+  "godot_rendered_checks": 180,
+  "failures": 0,
+  "triangles": 91330,
+  "meshes": 21,
+  "material_primitives": 77,
+  "facial_shape_keys": [
+    "Blink",
+    "BrowRaise",
+    "BrowLower",
+    "Smile",
+    "Frown",
+    "MouthOpen",
+    "Relaxed",
+    "Focused",
+    "Smirk"
+  ],
+  "preserved_components": 243,
+  "authorized_adjusted_front_clumps": 10,
+  "preservation_baseline": "rollback/pre-reconstruction/slayer.blend",
+  "existing_suite": {
+    "command": "powershell -ExecutionPolicy Bypass -File ./tools/verify.ps1",
+    "exit_code": 0,
+    "initial_run_note": "One jump-to-mantle assertion failed during CPU rendering. Isolated traversal-flow rerun: 25 checks, 0 failures. Full subsequent suite: exit 0.",
+    "scope": "Previous face-overhaul baseline only; this facial reconstruction reran focused Blender, GLB and Godot checks. No new full gameplay-suite run; gameplay files unchanged."
+  },
+  "required_views": [
+    "face-neutral",
+    "face-three-quarter",
+    "face-profile",
+    "face-relaxed",
+    "face-focused",
+    "face-smirk",
+    "front",
+    "gameplay-distance"
+  ],
+  "extra_views": [
+    "face-blink",
+    "face-open-mouth",
+    "face-smile",
+    "face-determined"
+  ],
+  "render_samples": 48,
+  "visually_inspected": true,
+  "visual_iterations": [
+    {
+      "pass": 1,
+      "views": [
+        "face-neutral",
+        "face-three-quarter",
+        "face-profile"
+      ],
+      "finding": "Opening calmer, but socket border needed continuous skin normals."
+    },
+    {
+      "pass": 2,
+      "views": [
+        "face-neutral",
+        "face-three-quarter",
+        "face-profile",
+        "face-relaxed",
+        "face-focused",
+        "face-blink",
+        "face-open-mouth"
+      ],
+      "finding": "Welded socket seam; profile prompted deeper eyes, shorter lower face and higher understated mouth."
+    },
+    {
+      "pass": 3,
+      "views": [
+        "face-neutral",
+        "face-three-quarter",
+        "face-profile",
+        "face-relaxed",
+        "face-focused",
+        "face-smirk",
+        "front",
+        "gameplay-distance",
+        "face-blink",
+        "face-open-mouth"
+      ],
+      "finding": "Corrected head silhouette seam. Half-lid inspection revealed two folded socket triangles; continuous deformation field removes them. Added explicit no-fold regression checks; final affected renders inspected."
+    }
+  ],
+  "final_visual_review": {
+    "eyes": "Aligned gaze; reduced white above iris; upper-lid overlap; no contrasting cosmetic ring.",
+    "profile": "Inset eyes, small integrated nose, shorter chin and understated lips.",
+    "expressions": "Relaxed/focused socket folds corrected; blink hides eye layers; smirk remains subtle.",
+    "hair": "Visible eye/brow exposed; asymmetric fringe and partially concealed opposite eye retained.",
+    "gameplay_distance": "Hair/exposed eye remain identifiable, but fine facial detail occupies few pixels.",
+    "godot": "PBR skin colour, eye layers and all nine morphs survive actual engine import/render."
+  },
+  "live_actor_replaced": false,
+  "gameplay_changed": false,
+  "remaining_manual_review": [
+    "Artistic approval of the new face",
+    "Combined morph extremes and expression timing during later animation",
+    "Arena lighting and moving-camera readability after rigging and live integration"
+  ]
+}

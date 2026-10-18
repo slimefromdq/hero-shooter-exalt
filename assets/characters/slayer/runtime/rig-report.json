@@ -1,0 +1,9 @@
+{
+	"bones": 16,
+	"facial_morphs": 9,
+	"gameplay_modified": false,
+	"max_influences": 4,
+	"skinned_groups": 19,
+	"source": "res://assets/characters/slayer/slayer.glb",
+	"source_sha256": "5a4c4a78532765ac092caffa3fda42177d78a33753de6b4f5b2b5bb95a02c8c3"
+}

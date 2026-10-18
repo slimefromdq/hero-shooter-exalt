@@ -1,0 +1,23 @@
+{
+	"bounds_max": "(0.455843, 1.9, 0.194028)",
+	"bounds_min": "(-0.47893, 0.0, -0.200414)",
+	"checks": 164,
+	"engine": "4.7.2-stable (official)",
+	"facial_shape_keys": [
+		"Blink",
+		"BrowRaise",
+		"BrowLower",
+		"Smile",
+		"Frown",
+		"MouthOpen",
+		"Relaxed",
+		"Focused",
+		"Smirk"
+	],
+	"failures": [],
+	"height": 1.89999997615814,
+	"live_actor_replaced": false,
+	"meshes": 21,
+	"surfaces": 77,
+	"triangles": 91330
+}

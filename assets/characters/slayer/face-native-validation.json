@@ -1,0 +1,19 @@
+{
+  "checks": 11,
+  "failures": 0,
+  "blender": "5.2.2 LTS",
+  "preserved_components": 243,
+  "adjusted_front_clumps": 10,
+  "baseline": "rollback/pre-reconstruction/slayer.blend",
+  "shape_keys": [
+    "Blink",
+    "BrowRaise",
+    "BrowLower",
+    "Smile",
+    "Frown",
+    "MouthOpen",
+    "Relaxed",
+    "Focused",
+    "Smirk"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "checks": 20511,
+  "failures": 0,
+  "glb_version": 2,
+  "file_bytes": 5393020,
+  "sha256": "5a4c4a78532765ac092caffa3fda42177d78a33753de6b4f5b2b5bb95a02c8c3",
+  "meshes": 21,
+  "primitives": 77,
+  "triangles": 91330,
+  "materials": 35,
+  "external_dependencies": 0,
+  "facial_shape_keys": [
+    "Blink",
+    "BrowRaise",
+    "BrowLower",
+    "Smile",
+    "Frown",
+    "MouthOpen",
+    "Relaxed",
+    "Focused",
+    "Smirk"
+  ],
+  "moved_vertices_by_key": {
+    "Blink": 5429,
+    "BrowRaise": 1527,
+    "BrowLower": 1531,
+    "Smile": 3587,
+    "Frown": 3587,
+    "MouthOpen": 1903,
+    "Relaxed": 2704,
+    "Focused": 2704,
+    "Smirk": 1663
+  },
+  "method": "GLB header/buffer/index/normal/PBR checks; Godot import tested separately"
+}

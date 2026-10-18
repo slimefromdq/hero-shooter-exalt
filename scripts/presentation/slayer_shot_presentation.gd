@@ -32,6 +32,8 @@ func discharge(origin: Vector3, forward: Vector3, contacts: Array[Dictionary], e
 		return
 	# Match the existing rendered barrel. This cosmetic occlusion ray has no combat outcome.
 	var barrel: Vector3 = presentation.rifle.to_global(Vector3(0, .03, -.9))
+	if is_instance_valid(presentation.slayer_model) and presentation.slayer_model.active:
+		barrel = presentation.slayer_model.muzzle.global_position
 	var obstruction: Dictionary = presentation.actor.resolver.ray(origin, barrel, [presentation.actor.get_rid()], 1)
 	if not obstruction.is_empty(): barrel = obstruction.position + obstruction.normal * .025
 	spawn_burst(MUZZLE, barrel, forward, Color("ffd2a0"))

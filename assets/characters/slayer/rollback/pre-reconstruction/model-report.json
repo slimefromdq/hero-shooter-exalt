@@ -1,0 +1,50 @@
+{
+  "blender": "5.2.2 LTS",
+  "source_objects": 254,
+  "export_meshes": 21,
+  "triangles": 90142,
+  "materials": 37,
+  "bounds_blender": [
+    [
+      -0.478929728269577,
+      -0.19402791559696198,
+      0.0
+    ],
+    [
+      0.45584285259246826,
+      0.20041365921497345,
+      1.899999976158142
+    ]
+  ],
+  "facing_blender": "+Y",
+  "facing_godot": "-Z",
+  "height_m": 1.9,
+  "rigged": false,
+  "generated_with_seed": 7419,
+  "blender_mesh_validation_passed": true,
+  "facial_shape_keys": [
+    "Blink",
+    "BrowRaise",
+    "BrowLower",
+    "Smile",
+    "Frown",
+    "MouthOpen"
+  ],
+  "face_config": {
+    "cheek_fullness": 1.12,
+    "chin_lift": 0.0075,
+    "eye_height": 1.15,
+    "eye_scale": 1.25,
+    "eye_spacing": 0.047,
+    "eye_tilt": 0.11,
+    "eye_width": 0.8,
+    "eyebrow_angle": 0.12,
+    "eyelid_thickness": 0.0008,
+    "head_width": 1.055,
+    "iris_scale": 1.07,
+    "jaw_taper": 0.95,
+    "lip_fullness": 1.6,
+    "mouth_curvature": 1.15,
+    "nose_size": 0.9
+  }
+}
