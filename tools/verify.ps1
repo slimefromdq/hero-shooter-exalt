@@ -15,6 +15,10 @@ Push-Location -LiteralPath $taskRoot
 try {
     & $taskEngine --headless --path $taskRoot --editor --import --quit
     if ($LASTEXITCODE -ne 0) { throw 'Godot import failed.' }
+    foreach ($taskMuseumTest in @('museum_rules_test', 'museum_traversal_test', 'museum_menu_test', 'museum_delivery_test', 'museum_integration_test')) {
+        & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script "res://tests/$taskMuseumTest.gd"
+        if ($LASTEXITCODE -ne 0) { throw "Museum check failed: $taskMuseumTest" }
+    }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/roster_expansion_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Relay, Dynamo or Wisp combat and integration failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/crouch_test.gd
@@ -85,6 +89,10 @@ try {
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_navigation_regression.gd
     if ($LASTEXITCODE -ne 0) { throw 'City navigation recovery or healing route failed.' }
     if ($Capture) {
+        & $taskEngine --path $taskRoot --script res://tests/museum_input_test.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Native museum controls or exploration exit failed.' }
+        & $taskEngine --path $taskRoot --script res://tests/capture_museum.gd --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Rendered museum capture failed.' }
         & $taskEngine --path $taskRoot --script res://tests/slayer_character_test.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
         if ($LASTEXITCODE -ne 0) { throw 'Live Slayer model rendered inspection failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_slayer_character_city.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60

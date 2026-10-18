@@ -1,0 +1,3956 @@
+{
+  "map": "Meridian Museum",
+  "engine": "Godot 4.7.2.stable.official.ed1daf0bf",
+  "date": "2026-10-18",
+  "focused_checks": 451,
+  "native_input_checks": 16,
+  "simulation_checks": 32,
+  "existing_verify_ps1": "passed; exit 0; no failed assertions or script errors",
+  "preexisting_headless_cleanup_messages": [
+    "ERROR: 12 RID allocations of type 'N13RendererDummy15MaterialStorage13DummyMaterialE' were leaked at exit.",
+    "ERROR: 4 RID allocations of type 'N13RendererDummy15MaterialStorage11DummyShaderE' were leaked at exit.",
+    "ERROR: 4 RID allocations of type 'N13RendererDummy15MaterialStorage13DummyMaterialE' were leaked at exit.",
+    "ERROR: 7 RID allocations of type 'N13RendererDummy9DummyMeshE' were leaked at exit.",
+    "ERROR: 89 resources still in use at exit (run with --verbose for details).",
+    "ERROR: Pages in use exist at exit in PagedAllocator: N12VariantPools11BucketSmallE",
+    "ERROR: Pages in use exist at exit in PagedAllocator: N12VariantPools12BucketMediumE"
+  ],
+  "rendered_frames": [
+    "01-court.png",
+    "02-giants.png",
+    "03-terrace.png",
+    "04-vault.png",
+    "05-overhead.png",
+    "06-overhead.png",
+    "07-overhead.png",
+    "08-overhead.png",
+    "09-atlas-ground.png",
+    "10-atlas-high.png",
+    "11-player.png",
+    "12-capture-locks.png",
+    "13-checkpoint.png",
+    "14-overtime.png",
+    "15-attack-victory.png",
+    "16-defense-victory.png"
+  ],
+  "spawn_route_audit": [
+    {
+      "connected": true,
+      "distance_m": 60.444306248799,
+      "spawn": "A0",
+      "target": "(6.0, 0.0, 3.0)",
+      "walk_seconds": 10.0740510414665
+    },
+    {
+      "connected": true,
+      "distance_m": 55.7084867507219,
+      "spawn": "A1",
+      "target": "(12.0, 0.0, 0.0)",
+      "walk_seconds": 9.28474779178699
+    },
+    {
+      "connected": true,
+      "distance_m": 54.2767600556836,
+      "spawn": "A2",
+      "target": "(62.0, 0.0, 0.0)",
+      "walk_seconds": 9.04612667594726
+    },
+    {
+      "connected": true,
+      "distance_m": 58.1620404720306,
+      "spawn": "A3",
+      "target": "(107.9998, 1.499985, 0.0)",
+      "walk_seconds": 9.69367341200511
+    },
+    {
+      "connected": true,
+      "distance_m": 67.0031132232398,
+      "spawn": "D0",
+      "target": "(6.0, 0.0, 3.0)",
+      "walk_seconds": 11.1671855372066
+    },
+    {
+      "connected": true,
+      "distance_m": 84.3826091401279,
+      "spawn": "D1",
+      "target": "(12.0, 0.0, 0.0)",
+      "walk_seconds": 14.0637681900213
+    },
+    {
+      "connected": true,
+      "distance_m": 80.7684982601786,
+      "spawn": "D2",
+      "target": "(62.0, 0.0, 0.0)",
+      "walk_seconds": 13.4614163766964
+    },
+    {
+      "connected": true,
+      "distance_m": 106.030601886683,
+      "spawn": "D2 final return",
+      "walk_seconds": 17.6717669811139
+    }
+  ],
+  "suites": {
+    "rules": {
+      "checks": 36,
+      "failures": []
+    },
+    "traversal": {
+      "checks": 15,
+      "failures": []
+    },
+    "menu": {
+      "checks": 14,
+      "failures": []
+    },
+    "integration-attack": {
+      "checks": 97,
+      "details": [],
+      "failures": []
+    },
+    "integration-defend": {
+      "checks": 97,
+      "details": [],
+      "failures": []
+    },
+    "delivery": {
+      "checks": 192,
+      "details": [],
+      "failures": []
+    },
+    "input": {
+      "checks": 16,
+      "failures": [],
+      "renderer": "forward_plus"
+    },
+    "simulation-76-attack": {
+      "checks": 16,
+      "drill_seconds": 164,
+      "failures": [],
+      "falls": 0,
+      "natural_result": {
+        "capture": 1.0,
+        "checkpoint": 3,
+        "payload": 210.070159912109,
+        "phase": "finished",
+        "winner": 0
+      },
+      "persistent_stalls": [],
+      "recovery_warps": 0,
+      "seconds": 600.0,
+      "seed": 76,
+      "snapshots": [
+        {
+          "capture": 0.0,
+          "payload": 0.0,
+          "phase": "preparation",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(-51.9931, 0.000843, 0.238417)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-52.0, 0.00015, -1.0)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-50.0, 0.00015, -1.0)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-54.0, 0.00015, 1.0)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-52.0, 0.00015, 1.0)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-50.0, 0.00015, 1.0)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(59.63763, 0.000843, -26.99578)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(61.0015, 0.000843, -27.71675)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(62.50711, 0.000843, -28.14037)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(59.02565, 0.000843, -25.42568)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(60.93636, 0.000843, -26.49601)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(61.92402, 0.000843, -26.92885)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 0,
+          "winner": -1
+        },
+        {
+          "capture": 0.0,
+          "payload": 0.0,
+          "phase": "capture",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(-44.35, 0.000843, 5.864146)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-49.23294, 0.000839, 2.334941)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-48.97559, 0.000839, 0.775676)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-50.23704, 0.000839, 3.257973)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(-48.97895, 0.000839, 3.426263)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(-47.08717, 0.000843, 4.4954)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(2.83162, 0.000826, -3.575454)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(5.139277, 0.000737, 2.55241)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(14.08093, 0.000856, -0.600547)",
+              "hero": "doctor",
+              "stuck": 1.03333333333333,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(5.349485, -0.005274, -3.402381)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(7.383759, 0.000835, -4.193686)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(2.615308, 0.000843, 6.555801)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 30,
+          "winner": -1
+        },
+        {
+          "capture": 0.0,
+          "payload": 0.0,
+          "phase": "capture",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(-5.472431, -0.000725, -2.893572)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(8.954986, 0.000678, -4.236803)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(10.6117, 0.000843, 2.541837)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(5.563771, -0.006058, -6.651311)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(-5.727232, 3.600804, -15.54626)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(-36.90931, 0.000839, 5.995651)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(0.781685, 0.000835, -16.43536)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(10.97033, 0.000843, -14.86976)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(-1.729988, 0.000491, 2.238523)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(5.296269, 0.000843, -19.48511)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(37.17042, 0.000839, -21.72112)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(3.831264, 0.000828, 2.37975)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 60,
+          "winner": -1
+        },
+        {
+          "capture": 0.907916666666674,
+          "payload": 0.0,
+          "phase": "capture",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(-5.423054, 0.000834, -3.543598)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-1.591995, 0.000839, -19.36699)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-9.242227, 0.000835, -7.779524)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-18.97055, 0.000843, 0.649315)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(-5.727232, 3.600804, -15.54626)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(0.245885, 0.000835, 8.205581)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(-4.383696, -0.000656, -3.171195)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(5.477402, -0.000356, 2.948626)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(-2.403754, 0.000843, -8.343664)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(4.99246, -0.000695, -3.549103)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(11.18916, 0.456485, -16.39452)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(0.923209, 0.000843, 7.423944)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 90,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 2.20833332141241,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(5.336671, 0.00082, -3.154827)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(14.48711, 0.000839, 2.192119)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-1.214762, -0.005177, -3.174735)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(14.39874, 0.000843, -2.156861)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(0.602747, 3.600804, -15.92723)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(12.0219, 0.000839, -1.393232)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(81.06531, 0.000839, -29.26181)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(38.52275, 0.000843, -12.96418)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(82.96898, 0.000839, -28.42826)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(11.51833, 0.000064, -14.90455)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(11.27008, 0.33447, -17.77645)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(33.41291, 0.000839, -11.67471)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 120,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 27.664999890328,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(-18.67632, 0.000843, 35.14018)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-6.995028, 0.000839, 26.25338)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-17.63092, 0.000839, 36.06657)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(0.783138, 0.000839, 18.08816)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(37.25845, 4.000827, 17.02499)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(-2.937398, 0.000839, 21.99273)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(34.11049, 0.000843, -12.02837)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(38.14096, 0.000839, -10.03251)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(34.55913, 0.000843, -16.51625)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(37.12035, 0.000843, -12.00381)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(54.15021, 0.429532, 17.87521)",
+              "hero": "dynamo",
+              "stuck": 0.516666666666667,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(31.97843, 0.000843, -7.364926)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 150,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 34.011666508516,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(30.82527, 0.000843, -12.07563)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(37.40073, 0.000567, -7.919101)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(23.67651, 0.000839, -2.694757)",
+              "hero": "doctor",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(33.86301, 0.000839, -11.49191)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(27.26979, 2.838343, 17.77063)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(32.3918, 0.000843, -11.83283)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(42.17319, 0.000843, -18.76281)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(49.35995, 0.000839, -19.01031)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(75.19662, 0.000835, -20.4922)",
+              "hero": "doctor",
+              "stuck": 0.516666666666667,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(35.21509, 0.000839, -15.22873)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(26.47689, 2.485399, 16.50976)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(33.76805, 0.000839, -7.000026)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 180,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 63.6916664163262,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(53.31656, 0.000839, 3.16405)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(60.11056, 0.000843, 8.641991)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(50.50787, 0.000843, 2.335061)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(50.43702, 0.000839, 1.989188)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(37.29502, 4.000834, 17.04963)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(-17.7583, 0.000839, 35.6832)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(51.40481, 0.000839, -2.012234)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(54.63514, 0.000839, 8.758931)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(50.1359, 0.000839, 4.392648)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(59.37045, 0.000843, -1.188805)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(53.85807, 0.000124, 19.13092)",
+              "hero": "dynamo",
+              "stuck": 0.516666666666667,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(46.4512, 0.000843, 6.995573)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 210,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 61.208333082993,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(-23.57532, 0.000839, 31.03361)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(60.35456, 0.000839, 0.291023)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(51.28829, 0.000839, 4.162844)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(54.63316, 0.000843, 3.034271)",
+              "hero": "relay",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(36.94912, 4.000839, 17.05792)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(6.168212, 0.000835, 13.01557)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(60.51228, 0.000843, -1.719172)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(51.61213, 0.000839, -10.1466)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(58.20113, 0.000839, -0.975042)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(57.97696, 0.000839, -4.022684)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(59.68742, 0.000843, 6.530736)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(62.36375, 0.000843, 1.287704)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 240,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 60.383333082993,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(11.69441, 0.000843, 20.79524)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(58.8223, 0.000843, 0.565718)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(40.83585, 0.000839, 9.939841)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-4.416839, 0.000839, 24.91578)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(33.69216, 4.000819, 16.9486)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(25.89384, 0.000839, -3.922543)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(55.6825, 0.000839, -1.360353)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(60.50579, 0.000843, -0.253176)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(59.17964, 0.000843, -2.756234)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(55.80309, 0.000839, -2.264211)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(36.33048, 4.000831, 16.82204)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(60.73119, 0.000843, 0.600575)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 270,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 61.3833330829929,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(21.73203, 0.120691, 14.87619)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(44.91978, 0.000839, 11.4226)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(22.68785, 0.261459, 14.4554)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(25.00825, 0.000839, 12.7087)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(35.13152, 4.000812, 16.91581)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(47.39703, 0.000839, -15.3367)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(60.92068, 0.000843, -1.832579)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(60.93843, 0.000843, 0.138737)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(59.66917, 0.000843, 4.508713)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(60.26322, 0.000843, -2.256592)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(45.46044, 4.000808, 17.37518)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(54.93097, 0.000839, 3.270602)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 300,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 62.3583330829929,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(-0.05873, 0.000839, 24.59012)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-12.15088, 0.000843, 32.10298)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-1.194404, 0.000843, 21.28724)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-16.2875, 0.000839, 35.7617)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(32.76719, 4.000812, 16.9931)",
+              "hero": "dynamo",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(31.05286, 0.000843, -8.352525)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(61.12905, 0.000562, -2.022934)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(61.85837, 0.000843, 0.166054)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(47.13759, 3.546221, 16.40339)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(61.8921, 0.000843, -1.999747)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(28.49097, 0.000353, 17.89631)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(56.38797, 0.000843, 2.539519)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 330,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 87.3199994842209,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(68.99947, 0.000839, 3.656486)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(73.41848, 0.00084, 9.400919)",
+              "hero": "huddle",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(38.70107, 0.000839, 10.80131)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(74.99922, 0.000835, 3.599658)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(59.1565, 0.000839, 0.342943)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(73.04306, -1.499165, 23.19615)",
+              "hero": "slayer",
+              "stuck": 1.03333333333333,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(115.2357, 1.500843, -27.25316)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(118.178, 1.500839, -26.35382)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(58.73837, 0.000843, 10.13006)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(109.7823, 1.500839, -27.24814)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(65.52794, 0.000839, 2.810255)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(93.13909, 0.000815, -21.19549)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 360,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 123.634999140104,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(94.36015, 0.224468, 5.509692)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(87.41651, 0.000839, 6.327269)",
+              "hero": "huddle",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(87.24811, 0.000839, 6.148213)",
+              "hero": "doctor",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(87.96404, 0.000839, 9.956953)",
+              "hero": "relay",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(82.6785, 4.50055, -17.02234)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(94.77834, 0.263673, 5.141203)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(98.96324, 0.000839, -13.8843)",
+              "hero": "nimbus",
+              "stuck": 0.516666666666667,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(98.96368, 0.011912, -18.96088)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(91.20984, 0.000839, -5.269782)",
+              "hero": "doctor",
+              "stuck": 0.516666666666667,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(99.37411, 0.694531, -3.885581)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(98.57813, 0.27561, -17.88075)",
+              "hero": "dynamo",
+              "stuck": 0.516666666666667,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(95.41312, 0.323186, 3.20074)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 390,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 126.779999125003,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(93.6096, 0.309573, 2.044697)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(96.25246, 0.401873, 2.179554)",
+              "hero": "huddle",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(91.60577, 0.000839, 5.811663)",
+              "hero": "doctor",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(96.44868, 0.759495, -1.642351)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(55.69034, 0.000839, -2.914063)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(95.06673, 0.290712, 3.606066)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(118.1184, 1.500844, -26.38476)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(94.17051, 0.206688, -4.705912)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(98.04906, -0.92761, 18.38564)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(96.72514, 0.446157, -5.00914)",
+              "hero": "relay",
+              "stuck": 0.516666666666667,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(98.03703, 0.000839, -14.4359)",
+              "hero": "dynamo",
+              "stuck": 1.03333333333333,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(98.00153, -1.499165, 22.27476)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 420,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 182.594998232524,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(133.6776, 1.500839, -13.98498)",
+              "hero": "nimbus",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(135.9191, 1.500841, -10.29418)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(118.3435, 3.157065, 15.03805)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(135.9191, 1.500836, -12.66773)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(126.1212, 5.000835, 16.69162)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(98.32121, 0.59582, -8.495878)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(98.64575, 0.626246, -10.60268)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(99.12817, 0.000839, 13.88171)",
+              "hero": "huddle",
+              "stuck": 1.55,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(97.44483, 0.513659, 0.965753)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(99.41073, 0.000839, -14.20171)",
+              "hero": "relay",
+              "stuck": 1.55,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(106.8565, 1.396, -6.25246)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(99.95204, 0.748711, -11.11967)",
+              "hero": "slayer",
+              "stuck": 0.516666666666667,
+              "team": 1
+            }
+          ],
+          "second": 450,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 210.070159912109,
+          "phase": "finished",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(149.6627, 1.500838, -2.000005)",
+              "hero": "nimbus",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(151.8778, 1.500829, 1.686046)",
+              "hero": "huddle",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(76.31581, -1.499165, 20.66796)",
+              "hero": "doctor",
+              "stuck": 1.55,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(156.677, 1.499408, -2.185256)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(129.9269, 5.000831, 16.93217)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(84.93359, 0.000839, -1.650703)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(117.3187, 1.500844, -26.8037)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(135.1559, 1.500839, -3.755489)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(127.2041, 1.500839, -27.52705)",
+              "hero": "doctor",
+              "stuck": 0.516666666666667,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(121.2475, 1.500843, -24.63779)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(128.1575, 1.500843, -27.05889)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(118.7568, 1.500843, -26.03513)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 480,
+          "winner": 0
+        },
+        {
+          "capture": 1.0,
+          "payload": 210.070159912109,
+          "phase": "finished",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(149.6627, 1.500838, -2.000005)",
+              "hero": "nimbus",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(151.8778, 1.500829, 1.686046)",
+              "hero": "huddle",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(76.31581, -1.499165, 20.66796)",
+              "hero": "doctor",
+              "stuck": 1.55,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(156.677, 1.499408, -2.185256)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(129.9269, 5.000831, 16.93217)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(84.93359, 0.000839, -1.650703)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(117.3187, 1.500844, -26.8037)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(135.1559, 1.500839, -3.755489)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(127.2041, 1.500839, -27.52705)",
+              "hero": "doctor",
+              "stuck": 0.516666666666667,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(121.2475, 1.500843, -24.63779)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(128.1575, 1.500843, -27.05889)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(118.7568, 1.500843, -26.03513)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 510,
+          "winner": 0
+        },
+        {
+          "capture": 1.0,
+          "payload": 210.070159912109,
+          "phase": "finished",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(149.6627, 1.500838, -2.000005)",
+              "hero": "nimbus",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(151.8778, 1.500829, 1.686046)",
+              "hero": "huddle",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(76.31581, -1.499165, 20.66796)",
+              "hero": "doctor",
+              "stuck": 1.55,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(156.677, 1.499408, -2.185256)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(129.9269, 5.000831, 16.93217)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(84.93359, 0.000839, -1.650703)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(117.3187, 1.500844, -26.8037)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(135.1559, 1.500839, -3.755489)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(127.2041, 1.500839, -27.52705)",
+              "hero": "doctor",
+              "stuck": 0.516666666666667,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(121.2475, 1.500843, -24.63779)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(128.1575, 1.500843, -27.05889)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(118.7568, 1.500843, -26.03513)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 540,
+          "winner": 0
+        },
+        {
+          "capture": 1.0,
+          "payload": 210.070159912109,
+          "phase": "finished",
+          "positions": [
+            {
+              "assignment": "escort",
+              "at": "(149.6627, 1.500838, -2.000005)",
+              "hero": "nimbus",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(151.8778, 1.500829, 1.686046)",
+              "hero": "huddle",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(76.31581, -1.499165, 20.66796)",
+              "hero": "doctor",
+              "stuck": 1.55,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(156.677, 1.499408, -2.185256)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(129.9269, 5.000831, 16.93217)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(84.93359, 0.000839, -1.650703)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(117.3187, 1.500844, -26.8037)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(135.1559, 1.500839, -3.755489)",
+              "hero": "huddle",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(127.2041, 1.500839, -27.52705)",
+              "hero": "doctor",
+              "stuck": 0.516666666666667,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(121.2475, 1.500843, -24.63779)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(128.1575, 1.500843, -27.05889)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(118.7568, 1.500843, -26.03513)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 570,
+          "winner": 0
+        }
+      ],
+      "staged_combat": [
+        {
+          "contest_samples": 14,
+          "falls": 0,
+          "furthest_distance": 61.7516659617404,
+          "seconds": 60,
+          "stage": 1,
+          "start_distance": 0.0
+        },
+        {
+          "contest_samples": 7,
+          "falls": 0,
+          "furthest_distance": 128.786666488645,
+          "seconds": 60,
+          "stage": 2,
+          "start_distance": 70.0
+        },
+        {
+          "contest_samples": 21,
+          "falls": 0,
+          "furthest_distance": 141.625159899394,
+          "seconds": 60,
+          "stage": 3,
+          "start_distance": 140.070159912109
+        }
+      ],
+      "transitions": [
+        "capture",
+        "escort",
+        "cp1",
+        "cp2",
+        "cp3",
+        "finished"
+      ],
+      "worst_stuck": 3.0
+    },
+    "simulation-971-defend": {
+      "checks": 16,
+      "drill_seconds": 165,
+      "failures": [],
+      "falls": 0,
+      "natural_result": {
+        "capture": 1.0,
+        "checkpoint": 0,
+        "payload": 40.4666665871941,
+        "phase": "finished",
+        "winner": 1
+      },
+      "persistent_stalls": [],
+      "recovery_warps": 0,
+      "seconds": 600.0,
+      "seed": 971,
+      "snapshots": [
+        {
+          "capture": 0.0,
+          "payload": 0.0,
+          "phase": "preparation",
+          "positions": [
+            {
+              "assignment": "contest",
+              "at": "(59.33743, 0.000843, -26.69267)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(-54.0, 0.00015, -1.0)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-52.0, 0.00015, -1.0)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-50.0, 0.00015, -1.0)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-54.0, 0.00015, 1.0)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-52.0, 0.00015, 1.0)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-50.0, 0.00015, 1.0)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(61.12082, 0.000843, -27.86297)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(62.53679, 0.000843, -28.14705)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(59.17217, 0.000843, -25.32028)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(60.89108, 0.000843, -26.54999)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(61.92402, 0.000843, -26.91683)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 0,
+          "winner": -1
+        },
+        {
+          "capture": 0.0,
+          "payload": 0.0,
+          "phase": "capture",
+          "positions": [
+            {
+              "assignment": "contest",
+              "at": "(0.778528, -0.005957, -3.694102)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(-50.5837, 0.000839, 1.875258)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-49.13635, 0.000843, 2.08143)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-47.68606, 0.000843, 2.916308)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-50.18616, 0.000843, 3.319171)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(-48.95351, 0.000839, 3.393799)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(-47.08836, 0.000839, 4.496396)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(5.156593, -0.001643, 2.40046)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(9.99574, 0.000839, -2.080941)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(5.313755, -0.005329, -3.35993)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(7.027936, 0.000818, -4.110917)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(2.639278, 0.000835, 6.574492)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 30,
+          "winner": -1
+        },
+        {
+          "capture": 0.665833333333342,
+          "payload": 0.0,
+          "phase": "capture",
+          "positions": [
+            {
+              "assignment": "contest",
+              "at": "(11.25714, 0.000066, -14.87452)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(-5.513882, -0.003018, -3.062084)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(4.690916, 1.331436, 1.324466)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-8.171952, 0.000843, -9.522201)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(7.990106, 0.000843, -12.86926)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(-5.759757, 3.599799, -15.54862)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(2.363199, -0.002455, 3.737704)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(49.53222, 0.000839, -20.06347)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(23.5169, 0.000843, -8.94591)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(12.67179, 0.000842, -11.79745)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(36.16164, 0.000839, -21.60498)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(5.506478, 0.000843, -3.028635)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 60,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 21.4933332602185,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "contest",
+              "at": "(79.11682, 0.000835, -25.54125)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(20.99985, 0.000757, -10.40054)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(27.00005, 0.000839, -6.202654)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(25.84805, 0.000843, 0.859984)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(25.41875, 0.00084, -11.57427)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(28.88623, 3.556824, 17.48446)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(30.72766, 0.000839, -8.476025)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(77.69637, 0.000817, -22.38583)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(74.99397, 0.000827, -20.4325)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(67.74007, 0.000839, -19.21773)",
+              "hero": "relay",
+              "stuck": 1.55,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(24.6548, 0.0008, 14.55213)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(84.67931, 0.000839, -27.98164)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 90,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 40.2266665935519,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "forward_hold",
+              "at": "(44.04533, 0.000839, -5.755161)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(5.005022, 0.000835, 14.13148)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(0.730531, 0.000839, 18.14384)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-7.924421, 0.000843, 27.17072)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(18.15878, 0.000839, 3.840212)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(33.67767, 4.00082, 16.74681)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(10.49267, 0.000839, 9.302216)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.24543, 0.000839, -4.377855)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(31.84678, 0.000843, 16.36459)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.71464, 0.000839, -6.122126)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(24.43584, 1.579716, 16.14342)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(43.72271, 0.000843, -7.118733)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 120,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 40.4666665871941,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "contest",
+              "at": "(44.54759, 0.000843, -10.99313)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(36.562, 0.000843, -9.942784)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(45.10077, 0.794586, -7.479799)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(28.16381, 0.000843, 12.46503)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(44.97409, 0.000839, -12.03106)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(27.27302, 0.000843, 14.59454)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(40.87211, 0.000839, -14.63853)",
+              "hero": "slayer",
+              "stuck": 1.03333333333333,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(45.8965, 0.000542, -8.960606)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(49.73895, 0.000843, -12.06689)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(45.69188, 0.000839, -12.40932)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(36.37275, 4.000827, 16.78878)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(44.39624, 0.000843, -7.647639)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 150,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 40.4666665871941,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "forward_hold",
+              "at": "(43.13179, 0.000839, -6.237531)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(32.98868, 0.000839, -7.413651)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(21.11788, 0.000843, -22.40014)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(26.52862, 0.000839, -4.25389)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(38.28817, 0.000843, -16.07052)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(34.13444, 4.000815, 16.82161)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(39.08689, 0.000839, -15.84456)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(81.04884, 0.000839, -27.00144)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(49.13389, 0.000839, -9.290606)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.17978, 0.000843, -6.172949)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(38.74527, 4.000831, 17.01563)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(47.95006, 0.000839, -21.58954)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 180,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 40.4666665871941,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "forward_hold",
+              "at": "(44.05986, 0.000843, -5.633711)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(39.05852, 0.000839, -11.71104)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(45.35904, 0.000839, -9.450548)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(28.09384, 0.000843, 14.37772)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-17.11827, 0.000839, 35.92373)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(33.61976, 4.000832, 17.18934)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(-20.2235, 0.000839, 33.13179)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.53374, 0.000839, -4.006726)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(41.73563, 0.000839, -0.660215)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.58994, 0.000839, -6.180819)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(75.59624, 0.000835, -18.84021)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(44.36974, 0.000936, -7.977478)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 210,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 40.4666665871941,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "forward_hold",
+              "at": "(43.58649, 0.000839, -5.34341)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(3.298715, 0.000835, 15.4943)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(38.02938, 0.000843, -5.063698)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-4.174841, 0.000843, 20.2305)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(18.32228, 0.000839, 3.713261)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(-19.75076, 0.000839, 34.32545)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(15.5758, 0.000839, 4.937396)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.18868, 0.000839, -4.155699)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(43.10603, 0.000839, 16.08075)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.20247, 0.000843, -6.196527)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(39.04949, 4.000839, 17.04894)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(43.32004, 0.000843, -7.148334)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 240,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 40.4666665871941,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "forward_hold",
+              "at": "(44.99986, 0.000843, -6.180901)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(-11.24262, 0.000839, 30.74574)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-23.37454, 0.000839, 29.70065)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-10.95611, 0.000839, 29.567)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(23.82961, 0.000843, -0.596218)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(52.32143, 1.242326, 17.91445)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(12.54109, 0.000835, 7.543273)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(43.98345, 0.000839, -4.446481)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(47.37762, 0.000839, -8.637701)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(43.94788, 0.000839, -5.531555)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(67.60989, 0.000839, -6.103667)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(43.63537, 0.000839, -6.47654)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 270,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 40.4666665871941,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "forward_hold",
+              "at": "(43.25612, 0.000839, -6.024014)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(23.54038, 0.000839, -0.369659)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-14.69634, 0.000839, 34.33107)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-10.05999, 0.000839, 29.45603)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(35.23423, 0.000839, -8.165011)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(29.21363, 0.000835, 19.40045)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(27.49421, 0.000843, -9.491904)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.2296, 0.000843, -4.071921)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(42.71345, 0.000843, -0.528071)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.45107, 0.000839, -6.428373)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(34.68024, 4.000812, 16.73281)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(43.7323, 0.000094, -6.829384)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 300,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 40.4666665871941,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "forward_hold",
+              "at": "(43.57133, 0.000839, -5.846518)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(33.42958, 0.000839, -14.11069)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(36.50981, 0.000835, -22.60405)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(34.59502, 0.000839, -13.27982)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(44.14629, 0.000839, -15.15866)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(31.80276, 4.000811, 16.84598)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(24.10076, 0.000839, -22.51997)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.23851, 0.000839, -4.096677)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(29.88705, 0.000839, 13.64305)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.4654, 0.000843, -6.312654)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(22.31238, 0.330141, 14.60595)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(43.94397, 0.000843, -7.032472)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 330,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 40.4666665871941,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "forward_hold",
+              "at": "(43.56532, 0.000839, -5.829259)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(39.07533, 0.000839, -11.72255)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(40.18033, 0.000839, -9.645823)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(31.38414, 4.000811, 17.16977)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-2.045629, 0.000839, 21.05603)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(36.89822, 3.999383, 17.28581)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(42.48102, 0.000843, -16.98356)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.19954, 0.000839, -4.096395)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(40.44309, 0.000843, -2.185155)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.52753, 0.000839, -6.066378)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(79.03184, 0.000839, -23.63437)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(43.95211, 0.000843, -7.097526)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 360,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 40.4666665871941,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "forward_hold",
+              "at": "(43.59749, 0.000843, -6.090873)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(-2.995538, 0.000843, 22.05641)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-23.64544, 0.000843, 28.93977)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(26.57873, 0.000843, 8.006024)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(32.6068, 0.000843, -9.240592)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(37.31015, 4.000837, 17.04268)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(24.15614, 0.000843, -22.6771)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.26007, 0.000839, -4.118863)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(41.25714, 0.000843, -2.050323)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.57243, 0.000839, -6.043502)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(80.44729, 0.000839, -25.16303)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(41.27331, 0.000843, -6.618729)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 390,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 40.4666665871941,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "forward_hold",
+              "at": "(43.49833, 0.000839, -5.821624)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(28.56194, 0.000843, -4.102216)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-0.085127, 0.000839, 19.00042)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(17.18727, 0.000843, 4.010149)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(28.9596, 0.000839, -8.640897)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(-21.78515, 0.000839, 32.73336)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "flank",
+              "at": "(29.05041, 0.000839, -6.545256)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(43.41578, 0.000843, -3.715146)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(40.70211, 0.000839, -0.137531)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.53602, 0.000839, -6.392797)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "high_ground",
+              "at": "(39.08131, 4.000839, 17.05043)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "flank",
+              "at": "(43.9371, 0.000839, -6.944805)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 420,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 40.4666665871941,
+          "phase": "escort",
+          "positions": [
+            {
+              "assignment": "contest",
+              "at": "(40.51214, 0.000843, -8.015147)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(39.4482, 0.000839, -11.98692)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(16.33916, 0.000839, 5.262658)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(33.25348, 0.000839, -7.80126)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-21.00584, 0.000839, 33.89982)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-1.457037, 0.000843, 22.29975)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(39.61074, 0.000839, -5.255859)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "contest",
+              "at": "(45.3084, 0.000839, -7.433051)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(42.02822, 0.000843, -5.352098)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(45.39949, 0.000839, -11.48554)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(68.02924, 0.000839, -9.223807)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "contest",
+              "at": "(43.1882, 0.000843, -7.283107)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 450,
+          "winner": -1
+        },
+        {
+          "capture": 1.0,
+          "payload": 40.4666665871941,
+          "phase": "finished",
+          "positions": [
+            {
+              "assignment": "forward_hold",
+              "at": "(43.37425, 0.000839, -5.868618)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(42.03729, 0.000839, -14.17669)",
+              "hero": "nimbus",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(44.34482, 2.181436, -7.447959)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-19.76056, 0.000839, 31.03479)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(32.37469, 0.000843, -5.993834)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(37.08816, 0.000843, -10.30879)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-13.00963, 0.000839, 32.56205)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(43.26299, 0.000839, -4.265934)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(45.8894, 0.000843, -8.929293)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.1175, 0.000839, -6.05468)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.25226, 0.000839, -4.286556)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(43.75686, 0.000843, -1.994034)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 480,
+          "winner": 1
+        },
+        {
+          "capture": 1.0,
+          "payload": 40.4666665871941,
+          "phase": "finished",
+          "positions": [
+            {
+              "assignment": "forward_hold",
+              "at": "(43.37425, 0.000839, -5.868618)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(42.03729, 0.000839, -14.17669)",
+              "hero": "nimbus",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(44.34482, 2.181436, -7.447959)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-19.76056, 0.000839, 31.03479)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(32.37469, 0.000843, -5.993834)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(37.08816, 0.000843, -10.30879)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-13.00963, 0.000839, 32.56205)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(43.26299, 0.000839, -4.265934)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(45.8894, 0.000843, -8.929293)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.1175, 0.000839, -6.05468)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.25226, 0.000839, -4.286556)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(43.75686, 0.000843, -1.994034)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 510,
+          "winner": 1
+        },
+        {
+          "capture": 1.0,
+          "payload": 40.4666665871941,
+          "phase": "finished",
+          "positions": [
+            {
+              "assignment": "forward_hold",
+              "at": "(43.37425, 0.000839, -5.868618)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(42.03729, 0.000839, -14.17669)",
+              "hero": "nimbus",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(44.34482, 2.181436, -7.447959)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-19.76056, 0.000839, 31.03479)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(32.37469, 0.000843, -5.993834)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(37.08816, 0.000843, -10.30879)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-13.00963, 0.000839, 32.56205)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(43.26299, 0.000839, -4.265934)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(45.8894, 0.000843, -8.929293)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.1175, 0.000839, -6.05468)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.25226, 0.000839, -4.286556)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(43.75686, 0.000843, -1.994034)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 540,
+          "winner": 1
+        },
+        {
+          "capture": 1.0,
+          "payload": 40.4666665871941,
+          "phase": "finished",
+          "positions": [
+            {
+              "assignment": "forward_hold",
+              "at": "(43.37425, 0.000839, -5.868618)",
+              "hero": "nimbus",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "escort",
+              "at": "(42.03729, 0.000839, -14.17669)",
+              "hero": "nimbus",
+              "stuck": 0.516666666666667,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(44.34482, 2.181436, -7.447959)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-19.76056, 0.000839, 31.03479)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(32.37469, 0.000843, -5.993834)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(37.08816, 0.000843, -10.30879)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "escort",
+              "at": "(-13.00963, 0.000839, 32.56205)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 0
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(43.26299, 0.000839, -4.265934)",
+              "hero": "marshal",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(45.8894, 0.000843, -8.929293)",
+              "hero": "doctor",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.1175, 0.000839, -6.05468)",
+              "hero": "relay",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(44.25226, 0.000839, -4.286556)",
+              "hero": "dynamo",
+              "stuck": 0.0,
+              "team": 1
+            },
+            {
+              "assignment": "forward_hold",
+              "at": "(43.75686, 0.000843, -1.994034)",
+              "hero": "slayer",
+              "stuck": 0.0,
+              "team": 1
+            }
+          ],
+          "second": 570,
+          "winner": 1
+        }
+      ],
+      "staged_combat": [
+        {
+          "contest_samples": 23,
+          "falls": 0,
+          "furthest_distance": 36.0983330925308,
+          "seconds": 60,
+          "stage": 1,
+          "start_distance": 0.0
+        },
+        {
+          "contest_samples": 17,
+          "falls": 0,
+          "furthest_distance": 117.261666202546,
+          "seconds": 60,
+          "stage": 2,
+          "start_distance": 70.0
+        },
+        {
+          "contest_samples": 11,
+          "falls": 0,
+          "furthest_distance": 141.24515991211,
+          "seconds": 60,
+          "stage": 3,
+          "start_distance": 140.070159912109
+        }
+      ],
+      "transitions": [
+        "capture",
+        "escort",
+        "cp1",
+        "cp2",
+        "cp3",
+        "finished"
+      ],
+      "worst_stuck": 3.0
+    }
+  },
+  "human_playtesting": "Pending: competitive balance, sightline pressure, route difficulty, movement feel, and combat return timing."
+}
