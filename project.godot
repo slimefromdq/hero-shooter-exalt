@@ -19,7 +19,6 @@ config/icon="res://icon.svg"
 [autoload]
 
 SlayerEffectPool="*res://scripts/presentation/slayer_effect_pool.gd"
-
 DisplaySettings="*res://scripts/presentation/display_settings.gd"
 GameSettings="*res://scripts/presentation/game_settings.gd"
 
@@ -63,7 +62,8 @@ jump={
 }
 dash={
 "deadzone": 0.2,
-"events": Array[InputEvent]([Object(InputEventMouseButton,"button_index":4)])
+"events": Array[InputEvent]([Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":32,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":0,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"factor":1.0,"button_index":4,"canceled":false,"pressed":false,"double_click":false,"script":null)
+])
 }
 slide={
 "deadzone": 0.2,
