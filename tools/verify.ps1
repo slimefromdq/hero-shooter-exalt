@@ -18,6 +18,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Godot import failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/movement_overhaul_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Shared movement overhaul failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/movement_visual_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Movement visuals or dash-slide feedback failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/training_mantle_slide_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Training tower wall-kick mantle slide failed.' }
     foreach ($taskBotTest in @('bot_tactics_test', 'bot_integration_test')) {
@@ -108,6 +110,8 @@ try {
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_navigation_regression.gd
     if ($LASTEXITCODE -ne 0) { throw 'City navigation recovery or healing route failed.' }
     if ($Capture) {
+        & $taskEngine --path $taskRoot --script res://tests/capture_movement_visuals.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Movement visual captures failed.' }
         & $taskEngine --path $taskRoot --script res://tests/marshal_character_test.gd --windowed --resolution 1440x1100 --audio-driver Dummy --fixed-fps 60
         if ($LASTEXITCODE -ne 0) { throw 'Marshal rendered rig validation failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_marshal_character_game.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60

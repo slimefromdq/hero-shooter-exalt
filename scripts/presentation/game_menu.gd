@@ -154,6 +154,11 @@ func show_settings() -> void:
 		spin.custom_minimum_size.x = 160
 		row.add_child(spin)
 		spin.value_changed.connect(func(value: float) -> void: settings_store.set_setting(setting[1],value))
+	var movement_camera := CheckButton.new()
+	movement_camera.text = "Movement camera effects"
+	movement_camera.button_pressed = float(settings_store.values.get("movement_camera_effects",1)) >= .5
+	content.add_child(movement_camera)
+	movement_camera.toggled.connect(func(on: bool) -> void: settings_store.set_setting("movement_camera_effects",1.0 if on else 0.0))
 	add_bot_difficulty_selector(content)
 	label("WASD move · Space jump / wall kick · Hold Space + move to mantle",14)
 	var bindings := PackedStringArray()

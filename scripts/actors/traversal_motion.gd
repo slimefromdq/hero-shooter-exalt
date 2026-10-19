@@ -165,6 +165,7 @@ func advance(delta: float) -> bool:
 		carried_velocity = Vector3.ZERO
 		actor.motor.transition("air")
 		actor.resolver.record("land",actor,"mantle")
+		actor.movement_confirmed.emit("mantle",landing,approach_direction,Vector3.UP,1)
 		return true
 	return false
 
@@ -213,6 +214,7 @@ func try_wall_jump(wish: Vector3) -> bool:
 	wall_cooldown = actor.tuning.wall_jump_cooldown
 	wall_pose = .28
 	actor.resolver.record("cast",actor,"wall_jump")
+	actor.movement_confirmed.emit("wall_jump",actor.body_point(.8)-normal*.36,actor.velocity,normal,1)
 	actor.presentation.sound.play_tone(190,.09,.25)
 	return true
 

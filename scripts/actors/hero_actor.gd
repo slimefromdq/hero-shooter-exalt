@@ -5,6 +5,8 @@ signal damaged(amount: float, head: bool)
 signal overhealth_changed(amount: float)
 signal overhealth_cleared
 signal overhealth_broken
+signal movement_confirmed(kind: String, at: Vector3, direction: Vector3, normal: Vector3, strength: float)
+signal dash_slide_failed(reason: String)
 signal died
 
 @export var tuning: HeroTuning

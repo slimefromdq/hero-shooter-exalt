@@ -240,6 +240,7 @@ func draw_crosshair(p: HeroActor) -> void:
 		canvas.draw_line(center + direction * (7+bloom),center + direction * (13+bloom),color,1.5)
 	canvas.draw_circle(center,1.3,color)
 	if p.alive and not match_controller.menu_open: CombatHUD.ammo(canvas,p,bold,center)
+	if p.alive and not match_controller.menu_open: MovementHUD.draw(canvas,p,bold,center)
 	draw_reticle_resources(p,center)
 	if hit_timer > 0:
 		for direction: Vector2 in [Vector2(-1,-1),Vector2(1,-1),Vector2(-1,1),Vector2(1,1)]:

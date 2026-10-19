@@ -17,6 +17,7 @@ var recoil: float = 0.0
 var dash_queued: bool = false
 var slide_queued: bool = false
 var posture_offset: float = 0.0
+@export var movement_camera_effects: float = 1.0
 @export var normal_fov: float = 82.0
 @export var aim_fov: float = 60.0
 
@@ -64,7 +65,8 @@ func _process(delta: float) -> void:
 	var aiming: bool = actor.intent.aim_held or actor.state == "ultimate"
 	var march_fov: float = 0.0
 	if actor.state == "marshal_march": march_fov = 4.0*(actor.kit as MarshalKit).march_speed/(actor.tuning as MarshalTuning).march_speed
-	camera.fov = lerpf(camera.fov, 34.0 if actor.state == "ultimate" else (aim_fov if aiming else normal_fov)+march_fov, minf(1.0, delta * 12.0))
+	var movement_fov: float = actor.presentation.movement.camera_offset(delta,aiming or movement_camera_effects < .5)
+	camera.fov = lerpf(camera.fov, 34.0 if actor.state == "ultimate" else (aim_fov if aiming else normal_fov)+march_fov+movement_fov, minf(1.0, delta * 12.0))
 	var desired_distance: float = camera_distance * (0.8 if aiming else 1.0)
 	if actor.state == "marshal_shield" and actor.tuning is MarshalTuning:
 		desired_distance = (actor.tuning as MarshalTuning).shield_camera_distance

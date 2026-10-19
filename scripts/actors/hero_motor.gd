@@ -22,6 +22,7 @@ var dash_airborne: bool = false
 var slide_press_age: float = 99.0
 var slide_rearmed: bool = true
 var slide_velocity: Vector3 = Vector3.ZERO
+var slide_feedback: DashSlideFeedback
 var traversal: TraversalMotion
 var external_velocity: Vector3 = Vector3.ZERO
 var crouched: bool = false
@@ -37,11 +38,17 @@ func _ready() -> void:
 	# Exclude only the bottom 2 cm from the clearance probe, preserving the
 	# standing head height so floor contact cannot masquerade as a low ceiling.
 	standing_clearance_capsule.height -= .02
+	slide_feedback = DashSlideFeedback.new()
+	slide_feedback.actor = actor
 	traversal = TraversalMotion.new()
 	traversal.actor = actor
 
 func tick(delta: float, input: CombatIntent) -> void:
+	var supported_before: bool = grounded()
+	var incoming_y: float = actor.velocity.y
 	tick_motion(delta,input)
+	if not supported_before and grounded() and incoming_y < -3 and mode != "slide":
+		visual("landing",actor.velocity,actor.get_floor_normal(),clampf(-incoming_y/10,.35,1.4))
 	# Root, melee and mobility branches must not silently swallow a hit impulse.
 	# Move separately so knockback cannot turn into stored player momentum.
 	if actor.state in ["captured", "throw_pair", "boot_attached", "boot_captured"]:
@@ -57,6 +64,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 
 func tick_motion(delta: float, input: CombatIntent) -> void:
 	var t: HeroTuning = actor.tuning
+	slide_feedback.tick(delta,input)
 	var was_floor: bool = grounded()
 	update_posture(was_floor and input.slide and mode not in ["dash","dash_windup","mantle"] and actor.state not in ["captured","throw_pair","boot_attached","boot_captured","stagger","counterthrow","throw_release"])
 	slide_press_age += delta
@@ -124,6 +132,7 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 		mantle_slide_left = 0
 		slide_rearmed = false
 		slide_press_age = 99.0
+		slide_feedback.begin(input)
 		transition("dash_windup", t.dash_buildup)
 		dash_charges -= 1
 		if dash_cd <= 0: dash_cd = t.dash_cooldown
@@ -152,6 +161,7 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 		actor.velocity = dash_direction * dash_current_speed
 		dash_current_speed = maxf(t.ground_speed, dash_current_speed - t.dash_decay * delta)
 		if timer <= 0.0:
+			slide_feedback.resolve("ground_dash" if not dash_airborne else ("not_downward" if was_floor else "expired"),input,slide_press_age,0)
 			transition("air")
 	elif mode == "slide":
 		if not was_floor:
@@ -229,6 +239,7 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			jump_buffer = 0.0
 			coyote = 0.0
 			transition("air")
+			visual("jump",actor.velocity)
 	actor.velocity = actor.velocity.limit_length(t.speed_limit)
 	var before: Vector3 = actor.velocity
 	actor.floor_stop_on_slope = mode != "slide"
@@ -244,19 +255,25 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			if normal.dot(Vector3.UP) >= cos(actor.floor_max_angle) and before.dot(normal) < -0.5:
 				# Project once. No new impulse, no charge/cooldown reset.
 				actor.velocity = before.slide(normal)
+				slide_feedback.resolve("" if dash_airborne else "ground_dash",input,slide_press_age,actor.velocity.length())
 				if dash_airborne and input.slide and slide_press_age <= t.dash_slide_window + .000001 and actor.velocity.length() >= t.slide_entry_speed:
+					slide_source = "air_dash"
 					transition("slide")
 					dash_slide = true
 					dash_slide_locked = false
-					slide_source = "air_dash"
 					slide_rearmed = true
 				else:
 					transition("ground")
 				break
 			elif absf(normal.y) < 0.7 or normal.y < -0.7:
+				slide_feedback.resolve("ground_dash" if not dash_airborne else ("ceiling" if normal.y < -.7 else "wall"),input,slide_press_age,0)
 				actor.velocity = before.slide(normal)
 				transition("air")
 				break
+			elif normal.dot(Vector3.UP) >= cos(actor.floor_max_angle):
+				slide_feedback.resolve("ground_dash" if not dash_airborne else "not_downward",input,slide_press_age,0)
+		if not dash_airborne and slide_feedback.attempted:
+			slide_feedback.resolve("ground_dash",input,slide_press_age,0)
 	if mode == "hover_ascent" and actor.is_on_ceiling():
 		transition("hover", t.hover_duration)
 	if mode == "ground" and crouched: mode = "crouch"
@@ -304,6 +321,7 @@ func finish_mantle(delta: float) -> void:
 		jump_buffer = 0
 		coyote = 0
 		mantle_slide_left = 0
+		visual("jump",actor.velocity)
 	actor.velocity = actor.velocity.limit_length(actor.tuning.speed_limit)
 	actor.move_and_slide()
 	# Mantles end slightly above the validated roof. Airborne approaches have
@@ -364,10 +382,13 @@ func grounded() -> bool:
 func transition(next: String, duration: float = 0.0) -> void:
 	if mode != next and is_instance_valid(actor.resolver):
 		actor.resolver.record("movement", actor, next)
+	var changed: bool = mode != next
 	mode = next
+	if changed and next == "dash": visual("dash",dash_direction)
 	if next == "slide":
 		slide_velocity = actor.velocity
 		set_crouched(true)
+		if changed: visual("dash_slide" if slide_source == "air_dash" else ("mantle_slide" if slide_source == "mantle" else "slide"),actor.velocity,actor.get_floor_normal() if actor.is_on_floor() else Vector3.UP)
 	if next != "slide":
 		dash_slide = false
 	timer = duration
@@ -378,6 +399,7 @@ func end_hover() -> void:
 		transition("air")
 
 func cancel() -> void:
+	if slide_feedback != null: slide_feedback.clear()
 	set_crouched(false)
 	external_velocity = Vector3.ZERO
 	if traversal != null:
@@ -399,6 +421,8 @@ func cancel() -> void:
 	slide_velocity = Vector3.ZERO
 
 func interrupt_mobility() -> void:
+	slide_feedback.clear()
+	if is_instance_valid(actor.presentation.movement): actor.presentation.movement.clear()
 	mantle_slide_left = 0
 	mantle_slide_buffered = false
 	if traversal != null and traversal.active: traversal.abort()
@@ -409,3 +433,7 @@ func interrupt_mobility() -> void:
 	actor.velocity.x = 0.0
 	actor.velocity.z = 0.0
 	# A root/slow interrupts voluntary mobility, not an enemy's existing push.
+
+func visual(kind: String, direction: Vector3, normal: Vector3 = Vector3.UP, strength: float = 1) -> void:
+	var at: Vector3 = actor.body_point(.9) if kind == "dash" else actor.global_position+Vector3.UP*.055
+	actor.movement_confirmed.emit(kind,at,direction,normal,strength)

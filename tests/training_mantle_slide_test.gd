@@ -3,6 +3,7 @@ var arena: Node3D
 var actor: HeroActor
 var failures: int = 0
 var checks: int = 0
+var movement_events: Array[String] = []
 func _initialize() -> void: call_deferred("run")
 func step(frames: int = 1) -> void:
 	for frame: int in frames:
@@ -22,7 +23,9 @@ func run() -> void:
 	actor.controller = null
 	for other: HeroActor in get_nodes_in_group("actors"):
 		if other != actor: other.set_physics_process(false)
+	actor.movement_confirmed.connect(func(kind: String,_at: Vector3,_direction: Vector3,_normal: Vector3,_strength: float) -> void: movement_events.append(kind))
 	for timing: String in ["early","late","after"]:
+		movement_events.clear()
 		actor.reset_actor(Vector3(18,.01,-16.60))
 		actor.intent.aim = Vector3.FORWARD
 		actor.intent.move = Vector3.FORWARD
@@ -64,6 +67,8 @@ func run() -> void:
 		var start: Vector3 = actor.position
 		await step(4)
 		check(actor.motor.mode == "slide" and actor.position.z < start.z-.35,timing+" continues sliding forward on the actual tower roof")
+		check(movement_events.count("wall_jump") == 1 and movement_events.count("mantle") == 1,timing+" confirms the actual wall jump and successful mantle once")
+		check(movement_events.has("slide" if timing == "early" else "mantle_slide"),timing+" emits the matching slide effect on the real tower")
 	print("TRAINING MANTLE SLIDE RESULT: ",checks," checks, ",failures," failures")
 	arena.queue_free()
 	await step(2)

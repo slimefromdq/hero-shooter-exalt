@@ -2,6 +2,7 @@ class_name HeroPresentation
 extends Node3D
 
 var actor: HeroActor
+var movement: MovementPresentation
 var overhealth_visual: OverhealthVisual
 var marshal_combat: MarshalCombatPresentation
 var model: Node3D
@@ -47,6 +48,9 @@ var marshal_model: MarshalCharacterDriver
 var slayer_abilities: SlayerAbilityPresentation
 
 func _ready() -> void:
+	movement = MovementPresentation.new()
+	movement.actor = actor
+	add_child(movement)
 	model = Node3D.new()
 	model.name = "Model"
 	model.position.y = 1.0
@@ -243,6 +247,7 @@ func _process(delta: float) -> void:
 	right_arm.rotation = Vector3(1.1,0,0)
 	for limb: Node3D in [left_arm,right_arm,left_leg,right_leg]:
 		(limb.get_node("Joint") as Node3D).rotation = Vector3.ZERO
+	model.scale = Vector3.ONE
 	model.position = Vector3(0,1.0 - actor.motor.posture_lowering(),0)
 	model.rotation = Vector3(-.28 if actor.motor.mode == "slide" else 0,0,-.85 if not actor.alive else 0)
 	umbrella.visible = actor.motor.mode in ["hover", "hover_ascent"]
@@ -444,6 +449,12 @@ func _process(delta: float) -> void:
 		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA if obstructing else BaseMaterial3D.TRANSPARENCY_DISABLED
 		material.albedo_color.a = .2 if obstructing else 1.0
 
+	if movement.jump_left > 0 and actor.state == "ready":
+		left_leg.rotation.x = -.45
+		right_leg.rotation.x = .1
+	if actor.motor.mode == "dash_windup":
+		model.rotation.x += .12
+		model.scale = Vector3(1.03,.94,1.03)
 	if is_instance_valid(slayer_model): slayer_model.update(delta)
 	if is_instance_valid(marshal_model): marshal_model.update(delta)
 
@@ -462,6 +473,7 @@ func on_block(attacker: HeroActor, defender: HeroActor) -> void:
 	block_effect = BlockImpact.spawn(actor.get_parent(), actor.global_position + Vector3.UP * 1.3 + toward * .72, toward)
 
 func clear_feedback() -> void:
+	if is_instance_valid(movement): movement.clear()
 	if is_instance_valid(marshal_combat): marshal_combat.clear()
 	if is_instance_valid(overhealth_visual): overhealth_visual.clear()
 	fire_flash = 0.0

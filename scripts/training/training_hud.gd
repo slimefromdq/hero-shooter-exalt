@@ -106,6 +106,7 @@ func draw_hud() -> void:
 			canvas.draw_line(center + direction * (7 + bloom), center + direction * (14 + bloom), cross_color, 2)
 		canvas.draw_circle(center, 1.3, cross_color)
 		CombatHUD.ammo(canvas,p,bold,center)
+		MovementHUD.draw(canvas,p,bold,center)
 		if p.state == "ultimate":
 			canvas.draw_arc(center, 250, 0, TAU, 100, Color(0.65, 0.95, 0.85, 0.7), 1, true)
 			canvas.draw_arc(center, 220, -PI / 2, -PI / 2 + TAU * minf(1, p.kit.ultimate_age / p.tuning.ultimate_preparation), 100, mint, 3, true)
@@ -356,6 +357,7 @@ func build_advanced_menu() -> void:
 	var camera_controls := VBoxContainer.new()
 	right.add_child(camera_controls)
 	var camera_controller: PlayerController = training.player.controller as PlayerController
+	check(camera_controls,"Movement camera effects",float(get_node("/root/GameSettings").values.get("movement_camera_effects",1)) >= .5,func(on: bool) -> void: get_node("/root/GameSettings").set_setting("movement_camera_effects",1.0 if on else 0.0))
 	spin(camera_controls, "Camera distance (m)", camera_controller.camera_distance, 2.0, 8.0, 0.1, func(value: float) -> void: camera_controller.camera_distance = value)
 	spin(camera_controls, "Camera shoulder offset (m)", camera_controller.shoulder_offset, -1.2, 1.2, 0.05, func(value: float) -> void: camera_controller.shoulder_offset = value)
 	spin(camera_controls, "Camera height (m)", camera_controller.camera_height, 1.0, 2.4, 0.05, func(value: float) -> void: camera_controller.camera_height = value)

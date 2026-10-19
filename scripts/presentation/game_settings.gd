@@ -1,7 +1,7 @@
 extends Node
 signal changed
 const PATH := "user://game_settings.cfg"
-const DEFAULTS := {"sensitivity":.0025,"camera_distance":3.0,"normal_fov":82.0,"aim_fov":60.0,"master":1.0,"combat":1.0,"feedback":1.0,"bot_difficulty":1.0}
+const DEFAULTS := {"sensitivity":.0025,"camera_distance":3.0,"normal_fov":82.0,"aim_fov":60.0,"movement_camera_effects":1.0,"master":1.0,"combat":1.0,"feedback":1.0,"bot_difficulty":1.0}
 var values: Dictionary = DEFAULTS.duplicate()
 
 func _ready() -> void:
@@ -49,4 +49,4 @@ func restore_defaults() -> void:
 	get_node("/root/DisplaySettings").set_fullscreen(true)
 
 func apply_controller(controller: Node) -> void:
-	for key: String in ["sensitivity","camera_distance","normal_fov","aim_fov"]: controller.set(key,values[key])
+	for key: String in ["sensitivity","camera_distance","normal_fov","aim_fov","movement_camera_effects"]: controller.set(key,values[key])

@@ -63,6 +63,8 @@ func tick(delta: float, input: CombatIntent) -> void:
 			melee_direction = input.aim.normalized()
 			actor.aim_direction = melee_direction
 		melee_age += delta
+		if melee_age-delta < t.melee_lunge_delay and melee_age >= t.melee_lunge_delay:
+			actor.movement_confirmed.emit("melee",actor.body_point(1.1),melee_direction,Vector3.UP,1)
 	match actor.state:
 		"melee_windup":
 			if actor.state_time <= 0.0:
