@@ -7,7 +7,7 @@ static func labels(a: HeroActor) -> Array[String]:
 	if a.kit is WispKit: return ["GHOSTSTEP","BETWEEN WORLDS","SPECTRAL LIFT"]
 	if a.kit is HuddleKit: return ["SCATTERBOUND","WE'VE GOT YOU!","PERSONAL SPACE!"]
 	var result: Array[String] = []
-	result.assign(["FORWARD MARCH","IRON RESOLVE","BREACH LINE"] if a.kit is MarshalKit else ["HOUSE CALL","WARD ROUND","PRESCRIPTION"])
+	result.assign(["FORWARD MARCH","RALLYING COMMAND","BREACH LINE"] if a.kit is MarshalKit else ["HOUSE CALL","WARD ROUND","PRESCRIPTION"])
 	return result
 
 static func cooldowns(a: HeroActor) -> Array[float]:
@@ -29,7 +29,7 @@ static func durations(a: HeroActor) -> Array[float]:
 		return [h.scatter_recharge,h.screen_cooldown,h.pulse_cooldown]
 	if a.tuning is MarshalTuning:
 		var t := a.tuning as MarshalTuning
-		return [t.march_cooldown,t.resolve_cooldown,t.breach_cooldown]
+		return [t.march_cooldown,t.rally_cooldown,t.breach_cooldown]
 	var t := a.tuning as DoctorTuning
 	return [t.call_cooldown,t.ward_cooldown,t.prescription_cooldown]
 
@@ -98,10 +98,10 @@ static func detail(a: HeroActor) -> String:
 		return "RMB HEAL / Q ESCAPE TO AIMED ALLY / 1 CLEANSE + 70% RESIST"
 	return ""
 
-static func status(a: HeroActor) -> String:
+static func status(a: HeroActor, include_overhealth: bool = true) -> String:
 	if a.benefits == null: return ""
-	var result: String = ""
-	for kind: String in ["exemplary","prescription","resolve","aftercare","ward","circuit"]:
+	var result: String = ("OVERHEALTH +%d / %.1fs  " % [ceili(a.overhealth.value()),a.overhealth.remaining()]) if include_overhealth and a.overhealth.value() > 0 else ""
+	for kind: String in ["exemplary","prescription","aftercare","ward","circuit"]:
 		var duration: float = a.benefits.remaining(kind)
 		if duration > 0: result += "OVERCLOCKED  " if kind == "circuit" else "%s %.1fs  " % [kind.to_upper(),duration]
 	return result

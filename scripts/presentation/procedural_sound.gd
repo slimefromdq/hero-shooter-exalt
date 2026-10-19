@@ -11,6 +11,7 @@ var spatial_owner: Node3D
 
 func _ready() -> void:
 	bus = "Combat"
+	if spatial_owner is HeroActor and spatial_owner.tuning is MarshalTuning: rally_shout()
 	if spatial_owner is HeroActor and spatial_owner.tuning is SlayerTuning:
 		for cue: String in ["shotgun", "shotgun_mechanism", "shotgun_hit", "shotgun_surface", "boot_start", "boot_wind", "boot_hit", "boot_kick", "boot_recover", "axe_draw", "axe_release", "axe_hit", "knife", "knife_hit"]: slayer_wave(cue)
 static var reward_waves: Dictionary = {}
@@ -296,4 +297,36 @@ static func marshal_slam() -> AudioStreamWAV:
 func play_marshal_slam() -> void:
 	stream = marshal_slam()
 	volume_db = -2.0 + distance_gain()
+	if DisplayServer.get_name() != "headless": play()
+
+static var rally_wave: AudioStreamWAV
+
+static func rally_shout() -> AudioStreamWAV:
+	if rally_wave != null: return rally_wave
+	var rate: int = 22050
+	var samples: int = int(rate*.7)
+	var bytes := PackedByteArray()
+	bytes.resize(samples*2)
+	for index: int in samples:
+		var at: float = float(index)/rate
+		# Two voiced syllables, a falling pitch, and broad vocal-formant harmonics.
+		var syllable: float = at if at < .26 else at-.32
+		var envelope: float = clampf(syllable/.025,0,1)*clampf((.32-syllable)/.12,0,1) if syllable >= 0 else 0.0
+		var hz: float = 145-35*at/.7
+		var voiced: float = 0
+		for harmonic: int in range(1,19):
+			var frequency: float = harmonic*hz
+			var weight: float = exp(-pow((frequency-650)/400,2))+.65*exp(-pow((frequency-1250)/350,2))
+			voiced += sin(TAU*frequency*at)*weight/harmonic
+		var breath: float = sin(index*173.731)*sin(index*57.23)*.035
+		bytes.encode_s16(index*2,int(clampf((voiced+breath)*envelope*.65,-1,1)*32767))
+	rally_wave = AudioStreamWAV.new()
+	rally_wave.format = AudioStreamWAV.FORMAT_16_BITS
+	rally_wave.mix_rate = rate
+	rally_wave.data = bytes
+	return rally_wave
+
+func play_rally_shout() -> void:
+	stream = rally_shout()
+	volume_db = -1.0+distance_gain()
 	if DisplayServer.get_name() != "headless": play()

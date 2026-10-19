@@ -74,7 +74,7 @@ static func apply(a: HeroActor, input: CombatIntent) -> void:
 		input.aim = (threat.global_position + Vector3.UP * 1.1 - input.aim_origin).normalized()
 		input.secondary_held = distance > 9 and (a.last_hit_age < 1.5 or threat.intent.primary or threat.intent.primary_held) and k.barrier_hp > 100
 		input.primary_held = not input.secondary_held and distance < 25
-		input.deflect = a.health < a.effective_max_health() * .55 and a.last_hit_age < 2
+		input.deflect = rally_worthwhile(a)
 		var forward: Vector3 = ((threat.global_position-a.global_position)*Vector3(1,0,1)).normalized()
 		input.hover = distance > 3 and distance < 18 and k.mobility_cd <= 0 and marshal_safe_lane(a,forward,k.data().march_range)
 		if a.state == "marshal_march":
@@ -115,3 +115,21 @@ static func marshal_verdict_safe(a: HeroActor, direction: Vector3) -> bool:
 	query.motion = Vector3.UP*(rise+.2)
 	if a.get_world_3d().direct_space_state.cast_motion(query)[0] < .99: return false
 	return marshal_safe_lane(a,direction,t.verdict_forward_range)
+
+static func rally_worthwhile(a: HeroActor) -> bool:
+	if not a.kit is MarshalKit: return false
+	var kit := a.kit as MarshalKit
+	if kit.deflect_cd > 0 or not kit.rally_allowed(): return false
+	var credible: bool = false
+	for opponent: HeroActor in a.get_tree().get_nodes_in_group("actors"):
+		if not opponent.alive or opponent.team == a.team or a.resolver.protected_room(opponent): continue
+		var distance: float = a.global_position.distance_to(opponent.global_position)
+		if distance > 20 or not a.resolver.visible(a.body_point(1.2),opponent,[a.get_rid()]): continue
+		if distance < 10 or a.last_hit_age < 1.5 or opponent.intent.primary or opponent.intent.primary_held or opponent.kit.ultimate_active():
+			credible = true
+			break
+	if not credible: return false
+	for ally: HeroActor in a.get_tree().get_nodes_in_group("actors"):
+		if ally == a or not kit.rally_recipient(ally): continue
+		if ally.overhealth.can_grant(a) and ally.overhealth.value() < kit.data().rally_ally_overhealth: return true
+	return a.health < a.effective_max_health()*.55 and a.last_hit_age < 1.5 and a.overhealth.can_grant(a) and a.overhealth.value() < kit.data().rally_self_overhealth

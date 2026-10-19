@@ -85,7 +85,7 @@ func evaluate(brain: BotBrain) -> void:
 	elif k is MarshalKit:
 		var marshal := k as MarshalKit
 		if seen and distance > 6 and marshal.barrier_hp > 120 and marshal.break_remaining <= 0 and (a.last_hit_age < 1.5 or brain.tactical_state in ["protect","hold"]): offer("secondary_held",.74,point,true)
-		if health < .55 and a.last_hit_age < 1.5 and k.deflect_cd <= 0: offer("deflect",.9)
+		if CareTactics.rally_worthwhile(a): offer("deflect",.9)
 		var march_toward: Vector3 = ((point-a.global_position)*Vector3(1,0,1)).normalized()
 		if seen and not escaping and distance < marshal.data().march_range-1 and distance > 3 and marshal.mobility_cd <= 0 and CareTactics.marshal_safe_lane(a,march_toward,marshal.data().march_range):
 			offer("hover",.82 if str(brain.threat.get("state","")) in ["ultimate","melee_windup","marshal_verdict"] else .72,point)
@@ -278,6 +278,9 @@ func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) ->
 			choice = {}
 			return
 	input.set(action,true)
+	if a.kit is MarshalKit and action == "deflect":
+		# The shout is instant: retain or raise a warranted barrier in the same tick.
+		input.secondary_held = a.state == "marshal_shield" or ability_scores.has("secondary_held")
 	if action == "hover" and a.kit is RelayKit: input.move = desired.normalized()*Vector3(1,0,1)
 	if action == "bomb" and a.kit is NimbusKit:
 		pending_bomb = true

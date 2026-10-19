@@ -144,7 +144,7 @@ func select_target() -> void:
 			if now-float(other.seen) < 1 and other.position.distance_to(entry.position) < 10: retaliation += 1
 		var score: float = range_value*.3+vulnerability*(.25+hero_profile.vulnerable_bias)+(.3 if visible else 0.0)-float(retaliation)*.045
 		var damage_rate: float = actor.tuning.rifle_damage/maxf(.1,actor.tuning.shot_interval)
-		score -= minf(.2,(float(entry.health)+float(entry.shields))/maxf(1,damage_rate)*.01)
+		score -= minf(.2,(float(entry.health)+float(entry.shields)+float(entry.get("overhealth",0)))/maxf(1,damage_rate)*.01)
 		if entry.position.distance_to(context.get("position",Vector3.ZERO)) < 10: score += .15
 		if is_instance_valid(patient) and patient.global_position.distance_to(entry.position) < 10 and patient.last_hit_age < 1.5: score += .2
 		if str(entry.state) in ["deflect","wisp_phase","marshal_shield"]: score -= .25

@@ -218,7 +218,10 @@ func draw_team_slot(actor: HeroActor, at: Vector2, friendly: bool, accent: Color
 	var hp: float = clampf(actor.health / maxf(1,actor.effective_max_health()),0,1) if actor.alive else 0.0
 	box(at + Vector2(4,85),Vector2(63,7),Color("394550"))
 	box(at + Vector2(4,85),Vector2(63 * hp,7),health_green if friendly and hp >= .3 else coral)
-	centered("%d HP" % ceili(actor.health if actor.alive else 0),at + Vector2(35,108),14,paper,true)
+	var temporary: float = actor.overhealth.value() if actor.alive else 0
+	if temporary > 0:
+		box(at+Vector2(4,94),Vector2(63*clampf(temporary/maxf(1,actor.effective_max_health()),0,1),3),ActorOverhealth.COLOR)
+	centered("%d HP" % ceili(actor.health if actor.alive else 0)+(" +%d" % ceili(temporary) if temporary > 0 else ""),at+Vector2(35,108),10 if temporary > 0 else 14,ActorOverhealth.COLOR if temporary > 0 else paper,true)
 	if friendly:
 		var charge: float = clampf(actor.kit.ultimate_charge,0,100)
 		box(at + Vector2(4,115),Vector2(63,4),Color("394550"))
@@ -279,8 +282,12 @@ func draw_player_rail(p: HeroActor) -> void:
 	if ceiling < 1:
 		box(origin + Vector2(404 * ceiling,0),Vector2(404 * (1 - ceiling),16),Color("a166cc"))
 	if p.shields > 0:
-		box(origin + Vector2(0,19),Vector2(404 * clampf(p.shields / p.tuning.max_health,0,1),4),mint)
-		text("+%d SHIELD" % ceili(p.shields),origin + Vector2(132,-12),11,mint,true)
+		box(origin + Vector2(0,19),Vector2(404 * clampf(p.shields / p.tuning.max_health,0,1),4),CombatHUD.SHIELD_COLOR)
+		text("+%d SHIELD" % ceili(p.shields),origin + Vector2(132,-12),11,CombatHUD.SHIELD_COLOR,true)
+	var temporary: float = p.overhealth.value()
+	if temporary > 0:
+		box(origin+Vector2(0,25),Vector2(404*clampf(temporary/p.tuning.max_health,0,1),5),ActorOverhealth.COLOR)
+		text("+%d OVERHEALTH" % ceili(temporary),origin+Vector2(4,43),12,ActorOverhealth.COLOR,true)
 	if p.kit is CareKit:
 		var labels: Array[String] = CareHUD.labels(p)
 		var times: Array[float] = CareHUD.cooldowns(p)

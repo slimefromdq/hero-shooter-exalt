@@ -27,7 +27,7 @@ func sense(actor: HeroActor, actors: Array, now: float, budget: int = 6) -> void
 		var defense: float = float(previous.get("defense_seen",-99.0))
 		if other.state in ["deflect","wisp_phase","marshal_shield"]: defense = now
 		observations[id] = {"id":id,"actor":weakref(other),"life":other.life_serial,"position":other.global_position,
-			"velocity":other.velocity,"health":other.health,"maximum":other.effective_max_health(),"shields":other.shields,
+			"velocity":other.velocity,"health":other.health,"maximum":other.effective_max_health(),"shields":other.shields,"overhealth":other.overhealth.value(),
 			"blocked_by_barrier":not actor.resolver.barrier_ray(actor,actor.body_point(1.45),other.body_point(1.0)).is_empty(),
 			"hero":other.tuning.hero_id,"role":HeroRoster.role_for(other.tuning.hero_id),"state":other.state,
 			"facing":other.aim_direction,"seen":now,"first_seen":first_seen,"defense_seen":defense,

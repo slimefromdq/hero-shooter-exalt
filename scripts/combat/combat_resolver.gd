@@ -121,7 +121,7 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 		confirmed_block.emit(source, target)
 		return "blocked"
 	var amount: float = base * (1.0 if tag == "bleed" else cast_multiplier(cast_id,source))
-	var executed: bool = execute and target.shields <= 0.0 and target.health / target.tuning.max_health <= source.tuning.execute_threshold
+	var executed: bool = execute and target.overhealth.value() <= 0.0 and target.shields <= 0.0 and target.health / target.tuning.max_health <= source.tuning.execute_threshold
 	if executed:
 		amount = target.health
 	if target.state in ["captured", "throw_pair"] and tag != "throw":
@@ -132,18 +132,20 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 		amount *= 1.0 - target.tuning.bullet_guard_reduction
 	amount *= 1.0 - target.benefits.reduction()
 	if executed and amount < target.health: executed = false
-	var absorbed: float = minf(target.shields, amount)
+	# Guard/mitigation first, then temporary overhealth -> personal shields -> HP.
+	var temporary: float = target.overhealth.absorb(amount)
+	var absorbed: float = minf(target.shields, maxf(0,amount-temporary))
 	target.shields -= absorbed
-	var hp_damage: float = minf(target.health, maxf(0.0, amount - absorbed))
+	var hp_damage: float = minf(target.health, maxf(0.0, amount - temporary - absorbed))
 	target.health = maxf(0.0, target.health - hp_damage)
-	if not source.kit.ultimate_active() and not ultimate_casts.has(cast_id): source.kit.ultimate_charge = minf(100.0, source.kit.ultimate_charge + minf(base,hp_damage + absorbed) * 0.09)
-	track_damage(source, target, hp_damage + absorbed, tag)
-	target.on_damage(hp_damage + absorbed, head)
-	if source.tuning is SlayerTuning and hp_damage + absorbed > 0.0:
+	if not source.kit.ultimate_active() and not ultimate_casts.has(cast_id): source.kit.ultimate_charge = minf(100.0, source.kit.ultimate_charge + minf(base,hp_damage + absorbed + temporary) * 0.09)
+	track_damage(source, target, hp_damage + absorbed + temporary, tag)
+	target.on_damage(hp_damage + absorbed + temporary, head)
+	if source.tuning is SlayerTuning and hp_damage + absorbed + temporary > 0.0:
 		target.statuses.mark(source,(source.tuning as SlayerTuning).mark_duration)
 	record("execution" if executed else "damage", source, tag,
-		"target=%s cast=%d base=%.1f applied=%.1f head=%s" % [target.actor_id, cast_id, base, hp_damage + absorbed, head])
-	confirmed_hit.emit(source, target, hp_damage + absorbed, head, executed)
+		"target=%s cast=%d base=%.1f applied=%.1f head=%s overhealth=%.1f shield=%.1f hp=%.1f" % [target.actor_id, cast_id, base, hp_damage + absorbed + temporary, head, temporary, absorbed, hp_damage])
+	confirmed_hit.emit(source, target, hp_damage + absorbed + temporary, head, executed)
 	return "execution" if executed else "hit"
 
 func knockback(source: HeroActor, target: HeroActor, impulse: Vector3, tag: String) -> void:
@@ -172,6 +174,8 @@ func visible(from: Vector3, target: HeroActor, exclude: Array[RID] = []) -> bool
 
 func clear_round() -> void:
 	resolved.clear()
+	for actor: HeroActor in get_tree().get_nodes_in_group("actors"):
+		if actor.overhealth != null: actor.overhealth.clear()
 	contributions.clear()
 	combat_time = 0.0
 

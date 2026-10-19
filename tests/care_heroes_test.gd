@@ -236,7 +236,7 @@ func shield_tests() -> void:
 	near(k.barrier_hp,1100,"same cast cannot damage barrier twice")
 	marshal.intent.deflect = true
 	k.tick(0,marshal.intent)
-	check(marshal.state == "marshal_shield" and marshal.benefits.has_kind("resolve"),"Iron Resolve works while holding shield")
+	check(marshal.state == "marshal_shield" and marshal.overhealth.value() == 175,"Rallying Command works while holding shield")
 	marshal.intent.secondary_held = false
 	marshal.intent.deflect = false
 	k.tick(0,marshal.intent)

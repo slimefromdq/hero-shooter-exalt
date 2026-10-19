@@ -1,5 +1,6 @@
 class_name CombatHUD
 extends RefCounted
+const SHIELD_COLOR: Color = Color("55bdfc")
 ## Horizontal health + shield strip shared by training and city HUDs.
 static func vitals(canvas: Control, actor: HeroActor, regular: Font, heavy: Font, at: Vector2, width: float = 400.0) -> void:
 	var green := Color("80f54e")
@@ -21,9 +22,14 @@ static func vitals(canvas: Control, actor: HeroActor, regular: Font, heavy: Font
 	canvas.draw_string(regular,at + Vector2(0,44),"HEALTH",HORIZONTAL_ALIGNMENT_LEFT,-1,10,Color("c5d7c4"))
 	if actor.shields > 0:
 		canvas.draw_rect(Rect2(at + Vector2(0,-44),Vector2(width,11)),background)
-		canvas.draw_rect(Rect2(at + Vector2(0,-44),Vector2(width * clampf(actor.shields / actor.tuning.max_health,0,1),11)),Color("55bdfc"))
+		canvas.draw_rect(Rect2(at + Vector2(0,-44),Vector2(width * clampf(actor.shields / actor.tuning.max_health,0,1),11)),SHIELD_COLOR)
 		canvas.draw_string(heavy,at + Vector2(width - 75,-50),"+%d" % ceili(actor.shields),HORIZONTAL_ALIGNMENT_LEFT,-1,17,Color("9bdeff"))
 
+	var temporary: float = actor.overhealth.value()
+	if temporary > 0:
+		canvas.draw_rect(Rect2(at+Vector2(0,27),Vector2(width,7)),background)
+		canvas.draw_rect(Rect2(at+Vector2(0,27),Vector2(width*clampf(temporary/actor.tuning.max_health,0,1),7)),ActorOverhealth.COLOR)
+		canvas.draw_string(heavy,at+Vector2(width-180,49),"+%d OVERHEALTH" % ceili(temporary),HORIZONTAL_ALIGNMENT_LEFT,-1,14,ActorOverhealth.COLOR)
 static func hit(canvas: Control, font: Font, caption: String, center: Vector2, head: bool, remaining: float) -> void:
 	var color := Color("ffe47b") if head else Color("fbfff4")
 	color.a = minf(1.0,remaining * 4.0)

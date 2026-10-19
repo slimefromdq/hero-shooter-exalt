@@ -4,6 +4,7 @@ extends Node3D
 const WIDTH: float = 1.3
 var actor: HeroActor
 var fill: MeshInstance3D
+var overhealth_fill: MeshInstance3D
 var shield_fill: MeshInstance3D
 var caption: Label3D
 var health_fraction: float = 1.0
@@ -15,6 +16,7 @@ func _ready() -> void:
 	quad(Vector2(WIDTH,.1),Vector3(0,0,.003),Color("394550"))
 	fill = quad(Vector2(WIDTH,.1),Vector3(0,0,.006),Color("ff4f65"))
 	shield_fill = quad(Vector2(WIDTH,.035),Vector3(0,.12,.006),Color("70ceff"))
+	overhealth_fill = quad(Vector2(WIDTH,.04),Vector3(0,.18,.006),ActorOverhealth.COLOR)
 	caption = Geometry.text3d(self,"",Vector3(0,.25,.01),36,Color("fbfff4"))
 	caption.pixel_size = .006
 	caption.outline_size = 5
@@ -50,5 +52,12 @@ func refresh() -> void:
 	shield_fill.visible = actor.shields > 0
 	shield_fill.scale.x = maxf(.0001,shield_fraction)
 	shield_fill.position.x = -WIDTH*(1-shield_fraction)*.5
+	var temporary: float = actor.overhealth.value()
+	var overhealth_fraction: float = clampf(temporary/maximum,0,1)
+	overhealth_fill.visible = temporary > 0
+	overhealth_fill.scale.x = maxf(.0001,overhealth_fraction)
+	overhealth_fill.position.x = -WIDTH*(1-overhealth_fraction)*.5
 	caption.text = "%d / %d" % [ceili(health),ceili(maximum)]
 	if actor.shields > 0: caption.text += "  +%d" % ceili(actor.shields)
+
+	if temporary > 0: caption.text += "  +%d OH" % ceili(temporary)

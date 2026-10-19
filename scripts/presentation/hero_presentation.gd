@@ -2,6 +2,7 @@ class_name HeroPresentation
 extends Node3D
 
 var actor: HeroActor
+var overhealth_visual: OverhealthVisual
 var model: Node3D
 var body: Node3D
 var umbrella: Node3D
@@ -164,6 +165,9 @@ func _ready() -> void:
 	if actor.kit is ExpansionKit: RosterVisuals.remodel(self)
 	elif actor.kit is HuddleKit: HuddleVisuals.remodel(self)
 	elif actor.kit is CareKit: CareVisuals.remodel(self)
+	overhealth_visual = OverhealthVisual.new()
+	overhealth_visual.actor = actor
+	add_child(overhealth_visual)
 	# Applied after hero remodeling so both silhouettes carry the same team language.
 	var team_colour := Color("38dfff") if actor.team == 0 else Color("ff4f65")
 	var team_material: StandardMaterial3D = Geometry.material(team_colour, .65)
@@ -354,7 +358,7 @@ func _process(delta: float) -> void:
 		(right_leg.get_node("Joint") as Node3D).rotation.x = -2.5 + stride
 	var status_text: String = ControlFeedback.caption(actor)
 	if status_text != "": status_text += "\n"
-	status_text += CareHUD.status(actor)
+	status_text += CareHUD.status(actor,false)
 	for effect: String in actor.statuses.effects:
 		if effect in ["root","slow"]: continue
 		status_text += "%s %.1f  " % [effect.replace("max_health","MAX HP WOUND").to_upper(),actor.statuses.effects[effect].remaining]
@@ -440,6 +444,7 @@ func on_block(attacker: HeroActor, defender: HeroActor) -> void:
 	block_effect = BlockImpact.spawn(actor.get_parent(), actor.global_position + Vector3.UP * 1.3 + toward * .72, toward)
 
 func clear_feedback() -> void:
+	if is_instance_valid(overhealth_visual): overhealth_visual.clear()
 	fire_flash = 0.0
 	if is_instance_valid(slayer_model): slayer_model.reset_feedback()
 	if is_instance_valid(slayer_shot): slayer_shot.clear()

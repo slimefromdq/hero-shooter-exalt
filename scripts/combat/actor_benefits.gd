@@ -27,7 +27,7 @@ func remaining(kind: String) -> float:
 func reduction() -> float:
 	var value: float = 0.0
 	for entry: Dictionary in effects.values():
-		if entry.kind in ["resolve","prescription"]: value = maxf(value,entry.strength)
+		if entry.kind in ["prescription"]: value = maxf(value,entry.strength)
 		elif entry.kind == "exemplary": value = maxf(value,(entry.source.get_ref().tuning as DoctorTuning).exemplary_reduction)
 	return value
 

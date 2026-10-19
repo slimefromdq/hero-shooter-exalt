@@ -60,10 +60,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 			breach_step()
 		if breach_index >= t.breach_count: breach_age = -1
 	if actor.state == "marshal_recovery" and actor.state_time <= 0: actor.state = "ready"
-	if input.deflect and deflect_cd <= 0 and (actor.permits("deflect") or actor.state == "marshal_shield"):
-		actor.benefits.grant("resolve",actor,t.resolve_duration,t.resolve_reduction)
-		deflect_cd = t.resolve_cooldown
-		actor.resolver.record("cast",actor,"iron_resolve")
+	if input.deflect and deflect_cd <= 0 and rally_allowed(): rally()
 	if actor.state == "marshal_shield" and (input.hover or input.bomb or input.ultimate or input.melee or input.throw_action or input.guard): lower_barrier()
 	if input.hover and mobility_cd <= 0 and actor.permits("march"):
 		actor.motor.interrupt_mobility()
@@ -347,3 +344,22 @@ func fire(_ultimate: bool = false) -> void:
 	actor.presentation.sound.play_tone(45,.28,.4)
 	if actor.controller is PlayerController: (actor.controller as PlayerController).add_recoil(.075)
 	actor.resolver.record("cast",actor,"cannon")
+
+func rally_allowed() -> bool:
+	return actor.alive and actor.state in ["ready","guard","marshal_shield"] and actor.motor.mode not in ["dash","dash_windup","mantle"] and not actor.resolver.attack_locked(actor)
+
+func rally_recipient(target: HeroActor) -> bool:
+	if not target.alive or target.team != actor.team or actor.global_position.distance_to(target.global_position) > data().rally_radius: return false
+	if actor.resolver.protected_room(target): return false
+	var from: Vector3 = actor.body_point(1.2)
+	var to: Vector3 = target.body_point(1.2)
+	if actor.resolver.spawn_door_blocks(from,to): return false
+	return target == actor or actor.resolver.attack_ray(actor,from,to,[actor.get_rid()],1).is_empty()
+
+func rally() -> void:
+	if deflect_cd > 0 or not rally_allowed(): return
+	deflect_cd = data().rally_cooldown
+	for target: HeroActor in actor.get_tree().get_nodes_in_group("actors"):
+		if rally_recipient(target): target.overhealth.grant(actor,data().rally_self_overhealth if target == actor else data().rally_ally_overhealth,data().rally_duration,"rallying_command")
+	actor.presentation.overhealth_visual.command(data().rally_radius)
+	actor.resolver.record("cast",actor,"rallying_command")

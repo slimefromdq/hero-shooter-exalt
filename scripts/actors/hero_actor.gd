@@ -2,6 +2,9 @@ class_name HeroActor
 extends CharacterBody3D
 
 signal damaged(amount: float, head: bool)
+signal overhealth_changed(amount: float)
+signal overhealth_cleared
+signal overhealth_broken
 signal died
 
 @export var tuning: HeroTuning
@@ -22,6 +25,7 @@ var resolver: CombatResolver
 var controller: Node
 var motor: HeroMotor
 var kit: HeroKit
+var overhealth: ActorOverhealth
 var benefits: ActorBenefits
 var statuses: CombatStatuses
 var close: CloseCombat
@@ -52,6 +56,8 @@ func _ready() -> void:
 	motor = HeroMotor.new()
 	motor.actor = self
 	add_child(motor)
+	overhealth = ActorOverhealth.new()
+	overhealth.actor = self
 	benefits = ActorBenefits.new()
 	benefits.actor = self
 	statuses = CombatStatuses.new()
@@ -74,6 +80,7 @@ func _physics_process(delta: float) -> void:
 		intent = controller.gather_intent(delta)
 	if not alive:
 		return
+	overhealth.tick(delta)
 	benefits.tick(delta)
 	statuses.tick(delta)
 	if not alive:
@@ -158,6 +165,8 @@ func die() -> void:
 	alive = false
 	life_serial += 1
 	if boot_pair != null: boot_pair.release(false)
+	overhealth.clear_owned()
+	overhealth.clear()
 	benefits.clear_owned()
 	benefits.clear()
 	statuses.clear()
@@ -180,6 +189,8 @@ func reset_actor(at: Vector3 = Vector3.INF) -> void:
 
 	for barrier: CombatBarrier in get_tree().get_nodes_in_group("barriers"):
 		if barrier is HuddleScreen and barrier.recipient == self: barrier.retire()
+	overhealth.clear_owned()
+	overhealth.clear()
 	benefits.clear_owned()
 	benefits.clear()
 	statuses.clear()
@@ -188,6 +199,7 @@ func reset_actor(at: Vector3 = Vector3.INF) -> void:
 	kit.cancel(true)
 	motor.cancel()
 	alive = true
+	last_hit_age = 99.0
 	health = tuning.max_health
 	shields = 0.0
 	invulnerable = false
@@ -206,6 +218,9 @@ func reset_actor(at: Vector3 = Vector3.INF) -> void:
 func _exit_tree() -> void:
 	if boot_pair != null: boot_pair.release(false)
 	if is_instance_valid(kit): kit.cancel(true)
+	if overhealth != null:
+		overhealth.clear_owned()
+		overhealth.clear()
 	if benefits != null: benefits.clear_owned()
 	if is_instance_valid(close):
 		close.cancel()
