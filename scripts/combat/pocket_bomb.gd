@@ -44,7 +44,7 @@ func _physics_process(delta: float) -> void:
 	if fuse <= 0.0:
 		explode()
 
-func explode() -> void:
+func explode(shot_triggered: bool = false) -> void:
 	if detonated or is_queued_for_deletion(): return
 	detonated = true
 	collision_layer = 0
@@ -57,8 +57,8 @@ func explode() -> void:
 	source.resolver.splash(source,global_position,t.bomb_radius,t.bomb_damage,"bomb",cast_id,true)
 	CombatEffect.pulse(get_parent(), global_position, Color("ffd18d"), t.bomb_radius)
 	source.presentation.sound.play_tone(60.0, 0.28, 0.3)
-	source.resolver.record("detonate", source, "bomb", "cast=%d" % cast_id)
+	source.resolver.record("detonate", source, "bomb", "cast=%d trigger=%s" % [cast_id,"shot" if shot_triggered else "fuse"])
 	queue_free()
 
 func receive_shot(shooter: HeroActor) -> void:
-	if shooter == source and airborne and not source.resolver.attack_locked(source): explode()
+	if shooter == source and airborne and not source.resolver.attack_locked(source): explode(true)

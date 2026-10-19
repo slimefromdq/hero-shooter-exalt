@@ -15,6 +15,10 @@ Push-Location -LiteralPath $taskRoot
 try {
     & $taskEngine --headless --path $taskRoot --editor --import --quit
     if ($LASTEXITCODE -ne 0) { throw 'Godot import failed.' }
+    foreach ($taskBotTest in @('bot_tactics_test', 'bot_integration_test')) {
+        & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script "res://tests/$taskBotTest.gd"
+        if ($LASTEXITCODE -ne 0) { throw "Tactical bot check failed: $taskBotTest" }
+    }
     foreach ($taskMuseumTest in @('museum_rules_test', 'museum_presentation_test', 'museum_redesign_test', 'museum_traversal_test', 'museum_menu_test', 'museum_delivery_test', 'museum_integration_test')) {
         & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script "res://tests/$taskMuseumTest.gd"
         if ($LASTEXITCODE -ne 0) { throw "Museum check failed: $taskMuseumTest" }
@@ -89,6 +93,8 @@ try {
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_navigation_regression.gd
     if ($LASTEXITCODE -ne 0) { throw 'City navigation recovery or healing route failed.' }
     if ($Capture) {
+        & $taskEngine --path $taskRoot --script res://tests/capture_bot_ai.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Rendered tactical bots or airborne bomb combo failed.' }
         & $taskEngine --path $taskRoot --script res://tests/museum_input_test.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
         if ($LASTEXITCODE -ne 0) { throw 'Native museum controls or exploration exit failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_museum.gd --resolution 1440x900 --audio-driver Dummy --fixed-fps 60

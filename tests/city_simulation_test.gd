@@ -150,7 +150,7 @@ func run() -> void:
 		total_travel += controller.distance_travelled
 		decisions_within_budget = decisions_within_budget and controller.decision_count <= duration * 5 + 50
 		paths_within_budget = paths_within_budget and controller.path_update_count <= duration * 2 + 50
-		bot_statistics.append({"actor":actor.actor_id,"hero":actor.tuning.hero_id,"role":controller.role,"active_seconds":controller.elapsed,"tactical_decisions":controller.decision_count,"path_updates":controller.path_update_count,"distance_m":controller.distance_travelled,"detours":controller.stuck_events,"warps":controller.recovery_warps})
+		bot_statistics.append({"actor":actor.actor_id,"hero":actor.tuning.hero_id,"role":controller.role,"active_seconds":controller.elapsed,"tactical_decisions":controller.decision_count,"path_updates":controller.path_update_count,"distance_m":controller.distance_travelled,"detours":controller.stuck_events,"warps":controller.recovery_warps,"metrics":controller.brain.diagnostics.summary(),"sight_queries":controller.brain.perception.ray_count,"position_queries":controller.brain.movement.query_count})
 	check(warps == 0,"bot recovery uses navigation detours without teleporting")
 	check(decisions_within_budget,"tactical decision counters stay within the five hertz budget")
 	check(paths_within_budget,"navigation retarget counters stay within the two hertz budget")
@@ -177,7 +177,7 @@ func run() -> void:
 func finish() -> void:
 	print("RESULT: ",checks," checks, ",failures.size()," failures")
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://artifacts"))
-	var file := FileAccess.open("res://artifacts/city-simulation-%d-%ds.json" % [simulation_seed,duration],FileAccess.WRITE)
+	var file := FileAccess.open("res://artifacts/city-simulation-%d-%ds%s.json" % [simulation_seed,duration,"" if HeroRoster.selected == "nimbus" else "-"+HeroRoster.selected],FileAccess.WRITE)
 	file.store_string(JSON.stringify({"seed":simulation_seed,"seconds":duration,"checks":checks,"failures":failures,"captures":captures,"contest_seconds":contest_seconds,"deaths":deaths,"rounds":rounds,"health_collections":health_collections,"subway_teams":visited_subway,"arcade_teams":visited_arcade,"high_ground_teams":visited_high,"max_heights":max_heights,"lowest_y":lowest_y,"worst_stall":worst_stall,"persistent_stalls":persistent_stalls,"falls":falls,"healing_total":healing_total,"barrier_hits":barrier_hits,"total_metres_travelled":total_travel,"bots":bot_statistics},"\t"))
 	arena.queue_free()
 	await process_frame

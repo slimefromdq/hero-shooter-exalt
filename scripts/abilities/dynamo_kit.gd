@@ -141,6 +141,7 @@ func fire(_ultimate: bool = false) -> void:
 	if target != null and hit.get("result","") == "hit" and charge_left > 0 and arc_cd <= 0:
 		arc(target)
 	feedback(90+spin*45)
+	actor.resolver.record("cast",actor,"minigun")
 
 func arc(first: HeroActor) -> void:
 	arc_cd = data().arc_interval

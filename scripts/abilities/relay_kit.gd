@@ -155,6 +155,7 @@ func fire(_ultimate: bool = false) -> void:
 	shot_cd = primary_interval()+cadence_debt
 	launch(shot_direction(data().carbine_range),actor.tuning.rifle_damage,data().carbine_speed,data().carbine_range,Color("ffcf70"),0,true)
 	feedback(470)
+	actor.resolver.record("cast",actor,"carbine")
 
 func cancel(clear_owned: bool = false) -> void:
 	if actor.state.begins_with("relay_"): actor.state = "ready"

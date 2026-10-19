@@ -107,6 +107,7 @@ func fire(_ultimate: bool = false) -> void:
 	var target: HeroActor = hit.get("collider") as HeroActor
 	if target != null and target.alive and hit.get("result","") == "hit": target.statuses.add_soul(actor,data().mark_limit,data().mark_duration)
 	feedback(660 if ammo%2 == 0 else 740)
+	actor.resolver.record("cast",actor,"pistols")
 
 func soulbreaker() -> void:
 	if shells <= 0 or secondary_cd > 0 or not can_act("secondary"): return

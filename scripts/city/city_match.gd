@@ -366,3 +366,7 @@ func _on_combat_event(entry: Dictionary) -> void:
 				break
 	elif entry.get("event", "") == "block" and entry.get("actor", "") == player.actor_id:
 		show_notice("PERFECT BLOCK  /  ATTACKER STAGGERED", 1.2)
+
+func bot_objective_context(team: int) -> Dictionary:
+	return {"position":definition.hill_center,"radius":7.0,"phase":"active" if hill.unlocked else "preparation",
+		"urgency":1.0 if hill.owner_team != team or hill.contested else .45,"secured":hill.owner_team == team and not hill.contested}

@@ -154,6 +154,7 @@ func show_settings() -> void:
 		spin.custom_minimum_size.x = 160
 		row.add_child(spin)
 		spin.value_changed.connect(func(value: float) -> void: settings_store.set_setting(setting[1],value))
+	add_bot_difficulty_selector(content)
 	label("WASD move · Space jump / wall kick · Hold Space + move to mantle",14)
 	var bindings := PackedStringArray()
 	for action: String in ["dash","slide","reload","melee","throw","guard","hover","deflect","bomb","ultimate","interact"]:
@@ -162,6 +163,11 @@ func show_settings() -> void:
 	label("Air-dash slide: press Shift in the last 0.12 s before impact. Slide shots cost no ammo while loaded.",13)
 	label("Hold Shift at low speed to crouch; WASD crouch-walks at half speed. Enough momentum takes priority as a slide.",13)
 	button("RESTORE DEFAULTS",func() -> void: settings_store.restore_defaults(); show_settings())
+	if session != null:
+		button("EXPORT BOT DIAGNOSTICS",func() -> void:
+			var result: Error = BotDebug.export_tree(get_tree())
+			if result == OK: session.show_notice("BOT METRICS SAVED / user://bot_metrics.json")
+			else: session.show_notice("BOT METRICS / "+error_string(result)))
 	button("BACK",show_home)
 
 func show_museum() -> void:
@@ -218,3 +224,13 @@ func show_museum_lighting() -> void:
 	label("ROSY AFTERNOON / brilliant rose sunlight and pink clouds",15)
 	label("STARRY NIGHT / moonlight, stars, and warm glowing galleries",15)
 	button("BACK",show_home)
+
+func add_bot_difficulty_selector(parent: Node) -> OptionButton:
+	label("BOT DIFFICULTY",14,Color("edf0e1"),parent)
+	var selector := OptionButton.new()
+	selector.name = "BotDifficulty"
+	for title: String in BotSkillProfile.NAMES: selector.add_item(title)
+	selector.select(int(settings_store.values.get("bot_difficulty",1)))
+	selector.item_selected.connect(func(index: int) -> void: settings_store.set_setting("bot_difficulty",index))
+	parent.add_child(selector)
+	return selector

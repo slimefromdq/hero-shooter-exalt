@@ -85,6 +85,9 @@ func run() -> void:
 	check(recovery_warps == 0,"bot routes need no recovery teleports")
 	check(persistent_stalls.is_empty(),"independent position sampling finds no persistent eight-second route stalls")
 	check(session.elapsed > 30,"natural simulation advances beyond preparation")
+	var bot_metrics: Array[Dictionary] = []
+	for participant: HeroActor in session.actors:
+		bot_metrics.append({"actor":participant.actor_id,"hero":participant.tuning.hero_id,"metrics":participant.controller.brain.diagnostics.summary(),"sight_queries":participant.controller.brain.perception.ray_count,"position_queries":participant.controller.brain.movement.query_count,"decisions":participant.controller.decision_count,"paths":participant.controller.path_update_count})
 	var natural_result := {"phase":session.phase,"capture":session.capture_progress,"payload":session.payload_distance,"checkpoint":session.checkpoint_index,"winner":session.winner}
 	# Real combat starts at each unlocked leg too, so later terrain is not
 	# validated only by an unopposed drill when the natural defense holds CP1.
@@ -136,8 +139,8 @@ func run() -> void:
 	for index: int in [1,2,3]: check("cp%d" % index in transitions,"walking escorts reach checkpoint %d" % index)
 	check(session.winner == 0,"bot-driven route drill completes at final dock")
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://artifacts/museum"))
-	var file := FileAccess.open("res://artifacts/museum/simulation-%d-%s.json" % [seed_value,"defend" if session.player.team == 1 else "attack"],FileAccess.WRITE)
-	file.store_string(JSON.stringify({"seed":seed_value,"seconds":duration,"checks":checks,"failures":failures,"falls":falls,"worst_stuck":worst_stuck,"persistent_stalls":persistent_stalls,"recovery_warps":recovery_warps,"natural_result":natural_result,"staged_combat":staged_results,"drill_seconds":drill_seconds,"transitions":transitions,"snapshots":snapshots},"  "))
+	var file := FileAccess.open("res://artifacts/museum/simulation-%d-%s%s.json" % [seed_value,"defend" if session.player.team == 1 else "attack","" if HeroRoster.selected == "nimbus" else "-"+HeroRoster.selected],FileAccess.WRITE)
+	file.store_string(JSON.stringify({"seed":seed_value,"seconds":duration,"checks":checks,"failures":failures,"falls":falls,"worst_stuck":worst_stuck,"persistent_stalls":persistent_stalls,"recovery_warps":recovery_warps,"natural_result":natural_result,"bots":bot_metrics,"staged_combat":staged_results,"drill_seconds":drill_seconds,"transitions":transitions,"snapshots":snapshots},"  "))
 	print("MUSEUM SIMULATION ",checks," checks; ",failures.size()," failures")
 	arena.queue_free()
 	await frames(3)

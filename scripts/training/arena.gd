@@ -81,3 +81,24 @@ func build_environment() -> void:
 		for z: float in [-24.0, -4.0, 16.0]:
 			Geometry.box(self, Vector3(0.4, 7, 0.4), Vector3(x, 3.5, z), Color("233d47"))
 			Geometry.box(self, Vector3(1.6, 0.15, 0.6), Vector3(x, 7, z), Color("edeee0"), false)
+
+func ensure_tactical_navigation() -> void:
+	if has_node("TacticalNavigation"): return
+	var region := NavigationRegion3D.new()
+	region.name = "TacticalNavigation"
+	var mesh := NavigationMesh.new()
+	mesh.agent_radius = .5
+	mesh.agent_height = 2.0
+	mesh.agent_max_climb = .5
+	mesh.agent_max_slope = 48
+	mesh.cell_size = .25
+	mesh.cell_height = .25
+	mesh.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
+	mesh.geometry_collision_mask = 1
+	region.navigation_mesh = mesh
+	add_child(region)
+	# Parse the static arena, excluding actors and shootable transient objects.
+	var geometry := NavigationMeshSourceGeometryData3D.new()
+	NavigationServer3D.parse_source_geometry_data(mesh,geometry,self)
+	NavigationServer3D.bake_from_source_geometry_data_async(mesh,geometry,func() -> void:
+		if is_instance_valid(region): region.navigation_mesh = mesh)

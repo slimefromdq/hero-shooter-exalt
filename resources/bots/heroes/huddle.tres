@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="BotHeroProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/bots/bot_hero_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+hero = "huddle"
+minimum_range = 6.0
+maximum_range = 14.0
+aggression = 0.65
+mobility = 0.85
+vulnerable_bias = 0.2

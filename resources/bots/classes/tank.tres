@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="BotClassProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/bots/bot_class_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+role = "tank"
+contest = 0.22
+protect = 0.22
+flank = 0.02
+retreat_health = 0.3

@@ -1,0 +1,228 @@
+{
+  "engine": "4.7.2.stable.official.ed1daf0bf",
+  "full_verification": {
+    "suites": 42,
+    "checks": 3168,
+    "failures": 0,
+    "log": "artifacts/ai-full-verification-final.log"
+  },
+  "latest_focused": {
+    "bot_tactics_test": 79,
+    "bot_integration_test": 19,
+    "failures": 0
+  },
+  "rendered_input": {
+    "checks": 8,
+    "failures": 0,
+    "log": "artifacts/ai-render-final.log"
+  },
+  "simulations": [
+    {
+      "map": "City",
+      "seed": 76,
+      "selected_hero": "nimbus",
+      "side": "both",
+      "seconds": 600,
+      "checks": 17,
+      "failures": [],
+      "heroes": [
+        "doctor",
+        "dynamo",
+        "huddle",
+        "nimbus",
+        "relay",
+        "slayer"
+      ],
+      "report": "artifacts/city-simulation-76-600s.json",
+      "persistent_stalls": 0,
+      "worst_temporary_stall_seconds": 7.0,
+      "falls": 0,
+      "recovery_warps": 0,
+      "captures": [
+        3,
+        3
+      ],
+      "deaths": 133,
+      "contest_seconds": 303.0,
+      "healing": 52497.8079511463,
+      "barrier_hits": 284,
+      "early_bomb_detonations": 16
+    },
+    {
+      "map": "City",
+      "seed": 971,
+      "selected_hero": "wisp",
+      "side": "both",
+      "seconds": 600,
+      "checks": 17,
+      "failures": [],
+      "heroes": [
+        "doctor",
+        "dynamo",
+        "marshal",
+        "relay",
+        "slayer",
+        "wisp"
+      ],
+      "report": "artifacts/city-simulation-971-600s-wisp.json",
+      "persistent_stalls": 0,
+      "worst_temporary_stall_seconds": 3.0,
+      "falls": 0,
+      "recovery_warps": 0,
+      "captures": [
+        2,
+        2
+      ],
+      "deaths": 129,
+      "contest_seconds": 303.0,
+      "healing": 41347.7680341627,
+      "barrier_hits": 618,
+      "early_bomb_detonations": 0
+    },
+    {
+      "map": "Museum",
+      "seed": 76,
+      "selected_hero": "nimbus",
+      "side": "attack",
+      "seconds": 600.0,
+      "checks": 16,
+      "failures": [],
+      "heroes": [
+        "doctor",
+        "dynamo",
+        "huddle",
+        "nimbus",
+        "relay",
+        "slayer"
+      ],
+      "report": "artifacts/museum/simulation-76-attack.json",
+      "persistent_stalls": 0,
+      "worst_temporary_stall_seconds": 3.0,
+      "falls": 0,
+      "recovery_warps": 0,
+      "natural_result": {
+        "capture": 0.856944444444448,
+        "checkpoint": 0,
+        "payload": 0.0,
+        "phase": "finished",
+        "winner": 1
+      },
+      "staged_combat": [
+        {
+          "contest_samples": 10,
+          "falls": 0,
+          "furthest_distance": 26.5783331791557,
+          "seconds": 60,
+          "stage": 1,
+          "start_distance": 0.0
+        },
+        {
+          "contest_samples": 18,
+          "falls": 0,
+          "furthest_distance": 81.6416666189845,
+          "seconds": 60,
+          "stage": 2,
+          "start_distance": 73.0
+        },
+        {
+          "contest_samples": 12,
+          "falls": 0,
+          "furthest_distance": 155.350000000001,
+          "seconds": 60,
+          "stage": 3,
+          "start_distance": 150.0
+        }
+      ],
+      "route_drill_seconds": 166
+    },
+    {
+      "map": "Museum",
+      "seed": 971,
+      "selected_hero": "wisp",
+      "side": "defend",
+      "seconds": 600.0,
+      "checks": 16,
+      "failures": [],
+      "heroes": [
+        "doctor",
+        "dynamo",
+        "marshal",
+        "relay",
+        "slayer",
+        "wisp"
+      ],
+      "report": "artifacts/museum/simulation-971-defend-wisp.json",
+      "persistent_stalls": 0,
+      "worst_temporary_stall_seconds": 4.0,
+      "falls": 0,
+      "recovery_warps": 0,
+      "natural_result": {
+        "capture": 0.262222222222222,
+        "checkpoint": 0,
+        "payload": 0.0,
+        "phase": "finished",
+        "winner": 1
+      },
+      "staged_combat": [
+        {
+          "contest_samples": 8,
+          "falls": 0,
+          "furthest_distance": 17.3916665871937,
+          "seconds": 60,
+          "stage": 1,
+          "start_distance": 0.0
+        },
+        {
+          "contest_samples": 20,
+          "falls": 0,
+          "furthest_distance": 78.169999949138,
+          "seconds": 60,
+          "stage": 2,
+          "start_distance": 73.0
+        },
+        {
+          "contest_samples": 6,
+          "falls": 0,
+          "furthest_distance": 183.76666654349,
+          "seconds": 60,
+          "stage": 3,
+          "start_distance": 150.0
+        }
+      ],
+      "route_drill_seconds": 166
+    }
+  ],
+  "performance": {
+    "baseline": {
+      "alive_actors": 12,
+      "average_draw_calls": 2803.17283236994,
+      "average_fps": 86.4736039323996,
+      "device": "NVIDIA GeForce RTX 3080",
+      "frames": 1730,
+      "location": "conservatory",
+      "p95_frame_ms": 15.07,
+      "p99_frame_ms": 16.551,
+      "physics_hz": 60,
+      "renderer": "forward_plus",
+      "resolution": "(1920, 1080)",
+      "seconds": 20.006105
+    },
+    "final": {
+      "alive_actors": 12,
+      "average_draw_calls": 3208.60664993726,
+      "average_fps": 79.6524474888492,
+      "device": "NVIDIA GeForce RTX 3080",
+      "frames": 1594,
+      "location": "conservatory",
+      "p95_frame_ms": 15.817,
+      "p99_frame_ms": 17.765,
+      "physics_hz": 60,
+      "renderer": "forward_plus",
+      "resolution": "(1920, 1080)",
+      "seconds": 20.01194
+    },
+    "p95_change_percent": 4.9568679495686885,
+    "average_fps_change_percent": -7.888137111624038
+  },
+  "manual_playtesting": "Not performed; balance, enjoyment, route feel, and Museum attack/defense balance need human acceptance."
+}

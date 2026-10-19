@@ -244,3 +244,7 @@ func active_objective_caption() -> String:
 	if phase == "escort":
 		return ("ESCORT" if player.team == 0 else "STOP PAYLOAD")+" / CP%d" % mini(3,checkpoint_index+1)
 	return "CAPTURE A" if player.team == 0 else "DEFEND A"
+
+func bot_objective_context(team: int) -> Dictionary:
+	return {"position":active_objective_position(),"radius":6.0 if phase == "escort" else 9.0,
+		"phase":phase+str(checkpoint_index),"urgency":1.0 if overtime or occupancy[1-team] > 0 else .6,"secured":occupancy[team] > 0 and occupancy[1-team] == 0}

@@ -1,7 +1,7 @@
 extends Node
 signal changed
 const PATH := "user://game_settings.cfg"
-const DEFAULTS := {"sensitivity":.0025,"camera_distance":3.0,"normal_fov":82.0,"aim_fov":60.0,"master":1.0,"combat":1.0,"feedback":1.0}
+const DEFAULTS := {"sensitivity":.0025,"camera_distance":3.0,"normal_fov":82.0,"aim_fov":60.0,"master":1.0,"combat":1.0,"feedback":1.0,"bot_difficulty":1.0}
 var values: Dictionary = DEFAULTS.duplicate()
 
 func _ready() -> void:
@@ -19,6 +19,7 @@ func _ready() -> void:
 
 func clamp_value(key: String, value: float) -> float:
 	match key:
+		"bot_difficulty": return float(clampi(roundi(value),0,3))
 		"sensitivity": return clampf(value,.0005,.008)
 		"camera_distance": return clampf(value,2,6)
 		"normal_fov": return clampf(value,70,105)

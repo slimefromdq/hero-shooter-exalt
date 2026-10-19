@@ -2,6 +2,7 @@ class_name CombatResolver
 extends Node
 
 signal event_logged(entry: Dictionary)
+signal cast_started(source: HeroActor, id: int)
 signal confirmed_hit(source: HeroActor, target: HeroActor, amount: float, head: bool, executed: bool)
 signal confirmed_heal(source: HeroActor, target: HeroActor, amount: float)
 signal confirmed_block(attacker: HeroActor, defender: HeroActor)
@@ -49,6 +50,7 @@ func resolve_death(victim: HeroActor) -> void:
 
 func new_cast(source: HeroActor = null) -> int:
 	cast_serial += 1
+	cast_started.emit(source,cast_serial)
 	cast_powers.erase(cast_serial - 16384)
 	ultimate_casts.erase(cast_serial - 16384)
 	cast_powers[cast_serial] = source.benefits.damage_multiplier() if is_instance_valid(source) and source.benefits != null else 1.0

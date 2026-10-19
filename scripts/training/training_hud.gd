@@ -299,6 +299,13 @@ func build_advanced_menu() -> void:
 	scenarios.item_selected.connect(func(index: int) -> void: training.scenario = index; training.reset_scenario())
 	button(left,"Start guard drill  /  hold %s" % TrainingInputs.key_label("guard"),training.start_guard_drill)
 	button(left,"Play Meridian Gardens  /  6v6 King of the Hill",training.enter_city)
+	menu_label(left,"Tactical AI difficulty",14)
+	var difficulty := OptionButton.new()
+	difficulty.name = "TacticalDifficulty"
+	for title: String in BotSkillProfile.NAMES: difficulty.add_item(title)
+	difficulty.select(int(get_node("/root/GameSettings").values.get("bot_difficulty",1)))
+	difficulty.item_selected.connect(func(index: int) -> void: get_node("/root/GameSettings").set_setting("bot_difficulty",index))
+	left.add_child(difficulty)
 	var profile := OptionButton.new()
 	for option: String in TrainingManager.PROFILES: profile.add_item(option)
 	profile.select(2)

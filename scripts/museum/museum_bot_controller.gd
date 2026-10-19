@@ -60,8 +60,3 @@ func decide() -> void:
 		hold = d.path_position(minf(d.checkpoint_distances()[-1],session.payload_distance+8))+offsets[slot%4]*.5
 	if session.phase == "preparation": hold = d.hill_center+Vector3(5,0,(slot%3-1)*3)
 	destination = NavigationServer3D.map_get_closest_point(navagent.get_navigation_map(),hold)
-
-func gather_intent(delta: float) -> CombatIntent:
-	var intent: CombatIntent = super.gather_intent(delta)
-	if actor.kit is RelayKit or actor.kit is HuddleKit: intent.hover = false
-	return intent

@@ -1,8 +1,8 @@
 class_name TrainingManager
 extends Node
 
-const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring", "Guard trainer", "Slayer hunter", "Marshal", "Doctor", "Huddle", "Relay", "Dynamo", "Wisp"]
-const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt", "Doctor rounds", "Marshal drill", "Huddle rescue", "Practice range", "Relay circuit", "Dynamo siege", "Wisp ballet"]
+const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring", "Guard trainer", "Slayer hunter", "Marshal", "Doctor", "Huddle", "Relay", "Dynamo", "Wisp", "Tactical Sparring"]
+const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt", "Doctor rounds", "Marshal drill", "Huddle rescue", "Practice range", "Relay circuit", "Dynamo siege", "Wisp ballet", "Tactical Sparring"]
 var arena: Node3D
 var player: HeroActor
 var bots: Array[HeroActor] = []
@@ -57,6 +57,7 @@ func _ready() -> void:
 	player.resolver.confirmed_hit.connect(on_hit)
 	player.resolver.event_logged.connect(on_event)
 	reset_scenario()
+	BotDebugOverlay.install(self)
 
 func enter_city() -> void:
 	get_tree().paused = false
@@ -155,7 +156,15 @@ func spawn_bot(profile: int, at: Vector3 = Vector3.INF, built_in: bool = false, 
 	bot.health = bot.tuning.max_health
 	bot.shields = target_shields
 	bot.invulnerable = target_invulnerable
-	var controller := BotController.new()
+	var controller: BotController = TrainingTacticalController.new() if profile == 13 else BotController.new()
+	if controller is TrainingTacticalController:
+		controller.slot = bots.size()
+		bot.select_hero(HeroRoster.selected)
+		bot.tuning.max_health = bot_max_health if target_health_override else HeroRoster.tuning_for(HeroRoster.selected).max_health
+		bot.health = bot.tuning.max_health
+		bot.shields = target_shields
+		bot.invulnerable = target_invulnerable
+		arena.ensure_tactical_navigation()
 	controller.actor = bot
 	controller.target = player
 	controller.profile = profile
@@ -199,6 +208,9 @@ func reset_scenario() -> void:
 	route_running = false
 	target_health_override = false
 	match scenario:
+		15:
+			arena.ensure_tactical_navigation()
+			spawn_bot(13,Vector3(3,.1,-11))
 		12:
 			for index: int in 3:
 				var friend: HeroActor = spawn_bot(0,Vector3(-5+index*5,.1,3-index*3),false,player.team)
