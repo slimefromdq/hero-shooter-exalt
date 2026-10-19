@@ -182,9 +182,9 @@ func run() -> void:
 	check(actor.motor.traversal.try_wall_jump(Vector3.FORWARD),"facing-led wall jump finds the side wall")
 	check(actor.velocity.x >= 2.99 and actor.velocity.z < -20 and actor.velocity.length() <= 26.001,"fast wall jump preserves minimum outward clearance within speed cap")
 	actor.motor.traversal.reset()
-	actor.velocity = Vector3.ZERO
+	actor.velocity = Vector3(0,0,6)
 	actor.aim_direction = Vector3.LEFT
-	check(actor.motor.traversal.try_wall_jump(Vector3.LEFT) and actor.velocity.x >= 2.99,"looking into a wall cannot launch back into it")
+	check(actor.motor.traversal.try_wall_jump(Vector3.LEFT) and actor.velocity.x > 8.9 and absf(actor.velocity.z) < .001 and actor.velocity.y >= 9.49,"head-on wall kick launches up and back without sideways movement")
 	kick_wall.queue_free()
 	await reset(Vector3(0,20,10))
 	actor.intent.stationary_melee = true
@@ -193,6 +193,21 @@ func run() -> void:
 	actor.intent.melee = false
 	await step(8)
 	check(not actor.close.melee_airborne and actor.position.y < 20 and absf(actor.position.z-10) < .01,"stationary training melee grants no lunge or suspension")
+	await reset()
+	actor.velocity = Vector3.FORWARD*10
+	actor.intent.slide = true
+	actor.intent.move = Vector3.RIGHT
+	actor.motor.transition("slide")
+	await step(30)
+	check(actor.motor.mode == "slide" and actor.velocity.x > 1 and actor.velocity.z < -6,"WASD slightly bends an ongoing slide while retaining forward travel")
+	check(actor.motor.slide_velocity.length() < 10,"slide steering does not add speed")
+	await reset()
+	actor.velocity = Vector3.FORWARD*10
+	actor.intent.slide = true
+	actor.intent.move = Vector3.BACK
+	actor.motor.transition("slide")
+	await step(12)
+	check(absf(actor.velocity.x) < .01 and actor.velocity.z < -8,"opposing slide input cannot invent sideways motion or reverse the slide")
 	# Exercise the real mantle handoff, not just the post-mantle opportunity.
 	var ledge: Node3D = Geometry.box(world,Vector3(6,2,8),Vector3(30,1,-3),Color.GRAY)
 	await reset(Vector3(30,.01,1.2))
@@ -205,6 +220,7 @@ func run() -> void:
 	for frame: int in 30:
 		if actor.motor.traversal.duration-actor.motor.traversal.elapsed <= .12: break
 		await step()
+	actor.motor.traversal.carried_velocity = Vector3(5,0,-6)
 	actor.intent.slide = true
 	actor.intent.slide_pressed = true
 	await step()
@@ -212,6 +228,32 @@ func run() -> void:
 	await step(9)
 	actor.intent.jump_held = false
 	check(actor.motor.mode == "slide" and actor.motor.slide_source == "mantle","fresh late-mantle crouch buffers into a real mantle slide")
+	check(absf(actor.velocity.x) < .01 and actor.velocity.z < -6,"mantle slide exits straight across the ledge despite sideways approach momentum")
+	# A wall kick leaves floor contact false and carries momentum away from
+	# the wall. The mantle slide must reset it before the landing tick moves.
+	await reset(Vector3(30,1.1,1.2))
+	actor.intent.move = Vector3.FORWARD
+	actor.intent.jump_held = true
+	for frame: int in 40:
+		await step()
+		if actor.motor.traversal.active: break
+	check(actor.motor.traversal.active,"airborne approach catches the tall-wall mantle")
+	for frame: int in 30:
+		if actor.motor.traversal.duration-actor.motor.traversal.elapsed <= .08: break
+		await step()
+	actor.motor.traversal.carried_velocity = Vector3(5,0,18)
+	actor.intent.slide = true
+	actor.intent.slide_pressed = true
+	await step()
+	actor.intent.slide_pressed = false
+	for frame: int in 10:
+		await step()
+		if not actor.motor.traversal.active: break
+	check(actor.motor.mode == "slide" and actor.motor.slide_source == "mantle","airborne mantle starts its buffered slide in the landing tick")
+	check(actor.velocity.z < -7.9 and absf(actor.velocity.x) < .01,"mantle slide replaces backward and sideways wall-kick momentum with forward speed")
+	var slide_start: Vector3 = actor.position
+	await step(5)
+	check(actor.position.z < slide_start.z-.5,"wall-kick mantle slide continues forward over the roof")
 	await reset(Vector3(30,.01,1.2))
 	actor.intent.move = Vector3.FORWARD
 	actor.intent.jump_held = true

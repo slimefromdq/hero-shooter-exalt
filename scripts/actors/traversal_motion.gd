@@ -96,7 +96,7 @@ func try_mantle_probe(wish: Vector3, offset: Vector3) -> bool:
 	actor.state = "mantle"
 	actor.aim_direction = forward
 	actor.rotation.y = atan2(-forward.x,-forward.z)
-	approach_direction = forward
+	approach_direction = (-normal * Vector3(1,0,1)).normalized()
 	actor.motor.mantle_slide_buffered = false
 	actor.motor.mantle_slide_left = 0
 	carried_velocity = (actor.velocity * Vector3(1,0,1)).limit_length(t.speed_limit)
@@ -157,6 +157,11 @@ func advance(delta: float) -> bool:
 		actor.state = "ready"
 		actor.state_time = 0
 		actor.velocity = carried_velocity
+		# A wall kick may still point away from the ledge when a tall mantle
+		# catches. Completion must carry that speed over the roof, even when
+		# crouch was pressed too early to earn the timed mantle-slide boost.
+		if actor.velocity.dot(approach_direction) < 0:
+			actor.velocity = approach_direction * carried_velocity.length()
 		carried_velocity = Vector3.ZERO
 		actor.motor.transition("air")
 		actor.resolver.record("land",actor,"mantle")
@@ -195,8 +200,11 @@ func try_wall_jump(wish: Vector3) -> bool:
 	var speed: float = minf(horizontal_limit,maxf(actor.tuning.wall_jump_speed,horizontal.length()))
 	var outward: float = minf(speed,maxf(actor.tuning.wall_jump_out,speed*maxf(0,forward.dot(normal))))
 	var tangent: Vector3 = forward.slide(normal).normalized()
-	if tangent.is_zero_approx(): tangent = horizontal.slide(normal).normalized()
-	if tangent.is_zero_approx(): tangent = normal.cross(Vector3.UP).normalized()
+	# Facing into the wall is an up-and-back kick, with no arbitrary
+	# tangent inherited from momentum or chosen from the wall's orientation.
+	if forward.dot(-normal) >= actor.tuning.wall_jump_head_on_dot or tangent.is_zero_approx():
+		outward = speed
+		tangent = Vector3.ZERO
 	var launch: Vector3 = tangent*sqrt(maxf(0,speed*speed-outward*outward))+normal*outward
 	actor.motor.end_hover()
 	actor.motor.transition("air")

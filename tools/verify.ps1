@@ -18,6 +18,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Godot import failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/movement_overhaul_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Shared movement overhaul failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/training_mantle_slide_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Training tower wall-kick mantle slide failed.' }
     foreach ($taskBotTest in @('bot_tactics_test', 'bot_integration_test')) {
         & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script "res://tests/$taskBotTest.gd"
         if ($LASTEXITCODE -ne 0) { throw "Tactical bot check failed: $taskBotTest" }

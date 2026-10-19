@@ -161,6 +161,12 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			var tangent: Vector3 = slide_velocity.slide(normal)
 			tangent += (Vector3.DOWN * t.gravity).slide(normal) * delta
 			tangent = tangent.move_toward(Vector3.ZERO, t.slide_friction * delta)
+			# Steering bends existing momentum along the floor without adding
+			# speed. Opposing input cannot instantly reverse a committed slide.
+			var steer: Vector3 = wish.slide(normal)
+			if not tangent.is_zero_approx() and not steer.is_zero_approx():
+				var turn: float = normal.dot(tangent.normalized().cross(steer.normalized()))
+				tangent = tangent.rotated(normal,turn*deg_to_rad(t.slide_steer_degrees)*delta*minf(1,steer.length()))
 			slide_velocity = tangent.limit_length(t.speed_limit)
 			# Keep reliable floor contact at small resting separations; this is
 			# support pressure, not stored slide momentum.
@@ -284,23 +290,26 @@ func set_crouched(value: bool) -> void:
 	body_collision.position.y = capsule.height * .5
 
 func finish_mantle(delta: float) -> void:
-	# The checked landing supplies ground permission immediately. Continue the
-	# carried motion in this same tick, or launch a buffered jump off the top.
+	# The checked landing supplies ground permission immediately. Resolve a
+	# buffered slide BEFORE moving so a wall kick cannot carry us off the lip.
 	mantle_slide_direction = traversal.approach_direction
 	mantle_slide_left = actor.tuning.mantle_slide_window
 	dash_slide_locked = false
 	coyote = .1
+	var exit_slide: bool = jump_buffer <= 0 and mantle_slide_buffered and actor.intent.slide
+	if exit_slide: start_mantle_slide()
 	actor.velocity.y = -actor.tuning.gravity * delta
 	if jump_buffer > 0:
 		actor.velocity.y = actor.tuning.jump_impulse
 		jump_buffer = 0
 		coyote = 0
 		mantle_slide_left = 0
-		mantle_slide_buffered = false
 	actor.velocity = actor.velocity.limit_length(actor.tuning.speed_limit)
 	actor.move_and_slide()
-	transition("ground" if actor.is_on_floor() else "air")
-	if mantle_slide_left > 0 and mantle_slide_buffered and actor.intent.slide and grounded(): start_mantle_slide()
+	# Mantles end slightly above the validated roof. Airborne approaches have
+	# no cached floor contact, so settle onto that roof in the handoff tick.
+	if coyote > 0: actor.apply_floor_snap()
+	transition("slide" if exit_slide and grounded() else ("ground" if actor.is_on_floor() else "air"))
 	mantle_slide_buffered = false
 
 func start_mantle_slide() -> void:

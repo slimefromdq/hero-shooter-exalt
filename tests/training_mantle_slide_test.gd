@@ -1,0 +1,70 @@
+extends SceneTree
+var arena: Node3D
+var actor: HeroActor
+var failures: int = 0
+var checks: int = 0
+func _initialize() -> void: call_deferred("run")
+func step(frames: int = 1) -> void:
+	for frame: int in frames:
+		await physics_frame
+		await process_frame
+func check(ok: bool, label: String) -> void:
+	checks += 1
+	print("PASS " if ok else "FAIL ",label)
+	if not ok: failures += 1
+func run() -> void:
+	HeroRoster.selected = "nimbus"
+	arena = load("res://scenes/training/combat_sandbox.tscn").instantiate()
+	root.add_child(arena)
+	current_scene = arena
+	arena.training.freeze_ai = true
+	actor = arena.training.player
+	actor.controller = null
+	for other: HeroActor in get_nodes_in_group("actors"):
+		if other != actor: other.set_physics_process(false)
+	for timing: String in ["early","late","after"]:
+		actor.reset_actor(Vector3(18,.01,-16.60))
+		actor.intent.aim = Vector3.FORWARD
+		actor.intent.move = Vector3.FORWARD
+		await step(4)
+		actor.intent.jump = true
+		await step()
+		actor.intent.jump = false
+		await step(19)
+		actor.intent.jump = true
+		actor.intent.jump_held = true
+		await step()
+		actor.intent.jump = false
+		print("KICK ",timing," position=",actor.position," velocity=",actor.velocity)
+		for frame: int in 80:
+			await step()
+			if actor.motor.traversal.active: break
+		check(actor.motor.traversal.active,timing+" reaches real 4.5m training tower mantle after wall kick")
+		if not actor.motor.traversal.active: continue
+		print("MANTLE ",timing," carried=",actor.motor.traversal.carried_velocity," direction=",actor.motor.traversal.approach_direction)
+		if timing == "early":
+			actor.intent.slide = true
+			actor.intent.slide_pressed = true
+			await step()
+			actor.intent.slide_pressed = false
+		for frame: int in 40:
+			if timing == "late" and actor.motor.traversal.duration-actor.motor.traversal.elapsed <= .1:
+				actor.intent.slide = true
+				actor.intent.slide_pressed = true
+			await step()
+			actor.intent.slide_pressed = false
+			if not actor.motor.traversal.active: break
+		if timing == "after":
+			actor.intent.slide = true
+			actor.intent.slide_pressed = true
+			await step()
+			actor.intent.slide_pressed = false
+		print("EXIT ",timing," at=",actor.position," velocity=",actor.velocity," mode=",actor.motor.mode," source=",actor.motor.slide_source)
+		check(actor.velocity.z < 0,timing+" exits the tall training tower forward")
+		var start: Vector3 = actor.position
+		await step(4)
+		check(actor.motor.mode == "slide" and actor.position.z < start.z-.35,timing+" continues sliding forward on the actual tower roof")
+	print("TRAINING MANTLE SLIDE RESULT: ",checks," checks, ",failures," failures")
+	arena.queue_free()
+	await step(2)
+	quit(1 if failures else 0)
