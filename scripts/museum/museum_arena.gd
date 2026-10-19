@@ -5,6 +5,7 @@ var navigation_region: NavigationRegion3D
 var resolver: CombatResolver
 var player: HeroActor
 var match_controller: MuseumMatch
+var objective_marker: MuseumObjectiveMarker
 
 func _ready() -> void:
 	HeroRoster.consume_direct_entry()
@@ -32,6 +33,9 @@ func _ready() -> void:
 	match_controller.definition = definition
 	match_controller.player = player
 	add_child(match_controller)
+	objective_marker = MuseumObjectiveMarker.new()
+	objective_marker.session = match_controller
+	add_child(objective_marker)
 
 func _exit_tree() -> void:
 	get_tree().paused = false

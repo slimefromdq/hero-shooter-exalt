@@ -84,6 +84,7 @@ func show_home() -> void:
 	else:
 		button("RESUME",session.toggle_menu)
 		button("CHANGE HERO",show_heroes)
+		if session is MuseumMatch: button("MUSEUM LIGHTING",show_museum_lighting)
 		button("RESTART MATCH" if session is CityMatch else "RESTART EXERCISE",session.restart_match if session is CityMatch else session.reset_scenario)
 		button("ENTER TRAINING" if session is CityMatch else "PLAY CITY MATCH",func() -> void: mode = "training" if session is CityMatch else "city"; launch())
 		if session is CityMatch:
@@ -172,6 +173,7 @@ func show_museum() -> void:
 			MuseumMatch.start_exploring = choice == "EXPLORE"
 			mode = "museum"
 			show_heroes())
+	add_museum_lighting_selector()
 	button("BACK",show_home)
 
 func launch() -> void:
@@ -189,3 +191,30 @@ func _unhandled_input(event: InputEvent) -> void:
 	if session == null and page != "home" and event.is_action_pressed("pause"):
 		show_home()
 		get_viewport().set_input_as_handled()
+
+func add_museum_lighting_selector() -> OptionButton:
+	var row := HBoxContainer.new()
+	content.add_child(row)
+	var title: Label = label("MUSEUM LIGHTING",15,Color("eed8a2"),row)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var selector := OptionButton.new()
+	selector.name = "MuseumLightingPreset"
+	selector.custom_minimum_size = Vector2(260,43)
+	var current: String = session.arena.builder.lighting.current_preset if session is MuseumMatch else MuseumLighting.load_preference()
+	for caption: String in MuseumLighting.TITLES: selector.add_item(caption)
+	selector.select(MuseumLighting.IDS.find(current))
+	row.add_child(selector)
+	selector.item_selected.connect(func(index: int) -> void:
+		var id: String = MuseumLighting.IDS[index]
+		MuseumLighting.choose(id)
+		if session is MuseumMatch: session.arena.builder.lighting.apply_preset(id))
+	return selector
+
+func show_museum_lighting() -> void:
+	page = "museum_lighting"
+	clear("MUSEUM LIGHTING","Choose a time of day. Changes apply immediately and save for your next visit.")
+	add_museum_lighting_selector()
+	label("COOL DAWN / blue morning light and pale mist",15)
+	label("ROSY AFTERNOON / brilliant rose sunlight and pink clouds",15)
+	label("STARRY NIGHT / moonlight, stars, and warm glowing galleries",15)
+	button("BACK",show_home)

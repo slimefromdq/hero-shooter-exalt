@@ -236,3 +236,11 @@ func enforce_spawn_exclusion(actor: HeroActor, before: Vector3) -> void:
 		# Recover invalid placements as well as ability relocations, without giving immunity.
 		var yaw: float = museum_definition().spawn_yaw(1-actor.team)
 		actor.global_position = definition.spawn_center(1-actor.team)+Vector3(0,.08,6.5).rotated(Vector3.UP,yaw)
+
+func active_objective_position() -> Vector3:
+	return payload.global_position if phase == "escort" else definition.hill_center
+
+func active_objective_caption() -> String:
+	if phase == "escort":
+		return ("ESCORT" if player.team == 0 else "STOP PAYLOAD")+" / CP%d" % mini(3,checkpoint_index+1)
+	return "CAPTURE A" if player.team == 0 else "DEFEND A"

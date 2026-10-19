@@ -1,0 +1,104 @@
+{
+  "date": "2026-10-18",
+  "engine": "Godot 4.7.2.stable.official.ed1daf0bf",
+  "renderer": "Vulkan Forward+ / NVIDIA GeForce RTX 3080",
+  "presentation": {
+    "checks": 65,
+    "failures": []
+  },
+  "full_regression": {
+    "command": "powershell -ExecutionPolicy Bypass -File tools/verify.ps1",
+    "exit_code": 0,
+    "failed_assertions": 0,
+    "script_errors": 0,
+    "note": "Presentation suite repeated after the final HUD boundary adjustment; 65 checks passed."
+  },
+  "rendered_review": {
+    "command": "Godot --path . --script res://tests/capture_museum_lighting.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60",
+    "exit_code": 0,
+    "view_count": 19,
+    "views": [
+      {
+        "path": "artifacts/museum/lighting/afternoon-court.png",
+        "sha256": "440b398db618fcfb249c72283dc0879f3c7119f31e6749c1a58f737ce6fdec73"
+      },
+      {
+        "path": "artifacts/museum/lighting/afternoon-giants.png",
+        "sha256": "756684d81bb1e79f69209ee0bd10f0b048c08c0f0f07f660eb0614b0112b8926"
+      },
+      {
+        "path": "artifacts/museum/lighting/afternoon-terrace.png",
+        "sha256": "27729bccac43e290a474db8a9c00a3d330eca68583c43a9cd170a8e6f7af61eb"
+      },
+      {
+        "path": "artifacts/museum/lighting/afternoon-vault.png",
+        "sha256": "d7c465662af5e447bcd1b5c514c3c5e91291c15964ec795c6c95c6b7ed8baee2"
+      },
+      {
+        "path": "artifacts/museum/lighting/dawn-court.png",
+        "sha256": "b721f881772d80fc1aba851c95e9b27e7cdda2f435836ddc2d4c646b98756d7b"
+      },
+      {
+        "path": "artifacts/museum/lighting/dawn-giants.png",
+        "sha256": "d05be1c8023bf01b04adadf2f2011a6e3cd4c982d140a45edb300cdf4bbe6ad9"
+      },
+      {
+        "path": "artifacts/museum/lighting/dawn-terrace.png",
+        "sha256": "3b341cf40a3af98b926ebf1097d37d9154ec4595f5dc5fedd8c61e448f441259"
+      },
+      {
+        "path": "artifacts/museum/lighting/dawn-vault.png",
+        "sha256": "c95dfa91909257b8c3472f12019fe5d3d11d91a11654eb75ab87b20a93676d9e"
+      },
+      {
+        "path": "artifacts/museum/lighting/night-court.png",
+        "sha256": "587315c4a79a0f11d04b08013f7a7df6a995da8e1457b7706ec4c5cf2f9a2a8f"
+      },
+      {
+        "path": "artifacts/museum/lighting/night-giants.png",
+        "sha256": "b5aaa8d1a3ca44f565b69aba16bf6c55b392f89b87d439cb014e0b9ca77a2055"
+      },
+      {
+        "path": "artifacts/museum/lighting/night-sky.png",
+        "sha256": "bfe934215d8afaa4a8b2b7b6dad08dbbac9f725f00ed4bd49870e053eb0039ff"
+      },
+      {
+        "path": "artifacts/museum/lighting/night-terrace.png",
+        "sha256": "bbd181d244ec0ea555ed5194abbef513ef6ad61d51dbad9cb2a74e47c1270d32"
+      },
+      {
+        "path": "artifacts/museum/lighting/night-vault.png",
+        "sha256": "6edd3b95daa4bee94a57e6368ef9dd48c0d74c9154b860f6887e7e431d852792"
+      },
+      {
+        "path": "artifacts/museum/lighting/objective-capture.png",
+        "sha256": "61b37282a92f12d499681d792808c07ec3f0201928c0ad615648950fcadf9d58"
+      },
+      {
+        "path": "artifacts/museum/lighting/objective-contested.png",
+        "sha256": "ab8bb8a1c54592de81df168f283786a6cc13e7fe6ebd9b47919cede347a5ad7a"
+      },
+      {
+        "path": "artifacts/museum/lighting/objective-offscreen.png",
+        "sha256": "616fc898b1c7ebb04cdccb96729e013e3d5a619e4a59baf7df26906e4e27b8f7"
+      },
+      {
+        "path": "artifacts/museum/lighting/objective-payload.png",
+        "sha256": "7040143c41738b4d87a2141e33720548299f97b97a6ca8aca27520d737d9f0fd"
+      },
+      {
+        "path": "artifacts/museum/lighting/objective-through-wall.png",
+        "sha256": "cba5054e11fac7d0583fc3cca40a603a93234cb61f2383c694b4830431535f28"
+      },
+      {
+        "path": "artifacts/museum/lighting/pause-lighting-menu.png",
+        "sha256": "9ce43f164779dfbc8ceb07fe76590b352b6a3d099afe0e28bd78d2951646c976"
+      }
+    ],
+    "review": "Reviewed all four fights under all three presets; visible stars, warm interiors, capture/payload/contest markers, off-screen guidance, through-wall guidance, and pause selector."
+  },
+  "limitations": [
+    "Human playtesting is still required for combat readability and marker distraction.",
+    "The earlier museum combat simulations were not repeated for this presentation-only change."
+  ]
+}

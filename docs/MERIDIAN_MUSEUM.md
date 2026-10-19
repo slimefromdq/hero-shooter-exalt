@@ -106,3 +106,15 @@ Each seeded simulation runs 600 seconds of natural full-roster combat, three sep
 Recorded verification: **849 focused checks**, **16 native-input checks**, **32 simulation checks**, and **18 rendered views** passed, alongside the existing project verification suite. Both 600-second seeds had zero falls, zero recovery teleports, and no persistent eight-second route stalls. The controlled drills completed capture and CP1–CP3 in 166 and 165 seconds. These results establish functional routes and rules, not competitive balance.
 
 Human playtesting remains necessary for choke pressure, long-range angles, flank commitment, final-point stalls, visual readability in combat, and movement feel. Current timing and geometry are editable first-playtest defaults.
+
+## Objective guidance and time of day
+
+A gold **A** diamond identifies the active capture point; after capture it becomes a **P** marker following the cart. The HUD shows the next checkpoint, horizontal distance, and above/below guidance when applicable. Off-screen arrows point toward the objective, including when it is behind the camera. The HUD marker stays visible through architecture, while the ground ring and vertical world beacon respect scene depth. Contest changes the marker to coral. Finished rounds hide guidance; restart restores the capture marker. The atlas highlights the active objective as well.
+
+Select **Cool Dawn**, **Rosy Afternoon**, or **Starry Night** on the Museum startup page. During play, use **Pause â†’ Museum Lighting** to change instantly. Selection persists between visits; restarts keep the current lighting. `Launch.ps1 -Museum -Lighting Dawn` (or `Afternoon` / `Night`) overrides the saved choice for that launch.
+
+Dawn has cool blue light, low sun and pale mist. Afternoon uses brilliant rose sunlight, pink clouds and warm stone. Night combines a procedural star field, moonlight, warm exhibit lights and emissive fixtures. All presets retain ambient and fill illumination for combat readability. They share identical geometry, navigation and objective tuning. Lighting colors, intensities and fixture locations are editable in `scripts/museum/museum_lighting.gd`; the sky is procedural in `shaders/museum_sky.gdshader`.
+
+![Museum lighting presets and objective marker](maps/museum-lighting.jpg)
+
+The presentation regression suite checks preset switching without geometry changes, saved preferences, paused live updates, objective transitions, contest/finish/reset, team-specific captions, and marker projection at four window sizes. Native captures cover all four fights in all three presets, the star field, objective guidance through walls and off screen, payload/contest guidance, and the lighting menu. Run `tests/capture_museum_lighting.gd` with a graphical Godot instance to refresh the 19 views under `artifacts/museum/lighting` (also included by `verify.ps1 -Capture`). Presentation evidence is recorded separately in [museum presentation results](validation/museum-presentation.json).

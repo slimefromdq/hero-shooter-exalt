@@ -3,6 +3,7 @@ extends Node3D
 ## Original batched architecture; solid silhouettes carry combat readability.
 var definition: MuseumMapDefinition
 var architecture: MeridianArchitecture
+var lighting: MuseumLighting
 var navigation_region: NavigationRegion3D
 var stairs: Array[Dictionary] = []
 var shortcuts: Array[Dictionary] = []
@@ -37,28 +38,9 @@ func _ready() -> void:
 	_build_navigation()
 
 func _build_environment() -> void:
-	var world := WorldEnvironment.new()
-	var environment := Environment.new()
-	environment.background_mode = Environment.BG_SKY
-	var sky := Sky.new()
-	var sky_mat := ProceduralSkyMaterial.new()
-	sky_mat.sky_top_color = Color("367a9b")
-	sky_mat.sky_horizon_color = Color("d9d9be")
-	sky.sky_material = sky_mat
-	environment.sky = sky
-	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color("bed5dd")
-	environment.ambient_light_energy = .65
-	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	world.environment = environment
-	add_child(world)
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-58,-25,0)
-	sun.light_color = Color("ffe2b4")
-	sun.light_energy = 1.25
-	sun.shadow_enabled = true
-	sun.directional_shadow_max_distance = 170
-	add_child(sun)
+	lighting = MuseumLighting.new()
+	lighting.definition = definition
+	add_child(lighting)
 
 func slab(at: Vector3, size: Vector3, key: String = "paving") -> void:
 	architecture.box(size,at,key,true)

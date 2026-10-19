@@ -1,9 +1,10 @@
-param([switch]$Editor, [switch]$Museum, [switch]$Defend, [switch]$Explore, [switch]$Training, [switch]$Slayer, [switch]$Marshal, [switch]$Doctor, [switch]$Huddle, [switch]$Relay, [switch]$Dynamo, [switch]$Wisp, [switch]$Windowed, [switch]$Fullscreen)
+param([ValidateSet("Dawn","Afternoon","Night")][string]$Lighting, [switch]$Editor, [switch]$Museum, [switch]$Defend, [switch]$Explore, [switch]$Training, [switch]$Slayer, [switch]$Marshal, [switch]$Doctor, [switch]$Huddle, [switch]$Relay, [switch]$Dynamo, [switch]$Wisp, [switch]$Windowed, [switch]$Fullscreen)
 $ErrorActionPreference = 'Stop'
 $taskEngine = & (Join-Path $PSScriptRoot 'tools/find_godot.ps1')
 if ($Windowed -and $Fullscreen) { throw 'Choose either -Windowed or -Fullscreen.' }
 if ($Museum -and $Training) { throw 'Choose either -Museum or -Training.' }
 if (($Defend -or $Explore) -and -not $Museum) { throw '-Defend and -Explore require -Museum.' }
+if ($Lighting -and -not $Museum) { throw '-Lighting requires -Museum.' }
 if ($Defend -and $Explore) { throw 'Choose either -Defend or -Explore.' }
 $taskGameArgs = @('--path', $PSScriptRoot)
 if ($Editor) { $taskGameArgs += '--editor' }
@@ -24,6 +25,7 @@ else {
 if ($Museum) {
     if ('--' -notin $taskGameArgs) { $taskGameArgs += '--' }
     $taskGameArgs += '--museum'
+    if ($Lighting) { $taskGameArgs += "--museum-lighting=$($Lighting.ToLowerInvariant())" }
     if ($Defend) { $taskGameArgs += '--defend' }
     if ($Explore) { $taskGameArgs += '--explore' }
 }

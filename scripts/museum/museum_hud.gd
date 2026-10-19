@@ -100,8 +100,11 @@ func draw_overview() -> void:
 			var active: bool = index == (d.attacker_stage if team == 0 else d.defender_stage)
 			box(at-Vector2(10,7),Vector2(20,14),(mint if team == 0 else coral) if active else muted.darkened(.65))
 			text(("A" if team == 0 else "D")+str(index),at+Vector2(-7,-11),11,paper)
-	var objective_at: Vector3 = d.hill_center if m.capture_progress < 1.0 else m.payload.global_position
-	canvas.draw_circle(map_point(objective_at,bounds),10,mint,false,2)
+	var objective_at: Vector3 = m.active_objective_position()
+	if m.winner < 0:
+		var active_at: Vector2 = map_point(objective_at,bounds)
+		canvas.draw_circle(active_at,12,Color("ffd587"),false,3)
+		text("ACTIVE A" if m.phase != "escort" else "PAYLOAD",active_at+Vector2(15,-12),12,Color("ffd587"),true)
 	for actor: HeroActor in m.actors:
 		if actor.alive: canvas.draw_circle(map_point(actor.global_position,bounds),4,paper if actor == m.player else (mint if actor.team == 0 else coral))
 	text("A: 0 / +3.6 m    GIANTS: +4 m / bridge +5.8 m    TERRACE: garden -1.5 / roof +4.5 m    VAULT: 0 / gantry +3.5 m",Vector2(155,680),14,paper)
@@ -114,3 +117,29 @@ func draw_player_rail(p: HeroActor) -> void:
 	super.draw_player_rail(p)
 	if p.kit is DynamoKit and p.kit.previewing and not p.kit.wall_valid:
 		centered("INVALID WALL / KEEP THE PAYLOAD TRACK AND SPAWN EXITS CLEAR",Vector2(800,655),14,coral,true)
+
+func draw_hud() -> void:
+	super.draw_hud()
+	var m := match_controller as MuseumMatch
+	if not is_instance_valid(m) or m.menu_open or overview_open or m.winner >= 0 or not m.player.alive: return
+	var camera: Camera3D = get_viewport().get_camera_3d()
+	if camera == null: return
+	var objective: Vector3 = m.active_objective_position()
+	var layout: Dictionary = MuseumObjectiveMarker.screen_layout(camera,objective+Vector3.UP*3.5,get_viewport().get_visible_rect().size)
+	var at: Vector2 = layout.position
+	var color: Color = coral if m.objective.contested else Color("ffd587")
+	var diamond := PackedVector2Array([at+Vector2(0,-19),at+Vector2(19,0),at+Vector2(0,19),at+Vector2(-19,0)])
+	canvas.draw_colored_polygon(diamond,Color("182939"))
+	canvas.draw_polyline(PackedVector2Array([diamond[0],diamond[1],diamond[2],diamond[3],diamond[0]]),Color("10151e"),6,true)
+	canvas.draw_polyline(PackedVector2Array([diamond[0],diamond[1],diamond[2],diamond[3],diamond[0]]),color,2.5,true)
+	centered("P" if m.phase == "escort" else "A",at+Vector2(0,6),18,color,true)
+	if layout.edge:
+		var direction: Vector2 = layout.direction
+		var side := Vector2(-direction.y,direction.x)
+		canvas.draw_colored_polygon(PackedVector2Array([at+direction*35,at+direction*24+side*6,at+direction*24-side*6]),color)
+	panel(at+Vector2(-130,-82),Vector2(260,41))
+	var caption: String = "CONTESTED / "+m.active_objective_caption() if m.objective.contested else m.active_objective_caption()
+	centered(caption,at+Vector2(0,-64),12,color,true)
+	var diff: Vector3 = objective-m.player.global_position
+	var height: String = " / ABOVE" if diff.y > 2.5 else (" / BELOW" if diff.y < -2.5 else "")
+	centered("%d m%s" % [roundi(Vector2(diff.x,diff.z).length()),height],at+Vector2(0,-48),11,paper)
