@@ -11,7 +11,9 @@ var spatial_owner: Node3D
 
 func _ready() -> void:
 	bus = "Combat"
-	if spatial_owner is HeroActor and spatial_owner.tuning is MarshalTuning: rally_shout()
+	if spatial_owner is HeroActor and spatial_owner.tuning is MarshalTuning:
+		rally_shout()
+		for cue: String in ["cannon","cannon_hit","cannon_blast","orbital","barrier_raise","barrier_lower","barrier_hit","barrier_break","barrier_ready","reload_start","reload_end"]: marshal_cue(cue)
 	if spatial_owner is HeroActor and spatial_owner.tuning is SlayerTuning:
 		for cue: String in ["shotgun", "shotgun_mechanism", "shotgun_hit", "shotgun_surface", "boot_start", "boot_wind", "boot_hit", "boot_kick", "boot_recover", "axe_draw", "axe_release", "axe_hit", "knife", "knife_hit"]: slayer_wave(cue)
 static var reward_waves: Dictionary = {}
@@ -329,4 +331,42 @@ static func rally_shout() -> AudioStreamWAV:
 func play_rally_shout() -> void:
 	stream = rally_shout()
 	volume_db = -1.0+distance_gain()
+	if DisplayServer.get_name() != "headless": play()
+
+static var marshal_cues: Dictionary = {}
+static func marshal_cue(cue: String) -> AudioStreamWAV:
+	if marshal_cues.has(cue): return marshal_cues[cue]
+	var rate: int = 22050
+	var duration: float = .42 if cue in ["cannon","barrier_break"] else (.32 if cue in ["orbital","cannon_blast"] else .2)
+	var bytes := PackedByteArray()
+	bytes.resize(int(rate*duration)*2)
+	for index: int in bytes.size()/2:
+		var at: float = float(index)/rate
+		var noise: float = sin(index*173.31)*sin(index*47.72)
+		var value: float = 0
+		match cue:
+			"cannon": value = noise*exp(-at*95)*.48+sin(TAU*48*at)*exp(-at*10)*.55+sin(TAU*92*at)*exp(-at*18)*.15
+			"cannon_blast": value = noise*exp(-at*30)*.45+sin(TAU*(62*at+2*(1-exp(-at*25))))*exp(-at*12)*.5
+			"orbital":
+				var impact_time: float = maxf(0,at-.035)
+				value = sin(TAU*(1800*at-1300*at*at))*exp(-at*65)*.28+noise*exp(-at*40)*.3+sin(TAU*57*impact_time)*exp(-impact_time*13)*.5
+			"barrier_break": value = noise*exp(-at*12)*.45+(sin(TAU*1700*at)+sin(TAU*2243*at))*.1*exp(-at*15)+sin(TAU*64*at)*exp(-at*12)*.25
+			"barrier_hit": value = (sin(TAU*430*at)+sin(TAU*679*at))*.2*exp(-at*30)+noise*.12*exp(-at*50)
+			"barrier_raise": value = sin(TAU*(200*at+1200*at*at))*.3*sin(PI*at/duration)+noise*.08*exp(-at*22)
+			"barrier_lower": value = sin(TAU*(550*at-1100*at*at))*.22*exp(-at*20)
+			"barrier_ready": value = (sin(TAU*700*at)+sin(TAU*1050*at))*.15*sin(PI*at/duration)
+			"reload_start","reload_end": value = noise*.28*exp(-at*60)+sin(TAU*(180 if cue == "reload_start" else 420)*at)*.2*exp(-at*25)
+			_: value = noise*.35*exp(-at*50)+sin(TAU*80*at)*.32*exp(-at*25)
+		value *= clampf(at/.002,0,1)*clampf((duration-at)/.02,0,1)
+		bytes.encode_s16(index*2,int(clampf(value,-.95,.95)*32767))
+	var wave := AudioStreamWAV.new()
+	wave.format = AudioStreamWAV.FORMAT_16_BITS
+	wave.mix_rate = rate
+	wave.data = bytes
+	marshal_cues[cue] = wave
+	return wave
+
+func play_marshal(cue: String) -> void:
+	stream = marshal_cue(cue)
+	volume_db = (-3.0 if cue == "cannon" else -7.0)+distance_gain()
 	if DisplayServer.get_name() != "headless": play()

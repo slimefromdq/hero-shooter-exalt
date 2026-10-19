@@ -5,6 +5,9 @@ var source: HeroActor
 var source_life: int
 var cast_id: int
 var damage_amount: float
+var blast_damage: float
+var blast_radius: float
+var detonated: bool = false
 var gravity: float
 var radius: float
 var range_left: float
@@ -21,6 +24,8 @@ func _ready() -> void:
 	source_life = source.life_serial
 	var t := source.tuning as MarshalTuning
 	damage_amount = t.cannon_damage
+	blast_damage = t.cannon_blast_damage
+	blast_radius = t.cannon_blast_radius
 	gravity = t.cannon_gravity
 	radius = t.cannon_radius
 	range_left = t.cannon_range
@@ -85,8 +90,8 @@ func sweep(motion: Vector3) -> bool:
 		var barrier_hit: Dictionary = barrier_contact(motion)
 		var probe: KinematicCollision3D = move_and_collide(motion,true)
 		if not barrier_hit.is_empty() and (probe == null or float(barrier_hit.center_distance) <= probe.get_travel().length()):
-			barrier_hit.collider.receive_damage(source,damage_amount,cast_id)
-			impact(barrier_hit.position)
+			global_position = barrier_hit.position-velocity.normalized()*(radius+.03)
+			impact(barrier_hit.position,"barrier",barrier_hit.collider)
 			return false
 		var hit: KinematicCollision3D = move_and_collide(motion)
 		if hit == null: return true
@@ -107,17 +112,30 @@ func sweep(motion: Vector3) -> bool:
 				velocity = target.aim_direction.normalized()*velocity.length()
 				# Stay at the swept contact; never teleport through nearby world geometry.
 				return false
-		elif hit.get_collider() is HunterSnare or hit.get_collider() is CombatStructure:
-			var amount: float = damage_amount
-			# Structures apply their own cast multiplier; traps accept resolved damage.
-			if hit.get_collider() is HunterSnare: amount *= source.resolver.cast_multiplier(cast_id,source)
+		elif hit.get_collider() is CombatStructure:
+			impact(hit.get_position(),"world",hit.get_collider())
+			return false
+		elif hit.get_collider() is HunterSnare:
+			# Traps accept resolved damage; structures use the splash snapshot above.
+			var amount: float = damage_amount*source.resolver.cast_multiplier(cast_id,source)
 			source.resolver.hit_object(hit.get_collider(),source,amount,cast_id)
-		impact(hit.get_position())
+		impact(hit.get_position(),"actor" if target != null else "world")
 		return false
 	queue_free()
 	return false
 
-func impact(at: Vector3) -> void:
-	CombatEffect.pulse(get_parent(),at,Color("edb76a"),.65)
-	if is_instance_valid(source.presentation): source.presentation.impact_sound.play_tone(48,.2,.3)
+func impact(at: Vector3, category: String = "world", direct_object: Node3D = null) -> void:
+	if detonated or is_queued_for_deletion(): return
+	detonated = true
+	var object_damage: Dictionary = {}
+	if direct_object != null: object_damage[direct_object] = damage_amount
+	# Sphere center stays on the near side of cover. Reuse the direct hit's cast
+	# so its victim cannot also receive splash or a second damage-credit event.
+	source.resolver.splash(source,global_position,blast_radius,blast_damage,"cannon_blast",cast_id,false,object_damage)
+	CombatEffect.pulse(get_parent(),global_position,Color("e7b868"),blast_radius)
+	if is_instance_valid(source.presentation) and is_instance_valid(source.presentation.marshal_combat):
+		source.presentation.marshal_combat.projectile_impact(at,category)
+	else:
+		CombatEffect.pulse(get_parent(),at,Color("edb76a"),.45)
+		if is_instance_valid(source.presentation): source.presentation.impact_sound.play_marshal("cannon_blast")
 	queue_free()

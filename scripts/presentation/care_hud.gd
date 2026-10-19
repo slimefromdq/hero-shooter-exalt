@@ -7,7 +7,7 @@ static func labels(a: HeroActor) -> Array[String]:
 	if a.kit is WispKit: return ["GHOSTSTEP","BETWEEN WORLDS","SPECTRAL LIFT"]
 	if a.kit is HuddleKit: return ["SCATTERBOUND","WE'VE GOT YOU!","PERSONAL SPACE!"]
 	var result: Array[String] = []
-	result.assign(["FORWARD MARCH","RALLYING COMMAND","BREACH LINE"] if a.kit is MarshalKit else ["HOUSE CALL","WARD ROUND","PRESCRIPTION"])
+	result.assign(["FORWARD MARCH","RALLYING COMMAND","ORBITAL BARRAGE"] if a.kit is MarshalKit else ["HOUSE CALL","WARD ROUND","PRESCRIPTION"])
 	return result
 
 static func cooldowns(a: HeroActor) -> Array[float]:

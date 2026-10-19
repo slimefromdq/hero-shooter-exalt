@@ -69,7 +69,8 @@ func _process(delta: float) -> void:
 	if actor.state == "marshal_shield" and actor.tuning is MarshalTuning:
 		desired_distance = (actor.tuning as MarshalTuning).shield_camera_distance
 	if actor.state in ["huddle_wave_start","huddle_wave"]: desired_distance = 4.5
-	arm.spring_length = lerpf(arm.spring_length, desired_distance, minf(1.0,delta * 10.0))
+	var distance_blend: float = 1-exp(-delta*10.0) if actor.tuning is MarshalTuning else minf(1.0,delta*10.0)
+	arm.spring_length = lerpf(arm.spring_length,desired_distance,distance_blend)
 
 func gather_intent(_delta: float) -> CombatIntent:
 	var input := CombatIntent.new()

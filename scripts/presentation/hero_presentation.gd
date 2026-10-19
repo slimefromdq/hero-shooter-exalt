@@ -3,6 +3,7 @@ extends Node3D
 
 var actor: HeroActor
 var overhealth_visual: OverhealthVisual
+var marshal_combat: MarshalCombatPresentation
 var model: Node3D
 var body: Node3D
 var umbrella: Node3D
@@ -168,6 +169,10 @@ func _ready() -> void:
 	overhealth_visual = OverhealthVisual.new()
 	overhealth_visual.actor = actor
 	add_child(overhealth_visual)
+	if actor.kit is MarshalKit:
+		marshal_combat = MarshalCombatPresentation.new()
+		marshal_combat.presentation = self
+		add_child(marshal_combat)
 	# Applied after hero remodeling so both silhouettes carry the same team language.
 	var team_colour := Color("38dfff") if actor.team == 0 else Color("ff4f65")
 	var team_material: StandardMaterial3D = Geometry.material(team_colour, .65)
@@ -444,6 +449,7 @@ func on_block(attacker: HeroActor, defender: HeroActor) -> void:
 	block_effect = BlockImpact.spawn(actor.get_parent(), actor.global_position + Vector3.UP * 1.3 + toward * .72, toward)
 
 func clear_feedback() -> void:
+	if is_instance_valid(marshal_combat): marshal_combat.clear()
 	if is_instance_valid(overhealth_visual): overhealth_visual.clear()
 	fire_flash = 0.0
 	if is_instance_valid(slayer_model): slayer_model.reset_feedback()

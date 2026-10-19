@@ -121,8 +121,13 @@ static func animate(p: HeroPresentation) -> void:
 		p.rifle.visible = not p.care_tool.visible and a.state != "marshal_shield"
 		if a.state == "marshal_shield": p.left_arm.rotation.x = 1.45
 		var cannon_kick: float = pow(clampf(p.fire_flash/.22,0,1),2)
-		p.rifle.position.z += cannon_kick*.16
-		p.rifle.rotation.x -= cannon_kick*.12
+		p.rifle.position.z += cannon_kick*.22
+		p.rifle.rotation.x -= cannon_kick*.15
+		if a.kit.reloading and a.state == "ready":
+			var progress: float = 1-a.kit.reload_remaining/maxf(.01,a.kit.reload_total)
+			p.rifle.rotation.z = -.2*sin(progress*PI)
+			p.rifle.position.y -= .12*sin(progress*PI)
+			p.left_arm.rotation = Vector3(1.6,-.3,-.2)
 	else:
 		p.care_tool.visible = (a.kit as DoctorKit).beam_healing or a.state == "doctor_ultimate"
 		p.care_tool.position = Vector3(-.35,1.35,-.45)

@@ -44,6 +44,8 @@ try {
 
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/huddle_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Huddle colony combat, mobility or lifecycle failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/marshal_orbital_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Marshal orbital targeting and combat presentation failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/marshal_cannon_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Marshal cannon failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/marshal_rework_test.gd
@@ -99,6 +101,8 @@ try {
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_navigation_regression.gd
     if ($LASTEXITCODE -ne 0) { throw 'City navigation recovery or healing route failed.' }
     if ($Capture) {
+        & $taskEngine --path $taskRoot --script res://tests/capture_marshal_polish.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Marshal orbital, cannon and barrier rendered capture failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_overhealth.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
         if ($LASTEXITCODE -ne 0) { throw 'Rallying Command and universal overhealth rendered capture failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_marshal_rework.gd --windowed --resolution 1280x720 --audio-driver Dummy --fixed-fps 60

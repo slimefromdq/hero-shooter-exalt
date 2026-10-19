@@ -19,7 +19,7 @@ Profiles live in `resources/bots/classes`, `resources/bots/heroes`, and `resourc
 |---|---|---|
 | Nimbus | 12–24 m | Rifle angles, clear overhead Hover, reactive Deflect, ballistic bomb throws and airborne bomb shooting, three-shot Final Notice |
 | Slayer | 4–10 m | Knife approach, supported Boot Rush and bounded steering, close follow-up, route snares, piercing axe value |
-| Marshal | 5–12 m | Anchoring, threat-facing barrier, cannon pressure, March engagement/peel, Rallying Command for threatened allies, Breach and Verdict |
+| Marshal | 5–12 m | Anchoring, threat-facing barrier, cannon pressure, March engagement/peel, Rallying Command for threatened allies, validated Orbital Barrage and Verdict |
 | Doctor | 14–22 m | Recoverable-patient triage, beam positioning, self-defense, Ward, cleanse/reduction, safe House Call and ally ultimate |
 | Huddle | 6–14 m | Mobile pressure, ally interception, escape-charge reserve, safe Regroup and directed Wave |
 | Relay | 12–24 m | Drone triage, battery recall, drone-centered Shock, escape Kickstart and team Full Circuit |

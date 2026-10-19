@@ -89,7 +89,7 @@ func evaluate(brain: BotBrain) -> void:
 		var march_toward: Vector3 = ((point-a.global_position)*Vector3(1,0,1)).normalized()
 		if seen and not escaping and distance < marshal.data().march_range-1 and distance > 3 and marshal.mobility_cd <= 0 and CareTactics.marshal_safe_lane(a,march_toward,marshal.data().march_range):
 			offer("hover",.82 if str(brain.threat.get("state","")) in ["ultimate","melee_windup","marshal_verdict"] else .72,point)
-		if seen and distance > 6 and distance < marshal.data().breach_count*marshal.data().breach_spacing and k.bomb_cd <= 0: offer("bomb",.65,point)
+		if seen and distance > 6 and distance < marshal.data().breach_count*marshal.data().breach_spacing and k.bomb_cd <= 0 and MarshalOrbitalTargeting.can_strike(a,(point-a.body_point(1.2)).normalized(),Vector3(enemy.position)+Vector3.UP*.9): offer("bomb",.65,point)
 		if seen and distance < marshal.data().verdict_range and k.ultimate_charge >= 100 and not escaping and CareTactics.marshal_verdict_safe(a,march_toward): offer("ultimate",impact,point)
 	elif k is DoctorKit:
 		var doctor := k as DoctorKit
@@ -269,12 +269,16 @@ func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) ->
 	input.primary_held = false
 	input.secondary_held = false
 	# Revalidate after aim delay: routing or an obstacle may have changed.
-	if a.kit is MarshalKit and action in ["hover","ultimate"]:
+	if a.kit is MarshalKit and action in ["hover","ultimate","bomb"]:
 		var forward: Vector3 = (input.aim*Vector3(1,0,1)).normalized()
 		if action == "hover" and not CareTactics.marshal_safe_lane(a,forward,(a.tuning as MarshalTuning).march_range):
 			choice = {}
 			return
 		if action == "ultimate" and not CareTactics.marshal_verdict_safe(a,forward):
+			choice = {}
+			return
+	if a.kit is MarshalKit and action == "bomb" and not brain.threat.is_empty():
+		if not MarshalOrbitalTargeting.can_strike(a,input.aim,Vector3(brain.threat.position)+Vector3.UP*.9):
 			choice = {}
 			return
 	input.set(action,true)

@@ -19,6 +19,8 @@ var breach_origin: Vector3
 var breach_index: int = 0
 var breach_age: float = -1.0
 var breach_cast: int = 0
+var orbital_points: Array[Dictionary] = []
+var orbital_effects: Array[MarshalOrbitalEffect] = []
 var verdict_direction: Vector3
 var verdict_warning: CombatEffect
 var verdict_age: float = 0.0
@@ -56,9 +58,9 @@ func tick(delta: float, input: CombatIntent) -> void:
 		break_remaining = 0
 	if breach_age >= 0:
 		breach_age += delta
-		while breach_index < t.breach_count and breach_age >= t.breach_warning + breach_index * t.breach_interval:
+		while breach_index < orbital_points.size() and breach_age >= float(orbital_points[breach_index].delay):
 			breach_step()
-		if breach_index >= t.breach_count: breach_age = -1
+		if breach_index >= orbital_points.size(): breach_age = -1
 	if actor.state == "marshal_recovery" and actor.state_time <= 0: actor.state = "ready"
 	if input.deflect and deflect_cd <= 0 and rally_allowed(): rally()
 	if actor.state == "marshal_shield" and (input.hover or input.bomb or input.ultimate or input.melee or input.throw_action or input.guard): lower_barrier()
@@ -78,14 +80,17 @@ func tick(delta: float, input: CombatIntent) -> void:
 		mobility_cd = t.march_cooldown
 		actor.resolver.record("cast",actor,"forward_march")
 	elif input.bomb and bomb_cd <= 0 and actor.permits("bomb"):
-		breach_origin = safe_muzzle()
+		clear_orbital()
+		breach_origin = actor.global_position
 		breach_direction = actor.aim_direction
 		breach_index = 0
 		breach_age = 0
 		breach_cast = actor.resolver.new_cast(actor)
 		bomb_cd = t.breach_cooldown
-		CombatEffect.streak(actor.get_parent(),breach_origin,breach_origin + breach_direction * t.breach_spacing * t.breach_count,.08,t.breach_warning)
-		actor.resolver.record("cast",actor,"breach_line")
+		orbital_points = MarshalOrbitalTargeting.plan(actor,breach_origin,breach_direction)
+		for entry: Dictionary in orbital_points:
+			orbital_effects.append(actor.presentation.marshal_combat.orbital_marker(entry,t.breach_radius))
+		actor.resolver.record("cast",actor,"orbital_barrage")
 	elif input.ultimate and ultimate_charge >= 100 and actor.permits("ultimate"):
 		ultimate_charge = 0
 		actor.motor.interrupt_mobility()
@@ -271,21 +276,47 @@ func movement_scale() -> float:
 
 func breach_step() -> void:
 	var t := data()
-	var previous: Vector3 = breach_origin + breach_direction * breach_index * t.breach_spacing
-	var endpoint: Vector3 = previous + breach_direction * t.breach_spacing
-	var hit: Dictionary = actor.resolver.attack_ray(actor,previous,endpoint,[actor.get_rid()],1)
+	var index: int = breach_index
+	var entry: Dictionary = orbital_points[index]
 	breach_index += 1
-	if not hit.is_empty():
-		endpoint = hit.position + hit.normal * .03
-		breach_index = t.breach_count
-	CombatEffect.pulse(actor.get_parent(),endpoint,Color("ffb95e"),t.breach_radius)
-	actor.presentation.sound.play_tone(65,.15,.2)
-	actor.resolver.splash(actor,endpoint,t.breach_radius,t.breach_damage,"breach",breach_cast)
-	# A preceding blast can break a barrier before the lane's next segment reaches it.
-	# Retire this barrage when a hostile barrier absorbs any of its blasts.
+	var previous: Vector3 = breach_origin if index == 0 else Vector3(orbital_points[index-1].position)
+	var lane: Dictionary = actor.resolver.attack_ray(actor,previous+Vector3.UP*.9,entry.position+Vector3.UP*.9,[actor.get_rid()],1)
+	if not lane.is_empty():
+		if lane.collider is CombatBarrier: lane.collider.receive_damage(actor,t.breach_damage,breach_cast)
+		stop_orbital()
+		return
+	if MarshalOrbitalTargeting.revalidate(actor,entry):
+		var overhead: Dictionary = actor.resolver.barrier_ray(actor,entry.position+Vector3.UP*t.orbital_sky_height,entry.position+Vector3.UP*.08)
+		if not overhead.is_empty():
+			overhead.collider.receive_damage(actor,t.breach_damage,breach_cast)
+			if index < orbital_effects.size() and is_instance_valid(orbital_effects[index]): orbital_effects[index].queue_free()
+			actor.presentation.marshal_combat.orbital_block(overhead.position)
+			stop_orbital()
+			return
+		if index < orbital_effects.size() and is_instance_valid(orbital_effects[index]):
+			orbital_effects[index].global_position = entry.position
+			orbital_effects[index].strike()
+		actor.presentation.marshal_combat.orbital_impact(entry.position)
+		actor.resolver.splash(actor,entry.position+Vector3.UP*.12,t.breach_radius,t.breach_damage,"orbital_barrage",breach_cast)
+		actor.resolver.record("impact",actor,"orbital_barrage","index=%d position=%s" % [index,entry.position])
+	elif index < orbital_effects.size() and is_instance_valid(orbital_effects[index]):
+		orbital_effects[index].queue_free()
+	if bool(entry.stop): stop_orbital()
 	for shield: CombatBarrier in actor.get_tree().get_nodes_in_group("barriers"):
-		if shield.source.team != actor.team and shield.received.has(breach_cast): breach_index = t.breach_count
+		if shield.source.team != actor.team and shield.received.has(breach_cast): stop_orbital()
 
+func stop_orbital() -> void:
+	for index: int in range(breach_index,orbital_effects.size()):
+		if is_instance_valid(orbital_effects[index]): orbital_effects[index].queue_free()
+	breach_index = orbital_points.size()
+	breach_age = -1
+
+func clear_orbital() -> void:
+	for effect in orbital_effects:
+		if is_instance_valid(effect): effect.queue_free()
+	orbital_effects.clear()
+	orbital_points.clear()
+	breach_age = -1
 func verdict() -> void:
 	for target: HeroActor in actor.get_tree().get_nodes_in_group("actors"):
 		var offset: Vector3 = target.global_position - actor.global_position
@@ -309,7 +340,9 @@ func cancel(clear_owned: bool = false) -> void:
 	verdict_forward_left = 0
 	verdict_steer_left = 0
 	if actor.state.begins_with("marshal_"): actor.state = "ready"
-	if clear_owned: breach_age = -1
+	if clear_owned:
+		clear_orbital()
+		if is_instance_valid(barrier): barrier.clear_feedback()
 	super.cancel(clear_owned)
 
 func refill() -> void:
@@ -317,7 +350,7 @@ func refill() -> void:
 	barrier_hp = data().barrier_health
 	break_remaining = 0
 	lowered_age = 0
-	breach_age = -1
+	clear_orbital()
 	if is_instance_valid(barrier): barrier.received.clear()
 
 func fire(_ultimate: bool = false) -> void:
@@ -341,7 +374,7 @@ func fire(_ultimate: bool = false) -> void:
 	consume_ammo()
 	shot_cd = primary_interval()
 	actor.presentation.fire_flash = .22
-	actor.presentation.sound.play_tone(45,.28,.4)
+	actor.presentation.marshal_combat.fire()
 	if actor.controller is PlayerController: (actor.controller as PlayerController).add_recoil(.075)
 	actor.resolver.record("cast",actor,"cannon")
 

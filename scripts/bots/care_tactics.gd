@@ -80,7 +80,7 @@ static func apply(a: HeroActor, input: CombatIntent) -> void:
 		if a.state == "marshal_march":
 			if not marshal_safe_lane(a,k.march_direction,k.march_left): k.finish_march(false)
 			input.move = forward if marshal_safe_lane(a,forward,k.march_left) else Vector3.ZERO
-		input.bomb = distance > 8 and distance < 22 and k.bomb_cd <= 0
+		input.bomb = distance > 8 and distance < 22 and k.bomb_cd <= 0 and MarshalOrbitalTargeting.can_strike(a,input.aim,threat.body_point(.9))
 		input.ultimate = distance < k.data().verdict_range - .5 and k.ultimate_charge >= 100 and marshal_verdict_safe(a,forward)
 
 static func marshal_safe_lane(a: HeroActor, direction: Vector3, distance: float) -> bool:

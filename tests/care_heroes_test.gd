@@ -378,7 +378,7 @@ func offensive_tests() -> void:
 	m.tick(0,marshal.intent)
 	marshal.intent.bomb = false
 	m.tick(.39,marshal.intent)
-	near(enemy.health,250,"Breach Line has damage-free warning")
+	near(enemy.health,250,"Orbital Barrage has damage-free warning")
 	m.tick(.8,marshal.intent)
 	near(enemy.health,175,"overlapping breach explosions hit each enemy once")
 	check(m.breach_index == 10,"barrage progresses through ten explosions")
@@ -392,7 +392,7 @@ func offensive_tests() -> void:
 	m.tick(0,marshal.intent)
 	marshal.intent.bomb = false
 	m.tick(2,marshal.intent)
-	near(enemy.health,175,"Breach Line follows 3D aim to airborne targets")
+	near(enemy.health,250,"ground-targeted Orbital Barrage cannot explode at airborne aim points")
 	await reset()
 	marshal.position = Vector3(0,.01,0)
 	doctor.position = Vector3(-12,.01,0)
@@ -508,7 +508,7 @@ func edge_tests() -> void:
 	marshal.intent.bomb = false
 	m.tick(2,marshal.intent)
 	near(defender.health,550,"shield-breaking Breach Line explosion still protects its owner")
-	check(defense.barrier_hp == 0 and m.breach_index == m.data().breach_count,"barrage ends at the hostile barrier even when breaking it")
+	check(defense.barrier_hp == 0 and m.breach_index == m.orbital_points.size() and m.breach_age < 0,"barrage ends at the hostile barrier even when breaking it")
 	defender.queue_free()
 	await reset()
 	marshal.position = Vector3(0,.01,0)

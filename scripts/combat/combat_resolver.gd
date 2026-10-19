@@ -220,7 +220,7 @@ func weapon_ray(source: HeroActor, from: Vector3, to: Vector3, exclude: Array[RI
 	var shield: Dictionary = barrier_ray(source,from,hit.get("position",to))
 	return shield if not shield.is_empty() else hit
 
-func splash(source: HeroActor, origin: Vector3, radius: float, amount: float, tag: String, id: int, falloff: bool = false) -> void:
+func splash(source: HeroActor, origin: Vector3, radius: float, amount: float, tag: String, id: int, falloff: bool = false, impact_damage: Dictionary = {}) -> void:
 	# Snapshot cover before changing any durability: a breaking shield still stops this blast.
 	var victims: Array[HeroActor] = []
 	for target: HeroActor in get_tree().get_nodes_in_group("actors"):
@@ -236,11 +236,13 @@ func splash(source: HeroActor, origin: Vector3, radius: float, amount: float, ta
 	for barrier: CombatBarrier in get_tree().get_nodes_in_group("barriers"):
 		if not barrier.active() or barrier.source.team == source.team: continue
 		var nearest: Vector3 = barrier.nearest_point(origin)
-		if origin.distance_to(nearest) <= radius and ray(origin,nearest,[],1).is_empty(): barrier.receive_damage(source,amount,id)
+		if origin.distance_to(nearest) <= radius and ray(origin,nearest,[],1).is_empty(): barrier.receive_damage(source,float(impact_damage.get(barrier,amount)),id)
 	for target: HeroActor in victims:
 		var distance: float = origin.distance_to(target.global_position + Vector3.UP * .9)
 		damage(source,target,amount * (maxf(0,1-distance/radius) if falloff else 1.0),tag,id,false,false,origin)
-	for structure: CombatStructure in structures: structure.receive_damage(source,amount,id)
+	# Explosive projectiles can retain stronger direct object hits without breaking
+	# cover before the blast's protected victims have been snapshotted.
+	for structure: CombatStructure in structures: structure.receive_damage(source,float(impact_damage.get(structure,amount)),id)
 
 func hit_object(collider: Object, source: HeroActor, amount: float, id: int) -> void:
 	if is_instance_valid(collider) and collider.has_method("receive_damage"):
