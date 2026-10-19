@@ -36,6 +36,8 @@ func _ready() -> void:
 	mesh.outer_radius = .32
 	flash_mesh = Geometry.mesh(presentation.rifle,mesh,Vector3(0,.04,-.91),Geometry.material(Color("ffe1a3"),2.8))
 	flash_mesh.rotation.x = PI/2
+	if is_instance_valid(presentation.marshal_model):
+		flash_mesh.position = presentation.rifle.to_local(presentation.marshal_model.muzzle.global_position)
 	flash_mesh.visible = false
 
 func fire() -> void:

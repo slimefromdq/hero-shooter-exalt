@@ -1,5 +1,7 @@
 # Marshal and Doctor
 
+Marshal's playable Blender character, rig, cannon, shield emitter, source-generation commands and visual validation are documented in [MARSHAL_CHARACTER.md](MARSHAL_CHARACTER.md).
+
 October 17, 2026. Two new playable heroes, separate from the reserved Annex and Ahab concepts. The kits implement the requested roles; all numerical balance remains provisional.
 
 ## Play

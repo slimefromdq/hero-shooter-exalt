@@ -1,0 +1,31 @@
+{
+  "blender": "5.2.2 LTS",
+  "triangles": 36816,
+  "vertices": 18840,
+  "skin_vertices": 16832,
+  "bones": 19,
+  "max_influences": 4,
+  "rigged": true,
+  "bounds_min": [
+    -0.7499999403953552,
+    -0.22999992966651917,
+    0.0
+  ],
+  "bounds_max": [
+    0.7499999403953552,
+    0.3830840587615967,
+    2.674473524093628
+  ],
+  "body_height_m": 1.963,
+  "height_with_hat_m": 2.674473524093628,
+  "facing_blender": "+Y",
+  "facing_godot": "-Z",
+  "facial_morphs": [
+    "Blink",
+    "Focused",
+    "MouthOpen"
+  ],
+  "validated": true,
+  "gameplay_modified": false,
+  "source_sha256": "bc788c5d6064fa533dfe50e4b4f1ab5d3e358fe9d8af44f1601413359414da2f"
+}

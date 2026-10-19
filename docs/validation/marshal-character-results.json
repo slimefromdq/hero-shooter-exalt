@@ -1,0 +1,19 @@
+{
+  "engine": "4.7.2.stable.official.ed1daf0bf",
+  "blender": "5.2.2 LTS",
+  "source_sha256": "bc788c5d6064fa533dfe50e4b4f1ab5d3e358fe9d8af44f1601413359414da2f",
+  "triangles": 36816,
+  "bones": 19,
+  "facial_morphs": ["Blink", "Focused", "MouthOpen"],
+  "max_influences": 4,
+  "source_validation": {"checks": 177, "failures": 0},
+  "focused_headless": {"checks": 43, "failures": 0},
+  "focused_forward_plus": {"checks": 61, "failures": 0},
+  "full_project_verification": {"command": "powershell -ExecutionPolicy Bypass -File tools/verify.ps1", "exit_code": 0},
+  "structural_audit": {"surface_probes": 2516, "winding_checks": 4420, "errors": 0},
+  "real_game_captures": ["training-gameplay", "training-crouch-gameplay", "city-gameplay", "city-character"],
+  "real_city_authored_actors": 2,
+  "evidence_directory": "artifacts/marshal-character/",
+  "gameplay_modified": false,
+  "human_playtesting_remaining": "Extended animation feel and player preference"
+}

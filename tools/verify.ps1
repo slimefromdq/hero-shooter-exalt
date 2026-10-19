@@ -48,6 +48,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Marshal orbital targeting and combat presentation failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/marshal_cannon_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Marshal cannon failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/marshal_character_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Marshal Blender skin, attachments or lifecycle failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/marshal_rework_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Marshal movement rework failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/care_heroes_test.gd
@@ -101,6 +103,10 @@ try {
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_navigation_regression.gd
     if ($LASTEXITCODE -ne 0) { throw 'City navigation recovery or healing route failed.' }
     if ($Capture) {
+        & $taskEngine --path $taskRoot --script res://tests/marshal_character_test.gd --windowed --resolution 1440x1100 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Marshal rendered rig validation failed.' }
+        & $taskEngine --path $taskRoot --script res://tests/capture_marshal_character_game.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Marshal live game captures failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_marshal_polish.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
         if ($LASTEXITCODE -ne 0) { throw 'Marshal orbital, cannon and barrier rendered capture failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_overhealth.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60

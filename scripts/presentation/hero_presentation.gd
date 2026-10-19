@@ -43,6 +43,7 @@ var team_ring: MeshInstance3D
 var roster_parts: Dictionary = {}
 var slayer_shot: SlayerShotPresentation
 var slayer_model: SlayerCharacterDriver
+var marshal_model: MarshalCharacterDriver
 var slayer_abilities: SlayerAbilityPresentation
 
 func _ready() -> void:
@@ -166,6 +167,7 @@ func _ready() -> void:
 	if actor.kit is ExpansionKit: RosterVisuals.remodel(self)
 	elif actor.kit is HuddleKit: HuddleVisuals.remodel(self)
 	elif actor.kit is CareKit: CareVisuals.remodel(self)
+	if actor.kit is MarshalKit: marshal_model = MarshalCharacterDriver.attach(self)
 	overhealth_visual = OverhealthVisual.new()
 	overhealth_visual.actor = actor
 	add_child(overhealth_visual)
@@ -180,11 +182,14 @@ func _ready() -> void:
 	for side: float in [-1.0, 1.0]:
 		var badge := BoxMesh.new()
 		badge.size = Vector3(.065,.10,.055) if is_instance_valid(slayer_model) else Vector3(.14, .18, .37)
-		Geometry.mesh(body, badge, Vector3(side * (.225 if is_instance_valid(slayer_model) else .31),1.44,0),team_material)
+		if is_instance_valid(marshal_model):
+			badge.size = Vector3(.05,.045,.24)
+		Geometry.mesh(body, badge, Vector3(side*.48,1.57,0) if is_instance_valid(marshal_model) else Vector3(side * (.225 if is_instance_valid(slayer_model) else .31),1.44,0),team_material)
 	for z: float in [-.23, .23]:
 		var band := BoxMesh.new()
 		band.size = Vector3(.5, .09, .04)
 		if is_instance_valid(slayer_model): band.size = Vector3(.29,.025,.012)
+		if is_instance_valid(marshal_model): band.size = Vector3(.27,.024,.012)
 		Geometry.mesh(body,band,Vector3(0,1.33,z*.61) if is_instance_valid(slayer_model) else Vector3(0,1.25,z),team_material)
 	var team_shape := TorusMesh.new()
 	team_shape.inner_radius = .43
@@ -200,6 +205,11 @@ func _ready() -> void:
 	ring.outer_radius = .52
 	status_ring = Geometry.mesh(self,ring,Vector3(0,.15,0),Geometry.material(Color("c79aef"),.8))
 	status_ring.visible = false
+	if is_instance_valid(marshal_model):
+		health_bar.position.y = 2.95
+		nameplate.position.y = 3.45
+		stagger_marks.position.y = 2.9
+		status_label.position.y = 2.85
 
 func make_limb(caption: String, at: Vector3, upper: float, lower: float, radius: float, color: Color) -> Node3D:
 	var pivot := Node3D.new()
@@ -247,6 +257,7 @@ func _process(delta: float) -> void:
 	stagger_marks.rotation.y = (1.0 - actor.state_time / maxf(.01,actor.tuning.stagger_duration)) * TAU
 	rifle.rotation = Vector3.ZERO
 	rifle.position = Vector3(.10,1.30,0) if is_instance_valid(slayer_model) and slayer_model.active else Vector3(.34,1.38,-.25)
+	if is_instance_valid(marshal_model) and marshal_model.active: rifle.position = Vector3(.13,1.34,.08)
 	if actor.kit.reloading and actor.state == "ready":
 		rifle.rotation.x = -0.7
 	var animation: String = ""
@@ -433,6 +444,7 @@ func _process(delta: float) -> void:
 		material.albedo_color.a = .2 if obstructing else 1.0
 
 	if is_instance_valid(slayer_model): slayer_model.update(delta)
+	if is_instance_valid(marshal_model): marshal_model.update(delta)
 
 func on_block(attacker: HeroActor, defender: HeroActor) -> void:
 	if defender != actor:
@@ -453,6 +465,7 @@ func clear_feedback() -> void:
 	if is_instance_valid(overhealth_visual): overhealth_visual.clear()
 	fire_flash = 0.0
 	if is_instance_valid(slayer_model): slayer_model.reset_feedback()
+	if is_instance_valid(marshal_model): marshal_model.reset_feedback()
 	if is_instance_valid(slayer_shot): slayer_shot.clear()
 	if is_instance_valid(slayer_abilities): slayer_abilities.clear()
 	if is_instance_valid(sound): sound.stop_slayer_voices()

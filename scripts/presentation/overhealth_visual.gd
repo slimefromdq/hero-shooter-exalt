@@ -35,6 +35,8 @@ func _ready() -> void:
 	actor.overhealth_broken.connect(broken)
 	actor.overhealth_cleared.connect(clear)
 	refresh(actor.overhealth.value())
+	if actor.tuning.hero_id == "marshal" and is_instance_valid(actor.presentation.marshal_model):
+		armor.scale = Vector3(1.26,1.04,1.22)
 
 func refresh(amount: float) -> void:
 	armor.visible = actor.alive and amount > 0
