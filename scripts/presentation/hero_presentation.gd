@@ -248,6 +248,10 @@ func _process(delta: float) -> void:
 	elif boot_release > 0:
 		animation = "slayer/boot_release"
 		progress = 1.0 - boot_release / .18
+	elif actor.state == "marshal_march":
+		animation = "care/march"
+		var marshal_kit := actor.kit as MarshalKit
+		progress = minf(.85,marshal_kit.march_age/.15*.2) if marshal_kit.march_left > 2 else lerpf(.85,1,1-marshal_kit.march_left/2)
 	elif actor.state == "marshal_verdict":
 		animation = "care/verdict"
 		progress = (actor.kit as MarshalKit).verdict_progress()

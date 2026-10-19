@@ -79,8 +79,19 @@ func safe_travel(a: HeroActor, direction: Vector3, distance: float, rise: float 
 	return session == null or not session.definition.spawn_bounds(1-a.team).has_point(end)
 
 func apply(brain: BotBrain, input: CombatIntent, recovering: bool) -> void:
-	if recovering: return
+	if recovering and brain.actor.state not in ["marshal_march","marshal_verdict"]: return
 	var a: HeroActor = brain.actor
+	if a.state in ["marshal_march","marshal_verdict"]:
+		input.move = Vector3.ZERO
+		var marshal_kit := a.kit as MarshalKit
+		if a.state == "marshal_march" and not CareTactics.marshal_safe_lane(a,marshal_kit.march_direction,marshal_kit.march_left):
+			marshal_kit.finish_march(false)
+			return
+		if not brain.threat.is_empty():
+			var toward: Vector3 = ((Vector3(brain.threat.position)-a.global_position)*Vector3(1,0,1)).normalized()
+			if a.state == "marshal_march" and CareTactics.marshal_safe_lane(a,toward,marshal_kit.march_left):
+				input.move = toward
+		return
 	if a.state in ["slayer_boot_start","slayer_boot_active"]:
 		if not brain.threat.is_empty(): input.move = ((brain.threat.position-a.global_position)*Vector3(1,0,1)).normalized()
 		return

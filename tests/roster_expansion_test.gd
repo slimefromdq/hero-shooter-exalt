@@ -284,6 +284,8 @@ func wall_tests() -> void:
 	check(absf(steering.x) > .1,"bots choose a physical detour around a wall")
 	dynamo.position = Vector3(15,.01,0)
 	friend.position = Vector3(0,.01,-9)
+	# Keep the firing position clear for weapons with a physical muzzle sweep.
+	relay.position = Vector3(-15,.01,0)
 	for id: String in HeroRoster.IDS:
 		foes[0].select_hero(id)
 		foes[0].position = Vector3(0,.01,0)

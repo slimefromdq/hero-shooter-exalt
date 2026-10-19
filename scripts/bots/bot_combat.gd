@@ -86,9 +86,11 @@ func evaluate(brain: BotBrain) -> void:
 		var marshal := k as MarshalKit
 		if seen and distance > 6 and marshal.barrier_hp > 120 and marshal.break_remaining <= 0 and (a.last_hit_age < 1.5 or brain.tactical_state in ["protect","hold"]): offer("secondary_held",.74,point,true)
 		if health < .55 and a.last_hit_age < 1.5 and k.deflect_cd <= 0: offer("deflect",.9)
-		if seen and distance < marshal.data().march_range and distance > 2 and marshal.mobility_cd <= 0: offer("hover",.72,point)
+		var march_toward: Vector3 = ((point-a.global_position)*Vector3(1,0,1)).normalized()
+		if seen and not escaping and distance < marshal.data().march_range-1 and distance > 3 and marshal.mobility_cd <= 0 and CareTactics.marshal_safe_lane(a,march_toward,marshal.data().march_range):
+			offer("hover",.82 if str(brain.threat.get("state","")) in ["ultimate","melee_windup","marshal_verdict"] else .72,point)
 		if seen and distance > 6 and distance < marshal.data().breach_count*marshal.data().breach_spacing and k.bomb_cd <= 0: offer("bomb",.65,point)
-		if seen and distance < marshal.data().verdict_range and k.ultimate_charge >= 100 and not escaping: offer("ultimate",impact,point)
+		if seen and distance < marshal.data().verdict_range and k.ultimate_charge >= 100 and not escaping and CareTactics.marshal_verdict_safe(a,march_toward): offer("ultimate",impact,point)
 	elif k is DoctorKit:
 		var doctor := k as DoctorKit
 		var self_defense: bool = seen and distance < 5 and health < .4
@@ -236,11 +238,13 @@ func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) ->
 		var point: Vector3 = brain.threat.position+Vector3.UP*1.1
 		var lead: float = 0.0
 		if a.kit is RelayKit: lead = a.global_position.distance_to(point)/(a.tuning as RelayTuning).carbine_speed
+		elif a.kit is MarshalKit: lead = a.global_position.distance_to(point)/(a.tuning as MarshalTuning).cannon_speed
 		elif a.kit is HuddleKit: lead = a.global_position.distance_to(point)/(a.tuning as HuddleTuning).seed_speed
 		if str(choice.get("action","")) == "hover" and a.kit is SlayerKit:
 			lead = a.global_position.distance_to(point)/(a.tuning as SlayerTuning).knife_speed
 			point.y += .5*(a.tuning as SlayerTuning).knife_gravity*lead*lead
 		point += Vector3(brain.threat.velocity)*lead*brain.skill.prediction
+		if a.kit is MarshalKit: point.y += .5*(a.tuning as MarshalTuning).cannon_gravity*lead*lead
 		desired = point-input.aim_origin
 	var action: String = str(choice.get("action",""))
 	var action_point: Vector3 = choice.get("point",Vector3.INF)
@@ -264,6 +268,15 @@ func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) ->
 	input.primary = false
 	input.primary_held = false
 	input.secondary_held = false
+	# Revalidate after aim delay: routing or an obstacle may have changed.
+	if a.kit is MarshalKit and action in ["hover","ultimate"]:
+		var forward: Vector3 = (input.aim*Vector3(1,0,1)).normalized()
+		if action == "hover" and not CareTactics.marshal_safe_lane(a,forward,(a.tuning as MarshalTuning).march_range):
+			choice = {}
+			return
+		if action == "ultimate" and not CareTactics.marshal_verdict_safe(a,forward):
+			choice = {}
+			return
 	input.set(action,true)
 	if action == "hover" and a.kit is RelayKit: input.move = desired.normalized()*Vector3(1,0,1)
 	if action == "bomb" and a.kit is NimbusKit:

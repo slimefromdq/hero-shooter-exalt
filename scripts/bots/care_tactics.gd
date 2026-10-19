@@ -75,6 +75,43 @@ static func apply(a: HeroActor, input: CombatIntent) -> void:
 		input.secondary_held = distance > 9 and (a.last_hit_age < 1.5 or threat.intent.primary or threat.intent.primary_held) and k.barrier_hp > 100
 		input.primary_held = not input.secondary_held and distance < 25
 		input.deflect = a.health < a.effective_max_health() * .55 and a.last_hit_age < 2
-		input.hover = distance > 2 and distance < 6 and k.mobility_cd <= 0
+		var forward: Vector3 = ((threat.global_position-a.global_position)*Vector3(1,0,1)).normalized()
+		input.hover = distance > 3 and distance < 18 and k.mobility_cd <= 0 and marshal_safe_lane(a,forward,k.data().march_range)
+		if a.state == "marshal_march":
+			if not marshal_safe_lane(a,k.march_direction,k.march_left): k.finish_march(false)
+			input.move = forward if marshal_safe_lane(a,forward,k.march_left) else Vector3.ZERO
 		input.bomb = distance > 8 and distance < 22 and k.bomb_cd <= 0
-		input.ultimate = distance < k.data().verdict_range - .5 and k.ultimate_charge >= 100
+		input.ultimate = distance < k.data().verdict_range - .5 and k.ultimate_charge >= 100 and marshal_verdict_safe(a,forward)
+
+static func marshal_safe_lane(a: HeroActor, direction: Vector3, distance: float) -> bool:
+	if direction.is_zero_approx(): return false
+	var shape := CapsuleShape3D.new()
+	shape.radius = .4
+	shape.height = 1.8
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = shape
+	query.transform = Transform3D(Basis.IDENTITY,a.global_position+Vector3.UP*1.02)
+	query.collision_mask = 1
+	query.motion = direction*distance
+	if not a.get_world_3d().direct_space_state.intersect_shape(query,1).is_empty(): return false
+	var sweep: PackedFloat32Array = a.get_world_3d().direct_space_state.cast_motion(query)
+	if sweep[0] < .99: return false
+	# Check the whole lane: a safe endpoint alone can hide an intervening pit.
+	for index: int in int(ceil(distance/.75))+1:
+		var at: Vector3 = a.global_position+direction*minf(distance,index*.75)
+		var floor_hit: Dictionary = a.resolver.ray(at+Vector3.UP,at+Vector3.DOWN*2,[],1)
+		if floor_hit.is_empty() or floor_hit.normal.y < cos(a.floor_max_angle): return false
+		var session: Node = a.get_tree().get_first_node_in_group("city_match")
+		if session != null and session.definition.spawn_bounds(1-a.team).has_point(at): return false
+	return true
+
+static func marshal_verdict_safe(a: HeroActor, direction: Vector3) -> bool:
+	var t := a.tuning as MarshalTuning
+	var rise: float = t.verdict_jump_speed*t.verdict_jump_speed/(2*a.tuning.gravity)
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = a.motor.body_collision.shape
+	query.transform = a.motor.body_collision.global_transform
+	query.collision_mask = 1
+	query.motion = Vector3.UP*(rise+.2)
+	if a.get_world_3d().direct_space_state.cast_motion(query)[0] < .99: return false
+	return marshal_safe_lane(a,direction,t.verdict_forward_range)

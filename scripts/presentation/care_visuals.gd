@@ -66,10 +66,13 @@ static func remodel(p: HeroPresentation) -> void:
 		p.rifle.remove_child(child)
 		child.queue_free()
 	if marshal:
-		Geometry.box(p.rifle,Vector3(.26,.28,.65),Vector3(0,0,-.15),Color("27323c"),false)
-		for x: float in [-.07,.07]:
-			Geometry.box(p.rifle,Vector3(.075,.09,.4),Vector3(x,.04,-.6),trim,false)
-		Geometry.cylinder(p.rifle,.15,.26,Vector3(0,-.05,.16),trim)
+		Geometry.box(p.rifle,Vector3(.32,.32,.5),Vector3(0,-.04,.02),Color("27323c"),false)
+		var barrel: MeshInstance3D = Geometry.cylinder(p.rifle,.23,.85,Vector3(0,.04,-.4),trim)
+		barrel.rotation.x = PI/2
+		var muzzle: MeshInstance3D = Geometry.cylinder(p.rifle,.18,.012,Vector3(0,.04,-.832),Color("11151c"))
+		muzzle.rotation.x = PI/2
+		var rim: MeshInstance3D = Geometry.cylinder(p.rifle,.25,.09,Vector3(0,.04,-.76),Color("8d744a"))
+		rim.rotation.x = PI/2
 	else:
 		Geometry.box(p.rifle,Vector3(.09,.13,.37),Vector3(0,0,-.15),Color("cbbd8b"),false)
 		Geometry.box(p.rifle,Vector3(.08,.18,.09),Vector3(0,-.12,0),Color("48786f"),false)
@@ -95,6 +98,12 @@ static func animations() -> AnimationLibrary:
 	CloseCombatAnimations.track(slam,"Model/Geometry/RightArm:rotation",[0,.6,.85,1],[Vector3(1.1,0,0),Vector3(2.9,0,.1),Vector3(2.8,0,.1),Vector3(.5,0,.1)])
 	CloseCombatAnimations.track(slam,"Model:rotation",[0,.6,.85,1],[Vector3.ZERO,Vector3(-.25,0,0),Vector3(-.2,0,0),Vector3(.5,0,0)])
 	library.add_animation("verdict",slam)
+	var march := Animation.new()
+	march.length = 1.0
+	CloseCombatAnimations.track(march,"Model:rotation",[0,.2,.85,1],[Vector3.ZERO,Vector3(.32,0,-.06),Vector3(.32,0,-.06),Vector3.ZERO])
+	CloseCombatAnimations.track(march,"Model/Geometry/LeftArm:rotation",[0,.2,.85,1],[Vector3(.1,0,-.15),Vector3(1.3,0,-.5),Vector3(1.3,0,-.5),Vector3(.1,0,-.15)])
+	CloseCombatAnimations.track(march,"Model/Geometry/RightArm:rotation",[0,.2,.85,1],[Vector3(1.1,0,0),Vector3(.6,0,.25),Vector3(.6,0,.25),Vector3(1.1,0,0)])
+	library.add_animation("march",march)
 	var care := Animation.new()
 	care.length = 1.0
 	CloseCombatAnimations.track(care,"Model/Geometry/LeftArm:rotation",[0,.3,1],[Vector3(.1,0,-.15),Vector3(1.3,0,-.3),Vector3(1.6,0,-.15)])
@@ -111,6 +120,9 @@ static func animate(p: HeroPresentation) -> void:
 		p.care_tool.rotation = p.right_arm.rotation
 		p.rifle.visible = not p.care_tool.visible and a.state != "marshal_shield"
 		if a.state == "marshal_shield": p.left_arm.rotation.x = 1.45
+		var cannon_kick: float = pow(clampf(p.fire_flash/.22,0,1),2)
+		p.rifle.position.z += cannon_kick*.16
+		p.rifle.rotation.x -= cannon_kick*.12
 	else:
 		p.care_tool.visible = (a.kit as DoctorKit).beam_healing or a.state == "doctor_ultimate"
 		p.care_tool.position = Vector3(-.35,1.35,-.45)

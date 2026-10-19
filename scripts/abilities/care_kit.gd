@@ -43,9 +43,6 @@ func weapon(amount: float, spread: float = 0.0, pellets: int = 1) -> void:
 		var endpoint: Vector3 = hit.get("position",muzzle + aim * 70)
 		var id: int = actor.resolver.new_cast(actor)
 		var damage: float = amount / pellets
-		if actor.tuning is MarshalTuning:
-			var t := actor.tuning as MarshalTuning
-			damage *= lerpf(1,t.cannon_minimum,clampf((muzzle.distance_to(endpoint) - t.cannon_falloff_start) / (t.cannon_falloff_end - t.cannon_falloff_start),0,1))
 		var target: HeroActor = hit.get("collider") as HeroActor
 		if target != null:
 			var head: bool = endpoint.y - target.global_position.y >= target.headshot_height()
@@ -62,7 +59,4 @@ func refill() -> void:
 	mobility_cd = 0
 
 func fire(_ultimate: bool = false) -> void:
-	if actor.tuning is MarshalTuning:
-		var t := actor.tuning as MarshalTuning
-		weapon(t.cannon_damage,t.cannon_spread,t.cannon_pellets)
-	else: weapon(actor.tuning.rifle_damage)
+	weapon(actor.tuning.rifle_damage)

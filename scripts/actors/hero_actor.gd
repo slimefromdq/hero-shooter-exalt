@@ -81,8 +81,8 @@ func _physics_process(delta: float) -> void:
 	if state not in ["captured", "throw_pair", "mantle", "boot_captured"]:
 		if state in ["huddle_wave","huddle_scatter"]:
 			aim_direction = (kit as HuddleKit).travel_direction
-		elif state == "marshal_verdict":
-			aim_direction = (kit as MarshalKit).verdict_direction
+		elif state in ["marshal_verdict","marshal_march"]:
+			aim_direction = (kit as MarshalKit).verdict_direction if state == "marshal_verdict" else (kit as MarshalKit).march_direction
 		elif state in ["slayer_boot_start", "slayer_boot_active"]:
 			aim_direction = (kit as SlayerKit).boot_direction
 		else:

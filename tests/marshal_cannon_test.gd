@@ -1,0 +1,190 @@
+extends "res://tests/care_heroes_test.gd"
+
+func run() -> void:
+	world = Node3D.new()
+	root.add_child(world)
+	current_scene = world
+	resolver = CombatResolver.new()
+	world.add_child(resolver)
+	Geometry.box(world,Vector3(150,1,150),Vector3(0,-.5,0),Color.GRAY)
+	doctor = spawn("doctor",0,Vector3(-30,0,0))
+	friend = spawn("nimbus",0,Vector3(-30,0,5))
+	enemy = spawn("nimbus",1,Vector3(0,.01,-10))
+	marshal = spawn("marshal",0,Vector3(0,.01,0))
+	hunter = spawn("slayer",1,Vector3(-30,0,10))
+	second = spawn("doctor",0,Vector3(-30,0,15))
+	await setup_shot()
+	var kit := marshal.kit as MarshalKit
+	near(marshal.tuning.shot_interval,1.1,"cannon has slow deliberate cadence")
+	check(kit.ammo == 4,"cannon magazine holds four balls")
+	kit.fire(false)
+	var attacks: Array[Node] = get_nodes_in_group("marshal_cannonballs")
+	check(attacks.size() == 1,"one trigger launches one large cannonball")
+	check(kit.ammo == 3,"one cannonball costs one round")
+	near(enemy.health,250,"cannon is not instantaneous hitscan")
+	kit.fire(false)
+	check(get_nodes_in_group("marshal_cannonballs").size() == 1,"cadence prevents rapid duplicate shots")
+	var projectile: MarshalCannonball = attacks[0] as MarshalCannonball
+	projectile.set_physics_process(false)
+	near(projectile.radius,.24,"cannonball has a forty-eight centimetre diameter")
+	projectile._physics_process(.1)
+	near(enemy.health,250,"visible flight precedes distant damage")
+	advance(projectile,.4,60)
+	near(enemy.health,100,"single impact deals full 150 damage")
+	for fps: int in [20,30,60,120]:
+		await setup_shot()
+		projectile = ball(Vector3(0,1.3,0))
+		advance(projectile,.5,fps)
+		near(enemy.health,100,"swept hit once at %d Hz" % fps)
+	await setup_shot()
+	enemy.position.x = .58
+	await step()
+	projectile = ball(Vector3(0,1.3,0))
+	advance(projectile,.5,20)
+	near(enemy.health,100,"large sphere catches a glancing target outside its centre ray")
+	await setup_shot()
+	projectile = ball(Vector3(0,1.78,0))
+	advance(projectile,.5,60)
+	near(enemy.health,100,"head contact does not multiply heavy cannon damage")
+	await setup_shot()
+	var wall: Node3D = Geometry.box(world,Vector3(8,5,.08),Vector3(0,2,-5),Color.GRAY)
+	await step()
+	projectile = ball(Vector3(0,1.3,0))
+	advance(projectile,.5,20)
+	near(enemy.health,250,"thin world wall blocks cannonball at low frame rate")
+	check(projectile.is_queued_for_deletion(),"world impact consumes cannonball")
+	wall.queue_free()
+	await step()
+	await setup_shot()
+	enemy.state = "guard"
+	enemy.aim_direction = Vector3.BACK
+	projectile = ball(Vector3(0,1.3,0))
+	advance(projectile,.5,60)
+	near(enemy.health,250-150*(1-enemy.tuning.bullet_guard_reduction),"guard uses existing ranged-damage rules")
+	await setup_shot()
+	enemy.position.z = -5
+	enemy.state = "deflect"
+	enemy.aim_direction = Vector3.BACK
+	await step()
+	projectile = ball(Vector3(0,1.3,-1))
+	advance(projectile,1,60)
+	near(enemy.health,250,"frontal deflect protects defender")
+	near(marshal.health,400,"deflected cannonball returns through combat resolver")
+	await setup_shot()
+	var defender: HeroActor = spawn("marshal",1,Vector3(0,.01,-5))
+	defender.state = "marshal_shield"
+	defender.aim_direction = Vector3.BACK
+	await step()
+	projectile = ball(Vector3(0,1.3,0))
+	advance(projectile,.5,20)
+	near((defender.kit as MarshalKit).barrier_hp,1050,"barrier absorbs full cannon damage")
+	near(defender.health,550,"cannon cannot pierce barrier owner")
+	marshal.benefits.grant("exemplary",doctor,3)
+	var shield_boosted: float = 150*marshal.benefits.damage_multiplier()
+	projectile = ball(Vector3(0,1.3,0))
+	marshal.benefits.clear()
+	advance(projectile,.5,60)
+	near((defender.kit as MarshalKit).barrier_hp,1050-shield_boosted,"barrier applies cast-time power exactly once")
+	defender.queue_free()
+	await step()
+	await setup_shot()
+	friend.position = Vector3(0,.01,-5)
+	await step()
+	projectile = ball(Vector3(0,1.3,0))
+	advance(projectile,.5,60)
+	near(friend.health,250,"friendly actor takes no damage")
+	near(enemy.health,100,"friendly actor does not consume cannonball")
+	await setup_shot()
+	enemy.position.z = -40
+	await step()
+	projectile = ball(Vector3(0,1.3,0))
+	projectile.velocity.y = .5*projectile.gravity*40/32
+	advance(projectile,1.5,60)
+	near(enemy.health,100,"distant cannon hit retains full damage without pellet falloff")
+	await setup_shot()
+	var structure := CombatStructure.new()
+	structure.source = enemy
+	structure.health = 1000
+	structure.maximum = 1000
+	structure.size = Vector3(4,4,.5)
+	world.add_child(structure)
+	structure.position = Vector3(0,2,-5)
+	await step()
+	marshal.benefits.grant("exemplary",doctor,3)
+	var structure_boosted: float = 150*marshal.benefits.damage_multiplier()
+	projectile = ball(Vector3(0,1.3,0))
+	marshal.benefits.clear()
+	advance(projectile,.5,60)
+	near(structure.health,1000-structure_boosted,"destructible wall applies cast-time power exactly once")
+	near(enemy.health,250,"destructible wall absorbs cannonball before actor behind it")
+	structure.queue_free()
+	await step()
+	await setup_shot()
+	marshal.benefits.grant("exemplary",doctor,3)
+	var boosted: float = 150*marshal.benefits.damage_multiplier()
+	projectile = ball(Vector3(0,1.3,0))
+	marshal.benefits.clear()
+	advance(projectile,.5,60)
+	near(enemy.health,maxf(0,250-boosted),"in-flight cannonball preserves damage power committed at fire time")
+	await setup_shot()
+	enemy.position.z = -2
+	wall = Geometry.box(world,Vector3(8,4,.08),Vector3(0,1,-.55),Color.GRAY)
+	await step()
+	kit.fire(false)
+	for attack: Node in get_nodes_in_group("marshal_cannonballs"):
+		projectile = attack as MarshalCannonball
+		projectile.set_physics_process(false)
+		advance(projectile,.5,20)
+	near(enemy.health,250,"firing against close cover cannot spawn a cannonball beyond the wall")
+	wall.queue_free()
+	await step()
+	await setup_shot()
+	projectile = ball(Vector3(0,30,0))
+	projectile._physics_process(.5)
+	near(projectile.position.y,30-.5*3*.5*.5,"ballistic arc integrates gravity exactly",.01)
+	advance(projectile,3,20)
+	check(projectile.is_queued_for_deletion(),"range budget retires missed cannonballs")
+	await setup_shot()
+	projectile = ball(Vector3(0,1.3,0))
+	marshal.reset_actor()
+	check(projectile.is_queued_for_deletion(),"reset removes owned cannonballs")
+	await setup_shot()
+	kit.ammo = 0
+	kit.fire(false)
+	check(kit.reloading,"empty cannon initiates normal reload")
+	kit.tick_reload(1.79)
+	check(kit.ammo == 0,"reload cannot finish early")
+	kit.tick_reload(1.0/60)
+	check(kit.ammo == 4 and not kit.reloading,"next physics tick completes the 1.8 second four-ball reload")
+	print("RESULT: %d checks, %d failures" % [checks,failures.size()])
+	world.queue_free()
+	await step()
+	quit(0 if failures.is_empty() else 1)
+
+func setup_shot() -> void:
+	await reset()
+	marshal.position = Vector3(0,.01,0)
+	marshal.intent = CombatIntent.new()
+	marshal.aim_direction = Vector3.FORWARD
+	marshal.intent.aim = Vector3.FORWARD
+	doctor.position = Vector3(-30,.01,0)
+	friend.position = Vector3(-30,.01,5)
+	enemy.position = Vector3(0,.01,-10)
+	hunter.position = Vector3(-30,.01,10)
+	second.position = Vector3(-30,.01,15)
+	await step()
+
+func ball(at: Vector3) -> MarshalCannonball:
+	var result := MarshalCannonball.new()
+	result.source = marshal
+	result.cast_id = resolver.new_cast(marshal)
+	result.velocity = Vector3.FORWARD*32
+	world.add_child(result)
+	result.position = at
+	result.set_physics_process(false)
+	return result
+
+func advance(projectile: MarshalCannonball, seconds: float, fps: int) -> void:
+	for i: int in int(ceil(seconds*fps)):
+		if projectile.is_queued_for_deletion(): break
+		projectile._physics_process(1.0/fps)

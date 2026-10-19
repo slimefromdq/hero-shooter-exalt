@@ -62,7 +62,9 @@ func _process(delta: float) -> void:
 	rig.rotation = Vector3(pitch + recoil, yaw, 0.0)
 	arm.position.x = shoulder_offset
 	var aiming: bool = actor.intent.aim_held or actor.state == "ultimate"
-	camera.fov = lerpf(camera.fov, 34.0 if actor.state == "ultimate" else (aim_fov if aiming else normal_fov), minf(1.0, delta * 12.0))
+	var march_fov: float = 0.0
+	if actor.state == "marshal_march": march_fov = 4.0*(actor.kit as MarshalKit).march_speed/(actor.tuning as MarshalTuning).march_speed
+	camera.fov = lerpf(camera.fov, 34.0 if actor.state == "ultimate" else (aim_fov if aiming else normal_fov)+march_fov, minf(1.0, delta * 12.0))
 	var desired_distance: float = camera_distance * (0.8 if aiming else 1.0)
 	if actor.state == "marshal_shield" and actor.tuning is MarshalTuning:
 		desired_distance = (actor.tuning as MarshalTuning).shield_camera_distance
