@@ -41,6 +41,12 @@ func evaluate(brain: BotBrain) -> void:
 	var k: HeroKit = a.kit
 	choice = {}
 	ability_scores.clear()
+	if k is SamsonKit:
+		var target: HeroActor = brain.threat.actor.get_ref() as HeroActor if brain.ready_to_attack() and brain.threat.has("actor") else null
+		var selected: Dictionary = SamsonTactics.choice(a,target,brain.nearby_enemies)
+		if not selected.is_empty(): offer(selected.action,selected.score,selected.point)
+		intention = "Samson " + str(selected.get("action","support"))
+		return
 	if k is NimbusKit and a.state == "ultimate":
 		intention = "Final Notice shots"
 		return
@@ -228,6 +234,7 @@ func update_bomb(brain: BotBrain, input: CombatIntent, delta: float) -> bool:
 
 func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) -> void:
 	var a: HeroActor = brain.actor
+	if a.kit is SamsonKit and a.state.begins_with("samson_"): return
 	if a.resolver.attack_locked(a):
 		cancel("protected room")
 		return
@@ -237,7 +244,8 @@ func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) ->
 	if acquired and brain.tactical_state not in ["retreat","regroup"]:
 		var point: Vector3 = brain.threat.position+Vector3.UP*1.1
 		var lead: float = 0.0
-		if a.kit is RelayKit: lead = a.global_position.distance_to(point)/(a.tuning as RelayTuning).carbine_speed
+		if a.kit is SamsonKit: lead = a.global_position.distance_to(point)/(a.tuning as SamsonTuning).ink_speed
+		elif a.kit is RelayKit: lead = a.global_position.distance_to(point)/(a.tuning as RelayTuning).carbine_speed
 		elif a.kit is MarshalKit: lead = a.global_position.distance_to(point)/(a.tuning as MarshalTuning).cannon_speed
 		elif a.kit is HuddleKit: lead = a.global_position.distance_to(point)/(a.tuning as HuddleTuning).seed_speed
 		if str(choice.get("action","")) == "hover" and a.kit is SlayerKit:

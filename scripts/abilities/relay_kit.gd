@@ -25,14 +25,22 @@ func drone_position() -> Vector3:
 func ultimate_active() -> bool:
 	return circuit_left > 0
 
-func assign(target: HeroActor) -> bool:
+func can_assign(target: HeroActor) -> bool:
 	if not can_act("assign") or transfer_cd > 0 or not is_instance_valid(target) or not target.alive or target.team != actor.team: return false
 	if actor.resolver.protected_room(target): return false
 	if not ultimate_active() and battery < data().deploy_energy: return false
 	if target != actor:
 		if actor.global_position.distance_to(target.global_position) > data().assign_range: return false
 		if not actor.resolver.attack_ray(actor,actor.body_point(1.4),target.body_point(1.2),[],1).is_empty(): return false
-	if target == recipient: return false
+	return target != recipient
+
+func selection_previews() -> Array[Dictionary]:
+	var target: HeroActor = aimed_ally()
+	if can_assign(target): return [{"target":target,"action":"aim"}]
+	return []
+
+func assign(target: HeroActor) -> bool:
+	if not can_assign(target): return false
 	recipient = target
 	recipient_life = target.life_serial
 	transfer_left = data().transfer_time
@@ -47,17 +55,7 @@ func recall() -> void:
 	transfer_left = 0
 
 func aimed_ally() -> HeroActor:
-	var best: HeroActor
-	var score: float = cos(deg_to_rad(12))
-	for other: HeroActor in actor.get_tree().get_nodes_in_group("actors"):
-		if other == actor or other.team != actor.team or not other.alive: continue
-		if other.global_position.distance_to(actor.global_position) > data().assign_range or actor.resolver.protected_room(other): continue
-		if not actor.resolver.attack_ray(actor,actor.body_point(1.4),other.body_point(1.2),[],1).is_empty(): continue
-		var dot: float = (other.body_point(1.2)-aim_origin()).normalized().dot(actor.aim_direction)
-		if dot > score:
-			score = dot
-			best = other
-	return best
+	return AllyTargeting.aimed(actor,data().assign_range)
 
 func tick(delta: float, input: CombatIntent) -> void:
 	tick_common(delta)

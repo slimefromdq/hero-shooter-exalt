@@ -118,12 +118,12 @@ func shotgun_tests() -> void:
 	a.intent.hover = true
 	await step()
 	a.intent.hover = false
-	check(kit().knives == 2,"knife cancel is rejected during shotgun's initial recovery")
+	check(kit().knives == 3,"knife cancel is rejected during shotgun's initial recovery")
 	await step(16)
 	a.intent.hover = true
 	await step()
 	a.intent.hover = false
-	check(kit().knives == 1 and kit().shot_cd > .7,"valid knife cancel retains pump recovery")
+	check(kit().knives == 2 and kit().shot_cd > .7,"valid knife cancel retains pump recovery")
 
 func knife_tests() -> void:
 	await reset(Vector3(0,.01,-10))
@@ -162,7 +162,7 @@ func knife_tests() -> void:
 	kit().knives = 0
 	kit().knife_timer = .1
 	await step(8)
-	check(kit().knives == 1 and kit().knife_timer > 6,"knife charges regenerate sequentially")
+	check(kit().knives == 1 and kit().knife_timer > 5,"knife charges regenerate sequentially")
 	await reset(Vector3(0,.01,-6))
 	var wall: Node3D = Geometry.box(world,Vector3(3,3,.05),Vector3(0,1.5,-3),Color.GRAY)
 	await step(2)
@@ -170,7 +170,7 @@ func knife_tests() -> void:
 	await step(25)
 	check(b.health == 250,"fast knife cannot tunnel through a thin wall")
 	wall.queue_free()
-	await reset(Vector3(0,.01,-30))
+	await reset(Vector3(0,.01,-60))
 	kit().throw_knife()
 	await step(65)
 	check(b.health == 250 and get_nodes_in_group("owned_attacks").is_empty(),"knife expires at its limited range")
@@ -184,7 +184,7 @@ func boot_tests() -> void:
 	check(b.health == 250 and a.global_position.z > -.1,"Boot Rush has a damage-free readable startup")
 	await step(42)
 	check(b.health == 195 and b.position.z < -6,"boot connects once and displaces its target")
-	check(a.motor.dash_cd > 2 and kit().deflect_cd > 8,"boot does not reset universal dash or its own cooldown")
+	check(a.motor.dash_cd > 2 and kit().deflect_cd > 7,"boot does not reset universal dash or its own cooldown")
 	check(a.state == "ready","successful kick finishes its short recovery")
 	await reset(Vector3(10,.01,-6))
 	kit().start_boot()
@@ -221,7 +221,7 @@ func boot_tests() -> void:
 	a.intent.hover = true
 	await step()
 	a.intent.hover = false
-	check(kit().knives == 1 and a.motor.mode == "air","aerial knife does not grant Nimbus Hover")
+	check(kit().knives == 2 and a.motor.mode == "air","aerial knife does not grant Nimbus Hover")
 
 func trap_tests() -> void:
 	await reset(Vector3(10,.01,-6))
@@ -380,7 +380,7 @@ func edge_tests() -> void:
 	var entry: Vector3 = a.position
 	await step(15)
 	check(a.position.distance_to(entry) < .03 and a.state == "ready","snare interrupts an active Boot Rush without continuing travel")
-	check(kit().deflect_cd > 8 and a.motor.dash_cd == 0,"interrupted boot retains its spent cooldown")
+	check(kit().deflect_cd > 7 and a.motor.dash_cd == 0,"interrupted boot retains its spent cooldown")
 	await reset()
 	kit().ammo = 2
 	kit().start_reload()

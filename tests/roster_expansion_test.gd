@@ -442,7 +442,7 @@ func lifecycle_tests() -> void:
 				roles[HeroRoster.role_for(hero)] += 1
 				observed[hero] = true
 			check(team.size() == 6 and team[0] == id and roles == {"tank":2,"support":2,"dps":2},"seed %d balanced roster includes %s" % [seed_value,id])
-	check(observed.size() == 8,"seeded compositions cover all eight heroes")
+	check(observed.size() == HeroRoster.IDS.size(),"seeded compositions cover the complete registered roster")
 	for id: String in HeroRoster.IDS:
 		var elevated: int = 0
 		for slot: int in range(1,6):

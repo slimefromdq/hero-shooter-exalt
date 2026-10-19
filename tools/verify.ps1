@@ -16,6 +16,14 @@ Push-Location -LiteralPath $taskRoot
 try {
     & $taskEngine --headless --path $taskRoot --editor --import --quit
     if ($LASTEXITCODE -ne 0) { throw 'Godot import failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/ally_targeting_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Shared ally targeting failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/ability_selection_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Universal ability selection feedback failed.' }
+    foreach ($taskSamsonTest in @('samson_test', 'samson_integration_test')) {
+        & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script "res://tests/$taskSamsonTest.gd"
+        if ($LASTEXITCODE -ne 0) { throw "Samson validation failed: $taskSamsonTest" }
+    }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/movement_overhaul_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Shared movement overhaul failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/movement_visual_test.gd
@@ -75,7 +83,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Live Slayer rig, attachments, skin weights or lifecycle failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/slayer_revision_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Slayer input buffering, trap toss, feedback or throw checks failed.' }
-    & $taskEngine --headless --path $taskRoot --script res://tests/close_combat_test.gd
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/close_combat_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Melee engagement / throw choreography tests failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/guard_drill_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Guard drill or personal key bindings failed.' }
@@ -110,6 +118,10 @@ try {
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_navigation_regression.gd
     if ($LASTEXITCODE -ne 0) { throw 'City navigation recovery or healing route failed.' }
     if ($Capture) {
+        & $taskEngine --path $taskRoot --script res://tests/ability_selection_test.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Universal ability selection rendered feedback failed.' }
+        & $taskEngine --path $taskRoot --script res://tests/samson_integration_test.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60 -- --capture
+        if ($LASTEXITCODE -ne 0) { throw 'Samson native input and rendered validation failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_movement_visuals.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
         if ($LASTEXITCODE -ne 0) { throw 'Movement visual captures failed.' }
         & $taskEngine --path $taskRoot --script res://tests/marshal_character_test.gd --windowed --resolution 1440x1100 --audio-driver Dummy --fixed-fps 60

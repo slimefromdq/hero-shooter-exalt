@@ -57,3 +57,10 @@ Implemented all three heroes with editable tuning, original procedural models/po
 Verification passes 1,938 headless checks, including the final 255-check hero suite, plus 2,516 structural surface probes and 4,420 winding checks. Twenty-seven native engine input checks pass. Sixteen rendered review frames include portraits, active abilities, menus and city camera. Two 600-second simulations pass all 17 checks each, with both teams capturing, traversing subway/arcade/high-ground routes, no falls, no persistent stalls and no recovery teleports. Human balance and game-feel acceptance remain pending.
 
 See [kits and commands](RELAY_DYNAMO_WISP.md) and [machine-readable evidence](validation/roster-results.json).
+
+
+## ROSTER-05 - Samson
+
+Implemented the cockroach-lawyer Support with Deposition, two-charge Intervene, a full-speed 1.5-second Cross-Examination, six-second occupancy jurisdiction, and a 750-HP Roach Court protecting an 11 m radius. Includes stun/silence and spatial movement admission, independent overhealth slots, procedural art/audio, selection/HUD, tactical and manual bot profiles, and a rescue drill.
+
+Validation: all 54 default headless test scripts pass, 116 final focused checks pass, 18 native input/integration checks pass, and seeded 120-second City and Museum matches pass with every Samson ability used. Existing Slayer changes are preserved. Human balance and final presentation acceptance remain open. See [Samson implementation and evidence](SAMSON.md).

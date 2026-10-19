@@ -12,6 +12,7 @@ const HEROES := {
 	"nimbus":["FIELD AGENT","Precise umbrella rifle, aerial Hover and explosive setups.","Q Hover · E Deflect · 1 Pocket Bomb · 2 Final Notice"],
 	"slayer":["MONSTER HUNTER","Shotgun pressure, bleeding knives and directional boot captures.","Q Silver Knives · E Boot Rush · 1 Snare · 2 Heads Will Roll"],
 	"marshal":["MAIN TANK","Lead the advance behind an arcane barrier.","Q Forward March · E Rallying Command · 1 Orbital Barrage · 2 Verdict"],
+	"samson":["PEEL SUPPORT","Rescue allies, cross-examine threats, and establish Witness Protection.","Q Intervene · E Cross-Examination · 1 Cease and Desist · 2 Roach Court"],
 	"doctor":["MAIN SUPPORT","Hold RMB to heal allies; use LMB for precise sidearm fire.","Q House Call · E Ward Round · 1 Prescription · 2 Exemplary Condition"],
 	"huddle":["MOBILE OFF-TANK","A colony with seed fire, two flight bursts and ally protection.","Q Scatterbound · E Screen · 1 Personal Space · 2 Nobody Gets Squished"],
 	"relay":["DRONE SUPPORT","RMB assigns the healing drone. Recall to recharge; attack while it heals.","Q Kickstart · E Shock Delivery · 1 Recall / Self · 2 Full Circuit"],
@@ -112,7 +113,7 @@ func show_heroes() -> void:
 		row.add_theme_constant_override("separation",12)
 		card.add_child(row)
 		var portrait := TextureRect.new()
-		portrait.texture = load("res://assets/portraits/"+id+".png")
+		portrait.texture = load("res://assets/portraits/"+id+(".svg" if id == "samson" else ".png"))
 		portrait.custom_minimum_size = Vector2(85,110)
 		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED

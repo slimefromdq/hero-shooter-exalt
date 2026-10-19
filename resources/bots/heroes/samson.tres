@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="BotHeroProfile" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/bots/bot_hero_profile.gd" id="1"]
+[resource]
+script = ExtResource("1")
+hero = "samson"
+minimum_range = 12.0
+maximum_range = 20.0
+aggression = 0.25
+mobility = 0.55
+escape_reserve = 1
+rescue_health = 0.65
+emergency_health = 0.4
+pressure_window = 1.5
+diver_range = 6.0
+threat_range = 10.0
+court_offset = 4.0

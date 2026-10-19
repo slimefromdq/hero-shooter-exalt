@@ -61,7 +61,7 @@ func run() -> void:
 	binding.physical_keycode = KEY_E
 	check(InputMap.action_has_event("deflect",binding),"physical E is mapped to the boot slot")
 	await boot_press()
-	check(player.state == "slayer_boot_start" and kit().deflect_cd > 8,"E activates Boot Rush through the live player controller" if native_input else "boot slot intent activates Boot Rush")
+	check(player.state == "slayer_boot_start" and kit().deflect_cd > 7,"E activates Boot Rush through the live player controller" if native_input else "boot slot intent activates Boot Rush")
 	await step(39)
 	check(player.position.z < -1 and player.state == "ready","boot travels beyond the old eight-metre limit")
 	check(kit().boot_slow_time > 0 and player.permits("primary") and player.permits("jump"),"boot recovery keeps weapon and movement actions available")

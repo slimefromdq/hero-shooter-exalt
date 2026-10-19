@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="SamsonTuning" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/actors/samson_tuning.gd" id="1"]
+[resource]
+script = ExtResource("1")
+hero_id = "samson"
+max_health = 250.0
+rifle_damage = 12.0
+shot_interval = 0.15
+magazine = 24
+reload_time = 1.0
+head_multiplier = 1.5
+

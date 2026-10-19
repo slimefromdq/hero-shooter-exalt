@@ -35,9 +35,9 @@ Defaults are in `resources/slayer.tres` and exported `SlayerTuning` fields. Each
 | Shotgun | 6 shells, 10 × 9 body damage, global 2× head multiplier, 1.1 s pump lock, 1.1° fixed disk spread |
 | Falloff | Full through 12 m; linear reduction to 40% at 24 m; 35 m trace limit |
 | Reload | First shell after 0.15 + 0.22 s; subsequent shells every 0.22 s; firing waits for the full sequence |
-| Knives | 2 charges, sequential 7 s recharge, 30 direct damage, 110 m/s, 25 m range, 0.14 m collision radius; 0.09 s hand release, 0.22 s fading silver-blue trail |
+| Knives | 3 charges, sequential 6 s recharge, 30 direct damage, 110 m/s, 50 m range, 0.17 m collision radius; 0.09 s hand release, 0.22 s fading silver-blue trail |
 | Bleed | 8 DPS for 4 s in eight 4-damage ticks; refresh retains partial tick progress |
-| Boot Rush | 0.06 s startup, up to 12 m at 32 m/s, 55 damage once, 0.45 s turning hold then 18 m/s horizontal + 3 m/s upward launch, 9 s cooldown; 0.22 s input buffer |
+| Boot Rush | 0.06 s startup, up to 12 m at 32 m/s, 55 damage once, 0.45 s turning hold then 18 m/s horizontal + 3 m/s upward launch, 8 s cooldown; 0.22 s input buffer |
 | Boot recovery | Immediate control; speed returns from 35% to 100% over 0.4 s on hit or 0.7 s on miss/wall; 30% horizontal exit momentum |
 | Snare | 2 charges / active traps, sequential 12 s recharge, 0.75 s arm time from release, 1.4 m radius, 15 s lifetime, 25 HP |
 | Armed trigger | 25 damage, 1.5 s root and mobility lock; aim and shooting remain available; can trigger in flight |

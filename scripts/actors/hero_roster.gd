@@ -1,8 +1,8 @@
 class_name HeroRoster
 extends RefCounted
 
-const IDS: Array[String] = ["nimbus", "slayer", "marshal", "doctor", "huddle", "relay", "dynamo", "wisp"]
-const ROLES: Dictionary = {"nimbus":"dps","slayer":"dps","marshal":"tank","doctor":"support","huddle":"tank","relay":"support","dynamo":"tank","wisp":"dps"}
+const IDS: Array[String] = ["nimbus", "slayer", "marshal", "doctor", "huddle", "relay", "dynamo", "wisp", "samson"]
+const ROLES: Dictionary = {"nimbus":"dps","slayer":"dps","marshal":"tank","doctor":"support","huddle":"tank","relay":"support","dynamo":"tank","wisp":"dps","samson":"support"}
 static var composition_seed: int = 76
 static var selected: String = initial_selection()
 static var direct_entry_pending: bool = OS.get_cmdline_user_args().has("--direct")
@@ -29,6 +29,7 @@ static func kit_for(id: String) -> HeroKit:
 		"relay": return RelayKit.new()
 		"dynamo": return DynamoKit.new()
 		"wisp": return WispKit.new()
+		"samson": return SamsonKit.new()
 	return NimbusKit.new()
 
 static func team_hero(slot: int, player_hero: String) -> String:
@@ -81,6 +82,6 @@ static func bot_role(slot: int, player_hero: String) -> String:
 					break
 			if high >= 0: break
 	if slot == high: return "high_ground"
-	if hero in ["marshal","dynamo","doctor","relay"]: return "frontline"
+	if hero in ["marshal","dynamo","doctor","relay","samson"]: return "frontline"
 	if hero == "huddle": return "flank_left"
 	return ["frontline","frontline","frontline","flank_left","flank_right","high_ground"][slot]

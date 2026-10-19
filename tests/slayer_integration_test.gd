@@ -61,7 +61,7 @@ func run() -> void:
 	for event: Dictionary in arena.resolver.events:
 		if event.actor == hunter.actor_id: casts.append(event.ability)
 	check(casts.has("silver_knife") or casts.has("street_sweeper"),"live training bot resolves actual Slayer attacks")
-	check(hunter.kit.ammo <= 6 and (hunter.kit as SlayerKit).knives <= 2,"Slayer AI obeys finite ammunition and charges")
+	check(hunter.kit.ammo <= 6 and (hunter.kit as SlayerKit).knives <= (hunter.tuning as SlayerTuning).knife_charges,"Slayer AI obeys finite ammunition and charges")
 	training.freeze_ai = true
 	training.player.controller.active = false
 	training.player.statuses.apply("max_health",hunter,8,.5)

@@ -285,6 +285,8 @@ func build_advanced_menu() -> void:
 	button(left,"Play Relay / drone support",training.select_hero.bind("relay"))
 	button(left,"Play Dynamo / storm tank",training.select_hero.bind("dynamo"))
 	button(left,"Play Wisp / ghost DPS",training.select_hero.bind("wisp"))
+	button(left,"Play Samson / cockroach lawyer",training.select_hero.bind("samson"))
+	button(left,"Samson intervention / rescue and court",training.start_samson_drill)
 	button(left,"Relay circuit / drone and battery",training.start_roster_drill.bind("relay"))
 	button(left,"Dynamo siege / walls and storm",training.start_roster_drill.bind("dynamo"))
 	button(left,"Wisp ballet / marks and air combos",training.start_roster_drill.bind("wisp"))

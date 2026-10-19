@@ -35,6 +35,7 @@ static func steer(a: HeroActor, move: Vector3, goal: Vector3) -> Vector3:
 	var hit: Dictionary = a.resolver.ray(a.body_point(.8),probe+Vector3.UP*.8,[a.get_rid()],1)
 	var panel := hit.get("collider") as CombatStructure
 	if panel == null: return move
+	if panel is SamsonCourt: return around_court(a,panel,move,goal)
 	var wall := panel.get_parent() as DynamoWall
 	if wall == null: return move
 	var t := wall.source.tuning as DynamoTuning
@@ -64,3 +65,22 @@ static func steer(a: HeroActor, move: Vector3, goal: Vector3) -> Vector3:
 		a.set_meta("structure_route",best)
 		return ((best[0]-a.global_position)*Vector3(1,0,1)).normalized()
 	return move
+
+static func around_court(a: HeroActor, court: CombatStructure, move: Vector3, goal: Vector3) -> Vector3:
+	var center: Vector3 = court.global_position-Vector3.UP*court.size.y/2
+	var yaw: float = court.rotation.y
+	var local: Vector3 = (a.global_position-center).rotated(Vector3.UP,-yaw)
+	var side: float = 1.0 if local.z >= 0 else -1.0
+	var best: Array[Vector3] = []
+	var cost: float = INF
+	for edge: float in [-1.0,1.0]:
+		var near: Vector3 = supported(a,center+Vector3(edge*(court.size.x/2+.8),0,side*(court.size.z/2+.8)).rotated(Vector3.UP,yaw))
+		var far: Vector3 = supported(a,center+Vector3(edge*(court.size.x/2+.8),0,-side*(court.size.z/2+.8)).rotated(Vector3.UP,yaw))
+		if near == Vector3.INF or far == Vector3.INF or not clear(a,a.global_position,near) or not clear(a,near,far): continue
+		var length: float = a.global_position.distance_to(near)+near.distance_to(far)+far.distance_to(goal)
+		if length < cost:
+			cost = length
+			best = [near,far]
+	if best.is_empty(): return move
+	a.set_meta("structure_route",best)
+	return ((best[0]-a.global_position)*Vector3(1,0,1)).normalized()

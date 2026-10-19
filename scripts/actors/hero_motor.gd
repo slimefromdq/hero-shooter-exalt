@@ -123,7 +123,7 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 		return
 	coyote = 0.1 if was_floor else maxf(0.0, coyote - delta)
 	jump_buffer = 0.12 if input.jump else maxf(0.0, jump_buffer - delta)
-	var can_move: bool = actor.state not in ["stagger", "counterthrow", "throw_release"]
+	var can_move: bool = not actor.statuses.stunned() and actor.state not in ["stagger", "counterthrow", "throw_release"]
 	var wish: Vector3 = input.move if can_move else Vector3.ZERO
 	if input.dash and can_dash():
 		end_hover()
@@ -193,7 +193,7 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			scale = minf(scale,0.6)
 		if actor.state == "guard":
 			scale = 0.15
-		elif actor.state not in ["ready", "slayer_knife", "slayer_trap", "marshal_shield", "huddle_regroup", "wisp_phase"]:
+		elif actor.state not in ["ready", "slayer_knife", "slayer_trap", "marshal_shield", "huddle_regroup", "wisp_phase", "samson_cross"]:
 			scale = minf(scale, 0.35)
 		var current := Vector3(actor.velocity.x, 0.0, actor.velocity.z)
 		var acceleration: float = t.acceleration if was_floor else t.air_steering

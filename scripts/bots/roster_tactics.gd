@@ -11,6 +11,9 @@ static func safe_step(a: HeroActor, direction: Vector3) -> bool:
 	return true
 
 static func apply(a: HeroActor, input: CombatIntent) -> void:
+	if a.kit is SamsonKit:
+		SamsonTactics.apply(a,input)
+		return
 	for action: String in ["primary","primary_held","secondary_held","secondary_pressed","aim_held","hover","deflect","bomb","ultimate","melee","guard","throw_action"]: input.set(action,false)
 	input.reload = a.kit.ammo == 0
 	var enemy: HeroActor = CareTactics.enemy(a)

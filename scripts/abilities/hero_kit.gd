@@ -13,6 +13,11 @@ var reloading: bool = false
 var reload_remaining: float = 0.0
 var reload_total: float = 0.0
 
+## Read-only acquisition previews: target plus InputMap action. Empty for non-select kits.
+## Implementations share the same target selection and admission checks as their casts.
+func selection_previews() -> Array[Dictionary]:
+	return []
+
 func ultimate_active() -> bool:
 	return false
 

@@ -85,6 +85,7 @@ func _physics_process(delta: float) -> void:
 	overhealth.tick(delta)
 	benefits.tick(delta)
 	statuses.tick(delta)
+	intent = statuses.filter_intent(intent)
 	if not alive:
 		return
 	if state not in ["captured", "throw_pair", "mantle", "boot_captured"]:
@@ -105,6 +106,7 @@ func _physics_process(delta: float) -> void:
 		state = "ready"
 	if state == "marshal_shield" and (intent.melee or intent.throw_action or intent.guard): (kit as MarshalKit).lower_barrier()
 	if state == "huddle_regroup" and (intent.melee or intent.throw_action or intent.guard or intent.dash): state = "ready"
+	if kit is SamsonKit: (kit as SamsonKit).prepare_actions(intent)
 	close.tick(delta, intent)
 	kit.tick(delta, intent)
 	motor.tick(delta, intent)
@@ -115,6 +117,8 @@ func _physics_process(delta: float) -> void:
 
 # One authority boundary: controllers request actions; only components resolve them.
 func permits(action: String) -> bool:
+	if not statuses.permits(action): return false
+	if action == "intervene" and statuses.movement_disabled(): return false
 	if kit is ExpansionKit:
 		if action in ["step","lift","kickstart"] and statuses.movement_disabled(): return false
 		if action in ["secondary","step","lift","kickstart","phase","assign","wall"] and resolver.attack_locked(self): return false

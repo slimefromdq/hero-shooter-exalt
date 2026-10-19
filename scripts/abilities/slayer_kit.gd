@@ -2,7 +2,7 @@ class_name SlayerKit
 extends HeroKit
 
 signal audio_cue(cue: String)
-var knives: int = 2
+var knives: int = 3
 var knife_timer: float = 0.0
 var snares: int = 2
 var snare_timer: float = 0.0

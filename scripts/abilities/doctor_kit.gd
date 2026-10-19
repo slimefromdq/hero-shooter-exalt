@@ -15,25 +15,11 @@ func _ready() -> void:
 	refill()
 
 func sight(target: HeroActor) -> bool:
-	if not is_instance_valid(target) or not target.alive or target == actor or target.team != actor.team: return false
-	if actor.resolver.protected_room(actor) or actor.resolver.protected_room(target): return false
-	# Other teammates do not occlude care; environment and hostile barriers do.
-	var from: Vector3 = actor.body_point(1.4)
-	return actor.resolver.attack_ray(actor,from,target.body_point(1.2),[],1).is_empty()
+	return not actor.resolver.protected_room(actor) and AllyTargeting.sight(actor,target)
 
 func targeted(maximum: float, angle: float = 12.0) -> HeroActor:
-	var best: HeroActor = null
-	var score: float = cos(deg_to_rad(angle))
-	var origin: Vector3 = actor.intent.aim_origin
-	if origin == Vector3.ZERO: origin = actor.body_point(1.4)
-	for other: HeroActor in actor.get_tree().get_nodes_in_group("actors"):
-		if actor.global_position.distance_to(other.global_position) > maximum or not sight(other): continue
-		var direction: Vector3 = (other.body_point(1.2) - origin).normalized()
-		var dot: float = direction.dot(actor.aim_direction)
-		if dot > score:
-			score = dot
-			best = other
-	return best
+	if actor.resolver.protected_room(actor): return null
+	return AllyTargeting.aimed(actor,maximum,angle)
 
 func disconnect_beam() -> void:
 	patient = null
@@ -80,7 +66,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 			actor.state = "doctor_ultimate"
 			actor.state_time = t.exemplary_windup
 			actor.resolver.record("cast",actor,"exemplary_condition")
-	if input.secondary_held and actor.state in ["ready","doctor_ultimate"] and actor.motor.mode not in ["dash","dash_windup"]:
+	if input.secondary_held and (is_instance_valid(patient) or actor.statuses.permits("care_beam")) and not actor.statuses.stunned() and actor.state in ["ready","doctor_ultimate"] and actor.motor.mode not in ["dash","dash_windup"]:
 		update_beam(delta)
 	else: disconnect_beam()
 	if not input.secondary_held and (input.primary_held or input.primary): weapon(t.rifle_damage)
@@ -113,16 +99,37 @@ func update_beam(delta: float) -> void:
 		beam_draw_age = .045
 		CombatEffect.streak(actor.get_parent(),actor.muzzle(),patient.body_point(1.2),.055,.08)
 
-func start_call() -> bool:
-	var target: HeroActor = targeted(data().call_range)
+func call_target_clear(target: HeroActor) -> bool:
 	if target == null: return false
 	var offset: Vector3 = target.global_position - actor.global_position
 	if offset.length() <= data().call_stop: return false
 	var destination: Vector3 = target.global_position - offset.normalized() * data().call_stop
 	var motion: Vector3 = destination - actor.global_position
 	# Check the full capsule sweep before spending the cooldown.
-	if actor.test_move(actor.global_transform,motion): return false
-	call_destination = destination
+	return not actor.test_move(actor.global_transform,motion)
+
+func selection_previews() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if not actor.alive: return result
+	var target: HeroActor = targeted(data().call_range)
+	if mobility_cd <= 0 and actor.permits("house_call") and not actor.statuses.movement_disabled() and call_target_clear(target):
+		result.append({"target":target,"action":"hover"})
+	target = targeted(data().beam_range,data().beam_acquire)
+	if target != null and actor.statuses.permits("care_beam") and not actor.statuses.stunned() and actor.state in ["ready","doctor_ultimate"] and actor.motor.mode not in ["dash","dash_windup"]:
+		result.append({"target":target,"action":"aim"})
+	target = targeted(data().beam_range)
+	if target != null and bomb_cd <= 0 and actor.permits("bomb"):
+		result.append({"target":target,"action":"bomb"})
+	target = targeted(data().exemplary_range)
+	if target != null and ultimate_charge >= 100 and actor.permits("ultimate") and not target.benefits.has_kind("exemplary"):
+		result.append({"target":target,"action":"ultimate"})
+	return result
+
+func start_call() -> bool:
+	var target: HeroActor = targeted(data().call_range)
+	if not call_target_clear(target): return false
+	var offset: Vector3 = target.global_position-actor.global_position
+	call_destination = target.global_position-offset.normalized()*data().call_stop
 	actor.motor.interrupt_mobility()
 	actor.state = "doctor_call"
 	disconnect_beam()

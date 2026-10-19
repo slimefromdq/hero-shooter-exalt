@@ -62,7 +62,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 			breach_step()
 		if breach_index >= orbital_points.size(): breach_age = -1
 	if actor.state == "marshal_recovery" and actor.state_time <= 0: actor.state = "ready"
-	if input.deflect and deflect_cd <= 0 and rally_allowed(): rally()
+	if input.deflect and actor.statuses.permits("deflect") and deflect_cd <= 0 and rally_allowed(): rally()
 	if actor.state == "marshal_shield" and (input.hover or input.bomb or input.ultimate or input.melee or input.throw_action or input.guard): lower_barrier()
 	if input.hover and mobility_cd <= 0 and actor.permits("march"):
 		actor.motor.interrupt_mobility()
@@ -379,6 +379,7 @@ func fire(_ultimate: bool = false) -> void:
 	actor.resolver.record("cast",actor,"cannon")
 
 func rally_allowed() -> bool:
+	if not actor.statuses.permits("deflect"): return false
 	return actor.alive and actor.state in ["ready","guard","marshal_shield"] and actor.motor.mode not in ["dash","dash_windup","mantle"] and not actor.resolver.attack_locked(actor)
 
 func rally_recipient(target: HeroActor) -> bool:

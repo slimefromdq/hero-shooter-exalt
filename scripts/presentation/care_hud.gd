@@ -2,6 +2,7 @@ class_name CareHUD
 extends RefCounted
 
 static func labels(a: HeroActor) -> Array[String]:
+	if a.kit is SamsonKit: return ["INTERVENE","CROSS-EXAMINATION","CEASE AND DESIST"]
 	if a.kit is RelayKit: return ["KICKSTART","SHOCK DELIVERY","RECALL / SELF"]
 	if a.kit is DynamoKit: return ["STORMCHARGE","RAISE THE LINE","LODESTONE"]
 	if a.kit is WispKit: return ["GHOSTSTEP","BETWEEN WORLDS","SPECTRAL LIFT"]
@@ -15,6 +16,9 @@ static func cooldowns(a: HeroActor) -> Array[float]:
 	return [k.mobility_cd,k.deflect_cd,k.bomb_cd]
 
 static func durations(a: HeroActor) -> Array[float]:
+	if a.tuning is SamsonTuning:
+		var s := a.tuning as SamsonTuning
+		return [s.intervene_recharge,s.cross_cooldown,s.notice_cooldown]
 	if a.tuning is RelayTuning:
 		var t := a.tuning as RelayTuning
 		return [t.jump_cooldown,t.shock_cooldown,t.transfer_cooldown]
@@ -34,6 +38,7 @@ static func durations(a: HeroActor) -> Array[float]:
 	return [t.call_cooldown,t.ward_cooldown,t.prescription_cooldown]
 
 static func ultimate_label(a: HeroActor) -> String:
+	if a.kit is SamsonKit: return "ROACH COURT"
 	match a.tuning.hero_id:
 		"relay": return "FULL CIRCUIT"
 		"dynamo": return "STORM DOMINION"
@@ -45,6 +50,9 @@ static func ultimate_label(a: HeroActor) -> String:
 	return "FINAL NOTICE"
 
 static func ultimate_detail(a: HeroActor) -> String:
+	if a.kit is SamsonKit:
+		var t := a.tuning as SamsonTuning
+		return "%dM / %d%% RESIST / %d HP COURT" % [roundi(t.court_radius),roundi(t.court_reduction*100),roundi(t.court_health)]
 	match a.tuning.hero_id:
 		"relay": return "%d HP/S / +%d%% FIRE" % [roundi((a.tuning as RelayTuning).circuit_heal),roundi((a.tuning as RelayTuning).circuit_haste*100)]
 		"dynamo": return "%dM / %dM STORM / %d DPS" % [roundi((a.tuning as DynamoTuning).storm_range),roundi((a.tuning as DynamoTuning).storm_radius),roundi((a.tuning as DynamoTuning).storm_damage/(a.tuning as DynamoTuning).storm_interval)]
@@ -56,6 +64,7 @@ static func ultimate_detail(a: HeroActor) -> String:
 	return "EXECUTE <=20% HP"
 
 static func weapon_label(a: HeroActor) -> String:
+	if a.kit is SamsonKit: return "DEPOSITION"
 	match a.tuning.hero_id:
 		"relay": return "CARBINE"
 		"dynamo": return "MINIGUN"
@@ -67,6 +76,7 @@ static func weapon_label(a: HeroActor) -> String:
 	return "RIFLE"
 
 static func secondary_label(a: HeroActor) -> String:
+	if a.kit is SamsonKit: return "Q RESCUE / E CHANNEL / 1 NO-MOBILITY ZONE"
 	if a.kit is RelayKit: return "RMB ASSIGN DRONE / 1 RECALL OR SELF"
 	if a.kit is DynamoKit: return "RMB PRESPIN / WALL: LMB PLACE, RMB ROTATE, E CANCEL"
 	if a.kit is WispKit: return "RMB SOULBREAKER / DASH TO LOAD SHELLS"
@@ -76,6 +86,14 @@ static func secondary_label(a: HeroActor) -> String:
 	return "RMB AIM"
 
 static func detail(a: HeroActor) -> String:
+	if a.kit is SamsonKit:
+		var k := a.kit as SamsonKit
+		var result: String = "INTERVENE [%s][%s] %d/%d / NEXT %.1fs" % ["+" if k.charges > 0 else "-","+" if k.charges > 1 else "-",k.charges,k.data().intervene_charges,k.recharge]
+		if a.state == "samson_cross": result += " / %s %d%%" % [k.defendant.actor_id if is_instance_valid(k.defendant) else "CHANNEL",roundi(100*k.channel_age/k.data().cross_duration)]
+		elif k.feedback_left > 0: result += " / " + k.feedback_text
+		if is_instance_valid(k.notice) and k.notice.active(): result += " / NOTICE %d %.1fs" % [ceili(k.notice.health),k.notice.remaining]
+		if k.ultimate_active(): result += " / COURT %d %.1fs" % [ceili(k.court.health),k.court.remaining]
+		return result
 	if a.kit is RelayKit:
 		var k := a.kit as RelayKit
 		return "BATTERY %d/%d / %s%s" % [ceili(k.battery),ceili(k.data().battery_capacity),k.recipient.actor_id.to_upper() if is_instance_valid(k.recipient) else "DOCKED / CHARGING"," / CIRCUIT %.1fs" % k.circuit_left if k.ultimate_active() else " / TRANSFER" if k.transfer_left > 0 else ""]
@@ -100,7 +118,10 @@ static func detail(a: HeroActor) -> String:
 
 static func status(a: HeroActor, include_overhealth: bool = true) -> String:
 	if a.benefits == null: return ""
+	var disable: String = "STUNNED  " if a.statuses.stunned() else "SILENCED  " if a.statuses.silenced() else ""
 	var result: String = ("OVERHEALTH +%d / %.1fs  " % [ceili(a.overhealth.value()),a.overhealth.remaining()]) if include_overhealth and a.overhealth.value() > 0 else ""
+	if a.statuses.mobility_locked(): disable += "MOBILITY DENIED  "
+	result = disable + result
 	for kind: String in ["exemplary","prescription","aftercare","ward","circuit"]:
 		var duration: float = a.benefits.remaining(kind)
 		if duration > 0: result += "OVERCLOCKED  " if kind == "circuit" else "%s %.1fs  " % [kind.to_upper(),duration]

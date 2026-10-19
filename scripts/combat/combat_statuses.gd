@@ -10,6 +10,13 @@ func apply(kind: String, source: HeroActor, duration: float, strength: float = 0
 	if not actor.alive or actor.invulnerable or actor.state == "wisp_phase" or source.team == actor.team or actor.resolver.protected_room(actor) or actor.resolver.attack_locked(source):
 		return false
 	if actor.resolver.spawn_door_blocks(source.body_point(1),actor.body_point(1)): return false
+	if duration <= 0: return false
+	if kind in ["stun","silence"]: duration = maxf(duration,float(effects.get(kind,{}).get("remaining",0)))
+	if kind == "stun":
+		if actor.boot_pair != null: actor.boot_pair.release(false)
+		actor.close.cancel()
+		actor.kit.cancel()
+		actor.motor.interrupt_mobility()
 	# Refresh retains the DoT clock, preventing repeated hits from postponing ticks.
 	var clock: float = float(effects.get(kind, {}).get("clock", 0.0))
 	effects[kind] = {"source": weakref(source), "remaining": duration, "strength": strength, "clock": clock}
@@ -65,10 +72,14 @@ func effective_max() -> float:
 	return actor.tuning.max_health * (1.0 - float(effects.get("max_health", {}).get("strength", 0.0)))
 
 func movement_disabled() -> bool:
-	return effects.has("root") or effects.has("slow")
+	return effects.has("root") or effects.has("slow") or stunned()
 
 func movement_scale() -> float:
-	return 0.0 if effects.has("root") else float(effects.get("slow", {}).get("strength", 1.0))
+	if effects.has("root") or stunned(): return 0.0
+	var scale: float = minf(float(effects.get("slow",{}).get("strength",1.0)),float(effects.get("hinder",{}).get("strength",1.0)))
+	for zone: Node in actor.get_tree().get_nodes_in_group("movement_zones"):
+		if zone.hostile_contains(actor): scale = minf(scale,zone.movement_multiplier())
+	return scale
 
 func cleanse() -> void:
 	if actor.boot_pair != null and actor.boot_pair.victim == actor: actor.boot_pair.release(false)
@@ -95,3 +106,28 @@ func take_souls(source: HeroActor) -> int:
 	var result: int = soul_count(source)
 	souls.erase(source.get_instance_id())
 	return result
+
+func stunned() -> bool:
+	return effects.has("stun")
+
+func silenced() -> bool:
+	return effects.has("silence")
+
+func mobility_locked() -> bool:
+	for zone: Node in actor.get_tree().get_nodes_in_group("movement_zones"):
+		if zone.hostile_contains(actor): return true
+	return false
+
+func permits(action: String) -> bool:
+	if stunned(): return false
+	if silenced() and action not in ["primary","secondary","aim","reload","jump","melee","throw","counter","guard"]: return false
+	var mobility_action: bool = action in ["dash","hover","boot","march","house_call","step","lift","kickstart","scatter","wave","intervene"] or (action == "ultimate" and actor.tuning.hero_id in ["marshal","wisp"])
+	if mobility_action and mobility_locked(): return false
+	return true
+
+func filter_intent(input: CombatIntent) -> CombatIntent:
+	if not stunned(): return input
+	var filtered := CombatIntent.new()
+	filtered.aim = input.aim
+	filtered.aim_origin = input.aim_origin
+	return filtered

@@ -1,8 +1,8 @@
 class_name TrainingManager
 extends Node
 
-const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring", "Guard trainer", "Slayer hunter", "Marshal", "Doctor", "Huddle", "Relay", "Dynamo", "Wisp", "Tactical Sparring"]
-const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt", "Doctor rounds", "Marshal drill", "Huddle rescue", "Practice range", "Relay circuit", "Dynamo siege", "Wisp ballet", "Tactical Sparring"]
+const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring", "Guard trainer", "Slayer hunter", "Marshal", "Doctor", "Huddle", "Relay", "Dynamo", "Wisp", "Tactical Sparring", "Samson support"]
+const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt", "Doctor rounds", "Marshal drill", "Huddle rescue", "Practice range", "Relay circuit", "Dynamo siege", "Wisp ballet", "Tactical Sparring", "Samson intervention"]
 var arena: Node3D
 var player: HeroActor
 var bots: Array[HeroActor] = []
@@ -148,7 +148,7 @@ func spawn_bot(profile: int, at: Vector3 = Vector3.INF, built_in: bool = false, 
 	var bot := preload("res://scenes/actors/hero_actor.tscn").instantiate() as HeroActor
 	bot.set_meta("built_in",built_in)
 	bot.team = team_id
-	bot.tuning = HeroRoster.tuning_for({6:"slayer",7:"marshal",8:"doctor",9:"huddle",10:"relay",11:"dynamo",12:"wisp"}.get(profile,"nimbus"))
+	bot.tuning = HeroRoster.tuning_for({6:"slayer",7:"marshal",8:"doctor",9:"huddle",10:"relay",11:"dynamo",12:"wisp",14:"samson"}.get(profile,"nimbus"))
 	bot.actor_id = "%s_%02d" % [PROFILES[profile].to_lower().replace(" ", "_"), spawn_serial]
 	bot.position = Vector3(-4 + bots.size() * 3, 0.1, -7 - bots.size() * 2) if at == Vector3.INF else at
 	arena.add_child(bot)
@@ -208,6 +208,14 @@ func reset_scenario() -> void:
 	route_running = false
 	target_health_override = false
 	match scenario:
+		16:
+			var patient: HeroActor = spawn_bot(0,Vector3(0,.1,3),false,player.team)
+			patient.actor_id = "Witness"
+			patient.health = 80
+			var diver: HeroActor = spawn_bot(3,Vector3(0,.1,-4))
+			diver.controller.target = patient
+			var gunner: HeroActor = spawn_bot(2,Vector3(7,.1,-10))
+			gunner.controller.target = patient
 		15:
 			arena.ensure_tactical_navigation()
 			spawn_bot(13,Vector3(3,.1,-11))
@@ -383,4 +391,12 @@ func start_roster_drill(id: String) -> void:
 	freeze_ai = false
 	reset_scenario()
 	show_notice({"relay":"RMB assign / 1 recall and recharge / E blast / 2 overclock allies","dynamo":"RMB prespin / E preview, LMB place, RMB rotate / 1 pull / 2 storm","wisp":"Pistols mark / Q loads shells / RMB core detonates / 1 lift / E phase"}[id])
+	if menu_open: toggle_menu()
+
+func start_samson_drill() -> void:
+	select_hero("samson")
+	scenario = 16
+	freeze_ai = false
+	reset_scenario()
+	show_notice("Q rescue Witness / E cross-examine / 1 deny movement / 2 Witness Protection")
 	if menu_open: toggle_menu()

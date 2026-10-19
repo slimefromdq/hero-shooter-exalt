@@ -57,7 +57,7 @@ func _ready() -> void:
 	canvas.add_child(numbers)
 	display_settings = get_node("/root/DisplaySettings")
 	for hero: String in HeroRoster.IDS:
-		portraits[hero] = load("res://assets/portraits/" + hero + ".png") as Texture2D
+		portraits[hero] = load("res://assets/portraits/" + hero + (".svg" if hero == "samson" else ".png")) as Texture2D
 	build_menu()
 
 func refresh_display_button() -> void:

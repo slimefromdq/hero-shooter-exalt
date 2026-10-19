@@ -18,14 +18,17 @@ func remaining() -> float:
 		if entry.amount == current and current > 0: result = maxf(result,entry.remaining)
 	return result
 
-func can_grant(source: HeroActor) -> bool:
-	return is_instance_valid(source) and not grants.has(source.get_instance_id())
+func grant_key(source: HeroActor, slot: String = "") -> Variant:
+	return source.get_instance_id() if slot.is_empty() else "%d:%s" % [source.get_instance_id(),slot]
 
-func grant(source: HeroActor, amount: float, duration: float, tag: String = "overhealth") -> bool:
+func can_grant(source: HeroActor, slot: String = "") -> bool:
+	return is_instance_valid(source) and not grants.has(grant_key(source,slot))
+
+func grant(source: HeroActor, amount: float, duration: float, tag: String = "overhealth", slot: String = "") -> bool:
 	if not is_instance_valid(source) or not source.alive or not actor.alive or source.team != actor.team: return false
 	if amount <= 0 or duration <= 0 or not is_finite(amount) or not is_finite(duration): return false
-	if not can_grant(source) or source.resolver.attack_locked(source) or actor.resolver.protected_room(actor): return false
-	grants[source.get_instance_id()] = {"amount":amount,"remaining":duration}
+	if not can_grant(source,slot) or source.resolver.attack_locked(source) or actor.resolver.protected_room(actor): return false
+	grants[grant_key(source,slot)] = {"amount":amount,"remaining":duration,"source_id":source.get_instance_id()}
 	actor.resolver.record("overhealth_grant",source,tag,"target=%s amount=%.1f duration=%.1f available=%.1f" % [actor.actor_id,amount,duration,value()])
 	actor.overhealth_changed.emit(value())
 	return true
@@ -42,11 +45,11 @@ func absorb(amount: float) -> float:
 
 func tick(delta: float) -> void:
 	var previous: float = value()
-	for key: int in grants.keys():
+	for key: Variant in grants.keys():
 		grants[key].remaining -= maxf(0,delta)
 		if grants[key].remaining <= .000001:
 			grants.erase(key)
-			actor.resolver.record("overhealth_expire",actor,"overhealth","source=%d" % key)
+			actor.resolver.record("overhealth_expire",actor,"overhealth","source=%s" % str(key))
 	if value() != previous: actor.overhealth_changed.emit(value())
 
 func clear() -> void:
@@ -56,5 +59,10 @@ func clear() -> void:
 
 func clear_owned() -> void:
 	for other: HeroActor in actor.get_tree().get_nodes_in_group("actors"):
-		if other.overhealth != null and other.overhealth.grants.erase(actor.get_instance_id()):
-			other.overhealth_changed.emit(other.overhealth.value())
+		if other.overhealth == null: continue
+		var changed: bool = false
+		for key: Variant in other.overhealth.grants.keys():
+			if other.overhealth.grants[key].get("source_id",key) == actor.get_instance_id():
+				other.overhealth.grants.erase(key)
+				changed = true
+		if changed: other.overhealth_changed.emit(other.overhealth.value())

@@ -1,6 +1,7 @@
 class_name HeroPresentation
 extends Node3D
 
+var selections: AbilitySelectionMarkers
 var actor: HeroActor
 var movement: MovementPresentation
 var overhealth_visual: OverhealthVisual
@@ -48,6 +49,9 @@ var marshal_model: MarshalCharacterDriver
 var slayer_abilities: SlayerAbilityPresentation
 
 func _ready() -> void:
+	selections = AbilitySelectionMarkers.new()
+	selections.actor = actor
+	add_child(selections)
 	movement = MovementPresentation.new()
 	movement.actor = actor
 	add_child(movement)
@@ -168,7 +172,8 @@ func _ready() -> void:
 		slayer_abilities.presentation = self
 		add_child(slayer_abilities)
 		animator.add_animation_library("slayer",SlayerAnimations.library())
-	if actor.kit is ExpansionKit: RosterVisuals.remodel(self)
+	if actor.kit is SamsonKit: SamsonVisuals.remodel(self)
+	elif actor.kit is ExpansionKit: RosterVisuals.remodel(self)
 	elif actor.kit is HuddleKit: HuddleVisuals.remodel(self)
 	elif actor.kit is CareKit: CareVisuals.remodel(self)
 	if actor.kit is MarshalKit: marshal_model = MarshalCharacterDriver.attach(self)
@@ -357,11 +362,15 @@ func _process(delta: float) -> void:
 	var debug: bool = bool(session.get("debug_view")) if session != null else false
 	debug_label.visible = debug
 	debug_label.text = "%s • %s\n%.1f m/s" % [actor.state, actor.motor.mode, actor.velocity.length()]
+	if actor.statuses.stunned() or actor.statuses.silenced():
+		debug_label.visible = true
+		debug_label.text = "STUNNED" if actor.statuses.stunned() else "SILENCED"
 	if actor.is_on_floor() and not was_grounded and actor.velocity.length() > 1.0:
 		sound.play_tone(70.0, 0.07, 0.1)
 	was_grounded = actor.is_on_floor()
 	if actor.tuning is SlayerTuning: SlayerVisuals.animate(self)
-	if actor.kit is ExpansionKit: RosterVisuals.animate(self,delta)
+	if actor.kit is SamsonKit: SamsonVisuals.animate(self)
+	elif actor.kit is ExpansionKit: RosterVisuals.animate(self,delta)
 	elif actor.kit is HuddleKit: HuddleVisuals.animate(self)
 	elif actor.kit is CareKit: CareVisuals.animate(self)
 	if actor.motor.mode == "slide":

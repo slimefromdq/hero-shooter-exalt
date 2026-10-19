@@ -101,7 +101,7 @@ func start_scatter() -> void:
 	actor.presentation.sound.play_tone(430,.14,.16)
 	actor.resolver.record("cast",actor,"scatterbound")
 
-func cast_screen() -> void:
+func screen_target() -> HeroActor:
 	var recipient: HeroActor = actor
 	var score: float = cos(deg_to_rad(12))
 	var origin: Vector3 = actor.intent.aim_origin
@@ -114,6 +114,16 @@ func cast_screen() -> void:
 		if dot > score:
 			score = dot
 			recipient = other
+	return recipient
+
+func selection_previews() -> Array[Dictionary]:
+	if deflect_cd <= 0 and actor.permits("screen"):
+		var target: HeroActor = screen_target()
+		if target != actor: return [{"target":target,"action":"deflect"}]
+	return []
+
+func cast_screen() -> void:
+	var recipient: HeroActor = screen_target()
 	if is_instance_valid(screen): screen.retire()
 	screen = HuddleScreen.new()
 	screen.source = actor

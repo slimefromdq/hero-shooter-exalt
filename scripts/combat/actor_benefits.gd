@@ -29,6 +29,8 @@ func reduction() -> float:
 	for entry: Dictionary in effects.values():
 		if entry.kind in ["prescription"]: value = maxf(value,entry.strength)
 		elif entry.kind == "exemplary": value = maxf(value,(entry.source.get_ref().tuning as DoctorTuning).exemplary_reduction)
+	for field: Node in actor.get_tree().get_nodes_in_group("protection_fields"):
+		if field.qualifies(actor): value = maxf(value,field.reduction())
 	return value
 
 func damage_multiplier() -> float:
