@@ -316,6 +316,7 @@ func _process(delta: float) -> void:
 		if animator.current_animation != animation:
 			animator.play(animation)
 		animator.seek(clampf(progress,0,.9999), true)
+		if animation == "melee": model.rotation.x -= asin(clampf(actor.close.melee_direction.y,-1,1)) * .65
 	else:
 		animator.stop(true)
 	if actor.state in ["throw_startup","throw_pair","captured","mantle"]:

@@ -20,12 +20,12 @@ All fields live in `HeroTuning`. Values can be changed through the Resource Insp
 
 | Experiment | Initial implementation |
 | --- | --- |
-| Dash | 0.16 s buildup; direction sampled at end; 22 m/s; 26 m/s² decay; 0.38 s burst; 4.5 s cooldown; one charge; air use allowed; no invulnerability |
-| Slide | 5 m/s ordinary entry; slope entry at 8°; 3.6 m/s² friction; gravity acts on floor tangent; 26 m/s global speed cap; automatic continuation after ground dash |
-| Movement | 6 m/s ground; 30 m/s² acceleration; 24 braking; 7.5 air steering; 8 m/s jump; 22 m/s² gravity; 0.1 s edge forgiveness, 0.12 s jump buffer |
+| Dash | 0.16 s buildup; direction sampled at end; 20 m/s; 26 m/s² decay; 0.38 s burst; two sequentially recharging charges at 4.3 s each; air use allowed; no invulnerability |
+| Slide | 5 m/s ordinary entry; slope entry at 8°; 4.0 m/s² friction; gravity acts on floor tangent; 26 m/s global speed cap; fresh crouch on airborne dash landing only; ground dash residual momentum cannot enter slide; mantle exit crouch supplies at least 8 m/s |
+| Movement | 6 m/s ground; 30 m/s² acceleration; 24 braking; 5.625 air steering; 8 m/s jump; 22 m/s² gravity; 0.1 s edge forgiveness, 0.12 s jump buffer |
 | Hover / umbrella vault | 12 m/s ascent for 0.4 s, then up to 2.5 s glide approaching 1.6 m/s descent; roughly 8 m open-space apex; cooldown after end |
-| Mantle | Hold Space + move into a ledge, or deliberate nearby press; 0.95 m forward probe; 0.3–2.2 m rise above feet; 0.32 s lift/over; preserve entry horizontal velocity on completion; last 0.12 s buffers a fresh exit jump; full-capsule path checks and live sweeps |
-| Wall jump | Press Space in air within 0.72 m of a near-vertical environment wall; preserve horizontal velocity along the wall, provide at least 9.5 m/s upward and 7.5 m/s outward; 26 m/s combined cap; 0.2 s cooldown; same facing wall cannot rearm until grounded |
+| Mantle | Hold Space + move into a ledge, or deliberate nearby press; 1.15 m forward probe with ±0.2 m side probes; 0.3–2.35 m rise above feet; 0.32 s lift/over; preserve entry horizontal velocity on completion; last 0.12 s buffers a fresh exit jump; full-capsule path checks and live sweeps |
+| Wall jump | Press Space in air within 0.72 m of a near-vertical environment wall; face-directed horizontal launch of at least 9 m/s, retaining faster incoming speed within the cap; at least 9.5 m/s upward and 3 m/s outward; 26 m/s combined cap; 0.2 s cooldown; same facing wall cannot rearm until grounded |
 | Melee | 75 HP; 2.6 m hit reach plus up to 4.8 m collision-limited travel; 0.24 s startup / 0.2 s active / 0.4 s recovery; no action cancels. Lunge starts at 0.06 s and lasts 0.36 s. Direction is fixed on input. |
 | Reload movement | 85% of ordinary ground speed: 5.1 m/s, previously 35% / 2.1 m/s. Aim still caps movement at 60%. Reload duration stays 1.6 s. |
 | Guard | 100 meter; 24/s drain; 35/s immediate regen after release; 28 per blocked strike; 2 s re-block cooldown; 15% movement; 0 bullet reduction |
@@ -40,7 +40,7 @@ The actor state table is authoritative; procedural animation never applies damag
 
 | State | Permitted actions |
 | --- | --- |
-| Ready, ground/air/slide/Hover | Rifle, aim, reload, kit, jump, shared combat; dash additionally requires cooldown |
+| Ready, ground/air/slide/Hover | Rifle, aim, reload, kit, jump, shared combat; dash additionally requires an available charge |
 | Dash buildup / dash | Steering intent is suppressed during the burst; no other combat casts |
 | Mantle | Fixed climb path and facing; no competing movement/combat casts; stagger, capture, death, reset, removed support or new obstruction can interrupt |
 | Melee startup / active / recovery | Swept, committed forward lunge during startup/active; limited normal translation in recovery; no rifle, guard, throw, dash or ability cancels |
@@ -155,3 +155,14 @@ This supersedes ROSTER-03's fixed team composition. New matches select seeded 2 
 Keep physical cover separate from the friendly-pass-through analytic shield contract. All weapon families, melee and explosions can damage hostile wall sections; cover is sampled before section destruction. Bounded pull displacement uses collision and grants no stun. Active new ultimates cannot charge themselves; delayed ultimate casts retain this restriction after expiry. Per-life cleanup stops old effect physics before deferred deletion.
 
 See [complete kits and validation](RELAY_DYNAMO_WISP.md) and [recorded results](validation/roster-results.json). Remaining reserved concepts and multiplayer remain deferred.
+
+
+## MOVE-05 · Shared movement overhaul · October 19, 2026
+
+Supersedes the movement tuning and wall-kick direction in MOVE-04. All eight heroes use two shared dash charges, sequential 4.3 s recharge, 20 m/s initial dash speed and WASD direction sampled after buildup. Air W/S follows camera pitch; A/D strafes horizontally; no movement falls back to aim. Ground dashes remain horizontal. Direction stays fixed during the burst. Dash slide conversion needs an airborne start and fresh crouch within 0.12 s before downward floor impact. Releasing/repressing crouch cannot turn residual dash speed into an ordinary slide; independent running/downhill slides remain.
+
+Slide friction is 4.0. A fresh crouch during the last 0.15 s of mantle or the first 0.2 s afterward launches a forward mantle slide at the greater of 8 m/s or carried forward speed; buffered exit jumps win. Mantle reach is 1.15 m, maximum rise 2.35 m, approach tolerance 60 degrees, with ±0.2 m side probes. Full standing clearance, supported landing and continuous capsule collision checks remain authoritative.
+
+Wall jumps follow facing while preserving at least 3 m/s outward clearance and at least 9 m/s horizontal launch before the combined speed cap. Shared air steering falls 25%, including Wisp's override (12 to 9). Gravity and ordinary jump impulse are unchanged. Melee retains 6 m travel and existing action timing, allows 3D aim until lunge begins after 0.06 s, and commits thereafter. Airborne melee suspends falling for 0.25 s; grounded movement remains horizontal. Stationary training melee has neither lunge nor suspension.
+
+`tests/movement_overhaul_test.gd` covers charge lifecycle, roster tuning, directional dashes, slide gating and distance, real mantle slide handoff, jump priority, forgiving acquisition with clearance, wall constraints, airborne melee and pause. Existing traversal, close-combat, hero and map suites remain part of `tools/verify.ps1`.

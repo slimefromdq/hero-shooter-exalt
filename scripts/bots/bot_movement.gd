@@ -111,7 +111,7 @@ func apply(brain: BotBrain, input: CombatIntent, recovering: bool) -> void:
 		if safe_travel(a,input.move,3):
 			input.jump = a.motor.grounded() and brain.level >= 2
 	if input.move.length() > .5 and a.state == "ready":
-		if brain.tactical_state == "retreat" and brain.hero_profile.mobility > .5 and a.motor.dash_cd <= 0 and safe_travel(a,input.move,a.tuning.dash_speed*a.tuning.dash_duration):
+		if brain.tactical_state == "retreat" and brain.hero_profile.mobility > .5 and a.motor.can_dash() and safe_travel(a,input.move,a.tuning.dash_speed*a.tuning.dash_duration):
 			input.dash = input.aim.dot(input.move.normalized()) > cos(deg_to_rad(8))
 			input.primary = false
 			input.primary_held = false

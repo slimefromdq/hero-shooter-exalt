@@ -42,7 +42,7 @@ The table shows Nimbus's kit; [Marshal and Doctor](docs/MARSHAL_DOCTOR.md) and [
 | Left click / right hold | Semi-auto umbrella rifle / shoulder aim |
 | R | Reload |
 | Space | Press to jump / wall kick; hold while moving into a ledge to mantle automatically |
-| Scroll wheel up | Horizontal ground dash / crosshair-directed 3D air dash, after a short buildup |
+| Scroll wheel up | Two WASD-directed dash charges; air W/S follows aim pitch; no WASD uses aim |
 | Shift hold | Crouch / half-speed crouch walk; momentum or a downhill slope takes priority as a slide |
 | Q | Ability 1 — Hover: higher umbrella vault, then glide; press again to end |
 | E | Ability 2 — frontal Deflect |
@@ -57,7 +57,11 @@ The table shows Nimbus's kit; [Marshal and Doctor](docs/MARSHAL_DOCTOR.md) and [
 | F11 / Alt+Enter | Toggle borderless fullscreen / windowed; also available in pause menus |
 | F3 / F5 / F6 | Telemetry / match or exercise restart / training-only refill |
 
-Bindings use named InputMap actions in `scripts/training/input_bindings.gd`; the saved project map contains the user's requested controls. Existing editor-configured bindings take precedence, and HUD prompts read the actual map. Only a downward air dash with a fresh Shift press within 0.12 s before floor impact enters a momentum slide. Release Shift or jump to end sliding. Ground dashes remain horizontal and never slide automatically. Guard limits movement and does **not** reduce bullets at the default setting.
+Bindings use named InputMap actions in `scripts/training/input_bindings.gd`; existing editor-configured bindings take precedence, and HUD prompts read the actual map. Every hero has **two shared dash charges**, recharging one at a time every **4.3 s**. Dash speed is **20 m/s**. Direction commits after the 0.16 s buildup: WASD selects travel relative to the camera, with forward/backward following camera pitch in the air and strafing remaining horizontal. Ground dashes stay horizontal. Without WASD, dash follows aim.
+
+Only a dash that **starts airborne** can convert downward floor contact into a dash slide, using a fresh Shift press within **0.12 s** before impact. Ground-dash residual speed cannot trigger a slide by releasing and repressing Shift. Ordinary running/downhill momentum slides remain available; standing crouch remains crouch. Slides have slightly stronger friction (**4.0**). Release Shift or jump to exit. A fresh Shift press in the last **0.15 s** of a mantle or within **0.2 s** afterward produces a forward **mantle slide** at at least **8 m/s**, carrying faster forward momentum. Buffered exit jumps take priority.
+
+Shared melee keeps its **6 m** lunge. Aim in 3D until the lunge starts after **0.06 s**, then the direction commits. Grounded lunges move horizontally; airborne lunges follow full aim and suspend ordinary falling for **0.25 s** before gravity resumes. Stationary training strikes remain stationary. Air steering is reduced by **25%**, with gravity and jump height unchanged. Guard limits movement and does **not** reduce bullets at the default setting.
 
 ## Guard practice
 
@@ -65,15 +69,15 @@ Press **Tab → Start guard drill**, walk inside the coral ring, face the statio
 
 ## Climbing and wall jumps
 
-**Hold Space and move into a wall or tower** to mantle automatically when a ledge comes within about **0.95 m** and **2.2 m above your feet**, provided the top has room to stand. Keep holding through a jump, umbrella ascent or successive ledges; you do not need another press at each lip. The climb takes about **0.32 s**, with continuous collision checks and a two-arm pull-up pose. Your incoming horizontal momentum carries through the finish straight into running. **Press Space during the last 0.12 s** to jump immediately off the top with that momentum. Holding Space while standing still or moving away does not start an automatic climb; holding alone does not jump on completion.
+**Hold Space and move into a wall or tower** to mantle automatically when a ledge comes within about **1.15 m** and **2.35 m above your feet**, provided the top has room to stand. Keep holding through a jump, umbrella ascent or successive ledges; you do not need another press at each lip. The climb takes about **0.32 s**, with continuous collision checks and a two-arm pull-up pose. Your incoming horizontal momentum carries through the finish straight into running. **Press Space during the last 0.12 s** to jump immediately off the top with that momentum. Holding Space while standing still or moving away does not start an automatic climb; holding alone does not jump on completion.
 
-While airborne within **0.72 m** of a wall, press **Space** to kick upward and away while keeping your momentum along the wall. Moving forward beside a left wall carries you forward and right; a right wall carries you forward and left. Camera direction does not replace your existing velocity. Wall kicks still need a new press, and landing or reaching a differently facing wall enables another kick. Try the marked ledge and kick wall beside the east-side traversal route. Q launches at **12 m/s for 0.4 s** and reaches roughly **8 m** above its starting point in open space before descending into the glide; ceilings stop the ascent safely.
+While airborne within **0.72 m** of a wall, press **Space** to kick upward and away with a facing-directed horizontal launch. Moving forward beside a left wall carries you forward and right; a right wall carries you forward and left. Camera facing directs horizontal launch while retaining at least 3 m/s away from the wall. The horizontal launch uses at least 9 m/s and preserves faster incoming speed within the shared cap. Wall kicks still need a new press, and landing or reaching a differently facing wall enables another kick. Try the marked ledge and kick wall beside the east-side traversal route. Q launches at **12 m/s for 0.4 s** and reaches roughly **8 m** above its starting point in open space before descending into the glide; ceilings stop the ascent safely.
 
 ## Included
 
 - Meridian Gardens: one player and eleven bots across eight heroes, navigation across five elevations, fixed-hill capture/contest/scoring, team-only safe rooms, eight-second respawns, ultimate retention, shared health pickups, match HUD, exploration mode and tactical atlas. First to 100% wins after the 20-second unlock and five-second uncontested capture.
 - Nimbus's complete prototype kit: 45/90 body/head rifle, upward Hover, timed projectile reflection and hitscan blocking, 140-peak / 5 m bomb with falloff, cover checks and owner-only airborne shoot detonation, and 150-damage Final Notice with a pre-hit 20% execution check.
-- Shared acceleration, braking, air steering, jump buffering/coyote time, collision-checked mantling, wall jumps, fixed-direction dash, both slide entries, and collision-aware shoulder camera.
+- Shared acceleration, braking, air steering, jump buffering/coyote time, collision-checked mantling, wall jumps, two-charge directional dash, momentum/dash/mantle slides, and collision-aware shoulder camera.
 - A 6 m committed melee lunge for engages/finishers, finite frontal guard with attacker stagger, interruptible 3.2 m throws, counterthrows, and an articulated pull/hip-lift/turn/slam/get-up animation. Slam damage occurs at impact; both participants retain 90% outside-damage reduction during the pair.
 - Reloads progress independently of action state with full movement speed; shoulder aiming retains its 60% cap. Nimbus/Huddle reload in 0.8 s, Marshal in 1 s, Doctor in 0.7 s; Slayer loads shells with 0.15 s startup and 0.22 s per shell. Firing waits until completion.
 - Six bot profiles; seven exercises including the stationary guard drill; spawn/despawn; 250/500 HP experiments; 19/20/21% target presets; shield/invulnerability controls; AI settings; resource refills; movement presets; live combat tuning; route timer; event export.

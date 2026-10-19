@@ -252,7 +252,7 @@ func draw_crosshair(p: HeroActor) -> void:
 # Dash sits below the ammunition, leaving room for its reload prompt.
 func draw_reticle_resources(p: HeroActor, center: Vector2) -> void:
 	var at: Vector2 = center + Vector2(68,53)
-	var ready: bool = p.motor.dash_cd <= 0
+	var ready: bool = p.motor.dash_charges > 0
 	var accent: Color = mint if ready else muted
 	canvas.draw_circle(at,15,Color(.025,.05,.075,.9))
 	canvas.draw_arc(at,14,-PI/2,-PI/2 + TAU,40,Color("394550"),2,true)
@@ -260,6 +260,7 @@ func draw_reticle_resources(p: HeroActor, center: Vector2) -> void:
 	if progress > 0:
 		canvas.draw_arc(at,14,-PI/2,-PI/2 + TAU * progress,40,accent,2,true)
 	draw_ability_glyph("dash",at,accent,.55)
+	canvas.draw_string(font,at+Vector2(-4,29),str(p.motor.dash_charges),HORIZONTAL_ALIGNMENT_LEFT,-1,13,accent)
 	if p.state == "guard":
 		# The open right edge keeps the ammo counter clear; only the arc carries guard state.
 		var start: float = PI * .15

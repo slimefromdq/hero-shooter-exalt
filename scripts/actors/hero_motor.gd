@@ -4,7 +4,14 @@ extends Node
 var actor: HeroActor
 var mode: String = "ground"
 var timer: float = 0.0
+# Remaining time until the next sequential charge returns.
 var dash_cd: float = 0.0
+var dash_charges: int = 2
+var dash_slide_locked: bool = false
+var slide_source: String = ""
+var mantle_slide_left: float = 0.0
+var mantle_slide_buffered: bool = false
+var mantle_slide_direction: Vector3 = Vector3.FORWARD
 var hover_cd: float = 0.0
 var dash_direction: Vector3 = Vector3.FORWARD
 var dash_current_speed: float = 0.0
@@ -55,11 +62,16 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 	slide_press_age += delta
 	if input.slide_pressed: slide_press_age = 0.0
 	if not input.slide and mode not in ["dash","dash_windup"]: slide_rearmed = true
+	if dash_slide_locked and mode not in ["dash","dash_windup"] and Vector2(actor.velocity.x,actor.velocity.z).length() <= t.ground_speed + .05:
+		dash_slide_locked = false
+	mantle_slide_left = maxf(0,mantle_slide_left-delta)
+	if input.slide_pressed and traversal.active and traversal.duration-traversal.elapsed <= t.mantle_slide_buffer:
+		mantle_slide_buffered = true
 	traversal.tick(delta,was_floor)
-	dash_cd = maxf(0.0, dash_cd - delta)
+	tick_dash_recharge(delta)
 	hover_cd = maxf(0.0, hover_cd - delta)
 	if actor.infinite_resources:
-		dash_cd = 0.0
+		refill_dashes()
 		hover_cd = 0.0
 	if traversal.active:
 		# Keep a short press buffer through the finish without turning the held
@@ -69,6 +81,8 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 		if traversal.advance(delta):
 			finish_mantle(delta)
 		return
+	if mantle_slide_left > 0 and input.slide_pressed and input.slide and not input.jump and was_floor and actor.state == "ready":
+		start_mantle_slide()
 	if actor.state in ["captured", "throw_pair", "boot_attached", "boot_captured"]:
 		actor.velocity = Vector3.ZERO
 		return
@@ -82,14 +96,20 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 		var lunge: Vector3 = actor.close.lunge_displacement(delta)
 		actor.velocity.x = lunge.x / delta
 		actor.velocity.z = lunge.z / delta
-		actor.velocity.y -= t.gravity * delta
+		if actor.close.melee_airborne:
+			var falling_delta: float = maxf(0,actor.close.melee_age-t.melee_air_suspend)-maxf(0,actor.close.melee_age-delta-t.melee_air_suspend)
+			actor.close.melee_fall_speed -= t.gravity * falling_delta
+			actor.velocity.y = actor.close.melee_fall_speed + lunge.y / delta
+		else:
+			actor.velocity.y -= t.gravity * delta
 		actor.velocity = actor.velocity.limit_length(t.speed_limit)
 		actor.move_and_slide()
 		for index: int in actor.get_slide_collision_count():
 			var normal: Vector3 = actor.get_slide_collision(index).get_normal()
-			if normal.dot(actor.close.melee_direction) < -0.25 and normal.y < cos(actor.floor_max_angle):
+			if normal.dot(actor.close.melee_motion_direction()) < -0.25:
 				actor.close.lunge_blocked = true
 		if actor.close.melee_age >= t.melee_lunge_delay + t.melee_lunge_duration:
+			if actor.close.melee_airborne: actor.velocity.y = actor.close.melee_fall_speed
 			actor.velocity.x = 0
 			actor.velocity.z = 0
 		return
@@ -97,13 +117,16 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 	jump_buffer = 0.12 if input.jump else maxf(0.0, jump_buffer - delta)
 	var can_move: bool = actor.state not in ["stagger", "counterthrow", "throw_release"]
 	var wish: Vector3 = input.move if can_move else Vector3.ZERO
-	if input.dash and dash_cd <= 0.0 and actor.permits("dash"):
+	if input.dash and can_dash():
 		end_hover()
 		dash_airborne = not was_floor
+		dash_slide_locked = true
+		mantle_slide_left = 0
 		slide_rearmed = false
 		slide_press_age = 99.0
 		transition("dash_windup", t.dash_buildup)
-		dash_cd = t.dash_cooldown
+		dash_charges -= 1
+		if dash_cd <= 0: dash_cd = t.dash_cooldown
 		actor.resolver.record("cast", actor, "dash")
 	if input.hover and hover_cd <= 0.0 and actor.permits("hover"):
 		if mode in ["hover", "hover_ascent"]:
@@ -118,7 +141,7 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 		actor.velocity.z = move_toward(actor.velocity.z, 0.0, delta * 8.0)
 		actor.velocity.y -= t.gravity * delta
 		if timer <= 0.0:
-			dash_direction = actor.aim_direction
+			dash_direction = requested_dash_direction(input)
 			if not dash_airborne:
 				dash_direction = Vector3(dash_direction.x,0,dash_direction.z).normalized()
 				if dash_direction.is_zero_approx(): dash_direction = -actor.global_basis.z
@@ -139,13 +162,15 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			tangent += (Vector3.DOWN * t.gravity).slide(normal) * delta
 			tangent = tangent.move_toward(Vector3.ZERO, t.slide_friction * delta)
 			slide_velocity = tangent.limit_length(t.speed_limit)
-			actor.velocity = slide_velocity + Vector3.DOWN * 0.1
+			# Keep reliable floor contact at small resting separations; this is
+			# support pressure, not stored slide momentum.
+			actor.velocity = slide_velocity + Vector3.DOWN * maxf(.5,t.gravity*delta)
 			if (tangent.length() < 2.0 and rad_to_deg(actor.get_floor_angle()) < t.slide_slope) or not input.slide:
 				transition("ground")
 	else:
 		# Test incoming momentum before crouch braking. Slide takes priority,
 		# including downhill entry, but cannot bypass the dash landing gate.
-		var enter_slide: bool = input.slide and slide_rearmed and was_floor and can_move and actor.state == "ready" and (Vector2(actor.velocity.x,actor.velocity.z).length() >= t.slide_entry_speed or rad_to_deg(actor.get_floor_angle()) >= t.slide_slope)
+		var enter_slide: bool = input.slide and slide_rearmed and not dash_slide_locked and was_floor and can_move and actor.state == "ready" and (Vector2(actor.velocity.x,actor.velocity.z).length() >= t.slide_entry_speed or rad_to_deg(actor.get_floor_angle()) >= t.slide_slope)
 		var scale: float = 1.0
 		if crouched and not enter_slide: scale = t.crouch_speed_scale
 		if input.aim_held and actor.tuning.hero_id in ["nimbus","slayer"]:
@@ -175,6 +200,7 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			actor.velocity.y -= t.gravity * delta
 			mode = "ground" if was_floor else "air"
 		if enter_slide:
+			slide_source = "momentum"
 			transition("slide")
 		elif crouched and was_floor:
 			mode = "crouch"
@@ -215,6 +241,8 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 				if dash_airborne and input.slide and slide_press_age <= t.dash_slide_window + .000001 and actor.velocity.length() >= t.slide_entry_speed:
 					transition("slide")
 					dash_slide = true
+					dash_slide_locked = false
+					slide_source = "air_dash"
 					slide_rearmed = true
 				else:
 					transition("ground")
@@ -258,23 +286,71 @@ func set_crouched(value: bool) -> void:
 func finish_mantle(delta: float) -> void:
 	# The checked landing supplies ground permission immediately. Continue the
 	# carried motion in this same tick, or launch a buffered jump off the top.
+	mantle_slide_direction = traversal.approach_direction
+	mantle_slide_left = actor.tuning.mantle_slide_window
+	dash_slide_locked = false
 	coyote = .1
 	actor.velocity.y = -actor.tuning.gravity * delta
 	if jump_buffer > 0:
 		actor.velocity.y = actor.tuning.jump_impulse
 		jump_buffer = 0
 		coyote = 0
+		mantle_slide_left = 0
+		mantle_slide_buffered = false
 	actor.velocity = actor.velocity.limit_length(actor.tuning.speed_limit)
 	actor.move_and_slide()
 	transition("ground" if actor.is_on_floor() else "air")
+	if mantle_slide_left > 0 and mantle_slide_buffered and actor.intent.slide and grounded(): start_mantle_slide()
+	mantle_slide_buffered = false
+
+func start_mantle_slide() -> void:
+	var speed: float = maxf(actor.tuning.mantle_slide_speed,actor.velocity.dot(mantle_slide_direction))
+	actor.velocity = (mantle_slide_direction * speed).limit_length(actor.tuning.speed_limit)
+	mantle_slide_left = 0
+	mantle_slide_buffered = false
+	dash_slide_locked = false
+	slide_source = "mantle"
+	transition("slide")
+
+func can_dash() -> bool:
+	return dash_charges > 0 and mode not in ["dash","dash_windup"] and actor.permits("dash")
+
+func refill_dashes() -> void:
+	dash_charges = actor.tuning.dash_capacity
+	dash_cd = 0
+
+func tick_dash_recharge(delta: float) -> void:
+	if dash_charges >= actor.tuning.dash_capacity:
+		dash_cd = 0
+		return
+	dash_cd -= delta
+	while dash_cd <= 0 and dash_charges < actor.tuning.dash_capacity:
+		dash_charges += 1
+		if dash_charges < actor.tuning.dash_capacity: dash_cd += actor.tuning.dash_cooldown
+	if dash_charges >= actor.tuning.dash_capacity: dash_cd = 0
+
+func requested_dash_direction(input: CombatIntent) -> Vector3:
+	var aim: Vector3 = input.aim.normalized()
+	var forward: Vector3 = (aim * Vector3(1,0,1)).normalized()
+	if forward.is_zero_approx(): forward = -actor.global_basis.z
+	var right: Vector3 = forward.cross(Vector3.UP).normalized()
+	var direction: Vector3 = aim
+	if not input.move.is_zero_approx():
+		direction = (aim if dash_airborne else forward) * input.move.dot(forward) + right * input.move.dot(right)
+	if not dash_airborne: direction.y = 0
+	return direction.normalized() if not direction.is_zero_approx() else forward
 
 func grounded() -> bool:
-	if not actor.is_on_floor():
+	if not actor.is_on_floor() and mode != "slide":
 		return false
 	# move_and_collide and training teleports do not refresh is_on_floor.
 	# Confirm actual nearby support before rearming jumps or coyote time.
 	var collision := KinematicCollision3D.new()
-	return actor.test_move(actor.global_transform,Vector3.DOWN * .06,collision) and collision.get_normal().y >= cos(actor.floor_max_angle)
+	if actor.test_move(actor.global_transform,Vector3.DOWN * .06,collision) and collision.get_normal().y >= cos(actor.floor_max_angle): return true
+	# A resting sweep can report a grazing contact instead of its support.
+	# Confirm a nearby walkable floor so flat slides do not randomly drop out.
+	var support: Dictionary = actor.resolver.ray(actor.global_position+Vector3.UP*.02,actor.global_position+Vector3.DOWN*.06,[actor.get_rid()],1)
+	return not support.is_empty() and support.normal.y >= cos(actor.floor_max_angle)
 
 func transition(next: String, duration: float = 0.0) -> void:
 	if mode != next and is_instance_valid(actor.resolver):
@@ -299,7 +375,11 @@ func cancel() -> void:
 		traversal.reset()
 	mode = "ground"
 	timer = 0.0
-	dash_cd = 0.0
+	refill_dashes()
+	dash_slide_locked = false
+	slide_source = ""
+	mantle_slide_left = 0
+	mantle_slide_buffered = false
 	hover_cd = 0.0
 	coyote = 0.0
 	jump_buffer = 0.0
@@ -310,6 +390,8 @@ func cancel() -> void:
 	slide_velocity = Vector3.ZERO
 
 func interrupt_mobility() -> void:
+	mantle_slide_left = 0
+	mantle_slide_buffered = false
 	if traversal != null and traversal.active: traversal.abort()
 	end_hover()
 	transition("ground" if actor.is_on_floor() else "air")

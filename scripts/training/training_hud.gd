@@ -121,7 +121,7 @@ func draw_hud() -> void:
 	label_at("%02d" % p.kit.ammo, Vector2(460, 811), 30 if p.tuning.magazine >= 100 else 37, ink, true)
 	label_at("/ %02d" % p.tuning.magazine, Vector2(460,830) if p.tuning.magazine >= 100 else Vector2(503,808), 11 if p.tuning.magazine >= 100 else 13, ink)
 	label_at("R  LOAD" if not p.kit.reloading else "LOAD %.1f" % p.kit.reload_remaining, Vector2(460, 844), 10, ink)
-	ability_card(550, TrainingInputs.key_label("dash"), "VECTOR", "DASH", p.motor.dash_cd, p.tuning.dash_cooldown)
+	ability_card(550, TrainingInputs.key_label("dash"), "DASH %d/%d" % [p.motor.dash_charges,p.tuning.dash_capacity], "READY", p.motor.dash_cd, p.tuning.dash_cooldown, p.motor.dash_charges > 0)
 	if p.kit is CareKit:
 		var labels: Array[String] = CareHUD.labels(p)
 		var times: Array[float] = CareHUD.cooldowns(p)
@@ -173,8 +173,8 @@ func draw_hud() -> void:
 		label_at("AGENT DOWN", Vector2(552, 405), 46, paper, true)
 		label_at("F5  RESTART EXERCISE     /     TAB  TRAINING CONSOLE", Vector2(514, 451), 15, mint)
 
-func ability_card(x: float, key: String, top: String, bottom: String, cd: float, total: float) -> void:
-	rect(Vector2(x, 738), Vector2(101, 126), paper if cd <= 0.0 else Color("ccd3c8"), 4)
+func ability_card(x: float, key: String, top: String, bottom: String, cd: float, total: float, available: bool = false) -> void:
+	rect(Vector2(x, 738), Vector2(101, 126), paper if cd <= 0.0 or available else Color("ccd3c8"), 4)
 	label_at(key, Vector2(x + 12, 761), 12, ink, true)
 	label_at(top, Vector2(x + 12, 803), 10, ink)
 	label_at(bottom if cd <= 0.0 else "%.1f s" % cd, Vector2(x + 12, 827), 15, ink, true)
@@ -314,7 +314,7 @@ func build_advanced_menu() -> void:
 	button(left, "Despawn all targets", training.despawn_bots)
 	button(left, "Reset exercise  [F5]", training.reset_scenario)
 	button(left, "Refill all resources  [F6]", training.refill_all)
-	button(left, "Refill cooldowns only", func() -> void: training.player.motor.dash_cd = 0; training.player.motor.hover_cd = 0; training.player.kit.deflect_cd = 0; training.player.kit.bomb_cd = 0; training.player.close.guard_cd = 0)
+	button(left, "Refill cooldowns only", func() -> void: training.player.motor.refill_dashes(); training.player.motor.hover_cd = 0; training.player.kit.deflect_cd = 0; training.player.kit.bomb_cd = 0; training.player.close.guard_cd = 0)
 	button(left, "Refill ultimate only", func() -> void: training.player.kit.ultimate_charge = 100)
 	check(left, "Freeze bot intent", false, func(on: bool) -> void: training.freeze_ai = on)
 	check(left, "Infinite resources  [CHEAT]", false, func(on: bool) -> void: training.infinite = on)
@@ -344,15 +344,15 @@ func build_advanced_menu() -> void:
 		["Counter window (s)", "counter_window", 0.24, 0.05, 0.4, 0.01],
 		["Throw outside damage multiplier", "throw_outside_multiplier", 0.1, 0.05, 1.0, 0.05],
 		["Guard bullet reduction (0 = none)", "bullet_guard_reduction", 0.0, 0.0, 0.8, 0.05],
-		["Dash speed (m/s)", "dash_speed", 22.0, 12.0, 26.0, 1.0],
-		["Slide friction", "slide_friction", 3.6, 1.0, 8.0, 0.2],
+		["Dash speed (m/s)", "dash_speed", 20.0, 12.0, 26.0, 1.0],
+		["Slide friction", "slide_friction", 4.0, 1.0, 8.0, 0.2],
 		["Hover ascent (m/s)", "hover_ascent", 8.5, 4.0, 14.0, 0.5]
 	]
 	for field: Array in fields:
 		spin(right, field[0], float(training.player.tuning.get(field[1])), field[3], field[4], field[5], change_tuning.bind(field[1]))
 	button(right, "Start timed traversal route", training.start_route)
-	button(right, "Movement preset · responsive", func() -> void: training.set_tuning("acceleration", 42); training.set_tuning("braking", 34); training.set_tuning("air_steering", 11))
-	button(right, "Movement preset · weighty (default)", func() -> void: training.set_tuning("acceleration", 30); training.set_tuning("braking", 24); training.set_tuning("air_steering", 7.5))
+	button(right, "Movement preset · responsive", func() -> void: training.set_tuning("acceleration", 42); training.set_tuning("braking", 34); training.set_tuning("air_steering", 8.25))
+	button(right, "Movement preset · weighty (default)", func() -> void: training.set_tuning("acceleration", 30); training.set_tuning("braking", 24); training.set_tuning("air_steering", 5.625))
 	var camera_controls := VBoxContainer.new()
 	right.add_child(camera_controls)
 	var camera_controller: PlayerController = training.player.controller as PlayerController

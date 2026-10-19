@@ -8,7 +8,7 @@ October 17, 2026. Two new playable heroes, separate from the reserved Annex and 
 
 Run `Launch.ps1 -Marshal` or `Launch.ps1 -Doctor`. Add `-Training` for the arena. Both pause menus offer all four heroes. Training offers **Doctor rounds** and **Marshal drill**, also available in the exercise selector. City teams contain one Marshal, one Doctor, two Nimbus and two Slayer; the player replaces a matching slot.
 
-Both retain Space traversal, 3 dash, Shift slide, 5 melee, 4 throw/counter and 6 melee guard. Neither new hero uses RMB shoulder zoom. Held firing is specific to these kits; Nimbus and Slayer retain their existing trigger behavior.
+Both retain Space traversal, wheel-up dash (two shared charges), Shift slide, 5 melee, 4 throw/counter and 6 melee guard. Neither new hero uses RMB shoulder zoom. Held firing is specific to these kits; Nimbus and Slayer retain their existing trigger behavior.
 
 ## Marshal Alden Vale
 

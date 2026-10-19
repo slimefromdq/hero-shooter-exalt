@@ -120,6 +120,7 @@ func run() -> void:
 	player.global_position = player.spawn_position
 	player.health = 100
 	player.kit.ultimate_charge = 43
+	player.motor.dash_charges = 1
 	player.motor.dash_cd = 2
 	player.motor.traversal.active = true
 	player.motor.traversal.origin = player.global_position

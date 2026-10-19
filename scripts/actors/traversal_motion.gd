@@ -11,6 +11,7 @@ var landing: Vector3
 var elapsed: float = 0.0
 var duration: float = 0.32
 var progress: float = 0.0
+var approach_direction: Vector3 = Vector3.FORWARD
 var carried_velocity: Vector3 = Vector3.ZERO
 var last_wall_normal: Vector3 = Vector3.ZERO
 var wall_cooldown: float = 0.0
@@ -25,6 +26,24 @@ func tick(delta: float, grounded: bool) -> void:
 		abort()
 
 func try_mantle(wish: Vector3) -> bool:
+	var forward: Vector3 = (wish * Vector3(1,0,1)).normalized()
+	if forward.is_zero_approx(): forward = (actor.aim_direction * Vector3(1,0,1)).normalized()
+	if forward.is_zero_approx(): return false
+	var side: Vector3 = forward.cross(Vector3.UP)
+	var probes: Array[Vector3] = [Vector3.ZERO,side*actor.tuning.mantle_probe_offset,-side*actor.tuning.mantle_probe_offset]
+	probes.sort_custom(func(a: Vector3,b: Vector3) -> bool:
+		var from_a: Vector3 = actor.global_position+Vector3.UP*.5+a
+		var from_b: Vector3 = actor.global_position+Vector3.UP*.5+b
+		var hit_a: Dictionary = actor.resolver.ray(from_a,from_a+forward*actor.tuning.mantle_reach,[],1)
+		var hit_b: Dictionary = actor.resolver.ray(from_b,from_b+forward*actor.tuning.mantle_reach,[],1)
+		var distance_a: float = from_a.distance_squared_to(hit_a.position) if not hit_a.is_empty() else INF
+		var distance_b: float = from_b.distance_squared_to(hit_b.position) if not hit_b.is_empty() else INF
+		return distance_a < distance_b)
+	for offset: Vector3 in probes:
+		if try_mantle_probe(wish,offset): return true
+	return false
+
+func try_mantle_probe(wish: Vector3, offset: Vector3) -> bool:
 	var forward: Vector3 = wish * Vector3(1,0,1)
 	if forward.length_squared() < .1:
 		forward = actor.aim_direction * Vector3(1,0,1)
@@ -32,12 +51,12 @@ func try_mantle(wish: Vector3) -> bool:
 		return false
 	forward = forward.normalized()
 	var t: HeroTuning = actor.tuning
-	var from: Vector3 = actor.global_position + Vector3.UP * .5
+	var from: Vector3 = actor.global_position + Vector3.UP * .5 + offset
 	var wall: Dictionary = actor.resolver.ray(from, from + forward * t.mantle_reach, [], 1)
 	if wall.is_empty() or absf((wall.normal as Vector3).y) > .2:
 		return false
 	var normal: Vector3 = wall.normal
-	if forward.dot(-normal) < .65:
+	if forward.dot(-normal) < t.mantle_approach_dot:
 		return false
 	# Probe beyond the lip far enough for the whole capsule to stand on top.
 	var over: Vector3 = wall.position - normal * .55
@@ -77,6 +96,9 @@ func try_mantle(wish: Vector3) -> bool:
 	actor.state = "mantle"
 	actor.aim_direction = forward
 	actor.rotation.y = atan2(-forward.x,-forward.z)
+	approach_direction = forward
+	actor.motor.mantle_slide_buffered = false
+	actor.motor.mantle_slide_left = 0
 	carried_velocity = (actor.velocity * Vector3(1,0,1)).limit_length(t.speed_limit)
 	actor.velocity = Vector3.ZERO
 	active = true
@@ -168,14 +190,17 @@ func try_wall_jump(wish: Vector3) -> bool:
 		return false
 	normal = (normal * Vector3(1,0,1)).normalized()
 	var horizontal: Vector3 = actor.velocity * Vector3(1,0,1)
-	var parallel: Vector3 = horizontal.slide(normal)
-	var outward: float = maxf(actor.tuning.wall_jump_out,horizontal.dot(normal))
-	var upward: float = maxf(actor.tuning.wall_jump_up,actor.velocity.y)
+	var upward: float = minf(actor.tuning.speed_limit,maxf(actor.tuning.wall_jump_up,actor.velocity.y))
+	var horizontal_limit: float = sqrt(maxf(0,actor.tuning.speed_limit*actor.tuning.speed_limit-upward*upward))
+	var speed: float = minf(horizontal_limit,maxf(actor.tuning.wall_jump_speed,horizontal.length()))
+	var outward: float = minf(speed,maxf(actor.tuning.wall_jump_out,speed*maxf(0,forward.dot(normal))))
+	var tangent: Vector3 = forward.slide(normal).normalized()
+	if tangent.is_zero_approx(): tangent = horizontal.slide(normal).normalized()
+	if tangent.is_zero_approx(): tangent = normal.cross(Vector3.UP).normalized()
+	var launch: Vector3 = tangent*sqrt(maxf(0,speed*speed-outward*outward))+normal*outward
 	actor.motor.end_hover()
 	actor.motor.transition("air")
-	# Preserve actual travel along the wall; camera direction and movement keys
-	# locate a wall but never replace the actor's existing momentum.
-	actor.velocity = parallel + normal * outward + Vector3.UP * upward
+	actor.velocity = (launch+Vector3.UP*upward).limit_length(actor.tuning.speed_limit)
 	last_wall_normal = normal
 	wall_cooldown = actor.tuning.wall_jump_cooldown
 	wall_pose = .28
@@ -184,6 +209,8 @@ func try_wall_jump(wish: Vector3) -> bool:
 	return true
 
 func abort() -> void:
+	actor.motor.mantle_slide_buffered = false
+	actor.motor.mantle_slide_left = 0
 	active = false
 	carried_velocity = Vector3.ZERO
 	progress = 0

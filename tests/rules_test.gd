@@ -287,7 +287,7 @@ func movement_tests() -> void:
 	a.intent.aim = Vector3(0,-0.5,-1).normalized()
 	await step()
 	a.intent.dash = false
-	check(a.motor.mode == "dash_windup" and a.motor.dash_cd > 4, "dash consumes one cooldown at buildup")
+	check(a.motor.mode == "dash_windup" and a.motor.dash_cd > 4 and a.motor.dash_charges == 1, "dash spends one charge and starts recharge at buildup")
 	a.intent.slide = false
 	await step(12)
 	check(a.motor.mode == "dash" and not a.motor.dash_airborne and a.motor.dash_direction.y == 0, "ground dash stays horizontal without automatic slide")

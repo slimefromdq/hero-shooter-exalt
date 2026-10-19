@@ -177,6 +177,7 @@ func knife_tests() -> void:
 
 func boot_tests() -> void:
 	await reset(Vector3(0,.01,-6))
+	a.motor.dash_charges = 1
 	a.motor.dash_cd = 3
 	kit().start_boot()
 	await step(2)
@@ -346,6 +347,7 @@ func integration_tests() -> void:
 	a.die()
 	a.reset_actor()
 	check(not b.statuses.marked_for(a),"attacker death and immediate respawn cannot retain pursuit marks")
+	a.motor.dash_charges = 1
 	a.motor.dash_cd = 3
 	a.statuses.apply("root",b,1.5)
 	check(a.motor.dash_cd == 3,"snare mobility interruption preserves universal cooldown")

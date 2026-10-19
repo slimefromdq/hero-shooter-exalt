@@ -93,7 +93,7 @@ func _physics_process(delta: float) -> void:
 		elif state in ["slayer_boot_start", "slayer_boot_active"]:
 			aim_direction = (kit as SlayerKit).boot_direction
 		else:
-			aim_direction = close.melee_direction if state.begins_with("melee_") else intent.aim.normalized()
+			aim_direction = close.melee_direction if state.begins_with("melee_") and close.melee_age >= tuning.melee_lunge_delay else intent.aim.normalized()
 		if Vector2(aim_direction.x, aim_direction.z).length() > 0.01:
 			rotation.y = atan2(-aim_direction.x, -aim_direction.z)
 	state_time = maxf(0.0, state_time - delta)

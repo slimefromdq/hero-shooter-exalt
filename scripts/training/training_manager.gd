@@ -279,7 +279,7 @@ func refill_all() -> void:
 	player.statuses.cleanse()
 	player.health = player.effective_max_health()
 	player.kit.refill()
-	player.motor.dash_cd = 0.0
+	player.motor.refill_dashes()
 	player.motor.hover_cd = 0.0
 	player.close.refill()
 	show_notice("TRAINING REFILL · health / ammo / cooldowns / ultimate")

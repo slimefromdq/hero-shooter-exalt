@@ -3,6 +3,7 @@ $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
 $taskEngine = & (Join-Path $PSScriptRoot 'find_godot.ps1')
 $taskRuntime = Join-Path $taskRoot '.tools/runtime'
+New-Item -ItemType Directory -Path (Join-Path $taskRoot 'artifacts/slayer-integration') -Force | Out-Null
 New-Item -ItemType Directory -Path $taskRuntime -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $taskRuntime 'Godot') -Force | Out-Null
 $taskSettings = Join-Path $taskRuntime 'Godot/editor_settings-4.7.tres'
@@ -15,6 +16,8 @@ Push-Location -LiteralPath $taskRoot
 try {
     & $taskEngine --headless --path $taskRoot --editor --import --quit
     if ($LASTEXITCODE -ne 0) { throw 'Godot import failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/movement_overhaul_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Shared movement overhaul failed.' }
     foreach ($taskBotTest in @('bot_tactics_test', 'bot_integration_test')) {
         & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script "res://tests/$taskBotTest.gd"
         if ($LASTEXITCODE -ne 0) { throw "Tactical bot check failed: $taskBotTest" }

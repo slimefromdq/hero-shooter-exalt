@@ -15,6 +15,8 @@ var sequence: ThrowSequence
 var pair_progress: float = 0.0
 var melee_age: float = 0.0
 var melee_direction: Vector3 = Vector3.FORWARD
+var melee_airborne: bool = false
+var melee_fall_speed: float = 0.0
 var lunge_blocked: bool = false
 var melee_lunge_enabled: bool = true
 
@@ -45,15 +47,21 @@ func tick(delta: float, input: CombatIntent) -> void:
 		actor.motor.transition("ground" if actor.is_on_floor() else "air")
 		actor.state = "melee_windup"
 		actor.state_time = t.melee_windup
-		melee_direction = Vector3(actor.aim_direction.x, 0, actor.aim_direction.z).normalized()
+		melee_direction = input.aim.normalized()
 		if melee_direction.length_squared() < 0.1:
 			melee_direction = -actor.global_basis.z
 		melee_age = 0.0
 		lunge_blocked = false
 		melee_lunge_enabled = not input.stationary_melee
+		melee_airborne = not actor.motor.grounded() and melee_lunge_enabled
+		melee_fall_speed = 0
 		cast_id = actor.resolver.new_cast(actor)
 		actor.resolver.record("cast", actor, "melee")
 	if actor.state.begins_with("melee_"):
+		# The lunge begins after its delay, even while damage windup continues.
+		if melee_age < t.melee_lunge_delay and not input.aim.is_zero_approx():
+			melee_direction = input.aim.normalized()
+			actor.aim_direction = melee_direction
 		melee_age += delta
 	match actor.state:
 		"melee_windup":
@@ -68,7 +76,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 					var hit: Dictionary = actor.resolver.ray(actor.body_point(1),point,[actor.get_rid()],1)
 					if hit.is_empty() or hit.get("collider") == structure: structure.receive_damage(actor,t.melee_damage,cast_id)
 			for target: HeroActor in actor.get_tree().get_nodes_in_group("actors"):
-				if valid_target(target, t.melee_range, 0.35):
+				if valid_melee_target(target):
 					actor.resolver.damage(actor, target, t.melee_damage, "melee", cast_id)
 					if actor.state == "stagger":
 						break
@@ -105,11 +113,22 @@ func lunge_displacement(delta: float) -> Vector3:
 	var end: float = t.melee_lunge_delay + maxf(0.01, t.melee_lunge_duration)
 	var current: float = smoothstep(t.melee_lunge_delay, end, melee_age)
 	var previous: float = smoothstep(t.melee_lunge_delay, end, maxf(0.0, melee_age - delta))
-	return melee_direction * (current - previous) * t.melee_lunge_distance
+	return melee_motion_direction() * (current - previous) * t.melee_lunge_distance
+
+func melee_motion_direction() -> Vector3:
+	if melee_airborne: return melee_direction
+	var flat: Vector3 = melee_direction * Vector3(1,0,1)
+	return flat.normalized() if not flat.is_zero_approx() else -actor.global_basis.z
 
 func melee_progress() -> float:
 	var t: HeroTuning = actor.tuning
 	return clampf(melee_age / (t.melee_windup + t.melee_active + t.melee_recovery), 0, 1)
+
+func valid_melee_target(target: HeroActor) -> bool:
+	if target == actor or not target.alive or target.team == actor.team or target.state == "wisp_phase": return false
+	if actor.resolver.attack_locked(actor) or actor.resolver.protected_room(target): return false
+	var offset: Vector3 = target.body_point(1)-actor.body_point(1)
+	return offset.length() <= actor.tuning.melee_range and offset.normalized().dot(melee_direction) >= .35 and actor.resolver.visible(actor.body_point(1),target,[actor.get_rid()])
 
 func valid_target(target: HeroActor, reach: float, facing: float) -> bool:
 	if target == actor or not target.alive or target.team == actor.team or target.state == "wisp_phase":

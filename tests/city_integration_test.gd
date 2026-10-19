@@ -164,6 +164,7 @@ func run() -> void:
 	player.kit.deflect_cd = 10
 	player.kit.bomb_cd = 9
 	player.kit.ultimate_charge = 83
+	player.motor.dash_charges = 1
 	player.motor.dash_cd = 2
 	player.motor.hover_cd = 3
 	player.close.guard_meter = 0
