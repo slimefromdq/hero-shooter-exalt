@@ -65,7 +65,7 @@ func feedback(tone: float = 400.0) -> void:
 	actor.presentation.sound.play_tone(tone,.065,.12)
 
 func can_act(action: String = "bomb") -> bool:
-	return actor.permits(action) and not actor.resolver.protected_room(actor)
+	return actor.permits(action) and not actor.resolver.attack_locked(actor)
 
 func refill() -> void:
 	super.refill()

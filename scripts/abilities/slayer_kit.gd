@@ -82,7 +82,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 	elif actor.state in ["slayer_knife", "slayer_trap", "slayer_axe_recovery"] and actor.state_time <= 0.0:
 		actor.state = "ready"
 	if input.deflect:
-		if actor.resolver.protected_room(actor):
+		if actor.resolver.attack_locked(actor):
 			hint("BOOT RUSH / LEAVE THE SAFE ROOM")
 		elif actor.statuses.movement_disabled():
 			hint("BOOT RUSH / MOBILITY DISABLED")
@@ -91,7 +91,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 		else:
 			boot_buffer = t.boot_input_buffer
 			if not actor.permits("boot") and actor.state != "guard": hint("BOOT RUSH / INPUT BUFFERED")
-	if boot_buffer > 0.0 and actor.state == "guard" and not actor.statuses.movement_disabled() and not actor.resolver.protected_room(actor):
+	if boot_buffer > 0.0 and actor.state == "guard" and not actor.statuses.movement_disabled() and not actor.resolver.attack_locked(actor):
 		actor.state = "ready"
 		actor.close.guard_cd = t.guard_cooldown
 	# Offensive cancels never reset the pump lock; all abilities respect commitments.

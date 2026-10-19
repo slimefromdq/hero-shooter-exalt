@@ -31,17 +31,23 @@ func clear_capsule(at: Vector3, excluded: Array[RID] = []) -> bool:
 	return arena.get_world_3d().direct_space_state.intersect_shape(query,1).is_empty()
 
 func path_reaches(at: Vector3) -> bool:
-	var path := NavigationServer3D.map_get_path(arena.get_world_3d().navigation_map,Vector3(6,0,3),at,true)
+	var path := NavigationServer3D.map_get_path(arena.get_world_3d().navigation_map,session.definition.hill_center+Vector3(5,0,-3),at,true)
 	return not path.is_empty() and path[-1].distance_to(at) < 1
 
 func park_actors() -> void:
 	for index: int in session.actors.size():
 		session.actors[index].global_position = Vector3(-60+index*2,.08,25)
 
-func gate_blocks(gate: StaticBody3D, team: int) -> bool:
+func gate_blocks(gate: MuseumSpawnDoor, team: int) -> bool:
+	var original_team: int = player.team
+	player.team = team
 	player.collision_mask = 9 if team == 0 else 5
-	var at: Vector3 = gate.global_position+Vector3(0,-2.42,-2)
-	return player.test_move(Transform3D(Basis.IDENTITY,at),Vector3(0,0,4))
+	var at: Vector3 = gate.global_position+Vector3(0,.08,-2).rotated(Vector3.UP,gate.rotation.y)
+	player.global_position = at
+	gate._physics_process(.25)
+	var blocked: bool = player.test_move(Transform3D(Basis.IDENTITY,at),Vector3(0,0,4).rotated(Vector3.UP,gate.rotation.y))
+	player.team = original_team
+	return blocked
 
 func run() -> void:
 	arena = load("res://scenes/museum/meridian_museum.tscn").instantiate()
@@ -94,18 +100,18 @@ func run() -> void:
 			for slot: int in 6:
 				check(clear_capsule(d.team_spawns(team)[slot]),"spawn capsule is clear: %s%d slot %d" % ["A" if team == 0 else "D",stage,slot])
 			arena.builder.update_gates(true)
-			for gate: StaticBody3D in arena.builder.spawn_gates:
+			for gate: MuseumSpawnDoor in arena.builder.spawn_gates:
 				if gate.get_meta("team") != team or gate.get_meta("stage") != stage: continue
 				check(gate_blocks(gate,1-team),"active spawn exit rejects enemies: "+str(gate.name))
 				check(gate_blocks(gate,team) == (team == 0),"preparation exit only locks attackers: "+str(gate.name))
 			arena.builder.update_gates(false)
-			for gate: StaticBody3D in arena.builder.spawn_gates:
+			for gate: MuseumSpawnDoor in arena.builder.spawn_gates:
 				if gate.get_meta("team") != team or gate.get_meta("stage") != stage: continue
 				check(not gate_blocks(gate,team),"released spawn exit permits its own team: "+str(gate.name))
 	session.restart_match()
 	park_actors()
 	session.toggle_exploration()
-	for gate: StaticBody3D in arena.builder.spawn_gates:
+	for gate: MuseumSpawnDoor in arena.builder.spawn_gates:
 		if gate.get_meta("team") == 0 and gate.get_meta("stage") == 0:
 			check(not gate_blocks(gate,0),"exploration opens preparation gates for free map access")
 	session.toggle_exploration()
@@ -147,7 +153,7 @@ func run() -> void:
 	session.payload.reset_cart()
 	for index: int in session.actors.size():
 		var actor: HeroActor = session.actors[index]
-		actor.reset_actor(Vector3(15+(index/3)*1.0,.08,(index%3-1)*1.0))
+		actor.reset_actor(d.payload_path[0]+Vector3((index%3-1)*1.0,.08,-3-(index/3)*1.0))
 		actor.collision_mask = 3
 	await frames()
 	session.payload.move_to_distance(15)
@@ -163,7 +169,7 @@ func run() -> void:
 	park_actors()
 	for id: String in HeroRoster.IDS:
 		player.select_hero(id)
-		for at: Vector3 in [Vector3(6,.08,3),d.high_positions[1]+Vector3.UP*.08,d.flank_positions[2]+Vector3.UP*.08,d.high_positions[3]+Vector3.UP*.08]:
+		for at: Vector3 in [d.hill_center+Vector3(5,.08,-3),d.high_positions[1]+Vector3.UP*.08,d.flank_positions[2]+Vector3.UP*.08,d.high_positions[3]+Vector3.UP*.08]:
 			player.global_position = at
 			await frames(3)
 			var query := PhysicsShapeQueryParameters3D.new()

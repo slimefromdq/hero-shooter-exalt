@@ -39,22 +39,31 @@ func draw_overview() -> void:
 	panel(Vector2(120,210),Vector2(1360,500))
 	text("MERIDIAN MUSEUM / "+("ELEVATED ROUTES" if underground_view else "GROUND + GARDEN"),Vector2(150,245),23,brass,true)
 	text("M close / B switch levels   |   stairs: gold   shortcuts: cyan   medical: green   active spawn: team color",Vector2(150,272),12,paper)
-	var bounds := Rect2(165,320,1250,290)
+	# Equal map scale preserves the folded layout instead of stretching it into a strip.
+	var bounds := Rect2(599,295,402,360)
 	for index: int in 4:
-		var left: float = [-26.0,16,64,108][index]
-		var right: float = [16.0,64,108,160][index]
-		var a: Vector2 = map_point(Vector3(left,0,-26),bounds)
-		var b: Vector2 = map_point(Vector3(right,0,26),bounds)
+		var area: Rect2 = d.combat_areas[index]
+		var a: Vector2 = map_point(Vector3(area.position.x,0,area.position.y),bounds)
+		var b: Vector2 = map_point(Vector3(area.end.x,0,area.end.y),bounds)
 		box(a,b-a,Color(.16+index*.02,.23,.27))
-		text(["A / ASTROLABE","CP1 / GIANTS","CP2 / TERRACE","CP3 / VAULT"][index],Vector2(a.x,310),13,brass,true)
+		text(["A / COURT","CP1 / GIANTS","CP2 / TERRACE","CP3 / VAULT"][index],a+Vector2(3,14),11,brass,true)
+	for index: int in 4:
+		text(["ASTROLABE COURT","HALL OF GIANTS","LIVING TERRACE","CONSERVATION VAULT"][index],Vector2(155,325+index*64),16,brass,true)
+		for entry: Dictionary in d.tactical_routes:
+			if entry.sector == index: text(entry.name,Vector2(155,345+index*64+(0 if entry.kind == "high_ground" else 18)),12,paper)
+	text("TEAM SPAWN DOORS",Vector2(1060,330),16,brass,true)
+	text("Teammates open from either side",Vector2(1060,355),12,paper)
+	text("Enemies cannot enter",Vector2(1060,377),12,paper)
+	text("Immune inside; firing permitted",Vector2(1060,399),12,mint)
+	text("Cross the threshold to leave immunity",Vector2(1060,421),12,paper)
 	# Draw authored collision footprints, so the atlas describes actual walls,
 	# exhibit cover and platforms rather than an abstract lane diagram.
 	for child: Node in m.arena.builder.architecture.collision_body.get_children():
 		var collision := child as CollisionShape3D
 		if collision.shape is BoxShape3D:
 			var size: Vector3 = collision.shape.size
-			if size.y < .1 or size.x > 100 or size.z > 70: continue
-			var ground: float = 1.5 if collision.position.x >= 108 else 0.0
+			if size.y < .1 or size.x > 90 or size.z > 90: continue
+			var ground: float = 0.0
 			var top: float = collision.position.y+size.y/2
 			if top <= ground+.2: continue
 			var corners := PackedVector2Array()
@@ -62,9 +71,9 @@ func draw_overview() -> void:
 				corners.append(map_point(collision.transform*corner,bounds))
 			canvas.draw_colored_polygon(corners,Color("8898a0") if size.y > 3 else Color("4f6c73"))
 		elif collision.shape is CylinderShape3D:
-			canvas.draw_circle(map_point(collision.position,bounds),collision.shape.radius*bounds.size.x/266,Color("70848b"))
-	var capture_a: Vector2 = map_point(Vector3(-9,0,-7),bounds)
-	var capture_b: Vector2 = map_point(Vector3(9,0,7),bounds)
+			canvas.draw_circle(map_point(collision.position,bounds),collision.shape.radius*bounds.size.x/114,Color("70848b"))
+	var capture_a: Vector2 = map_point(d.hill_center+Vector3(-9,0,-7),bounds)
+	var capture_b: Vector2 = map_point(d.hill_center+Vector3(9,0,7),bounds)
 	canvas.draw_rect(Rect2(capture_a,capture_b-capture_a),mint,false,2)
 	for index: int in range(1,d.payload_path.size()):
 		canvas.draw_line(map_point(d.payload_path[index-1],bounds),map_point(d.payload_path[index],bounds),brass,3,true)
@@ -91,15 +100,15 @@ func draw_overview() -> void:
 			var active: bool = index == (d.attacker_stage if team == 0 else d.defender_stage)
 			box(at-Vector2(10,7),Vector2(20,14),(mint if team == 0 else coral) if active else muted.darkened(.65))
 			text(("A" if team == 0 else "D")+str(index),at+Vector2(-7,-11),11,paper)
-	var objective_at: Vector3 = Vector3.ZERO if m.capture_progress < 1.0 else m.payload.global_position
+	var objective_at: Vector3 = d.hill_center if m.capture_progress < 1.0 else m.payload.global_position
 	canvas.draw_circle(map_point(objective_at,bounds),10,mint,false,2)
 	for actor: HeroActor in m.actors:
 		if actor.alive: canvas.draw_circle(map_point(actor.global_position,bounds),4,paper if actor == m.player else (mint if actor.team == 0 else coral))
-	text("A: 0 / +3.6 m    GIANTS: 0 / +4 m    TERRACE: garden -1.5 / roof +4.5 m    VAULT: +1.5 / gantry +5 m",Vector2(165,650),14,paper)
-	text("All primary perches have two ordinary approaches. Missed skill jumps land on lower playable routes.",Vector2(165,679),13,muted)
+	text("A: 0 / +3.6 m    GIANTS: +4 m / bridge +5.8 m    TERRACE: garden -1.5 / roof +4.5 m    VAULT: 0 / gantry +3.5 m",Vector2(155,680),14,paper)
+	text("All primary perches have two ordinary approaches. Missed skill jumps land on lower playable routes.",Vector2(155,702),13,muted)
 
 func map_point(point: Vector3, bounds: Rect2) -> Vector2:
-	return bounds.position+Vector2((point.x+66)/266,(point.z+40)/80)*bounds.size
+	return bounds.position+Vector2((point.x+57)/114,(point.z+51)/102)*bounds.size
 
 func draw_player_rail(p: HeroActor) -> void:
 	super.draw_player_rail(p)

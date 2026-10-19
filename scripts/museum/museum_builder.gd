@@ -6,8 +6,7 @@ var architecture: MeridianArchitecture
 var navigation_region: NavigationRegion3D
 var stairs: Array[Dictionary] = []
 var shortcuts: Array[Dictionary] = []
-var spawn_gates: Array[StaticBody3D] = []
-var capture_marker: MeshInstance3D
+var spawn_gates: Array[MuseumSpawnDoor] = []
 
 func _ready() -> void:
 	architecture = MeridianArchitecture.new(self)
@@ -93,244 +92,215 @@ func ramp(a: Vector3, b: Vector3, width: float, caption: String = "STAIR") -> vo
 	stairs.append({"a":a,"b":b,"width":width,"label":caption})
 	architecture.label(caption,a+Vector3.UP*.25,24,Color("305b65"),yaw)
 
-func deck(at: Vector3, length: float, height: float, key: String = "cream") -> void:
-	slab(at+Vector3(0,height-.2,0),Vector3(length,.4,5),key)
-	for x: float in [-length/2+1,length/2-1]:
-		slab(at+Vector3(x,height/2,0),Vector3(.65,height,.65),"ivory")
-	# The front rail is interrupted for shots and mantle entries; rear rail is safe.
-	architecture.railing(at+Vector3(-length/2,height,2.4),at+Vector3(length/2,height,2.4),.95)
-	for x: float in [-length*.33,length*.33]:
-		slab(at+Vector3(x,height+.5,-2.25),Vector3(3.2,1, .4),"ivory")
-	ramp(at+Vector3(-length/2-9,0,0),at+Vector3(-length/2,height,0),3.5,"WEST STAIR")
-	ramp(at+Vector3(length/2+9,0,0),at+Vector3(length/2,height,0),3.5,"EAST STAIR")
-
 func _build_floors() -> void:
-	slab(Vector3(-1,-.4,0),Vector3(130,.8,80))
-	slab(Vector3(86,-.4,-13),Vector3(44,.8,54))
-	slab(Vector3(86,-1.9,20.5),Vector3(44,.8,13),"grass")
-	slab(Vector3(86,-.4,34),Vector3(44,.8,12))
-	# A gentle arrival ramp reaches the elevated conservation wing.
-	ramp(Vector3(92,0,0),Vector3(108,1.5,0),27,"CONSERVATION RISE")
-	slab(Vector3(154,1.1,0),Vector3(92,.8,80))
-	ramp(Vector3(99,0,32),Vector3(108,1.5,32),13,"SERVICE RISE")
-	ramp(Vector3(99,0,-32),Vector3(108,1.5,-32),13,"SERVICE RISE")
-	ramp(Vector3(70,0,14),Vector3(70,-1.5,21),6,"GARDEN STAIR")
-	ramp(Vector3(97,0,14),Vector3(97,-1.5,21),6,"GARDEN STAIR")
-	ramp(Vector3(76,-1.5,21),Vector3(76,0,28),5,"GARDEN EXIT")
-	ramp(Vector3(82,-1.5,21),Vector3(82,0,28),5,"GARDEN EXIT")
-	for z: float in [-40,40]: wall(Vector3(-66,0,z),Vector3(200,1.5,z),9,"terracotta")
-	wall(Vector3(-66,0,-40),Vector3(-66,0,40),10)
-	wall(Vector3(200,1.5,-40),Vector3(200,1.5,40),10)
-	# Chunked perimeter gives deliberate side doors, display niches and landmarks.
-	for x: float in [-27,16,62,108,160]:
-		var y: float = 1.5 if x >= 108 else 0.0
-		for side: float in [-1,1]:
-			wall(Vector3(x,y,side*8),Vector3(x,y,side*14),8)
-			wall(Vector3(x,y,side*23),Vector3(x,y,side*26),8)
-		architecture.arch(Vector3(x,y,0),15,10,.8,"ivory",PI/2,.7)
-	for z: float in [-26,26]:
-		for x: float in [-22,4,30,56,82,108,134,160]:
-			var doorway: bool = false
-			var rooms: Array[Vector3] = definition.attacker_rooms if z > 0 else definition.defender_rooms
-			for room: Vector3 in rooms:
-				if absf(room.x-x) < 15: doorway = true
-			if doorway: continue
-			var y: float = 1.5 if x >= 108 else 0.0
-			wall(Vector3(x-8,y,z),Vector3(x+8,y,z),8)
+	# Only the garden is excavated. The footprint is 114 x 102 m, not a long strip.
+	slab(Vector3(-11,-.4,0),Vector3(92,.8,102))
+	slab(Vector3(50,-.4,0),Vector3(14,.8,102))
+	slab(Vector3(39,-.4,-43),Vector3(8,.8,16))
+	slab(Vector3(39,-.4,20),Vector3(8,.8,62))
+	slab(Vector3(39,-1.9,-23),Vector3(8,.8,24),"grass")
+	ramp(Vector3(39,0,-35),Vector3(39,-1.5,-28),8,"NORTH GARDEN STAIR")
+	ramp(Vector3(39,-1.5,-18),Vector3(39,0,-11),8,"SOUTH GARDEN STAIR")
+	for z: float in [-51,51]: wall(Vector3(-57,0,z),Vector3(57,0,z),10,"terracotta")
+	for x: float in [-57,57]: wall(Vector3(x,0,-51),Vector3(x,0,51),10,"terracotta")
+	# Central collection wing is substantial building mass, never a bypass lane.
+	slab(Vector3(0,6,25),Vector3(16,12,40),"terracotta")
+	architecture.label("MERIDIAN / COLLECTION WING",Vector3(0,10,45.4),42,Color("e5bb74"))
+	# Perimeter architecture defines the four wings, with generous local connections.
+	for row: Array in [
+	 [Vector3(-46,0,8),Vector3(-46,0,11)], [Vector3(-46,0,34),Vector3(-46,0,40)],
+	 [Vector3(-46,0,40),Vector3(-10,0,40)], [Vector3(-10,0,8),Vector3(-10,0,40)],
+	 [Vector3(-46,0,8),Vector3(-35,0,8)], [Vector3(-14,0,8),Vector3(-10,0,8)],
+	 [Vector3(-42,0,-38),Vector3(-42,0,-35)], [Vector3(-42,0,-15),Vector3(-42,0,4)], [Vector3(-42,0,4),Vector3(-35,0,4)],
+	 [Vector3(-15,0,4),Vector3(-4,0,4)], [Vector3(-4,0,-38),Vector3(-4,0,-30)],
+	 [Vector3(-4,0,-14),Vector3(-4,0,4)],
+	 [Vector3(2,0,-38),Vector3(2,0,-30)], [Vector3(2,0,-14),Vector3(2,0,4)],
+	 [Vector3(44,0,-38),Vector3(44,0,-37)], [Vector3(44,0,-32),Vector3(44,0,4)], [Vector3(2,0,4),Vector3(26,0,4)],
+	 [Vector3(40,0,4),Vector3(44,0,4)],
+	 [Vector3(8,0,10),Vector3(26,0,10)], [Vector3(40,0,10),Vector3(46,0,10)],
+	 [Vector3(8,0,10),Vector3(8,0,42)], [Vector3(8,0,42),Vector3(46,0,42)],
+	 [Vector3(46,0,10),Vector3(46,0,42)]]:
+		wall(row[0],row[1],8)
+	# Public admissions walk west of the galleries; two doors face its open porch.
+	wall(Vector3(-57,0,41),Vector3(-46,0,41),8)
+	# Back-of-house north edge has actual openings into its staff rooms.
+	for row: Array in [[-42,-19],[-5,-3],[13,21]]:
+		wall(Vector3(row[0],0,-38),Vector3(row[1],0,-38),7,"terracotta")
+	# Close unused perimeter strips into inaccessible building masses.
+	slab(Vector3(-2,4,47),Vector3(84,8,6),"terracotta")
+	slab(Vector3(50,4,46),Vector3(14,8,8),"terracotta")
+	slab(Vector3(51.5,4,26),Vector3(11,8,32),"terracotta")
+	slab(Vector3(-30.5,4,-44.5),Vector3(23,8,13),"terracotta")
+
+func room_shell(low: Vector3, high: Vector3, caption: String, key: String = "ivory", height: float = 6) -> void:
+	# Opposite doors leave a genuine interior route, rather than a cover box.
+	var mid: float = (low.x+high.x)/2
+	wall(low,Vector3(low.x,0,high.z),height,key)
+	wall(Vector3(high.x,0,low.z),high,height,key)
+	for z: float in [low.z,high.z]:
+		wall(Vector3(low.x,0,z),Vector3(mid-2,0,z),height,key)
+		wall(Vector3(mid+2,0,z),Vector3(high.x,0,z),height,key)
+	architecture.piece("box",Vector3(high.x-low.x,.2,high.z-low.z),Vector3(mid,height+.1,(low.z+high.z)/2),"roof_glass")
+	architecture.label(caption,Vector3(mid,minf(4.8,height-.5),high.z+.4),25,Color("305b65"))
+
+func platform(at: Vector3, size: Vector2, height: float, key: String = "cream") -> void:
+	slab(at+Vector3.UP*(height-.2),Vector3(size.x,.4,size.y),key)
 
 func _build_court() -> void:
-	architecture.label("MERIDIAN  /  MUSEUM OF LIVING HISTORY",Vector3(-25,8,0),65,Color("e5bb74"),PI/2)
-	architecture.label("A  /  ASTROLABE COURT",Vector3(0,.12,8),32)
-	# Oval architectural rhythm with generous breaks for three approaches.
-	for index: int in 12:
-		if index in [0,6]: continue
-		var angle: float = index*TAU/12
-		var at := Vector3(cos(angle)*20,0,sin(angle)*23)
-		architecture.cylinder(.6,7,at+Vector3.UP*3.5,"ivory",true)
-		architecture.arch(at+Vector3.UP*6,8,2.5,1,"cream",angle,.4,false)
-	architecture.cylinder(3,1.25,Vector3(1,.625,0),"slate",true)
-	architecture.cylinder(.55,5,Vector3(1,3.7,0),"brass",true)
-	for tilt: float in [0,.8,-.7]:
-		architecture.piece("ring",Vector3(7,.22,7),Vector3(1,4,0),"brass",Vector3(PI/2,tilt,.4))
-	architecture.piece("sphere",Vector3(1.4,1.4,1.4),Vector3(1,4,0),"cyan")
-	deck(Vector3(-5,0,-17),16,3.6)
-	for at: Vector3 in [Vector3(-15,0,15),Vector3(6,0,17)]:
-		architecture.planter(at,Vector3(4,1.2,2.5))
-		architecture.tree(at+Vector3.UP*1.2,1.1)
-	# Short mantle chain into the crescent's side; all drops land on court paving.
+	var c: Vector3 = definition.hill_center
+	architecture.label("A / ASTROLABE COURT",c+Vector3(0,.1,8),34)
+	architecture.cylinder(2.6,1.25,c+Vector3.UP*.625,"slate",true)
+	architecture.cylinder(.45,4,c+Vector3.UP*3.25,"brass",true)
+	for tilt: float in [0,.8,-.7]: architecture.piece("ring",Vector3(6,.22,6),c+Vector3.UP*4,"brass",Vector3(PI/2,tilt,.4))
+	architecture.piece("sphere",Vector3(1.2,1.2,1.2),c+Vector3.UP*4,"cyan")
+	slab(Vector3(-35,1.7,24),Vector3(3,3.4,5),"terracotta")
+	slab(Vector3(-22,1.5,30),Vector3(3,3,4),"ivory")
+	# Cafe roof and rear balcony form one occupied architectural edge.
+	platform(Vector3(-32,0,12),Vector2(24,5),3.6)
+	wall(Vector3(-44,0,10),Vector3(-44,0,14),6)
+	wall(Vector3(-34,0,10),Vector3(-34,0,18),3.4)
+	ramp(Vector3(-39,0,25),Vector3(-39,3.6,14.5),3.5,"CAFE STAIR")
+	ramp(Vector3(-23,0,25),Vector3(-23,3.6,14.5),3.5,"CLOISTER STAIR")
+	for x: float in [-39,-27]: slab(Vector3(x,4.15,14.2),Vector3(4,1.1,.5))
+	architecture.railing(Vector3(-44,3.6,9.7),Vector3(-20,3.6,9.7),.95)
+	room_shell(Vector3(-21,0,28),Vector3(-12,0,38),"SCULPTURE CLOISTER")
+	for at: Vector3 in [Vector3(-40,0,33),Vector3(-13,0,24)]: architecture.planter(at,Vector3(3,1.2,2))
 	for index: int in 2:
-		slab(Vector3(-9+index*2, .6+index*.6,-12-index*1.8),Vector3(2.8,1.2+index*1.2,2.8),"terracotta")
-	deck(Vector3(-12,0,9),6,3.6)
-	wall(Vector3(-16,0,11.7),Vector3(-16,0,16),4,"terracotta")
-	wall(Vector3(-16,0,15),Vector3(-12,0,15),4,"terracotta")
-	shortcuts.append({"a":Vector3(-9,0,-12),"b":Vector3(-5,3.6,-17),"kind":"MANTLE"})
-	shortcuts.append({"a":Vector3(-16.7,0,13),"b":Vector3(-12,3.6,9),"kind":"WALL KICK"})
-	for x: float in [-22,-13]:
-		slab(Vector3(x,1.1,19),Vector3(3.5,2.2,2),"ivory")
-		architecture.piece("sphere",Vector3(1,2,1),Vector3(x,3,19),"brass")
+		var h: float = (index+1)*1.2
+		slab(Vector3(-31,h/2,18-index*2),Vector3(2.8,h,2.8),"terracotta")
+	slab(Vector3(-31,2.9,14.4),Vector3(3,1.4,.4),"terracotta")
+	shortcuts.append({"a":Vector3(-31,0,20.1),"b":Vector3(-31,3.6,12),"kind":"CAFE MANTLES"})
+	wall(Vector3(-18,0,34),Vector3(-18,0,37),4,"terracotta")
+	wall(Vector3(-18,0,37),Vector3(-14,0,37),4,"terracotta")
+	shortcuts.append({"a":Vector3(-18.7,0,35),"b":Vector3(-18,3.6,12),"kind":"CLOISTER WALL KICK"})
 
 func _build_giants() -> void:
-	architecture.label("01  /  HALL OF GIANTS",Vector3(18,8,0),52,Color("e5bb74"),PI/2)
-	# Payload wraps the island; neither mezzanine sees both sides.
-	slab(Vector3(34,1.4,0),Vector3(11,2.8,7),"slate")
-	slab(Vector3(53,1.3,-15),Vector3(5,2.6,5),"terracotta")
-	deck(Vector3(38,0,17),16,4)
-	deck(Vector3(48,0,-19),10,4)
-	# Separate ledges form a real 4 m clear dash gap.
-	slab(Vector3(28,3.8,10),Vector3(6,.4,4),"cream")
-	slab(Vector3(38,3.8,10),Vector3(6,.4,4),"cream")
-	ramp(Vector3(17,0,10),Vector3(25,4,10),3.5,"EXHIBIT STAIR")
-	shortcuts.append({"a":Vector3(31,4,10),"b":Vector3(35,4,10),"kind":"DASH 4 m"})
-	wall(Vector3(18,0,21),Vector3(18,0,25),4)
-	wall(Vector3(26,0,21),Vector3(30,0,21),4)
-	# Suspended skeleton: spine, rib cage, skull, jaw, tail and legs.
-	for index: int in 15:
-		var x: float = 26+index*1.15
-		var y: float = 6.2+sin(index*.2)*.6
-		architecture.piece("sphere",Vector3(.6,.6,.6),Vector3(x,y,0),"bone")
+	architecture.label("01 / HALL OF GIANTS",Vector3(-27,8,-36),46,Color("e5bb74"))
+	slab(Vector3(-30,1.5,-28),Vector3(9,3,8),"slate")
+	room_shell(Vector3(-17,0,-18),Vector3(-7,0,-7),"RESEARCH / EDUCATION")
+	platform(Vector3(-32,0,-22),Vector2(18,4),4)
+	ramp(Vector3(-39,0,-8),Vector3(-39,4,-20),3.5,"EDUCATION STAIR")
+	# Bridge underside clears both the artifact and standing riders (4.4 m).
+	ramp(Vector3(-34,4,-20),Vector3(-34,5.8,-7),3.5,"UPPER GALLERY")
+	platform(Vector3(-27,0,-5),Vector2(17,4),5.8)
+	ramp(Vector3(-7,0,-5),Vector3(-18.5,5.8,-5),3.5,"RESEARCH STAIR")
+	for x: float in [-32,-22]: slab(Vector3(x,6.3,-3.3),Vector3(4,1,.5))
+	architecture.railing(Vector3(-35,5.8,-6.8),Vector3(-19,5.8,-6.8),.95)
+	# Two ledges share the gallery's ordinary access; a missed dash lands in the hall.
+	platform(Vector3(-37,0,-33),Vector2(5,4),4)
+	platform(Vector3(-37,0,-27.5),Vector2(3,7),4)
+	platform(Vector3(-28,0,-33),Vector2(5,4),4)
+	platform(Vector3(-28,0,-27.5),Vector2(3,7),4)
+	shortcuts.append({"a":Vector3(-34.5,4,-33),"b":Vector3(-30.5,4,-33),"kind":"DASH 4 m"})
+	for index: int in 14:
+		var at := Vector3(-36+index*.9,7+sin(index*.25)*.4,-28)
+		architecture.piece("sphere",Vector3(.5,.5,.5),at,"bone")
 		if index > 2 and index < 11:
 			for side: float in [-1,1]:
-				architecture.line(Vector3(x,y,0),Vector3(x-.3,y-1.4,side*1.7),.18,"bone")
-				architecture.line(Vector3(x-.3,y-1.4,side*1.7),Vector3(x+.1,y-2.2,side*1),.15,"bone")
-	architecture.piece("sphere",Vector3(3,1.4,1.8),Vector3(25,6.2,0),"bone")
-	architecture.line(Vector3(24,5.6,0),Vector3(26,5.3,0),.3,"bone")
-	for x: float in [31,38]:
-		for side: float in [-1,1]:
-			architecture.line(Vector3(x,5.5,side*.5),Vector3(x+1,3.6,side*1.4),.28,"bone")
-	for index: int in 6:
-		architecture.line(Vector3(42+index,6.2,0),Vector3(43+index,6.0-index*.15,0),.3-index*.035,"bone")
-	for x: float in [27,39,48]: architecture.line(Vector3(x,7,0),Vector3(x,12,0),.045,"iron")
-	# Vaulted skylight ribs leave clear airspace for flight without hiding routes.
-	for x: float in [19,28,37,46,55,61]:
-		architecture.arch(Vector3(x,0,0),51,13,.4,"ivory",PI/2,.35,false)
-	architecture.piece("box",Vector3(45,.12,34),Vector3(39,13,0),"roof_glass")
-	for x: float in [24,47]:
-		slab(Vector3(x,1,22),Vector3(3,2,2),"ivory")
-		architecture.piece("sphere",Vector3(1,1.6,1),Vector3(x,2.8,22),"bone")
+				architecture.line(at,at+Vector3(-.2,-1.5,side*1.7),.16,"bone")
+				architecture.line(at+Vector3(-.2,-1.5,side*1.7),at+Vector3(.1,-2.1,side),.14,"bone")
+	architecture.piece("sphere",Vector3(2.6,1.5,1.8),Vector3(-37,7,-28),"bone")
+	for x: float in [-37,-25]: architecture.line(Vector3(x,7,-28),Vector3(x,12,-28),.045,"iron")
+	for z: float in [-34,-24,-14]: architecture.arch(Vector3(-23,0,z),36,12,.4,"ivory",0,.35,false)
+	architecture.piece("box",Vector3(37,.15,40),Vector3(-23,12.4,-17),"roof_glass")
 
 func _build_terrace() -> void:
-	architecture.label("02  /  LIVING TERRACE",Vector3(64,7,0),50,Color("e5bb74"),PI/2)
-	deck(Vector3(83,0,-17),14,4.5,"grass")
-	for at: Vector3 in [Vector3(79,0,-4),Vector3(103,-1.5,24),Vector3(88,-1.5,24)]:
-		architecture.planter(at,Vector3(4,1.3,3))
-		architecture.tree(at+Vector3.UP*1.3,1.3)
-	wall(Vector3(80,0,-6),Vector3(87,0,-6),3.8,"terracotta")
-	wall(Vector3(97,0,7),Vector3(103,0,7),3.8,"terracotta")
+	architecture.label("02 / LIVING TERRACE",Vector3(22,7,-37),43,Color("e5bb74"))
+	# Pavilion sits inside the cart's curve, with an occupied roof and two ground doors.
+	room_shell(Vector3(12,0,-20),Vector3(22,0,-7),"BOTANICAL PAVILION","terracotta",3.8)
+	platform(Vector3(17,0,-10),Vector2(10,6),4.5,"grass")
+	platform(Vector3(19,0,-3.5),Vector2(4,7),4.5,"grass")
+	ramp(Vector3(3,0,-10),Vector3(12,4.5,-10),3.5,"PAVILION STAIR")
+	ramp(Vector3(29,0,0),Vector3(21,4.5,0),3.5,"TERRACE RAMP")
+	wall(Vector3(12,4.5,-11),Vector3(18,4.5,-11),3,"terracotta")
+	platform(Vector3(14,0,-17),Vector2(3,8),4.5,"grass")
+	for x: float in [14,20]: slab(Vector3(x,5,-7.3),Vector3(3,1,.45))
+	for at: Vector3 in [Vector3(6,0,-17),Vector3(29,0,-3),Vector3(36.5,-1.5,-23)]:
+		architecture.planter(at,Vector3(3,1.2,2))
+		architecture.tree(at+Vector3.UP*1.2,1)
 	for index: int in 3:
-		var h: float = 1.5*(index+1)
-		slab(Vector3(76+index*2,h/2,-10-index*2),Vector3(2.7,h,2.7),"ivory")
-	shortcuts.append({"a":Vector3(76,0,-10),"b":Vector3(80,4.5,-14),"kind":"MANTLE CHAIN"})
-	slab(Vector3(80,2.6,20),Vector3(5,.4,4),"cream")
-	slab(Vector3(90,2.6,20),Vector3(5,.4,4),"cream")
-	ramp(Vector3(72,-1.5,20),Vector3(77.5,2.8,20),3.5,"SCULPTURE STAIR")
-	ramp(Vector3(98,-1.5,20),Vector3(92.5,2.8,20),3.5,"SCULPTURE STAIR")
-	shortcuts.append({"a":Vector3(82.5,2.8,20),"b":Vector3(87.5,2.8,20),"kind":"DASH 5 m"})
-	for x: float in [71,87,101]:
-		architecture.cylinder(.8,1.2,Vector3(x,-.9,24),"ivory",true)
-		architecture.piece("ring",Vector3(2.3,.3,2.3),Vector3(x,1.1,24),"brass",Vector3(PI/2,.4,0))
+		var h: float = (index+1)*1.5
+		slab(Vector3(14,h/2,-24+index*2),Vector3(2.7,h,2.7),"ivory")
+	shortcuts.append({"a":Vector3(14,0,-26.1),"b":Vector3(14,4.5,-20),"kind":"ROOF MANTLES"})
+	platform(Vector3(14,0,-34),Vector2(5,4),2.8)
+	platform(Vector3(24,0,-34),Vector2(5,4),2.8)
+	ramp(Vector3(6,0,-34),Vector3(11.5,2.8,-34),3.5,"TERRACE LEDGE")
+	ramp(Vector3(32,0,-34),Vector3(26.5,2.8,-34),3.5,"GARDEN LEDGE")
+	shortcuts.append({"a":Vector3(16.5,2.8,-34),"b":Vector3(21.5,2.8,-34),"kind":"DASH 5 m"})
+	# Garden exits flank the promenade from separated angles.
+	wall(Vector3(35,0,-27),Vector3(35,0,-22),3.2,"terracotta")
+	wall(Vector3(35,0,-18),Vector3(35,0,-15),3.2,"terracotta")
 
 func _build_vault() -> void:
-	architecture.label("03  /  CONSERVATION VAULT",Vector3(109,8,0),48,Color("e5bb74"),PI/2)
-	slab(Vector3(128,3,0),Vector3(10,3,8),"ivory")
-	slab(Vector3(147,3,-13),Vector3(7,3,7),"terracotta")
-	deck(Vector3(131,1.5,17),16,3.5)
-	wall(Vector3(115,1.5,22),Vector3(115,1.5,25),4)
-	wall(Vector3(119,1.5,19),Vector3(124,1.5,19),4)
+	architecture.label("03 / CONSERVATION VAULT",Vector3(28,8,11),42,Color("e5bb74"))
+	room_shell(Vector3(20,0,14),Vector3(30,0,23),"RESTORATION")
+	room_shell(Vector3(28,0,33),Vector3(35,0,40),"PACKING","terracotta")
+	platform(Vector3(15.5,0,26.5),Vector2(7,7),3.5)
+	ramp(Vector3(13,0,13),Vector3(13,3.5,23),3.5,"RESTORATION STAIR")
+	ramp(Vector3(17,0,40),Vector3(17,3.5,30),3.5,"PACKING STAIR")
+	wall(Vector3(19,3.5,27),Vector3(19,3.5,30),3.5)
+	slab(Vector3(12.5,4,25),Vector3(.5,1,3))
 	for index: int in 2:
-		var h: float = 1.6*(index+1)
-		slab(Vector3(127+index*2,1.5+h/2,11+index*2),Vector3(2.7,h,2.7),"terracotta")
-	shortcuts.append({"a":Vector3(127,1.5,11),"b":Vector3(131,5,17),"kind":"PACKING MANTLE"})
-	shortcuts.append({"a":Vector3(116,1.5,20),"b":Vector3(124,5,17),"kind":"WALL KICK"})
-	for x: float in [116,137,153]:
-		slab(Vector3(x,2.6,-21),Vector3(4,2.2,3),"slate")
-		architecture.piece("sphere",Vector3(1.3,2,1.3),Vector3(x,4.5,-21),"brass")
-	for x: float in [112,124,136,148,159]:
-		architecture.arch(Vector3(x,1.5,0),50,11,.5,"ivory",PI/2,.45,false)
-	architecture.piece("box",Vector3(52,.12,34),Vector3(134,13,0),"roof_glass")
-	architecture.cylinder(4,.12,Vector3(154,1.56,0),"cyan")
-	architecture.label("ARTIFACT DOCK  /  FINAL",Vector3(158,6.5,0),42,Color("8beaff"),PI/2)
-	# Final defender approach doglegs behind solid storage bays.
-	wall(Vector3(174,1.5,-8),Vector3(182,1.5,-8),6)
-	wall(Vector3(165,1.5,8),Vector3(178,1.5,8),6)
-	# Archive/service separation makes the final defender return a committed
-	# rotation. The west exit serves CP1; the east exit reaches the final dock.
-	wall(Vector3(108,1.5,-18),Vector3(166,1.5,-18),5,"slate")
-	wall(Vector3(166,1.5,-18),Vector3(166,1.5,12),5,"slate")
+		var h: float = 1.6 if index == 0 else 2.8
+		slab(Vector3(22-index*2,h/2,25),Vector3(2.7,h,2.7),"terracotta")
+	shortcuts.append({"a":Vector3(24.1,0,25),"b":Vector3(17,3.5,25),"kind":"PACKING MANTLES"})
+	wall(Vector3(10,0,28),Vector3(10,0,31),4,"terracotta")
+	wall(Vector3(10,0,31),Vector3(14,0,31),4,"terracotta")
+	shortcuts.append({"a":Vector3(9.3,0,29),"b":Vector3(13,3.5,29),"kind":"SERVICE WALL KICK"})
+	architecture.cylinder(3,.12,Vector3(22,.06,36),"cyan")
+	architecture.label("ARTIFACT DOCK / FINAL",Vector3(22,5,40.5),32,Color("66d6eb"))
+	for z: float in [14,26,38]: architecture.arch(Vector3(27,0,z),36,11,.4,"ivory",0,.35,false)
+	architecture.piece("box",Vector3(37,.15,30),Vector3(27,11.3,26),"roof_glass")
 
 func _build_spawns() -> void:
 	for team: int in 2:
 		var rooms: Array[Vector3] = definition.attacker_rooms if team == 0 else definition.defender_rooms
 		for index: int in rooms.size():
 			var center: Vector3 = rooms[index]
-			# Two exits in the front wall, separated by an opaque screening panel.
-			wall(center+Vector3(-7,0,-5),center+Vector3(7,0,-5),5,"slate")
-			wall(center+Vector3(-7,0,-5),center+Vector3(-7,0,5),5)
-			wall(center+Vector3(7,0,-5),center+Vector3(7,0,5),5)
-			wall(center+Vector3(-1,0,5),center+Vector3(1,0,5),5)
-			slab(center+Vector3(0,5.2,0),Vector3(14,.4,10),"cream")
-			for offset: float in [-4,4]:
-				var gate := StaticBody3D.new()
-				gate.name = "%s%dGate" % ["A" if team == 0 else "D",index]
-				gate.set_meta("team",team)
-				gate.set_meta("stage",index)
-				gate.collision_layer = 4 if team == 0 else 8
-				gate.collision_mask = 0
-				gate.position = center+Vector3(offset,2.5,5)
-				var shape := CollisionShape3D.new()
-				var box := BoxShape3D.new()
-				box.size = Vector3(6,5,.2)
-				shape.shape = box
-				gate.add_child(shape)
-				var mesh := MeshInstance3D.new()
-				var gate_mesh := BoxMesh.new()
-				gate_mesh.size = box.size
-				mesh.mesh = gate_mesh
-				var material := StandardMaterial3D.new()
-				material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-				material.albedo_color = Color(.2,.8,.95,.14) if team == 0 else Color(.95,.4,.35,.14)
-				material.emission_enabled = true
-				material.emission = Color(.1,.4,.6) if team == 0 else Color(.5,.16,.1)
-				mesh.material_override = material
-				gate.add_child(mesh)
-				add_child(gate)
-				spawn_gates.append(gate)
-			architecture.label("%s%d  /  %s" % ["A" if team == 0 else "D",index,"ATTACK" if team == 0 else "DEFEND"],center+Vector3(0,4.4,5.4),28,Color("8beaff") if team == 0 else Color("ef9f85"))
-			# Screens outside both exits prevent shooting straight into arrival rooms.
-			var long_screen: bool = team == 0 or index == 0
-			wall(center+Vector3(-10 if long_screen else -6,0,9),center+Vector3(3 if long_screen else 0,0,9),3)
-			wall(center+Vector3(-3 if long_screen else 3,0,8),center+Vector3(12 if long_screen else 8,0,8),3)
+			var yaw: float = definition.spawn_yaw(team,index)
+			var basis := Basis(Vector3.UP,yaw)
+			var size: Vector2 = definition.spawn_room_size(team,index)
+			var half: float = size.x/2
+			var depth: float = size.y/2
+			var mullion: float = 1.0 if size.x > 10 else .5
+			var aperture: float = half-mullion
+			for ends: Array in [[Vector3(-half,0,-depth),Vector3(half,0,-depth)],[Vector3(-half,0,-depth),Vector3(-half,0,depth)],[Vector3(half,0,-depth),Vector3(half,0,depth)],[Vector3(-mullion,0,depth),Vector3(mullion,0,depth)]]:
+				wall(center+basis*ends[0],center+basis*ends[1],5,"slate")
+			slab(center+Vector3.UP*5.2,Vector3(size.y,.4,size.x) if absf(sin(yaw)) > .5 else Vector3(size.x,.4,size.y),"cream")
+			for sign_value: float in [-1,1]:
+				var offset: float = sign_value*(mullion+aperture/2)
+				var door := MuseumSpawnDoor.new()
+				door.name = "%s%dDoor%s" % ["A" if team == 0 else "D",index,"Left" if offset < 0 else "Right"]
+				door.team = team
+				door.stage = index
+				door.width = aperture
+				door.set_meta("team",team)
+				door.set_meta("stage",index)
+				door.position = center+basis*Vector3(offset,0,depth)
+				door.rotation.y = yaw
+				add_child(door)
+				spawn_gates.append(door)
+				architecture.line(center+basis*Vector3(offset-aperture/2+.2,.03,depth-.15),center+basis*Vector3(offset+aperture/2-.2,.03,depth-.15),.12,"cyan" if team == 0 else "terracotta")
+			architecture.label("%s%d / %s STAFF SPAWN" % ["A" if team == 0 else "D",index,"ADMISSIONS" if team == 0 else "CONSERVATION"],center+basis*Vector3(0,4.5,5.5),22,Color("8beaff") if team == 0 else Color("ef9f85"),yaw)
 
 func _build_track() -> void:
 	var path: Array[Vector3] = definition.payload_path
 	for index: int in range(1,path.size()):
-		for side: float in [-1,1]:
-			architecture.line(path[index-1]+Vector3(0,.035,side*.85),path[index]+Vector3(0,.035,side*.85),.075,"brass")
+		var side: Vector3 = (path[index]-path[index-1]).normalized().cross(Vector3.UP)*.85
+		for sign_value: float in [-1,1]: architecture.line(path[index-1]+side*sign_value+Vector3.UP*.035,path[index]+side*sign_value+Vector3.UP*.035,.075,"brass")
 	for index: int in 3:
-		var point: Vector3 = path[definition.checkpoint_vertices[index]]
-		architecture.label("CHECKPOINT %d" % (index+1),point+Vector3(0,.1,4),30,Color("66d6eb"))
-	# Capture perimeter is geometry paint, with a nonblocking center landmark.
-	for z: float in [-7,7]: architecture.line(Vector3(-9,.035,z),Vector3(9,.035,z),.12,"cyan")
-	for x: float in [-9,9]: architecture.line(Vector3(x,.035,-7),Vector3(x,.035,7),.12,"cyan")
+		architecture.label("CHECKPOINT %d" % (index+1),path[definition.checkpoint_vertices[index]]+Vector3(0,.1,3),26,Color("66d6eb"))
+	var c: Vector3 = definition.hill_center
+	for z: float in [-7,7]: architecture.line(c+Vector3(-9,.035,z),c+Vector3(9,.035,z),.12,"cyan")
+	for x: float in [-9,9]: architecture.line(c+Vector3(x,.035,-7),c+Vector3(x,.035,7),.12,"cyan")
 
 func _build_exhibits() -> void:
 	var glass: StandardMaterial3D = architecture.mat("case_glass",Color(.55,.8,.83,.12),0,.15)
 	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	glass.cull_mode = BaseMaterial3D.CULL_DISABLED
-	for index: int in 8:
-		var at: Vector3 = [Vector3(-21,0,-22),Vector3(5,0,22),Vector3(30,0,23),Vector3(52,0,22),Vector3(70,0,-22),Vector3(102,0,-22),Vector3(120,1.5,-23),Vector3(151,1.5,22)][index]
-		slab(at+Vector3.UP*.65,Vector3(1.6,1.3,1.6),"ivory")
-		# Vitrines are visibly delicate; only the opaque stone plinth is cover.
-		architecture.piece("box",Vector3(1.7,2,1.7),at+Vector3.UP*2.3,"case_glass")
-		architecture.piece("sphere",Vector3(.6,1.2,.6),at+Vector3.UP*1.9,"brass")
-		architecture.piece("ring",Vector3(.9,.12,.9),at+Vector3.UP*2.5,"brass",Vector3(PI/2,.4*index,0))
-		architecture.label(["FIRST LIGHT","THE TIDAL CROWN","ANCIENT SEAS","AGE OF GIANTS","LIVING STONE","SKY GARDENS","RESTORATION","THE STAR ARCHIVE"][index],at+Vector3(0,1.1,1),20,Color("25343c"))
-	for index: int in 4:
-		var x: float = [0.0,39,86,134][index]
-		var y: float = 1.5 if index == 3 else 0.0
-		# Original abstract collection panels give each wing a different accent.
-		for tile: int in 7:
-			architecture.piece("box",Vector3(1.1,1.4+sin(tile)*.6,.08),Vector3(x+(tile-3)*1.4,4.2+y,-25.5),["brass","blue","leaf","terracotta"][index])
-		architecture.label(["ASTROLABE COURT","HALL OF GIANTS","LIVING TERRACE","CONSERVATION VAULT"][index],Vector3(x,6.8+y,-25.4),48,Color("ead5a9"))
+	for at: Vector3 in [Vector3(-15,0,36),Vector3(-38,0,15),Vector3(-38,0,-33),Vector3(-11,0,-11),Vector3(6,0,-5),Vector3(18,0,-15),Vector3(25,0,19),Vector3(32,0,37)]:
+		slab(at+Vector3.UP*.65,Vector3(1.4,1.3,1.4),"ivory")
+		architecture.piece("box",Vector3(1.5,2,1.5),at+Vector3.UP*2.3,"case_glass")
+		architecture.piece("ring",Vector3(.9,.14,.9),at+Vector3.UP*2,"brass",Vector3(PI/2,.4,0))
 
 func _build_navigation() -> void:
 	navigation_region = NavigationRegion3D.new()
@@ -346,7 +316,7 @@ func _build_navigation() -> void:
 	nav.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
 	nav.geometry_source_geometry_mode = NavigationMesh.SOURCE_GEOMETRY_GROUPS_WITH_CHILDREN
 	nav.geometry_source_group_name = &"museum_navigation_geometry"
-	nav.filter_baking_aabb = AABB(Vector3(-65,-2.5,-39),Vector3(264,17,78))
+	nav.filter_baking_aabb = AABB(Vector3(-56.5,-2.5,-50.5),Vector3(113,17,101))
 	navigation_region.navigation_mesh = nav
 	add_child(navigation_region)
 	call_deferred("_bake")
@@ -356,9 +326,6 @@ func _bake() -> void:
 	navigation_region.bake_navigation_mesh(true)
 
 func update_gates(preparation: bool) -> void:
-	for gate: StaticBody3D in spawn_gates:
-		var team: int = gate.get_meta("team")
-		var stage: int = gate.get_meta("stage")
-		var current: int = definition.attacker_stage if team == 0 else definition.defender_stage
-		gate.visible = stage == current
-		gate.collision_layer = (12 if preparation and team == 0 else (4 if team == 0 else 8)) if stage == current else 0
+	for door: MuseumSpawnDoor in spawn_gates:
+		var current: int = definition.attacker_stage if door.team == 0 else definition.defender_stage
+		door.configure(door.stage == current,preparation and door.team == 0,door.stage < current)

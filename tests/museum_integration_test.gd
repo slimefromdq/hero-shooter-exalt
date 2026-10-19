@@ -69,11 +69,11 @@ func run() -> void:
 	var d: MuseumMapDefinition = session.museum_definition()
 	for stage: int in 4:
 		d.attacker_stage = stage
-		var target: Vector3 = Vector3(6,0,3) if stage == 0 else d.path_position([0.0,0,70,140.07][stage])
+		var target: Vector3 = d.hill_center+Vector3(5,0,-3) if stage == 0 else d.path_position(0 if stage == 1 else d.checkpoint_distances()[stage-2])
 		check(connected(d.team_spawns(0)[0],target),"attacker spawn A%d has navigable objective route" % stage)
 	for stage: int in 3:
 		d.defender_stage = stage
-		check(connected(d.team_spawns(1)[0],Vector3(6,0,3) if stage == 0 else d.path_position(70 if stage == 2 else 0)),"defender spawn D%d reaches its first hold" % stage)
+		check(connected(d.team_spawns(1)[0],d.hill_center+Vector3(5,0,-3) if stage == 0 else d.path_position(d.checkpoint_distances()[0] if stage == 2 else 0)),"defender spawn D%d reaches its first hold" % stage)
 	for index: int in 4:
 		check(connected(d.high_positions[index],d.flank_positions[index]),"area %d high ground connects to lower flank by ordinary navigation" % index)
 	# Inspect full payload clearance against world, excluding the cart itself.
@@ -84,7 +84,7 @@ func run() -> void:
 	query.collision_mask = 1
 	query.exclude = [session.payload.get_rid()]
 	var obstructions: Array[String] = []
-	for distance: int in range(0,211,2):
+	for distance: int in range(0,int(d.checkpoint_distances()[-1])+1,2):
 		var at: Vector3 = d.path_position(distance)
 		query.transform = Transform3D(Basis.IDENTITY,at+Vector3.UP*1.65)
 		if not arena.get_world_3d().direct_space_state.intersect_shape(query,1).is_empty(): obstructions.append("%d m %s" % [distance,str(at)])
@@ -95,10 +95,15 @@ func run() -> void:
 		var seconds: float = (stair.a as Vector3).distance_to(stair.b)/4+1
 		check(await walk(stair.a,stair.b,seconds),"physical ascending route "+str(stair.label)+str(stair.a))
 		check(await walk(stair.b,stair.a,seconds),"physical descending route "+str(stair.label)+str(stair.a))
+		if "GARDEN STAIR" in str(stair.label):
+			for side: float in [-1,1]:
+				var offset := Vector3(side*(float(stair.width)/2-.8),0,0)
+				check(await walk(stair.a+offset,stair.b+offset,seconds),"garden edge stair traversal "+str(stair.label)+str(side))
+				check(await walk(stair.b+offset,stair.a+offset,seconds),"garden edge stair return "+str(stair.label)+str(side))
 	session.restart_match()
 	var player: HeroActor = session.player
-	for actor: HeroActor in session.actors: actor.global_position = Vector3(-40,0,22)
-	player.global_position = Vector3(6,.08,3)
+	for actor: HeroActor in session.actors: actor.global_position = Vector3(-50,0,38)
+	player.global_position = d.hill_center+Vector3(5,.08,-3)
 	session.objective.phase = "capture"
 	check(session.objective_occupancy()[player.team] == 1,"ground actor contributes to capture")
 	player.global_position.y = 3.6
@@ -106,19 +111,19 @@ func run() -> void:
 	player.global_position.y = -1.5
 	check(session.objective_occupancy()[player.team] == 0,"lower-floor actor cannot capture")
 	session.objective.phase = "escort"
-	player.global_position = Vector3(12,.08,4)
+	player.global_position = d.payload_path[0]+Vector3(3,.08,0)
 	check(session.objective_occupancy()[player.team] == 1,"nearby visible actor escorts cart")
 	player.global_position.y = 4
 	check(session.objective_occupancy()[player.team] == 0,"upper actor cannot escort cart through floor")
 	# Temporary physical occluder verifies sight checks independently of distance.
-	player.global_position = Vector3(12,.08,4)
+	player.global_position = d.payload_path[0]+Vector3(3,.08,0)
 	var blocker := StaticBody3D.new()
 	var collider := CollisionShape3D.new()
 	var block_shape := BoxShape3D.new()
-	block_shape.size = Vector3(4,3,.5)
+	block_shape.size = Vector3(.5,3,4)
 	collider.shape = block_shape
 	blocker.add_child(collider)
-	blocker.position = Vector3(12,1.5,2.5)
+	blocker.position = d.payload_path[0]+Vector3(1.5,1.5,0)
 	arena.add_child(blocker)
 	await frames(2)
 	check(session.objective_occupancy()[player.team] == 0,"wall blocks escort and contest occupancy")
@@ -134,8 +139,8 @@ func run() -> void:
 	check(held.global_position.distance_to(held.spawn_position) < .01 and held.health == health,"relocation moves safe-room occupants without resetting health")
 	check(outside.global_position == outside_at,"relocation preserves living actors outside spawn")
 	check(not session.spawn_contains(d.attacker_rooms[0],0),"retired room loses spawn protection")
-	check(session.track_intersects(AABB(Vector3(20,0,-1),Vector3(5,3,2))),"remaining payload track rejects wall placements")
-	check(not session.track_intersects(AABB(Vector3(20,0,18),Vector3(3,3,2))),"off-track wall positions remain available")
+	check(session.track_intersects(AABB(d.payload_path[0]-Vector3(1,0,1),Vector3(2,3,2))),"remaining payload track rejects wall placements")
+	check(not session.track_intersects(AABB(Vector3(-38,0,33),Vector3(3,3,2))),"off-track wall positions remain available")
 	for id: String in HeroRoster.IDS:
 		player.global_position = player.spawn_position
 		session.select_hero(id)
@@ -148,22 +153,22 @@ func run() -> void:
 	# Pedestrian and rider transport use real swept CharacterBody motion.
 	for actor: HeroActor in session.actors: actor.global_position = Vector3(-35,0,20)
 	session.payload.reset_cart()
-	player.global_position = Vector3(12,.5,1.2)
+	player.global_position = d.payload_path[0]+Vector3(1.2,.5,0)
 	await frames(2)
 	session.payload.move_to_distance(4)
-	check(player.global_position.distance_to(Vector3(16,.5,1.2)) < .15,"payload carries a standing rider without drift")
-	player.global_position = Vector3(17,.08,0)
+	check(player.global_position.distance_to(session.payload.global_position+Vector3(1.2,.5,0)) < .15,"payload carries a standing rider without drift")
+	player.global_position = d.path_position(8)+Vector3(0,.08,0)
 	session.payload.move_to_distance(10)
 	check(absf(session.payload.distance-10) < .001 and player.global_position.distance_to(session.payload.global_position) > 2,"pedestrian cannot jam cart and is swept to a clear shoulder")
 	check(not player.test_move(player.global_transform,Vector3.ZERO),"cart displacement leaves capsule clear")
 	session.payload.reset_cart()
 	session.payload.move_to_distance(11)
-	player.global_position = session.payload.global_position+Vector3(0,.5,1.2)
+	player.global_position = session.payload.global_position+Vector3(1.2,.5,0)
 	await frames(2)
 	session.payload.move_to_distance(24)
-	check(player.global_position.distance_to(session.payload.global_position+Vector3(0,.5,1.2)) < .15,"rider transport follows cart bends without lateral drift")
+	check(player.global_position.distance_to(session.payload.global_position+Vector3(1.2,.5,0)) < .15,"rider transport follows cart bends without lateral drift")
 	session.payload.move_to_distance(5)
-	check(player.global_position.distance_to(session.payload.global_position+Vector3(0,.5,1.2)) < .15,"rollback carries riders safely through previous bends")
+	check(player.global_position.distance_to(session.payload.global_position+Vector3(1.2,.5,0)) < .15,"rollback carries riders safely through previous bends")
 	session.restart_match()
 	check(session.phase == "preparation" and d.attacker_stage == 0 and d.defender_stage == 0 and session.winner == -1,"restart resets spawns, cart and objective")
 	for index: int in 4:

@@ -102,7 +102,7 @@ func draw_hud() -> void:
 	if m.debug_view:
 		text("%d FPS  /  F3 ROUTES & RESOURCES" % Engine.get_frames_per_second(),Vector2(28,177),11,mint)
 	if p.spawn_protected and p.alive:
-		centered("SPAWN / +200 HP PER SECOND / WEAPONS LOCKED" if m.spawn_contains(p.global_position,p.team) else "PROTECTED ARRIVAL / WEAPONS LOCKED",Vector2(800,190),13,mint,true)
+		centered(("SPAWN IMMUNITY / +200 HP PER SECOND / FIRE THROUGH OPEN DOORS" if m is MuseumMatch else "SPAWN / +200 HP PER SECOND / WEAPONS LOCKED") if m.spawn_contains(p.global_position,p.team) else "PROTECTED ARRIVAL / WEAPONS LOCKED",Vector2(800,190),13,mint,true)
 	elif m.notice_time > 0:
 		centered(m.notice,Vector2(800,190),14,brass,true)
 	if p.alive and not m.menu_open and not overview_open:

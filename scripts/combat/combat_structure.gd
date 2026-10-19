@@ -40,7 +40,7 @@ func nearest_point(origin: Vector3) -> Vector3:
 
 func receive_damage(attacker: HeroActor, amount: float, id: int) -> void:
 	if health <= 0 or not is_instance_valid(source) or not is_instance_valid(attacker): return
-	if attacker.team == source.team or attacker.resolver.protected_room(attacker) or received.has(id): return
+	if attacker.team == source.team or attacker.resolver.attack_locked(attacker) or received.has(id): return
 	received[id] = true
 	health = maxf(0,health-amount*attacker.resolver.cast_multiplier(id,attacker))
 	CombatEffect.pulse(get_parent(),global_position,Color("b1dfff"),.35)

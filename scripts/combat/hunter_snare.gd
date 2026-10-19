@@ -111,7 +111,7 @@ func trigger(target: HeroActor) -> void:
 
 func receive_damage(attacker: HeroActor, amount: float, id: int) -> void:
 	if not is_instance_valid(source) or attacker.team == source.team or received.has(id) or is_queued_for_deletion(): return
-	if attacker.resolver.protected_room(attacker): return
+	if attacker.resolver.attack_locked(attacker): return
 	received[id] = true
 	health -= amount
 	if health <= 0:

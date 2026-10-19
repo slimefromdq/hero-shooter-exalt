@@ -38,7 +38,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 		regroup_cd = 0
 	var interrupt_heal: bool = input.primary or input.primary_held or input.reload or input.hover or input.deflect or input.bomb or input.ultimate or input.dash or input.melee or input.throw_action or input.guard
 	if actor.state == "huddle_regroup":
-		if not input.secondary_held or interrupt_heal or actor.resolver.protected_room(actor):
+		if not input.secondary_held or interrupt_heal or actor.resolver.attack_locked(actor):
 			actor.state = "ready"
 		else:
 			var previous: float = regroup_age

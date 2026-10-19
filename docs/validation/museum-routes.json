@@ -1,57 +1,57 @@
 [
   {
     "connected": true,
-    "distance_m": 60.444306248799,
+    "distance_m": 61.9237505532801,
     "spawn": "A0",
-    "target": "(6.0, 0.0, 3.0)",
-    "walk_seconds": 10.0740510414665
+    "target": "(-23.0, 0.0, 22.0)",
+    "walk_seconds": 10.3206250922134
   },
   {
     "connected": true,
-    "distance_m": 55.7084867507219,
+    "distance_m": 45.3608596287668,
     "spawn": "A1",
-    "target": "(12.0, 0.0, 0.0)",
-    "walk_seconds": 9.28474779178699
+    "target": "(-17.0, 0.0, 19.0)",
+    "walk_seconds": 7.56014327146113
   },
   {
     "connected": true,
-    "distance_m": 54.2767600556836,
+    "distance_m": 76.5205498896539,
     "spawn": "A2",
-    "target": "(62.0, 0.0, 0.0)",
-    "walk_seconds": 9.04612667594726
+    "target": "(-7.0, 0.0, -22.0)",
+    "walk_seconds": 12.753424981609
   },
   {
     "connected": true,
-    "distance_m": 58.1620404720306,
+    "distance_m": 55.3483987636864,
     "spawn": "A3",
-    "target": "(107.9998, 1.499985, 0.0)",
-    "walk_seconds": 9.69367341200511
+    "target": "(33.0, 0.0, 3.0)",
+    "walk_seconds": 9.22473312728107
   },
   {
     "connected": true,
-    "distance_m": 67.0031132232398,
+    "distance_m": 71.4570314511657,
     "spawn": "D0",
-    "target": "(6.0, 0.0, 3.0)",
-    "walk_seconds": 11.1671855372066
+    "target": "(-23.0, 0.0, 22.0)",
+    "walk_seconds": 11.9095052418609
   },
   {
     "connected": true,
-    "distance_m": 84.3826091401279,
+    "distance_m": 83.2822995074093,
     "spawn": "D1",
-    "target": "(12.0, 0.0, 0.0)",
-    "walk_seconds": 14.0637681900213
+    "target": "(-17.0, 0.0, 19.0)",
+    "walk_seconds": 13.8803832512349
   },
   {
     "connected": true,
-    "distance_m": 80.7684982601786,
+    "distance_m": 63.2075572665781,
     "spawn": "D2",
-    "target": "(62.0, 0.0, 0.0)",
-    "walk_seconds": 13.4614163766964
+    "target": "(-7.0, 0.0, -22.0)",
+    "walk_seconds": 10.534592877763
   },
   {
     "connected": true,
-    "distance_m": 106.030601886683,
+    "distance_m": 87.8168497607112,
     "spawn": "D2 final return",
-    "walk_seconds": 17.6717669811139
+    "walk_seconds": 14.6361416267852
   }
 ]

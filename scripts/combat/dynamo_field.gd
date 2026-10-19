@@ -39,7 +39,7 @@ func _physics_process(delta: float) -> void:
 	if remaining <= .00001: queue_free()
 
 func pulse(is_storm: bool) -> void:
-	if source.resolver.protected_room(source): return
+	if source.resolver.attack_locked(source): return
 	var t := source.tuning as DynamoTuning
 	var radius: float = t.storm_radius if is_storm else t.stone_radius
 	var at: Vector3 = global_position+Vector3.UP*.4

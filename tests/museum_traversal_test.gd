@@ -42,11 +42,17 @@ func run() -> void:
 		other.set_physics_process(false)
 		other.global_position = Vector3(-50,0,30)
 	await frames(4)
-	await mantle(Vector3(-9,.01,-9.85),Vector3.FORWARD,1.2,"court planter step")
-	await mantle(Vector3(76,.01,-7.9),Vector3.FORWARD,1.5,"terrace first step")
-	await mantle(Vector3(127,1.51,13.1),Vector3.FORWARD,3.1,"packing crate step")
+	await mantle(Vector3(-31,.01,20.1),Vector3.FORWARD,1.2,"court planter step")
+	await mantle(Vector3(-31,1.25,18.1),Vector3.FORWARD,2.4,"court second sculpture step")
+	await mantle(Vector3(-31,2.45,15.4),Vector3.FORWARD,3.6,"court balcony landing")
+	await mantle(Vector3(14,.01,-26.1),Vector3.BACK,1.5,"terrace first step")
+	await mantle(Vector3(14,1.55,-24.1),Vector3.BACK,3.0,"terrace second step")
+	await mantle(Vector3(14,3.05,-22.1),Vector3.BACK,4.5,"terrace roof connector")
+	await mantle(Vector3(24.1,.01,25),Vector3.LEFT,1.6,"packing crate step")
+	await mantle(Vector3(22.1,1.65,25),Vector3.LEFT,2.8,"packing second crate")
+	await mantle(Vector3(19.9,2.85,25),Vector3.LEFT,3.5,"packing gantry landing")
 	# Actual gap crossings use the shared dash, with no hero-specific ability.
-	for row: Array in [[Vector3(30.5,4.08,10),35.5,4.0,"four-meter gallery gap"],[Vector3(82,2.88,20),88,2.8,"five-meter terrace gap"]]:
+	for row: Array in [[Vector3(-35,4.08,-33),-30,4.0,"four-meter gallery gap"],[Vector3(16,2.88,-34),22,2.8,"five-meter terrace gap"]]:
 		actor.reset_actor(row[0])
 		actor.velocity = Vector3(4,1,0)
 		actor.intent = CombatIntent.new()
@@ -59,7 +65,7 @@ func run() -> void:
 		actor.intent = CombatIntent.new()
 		await frames(35)
 		check(actor.global_position.y > -3,str(row[3])+" remains inside safe museum bounds")
-	actor.reset_actor(Vector3(-16.7,1,13))
+	actor.reset_actor(Vector3(-18.7,1,35))
 	actor.velocity = Vector3(0,0,-3)
 	actor.intent = CombatIntent.new()
 	actor.intent.jump = true
@@ -68,12 +74,12 @@ func run() -> void:
 	actor.intent.jump = false
 	check(actor.velocity.y > 7 and actor.velocity.x < -1,"cloister wall kick uses real museum collision")
 	actor.select_hero("dynamo")
-	check(not DynamoWall.placement_clear(actor,Vector3(20,0,0),0),"Dynamo placement rejects the actual remaining cart corridor")
-	check(DynamoWall.placement_clear(actor,Vector3(34,0,-6),0),"Dynamo can still place an ordinary wall beside the track")
+	check(not DynamoWall.placement_clear(actor,Vector3(-17,0,16),0),"Dynamo placement rejects the actual remaining cart corridor")
+	check(DynamoWall.placement_clear(actor,Vector3(-28,0,37),0),"Dynamo can still place an ordinary wall beside the track")
 	session.objective.payload_distance = 50
-	check(session.track_intersects(AABB(Vector3(18,0,-1),Vector3(4,3,2))),"wall restriction also protects the cart's available rollback route")
+	check(session.track_intersects(AABB(Vector3(-18,0,15),Vector3(4,3,2))),"wall restriction also protects the cart's available rollback route")
 	session.objective.checkpoint_index = 1
-	check(not session.track_intersects(AABB(Vector3(18,0,-1),Vector3(4,3,2))),"completed checkpoint releases retired track for wall placement")
+	check(not session.track_intersects(AABB(Vector3(-18,0,15),Vector3(4,3,2))),"completed checkpoint releases retired track for wall placement")
 	var file := FileAccess.open("res://artifacts/museum/traversal.json",FileAccess.WRITE)
 	file.store_string(JSON.stringify({"checks":checks,"failures":failures},"  "))
 	print("MUSEUM TRAVERSAL ",checks," checks; ",failures.size()," failures")

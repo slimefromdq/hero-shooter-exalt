@@ -118,7 +118,7 @@ func gather_intent(delta: float) -> CombatIntent:
 		move = (move + separation * .7).limit_length(1.0)
 		move = avoid_wall(move)
 	intent.move = move
-	if is_instance_valid(target) and target.alive and sees_target and not actor.spawn_protected and not target.spawn_protected:
+	if is_instance_valid(target) and target.alive and sees_target and not actor.resolver.attack_locked(actor) and not actor.resolver.protected_room(target):
 		var offset: Vector3 = target.global_position - actor.global_position
 		var distance: float = offset.length()
 		intent.aim = remembered_aim

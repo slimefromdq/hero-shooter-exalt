@@ -15,7 +15,7 @@ Push-Location -LiteralPath $taskRoot
 try {
     & $taskEngine --headless --path $taskRoot --editor --import --quit
     if ($LASTEXITCODE -ne 0) { throw 'Godot import failed.' }
-    foreach ($taskMuseumTest in @('museum_rules_test', 'museum_traversal_test', 'museum_menu_test', 'museum_delivery_test', 'museum_integration_test')) {
+    foreach ($taskMuseumTest in @('museum_rules_test', 'museum_redesign_test', 'museum_traversal_test', 'museum_menu_test', 'museum_delivery_test', 'museum_integration_test')) {
         & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script "res://tests/$taskMuseumTest.gd"
         if ($LASTEXITCODE -ne 0) { throw "Museum check failed: $taskMuseumTest" }
     }

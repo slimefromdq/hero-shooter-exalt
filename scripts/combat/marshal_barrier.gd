@@ -20,7 +20,7 @@ func _ready() -> void:
 		Geometry.box(visual,Vector3(.015,t.barrier_height,.015),Vector3(x - 3,0,0),color.darkened(.25),false)
 
 func active() -> bool:
-	return is_instance_valid(source) and source.alive and source.kit is MarshalKit and source.state == "marshal_shield" and source.kit.barrier_hp > 0 and not source.resolver.protected_room(source)
+	return is_instance_valid(source) and source.alive and source.kit is MarshalKit and source.state == "marshal_shield" and source.kit.barrier_hp > 0 and not source.resolver.attack_locked(source)
 
 func frame() -> Transform3D:
 	var forward: Vector3 = source.aim_direction.normalized()
@@ -35,7 +35,7 @@ func dimensions() -> Vector2:
 	return Vector2(t.barrier_width,t.barrier_height)
 
 func receive_damage(attacker: HeroActor, amount: float, id: int) -> void:
-	if not active() or attacker.team == source.team or received.has(id) or attacker.resolver.protected_room(attacker): return
+	if not active() or attacker.team == source.team or received.has(id) or attacker.resolver.attack_locked(attacker): return
 	received[id] = true
 	if received.size() > 4096: received.clear()
 	var kit := source.kit as MarshalKit

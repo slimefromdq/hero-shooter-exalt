@@ -66,14 +66,14 @@ func run() -> void:
 	rules = escort()
 	var awarded: Array[int] = []
 	rules.checkpoint_reached.connect(func(index: int) -> void: awarded.append(index))
-	rules.advance(35,3,0)
-	check(rules.checkpoint_index == 1 and awarded == [1],"first checkpoint fires once at seventy meters")
+	rules.advance(definition.checkpoint_distances()[0]/2,3,0)
+	check(rules.checkpoint_index == 1 and awarded == [1],"first checkpoint fires once at its authored distance")
 	var after: float = rules.time_remaining
 	rules.advance(15,0,0)
-	check(rules.payload_distance == 70 and rules.time_remaining == after-15,"checkpoint locks rollback and awards no duplicate bonus")
-	rules.advance(35.1,3,0)
-	check(rules.checkpoint_index == 2 and awarded == [1,2],"second checkpoint awards once after terrace rise")
-	rules.advance(35,3,0)
+	check(is_equal_approx(rules.payload_distance,definition.checkpoint_distances()[0]) and rules.time_remaining == after-15,"checkpoint locks rollback and awards no duplicate bonus")
+	rules.advance((definition.checkpoint_distances()[1]-definition.checkpoint_distances()[0])/2,3,0)
+	check(rules.checkpoint_index == 2 and awarded == [1,2],"second checkpoint awards once after the terrace")
+	rules.advance((definition.checkpoint_distances()[2]-definition.checkpoint_distances()[1])/2+.001,3,0)
 	check(rules.winner == 0 and rules.phase == "finished" and awarded == [1,2,3],"third checkpoint is the final attacker victory")
 	var frozen: float = rules.payload_distance
 	rules.advance(99,0,0)
@@ -95,14 +95,14 @@ func run() -> void:
 	rules.advance(.11,0,1)
 	check(rules.winner == 1,"three continuous absent overtime seconds end defense win")
 	rules = escort()
-	rules.payload_distance = 69
+	rules.payload_distance = definition.checkpoint_distances()[0]-1
 	rules.time_remaining = .2
 	rules.advance(1,1,0)
 	check(rules.checkpoint_index == 1 and not rules.overtime and rules.time_remaining == 90,"checkpoint bonus exits overtime")
 	rules.reset()
 	check(rules.phase == "preparation" and rules.checkpoint_index == 0 and rules.payload_distance == 0 and rules.capture_progress == 0 and rules.winner == -1 and not rules.overtime,"reset clears every objective lifecycle field")
 	var marks := definition.checkpoint_distances()
-	check(is_equal_approx(marks[0],70) and absf(marks[1]-140) < .1 and absf(marks[2]-210) < .1,"authored track has three approximately seventy-meter legs")
+	check(marks[0] > 60 and marks[1] > marks[0] and marks[2] >= 180 and marks[2] <= 210,"folded track has three ordered checkpoints and 180-210 meters of travel")
 	for index: int in 3:
 		check(definition.path_position(marks[index]).distance_to(definition.payload_path[definition.checkpoint_vertices[index]]) < .001,"distance sampling reaches checkpoint %d" % (index+1))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://artifacts/museum"))

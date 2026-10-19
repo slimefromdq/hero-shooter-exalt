@@ -68,6 +68,7 @@ func _ready() -> void:
 	health = tuning.max_health
 
 func _physics_process(delta: float) -> void:
+	var before_motion: Vector3 = global_position
 	last_hit_age += delta
 	if controller != null and controller.has_method("gather_intent"):
 		intent = controller.gather_intent(delta)
@@ -98,6 +99,8 @@ func _physics_process(delta: float) -> void:
 	close.tick(delta, intent)
 	kit.tick(delta, intent)
 	motor.tick(delta, intent)
+	var session: Node = get_tree().get_first_node_in_group("museum_match")
+	if session != null: session.enforce_spawn_exclusion(self,before_motion)
 	if global_position.y < -8.0:
 		die()
 
@@ -105,13 +108,13 @@ func _physics_process(delta: float) -> void:
 func permits(action: String) -> bool:
 	if kit is ExpansionKit:
 		if action in ["step","lift","kickstart"] and statuses.movement_disabled(): return false
-		if action in ["secondary","step","lift","kickstart","phase","assign","wall"] and resolver.protected_room(self): return false
+		if action in ["secondary","step","lift","kickstart","phase","assign","wall"] and resolver.attack_locked(self): return false
 	if state in ["boot_attached","boot_captured"]: return false
 	if action == "primary" and kit != null and kit.reloading: return false
 	if tuning.hero_id == "huddle" and action in ["scatter","screen","regroup","wave"]:
-		if resolver.protected_room(self): return false
+		if resolver.attack_locked(self): return false
 		if action in ["scatter","wave"] and statuses.movement_disabled(): return false
-	if action in ["primary", "melee", "throw", "counter", "bomb", "ultimate", "knife", "boot", "snare", "march", "house_call", "barrier", "deflect"] and resolver.protected_room(self):
+	if action in ["primary", "melee", "throw", "counter", "bomb", "ultimate", "knife", "boot", "snare", "march", "house_call", "barrier", "deflect"] and resolver.attack_locked(self):
 		return false
 	if statuses.movement_disabled() and action in ["dash", "hover", "boot", "jump", "march", "house_call"]:
 		return false

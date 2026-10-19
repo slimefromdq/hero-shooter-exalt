@@ -147,9 +147,9 @@ func apply_pending_hero() -> void:
 	if changed: _orient(player)
 
 func _orient(actor: HeroActor) -> void:
-	# All arrival rooms use two south-facing exits; present those doors first.
-	actor.aim_direction = Vector3.BACK
-	actor.rotation.y = PI
+	# Face the authored doors, including the east-facing admissions spawn.
+	actor.aim_direction = Vector3.BACK.rotated(Vector3.UP,museum_definition().spawn_yaw(actor.team))
+	actor.rotation.y = PI+museum_definition().spawn_yaw(actor.team)
 	if actor.controller is PlayerController:
 		actor.controller.yaw = actor.rotation.y
 
@@ -216,3 +216,23 @@ func track_intersects(bounds: AABB) -> bool:
 			if AABB(minimum,maximum-minimum).intersects(bounds): return true
 		covered += length
 	return false
+
+func is_protected(actor: HeroActor) -> bool:
+	return is_instance_valid(actor) and actor.alive and spawn_contains(actor.global_position,actor.team)
+
+func spawn_attack_locked(actor: HeroActor) -> bool:
+	# Prep keeps attackers behind closed doors. Released spawns allow firing out.
+	return phase == "preparation" and actor.team == 0 and not exploration
+
+func enforce_spawn_exclusion(actor: HeroActor, before: Vector3) -> void:
+	var enemy: AABB = definition.spawn_bounds(1-actor.team)
+	if not enemy.has_point(actor.global_position) and enemy.intersects_segment(before,actor.global_position) == null: return
+	actor.motor.interrupt_mobility()
+	actor.motor.external_velocity = Vector3.ZERO
+	actor.velocity = Vector3.ZERO
+	if not enemy.has_point(before):
+		actor.global_position = before
+	else:
+		# Recover invalid placements as well as ability relocations, without giving immunity.
+		var yaw: float = museum_definition().spawn_yaw(1-actor.team)
+		actor.global_position = definition.spawn_center(1-actor.team)+Vector3(0,.08,6.5).rotated(Vector3.UP,yaw)

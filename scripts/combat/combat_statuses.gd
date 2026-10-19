@@ -7,8 +7,9 @@ var marks: Dictionary = {}
 var souls: Dictionary = {}
 
 func apply(kind: String, source: HeroActor, duration: float, strength: float = 0.0) -> bool:
-	if not actor.alive or actor.invulnerable or actor.state == "wisp_phase" or source.team == actor.team or actor.resolver.protected_room(actor) or actor.resolver.protected_room(source):
+	if not actor.alive or actor.invulnerable or actor.state == "wisp_phase" or source.team == actor.team or actor.resolver.protected_room(actor) or actor.resolver.attack_locked(source):
 		return false
+	if actor.resolver.spawn_door_blocks(source.body_point(1),actor.body_point(1)): return false
 	# Refresh retains the DoT clock, preventing repeated hits from postponing ticks.
 	var clock: float = float(effects.get(kind, {}).get("clock", 0.0))
 	effects[kind] = {"source": weakref(source), "remaining": duration, "strength": strength, "clock": clock}
@@ -21,6 +22,10 @@ func apply(kind: String, source: HeroActor, duration: float, strength: float = 0
 	return true
 
 func tick(delta: float) -> void:
+	if actor.get_tree().get_first_node_in_group("museum_match") != null and actor.resolver.protected_room(actor):
+		cleanse()
+		marks.clear()
+		if actor.state in ["captured","throw_pair","boot_captured","stagger","counterthrow"]: actor.close.cancel()
 	for key: int in souls.keys():
 		souls[key].remaining -= delta
 		var owner_actor: HeroActor = souls[key].source.get_ref() as HeroActor
@@ -49,6 +54,7 @@ func tick(delta: float) -> void:
 			marks.erase(key)
 
 func mark(source: HeroActor, duration: float) -> void:
+	if actor.resolver.protected_room(actor): return
 	if actor.alive:
 		marks[source.get_instance_id()] = {"source": weakref(source), "remaining": duration}
 

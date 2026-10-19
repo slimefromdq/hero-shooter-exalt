@@ -74,8 +74,19 @@ func is_front(target: HeroActor, source_position: Vector3) -> bool:
 	return facing.dot(toward.normalized()) > 0.35
 
 func protected_room(actor: HeroActor) -> bool:
-	var city: Node = get_tree().get_first_node_in_group("city_match")
-	return actor.spawn_protected or (city != null and city.is_protected(actor))
+	var session: Node = get_tree().get_first_node_in_group("city_match")
+	# A live position query prevents one-frame lingering protection at thresholds.
+	return session.is_protected(actor) if session != null else actor.spawn_protected
+
+func attack_locked(actor: HeroActor) -> bool:
+	var session: Node = get_tree().get_first_node_in_group("museum_match")
+	if session != null: return session.spawn_attack_locked(actor)
+	return protected_room(actor)
+
+func spawn_door_blocks(from: Vector3, toward: Vector3) -> bool:
+	for door: MuseumSpawnDoor in get_tree().get_nodes_in_group("museum_spawn_doors"):
+		if door.blocks_attack(from,toward): return true
+	return false
 
 func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast_id: int,
 		head: bool = false, execute: bool = false, incoming_from: Vector3 = Vector3.INF) -> String:
@@ -84,8 +95,10 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 	if source.team == target.team or target.invulnerable or target.state == "wisp_phase":
 		return "immune"
 	# Query positions at the authority boundary, including attacks already in flight.
-	if protected_room(source) or protected_room(target):
+	if attack_locked(source) or protected_room(target):
 		return "immune"
+	var origin: Vector3 = source.body_point(1) if incoming_from == Vector3.INF else incoming_from
+	if spawn_door_blocks(origin,target.body_point(1)): return "immune"
 	var key: String = "%d:%d" % [cast_id, target.get_instance_id()]
 	if resolved.has(key):
 		return "duplicate"
@@ -132,7 +145,8 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 	return "execution" if executed else "hit"
 
 func knockback(source: HeroActor, target: HeroActor, impulse: Vector3, tag: String) -> void:
-	if not target.alive or target.invulnerable or target.state == "wisp_phase" or source.team == target.team or protected_room(source) or protected_room(target): return
+	if not target.alive or target.invulnerable or target.state == "wisp_phase" or source.team == target.team or attack_locked(source) or protected_room(target): return
+	if spawn_door_blocks(source.body_point(1),target.body_point(1)): return
 	if target.boot_pair != null: target.boot_pair.release(false)
 	if target.state in ["captured", "throw_pair"]: return
 	if target.motor.traversal.active: target.motor.traversal.abort()
@@ -165,7 +179,7 @@ func clear_round() -> void:
 
 func heal(source: HeroActor, target: HeroActor, amount: float, tag: String, award_charge: bool = true) -> float:
 	if not is_instance_valid(source) or not is_instance_valid(target) or not source.alive or not target.alive or source.team != target.team or amount <= 0: return 0.0
-	if protected_room(source) or protected_room(target): return 0.0
+	if attack_locked(source) or protected_room(target): return 0.0
 	var restored: float = minf(amount,maxf(0,target.effective_max_health() - target.health))
 	if restored <= 0: return 0.0
 	target.health += restored

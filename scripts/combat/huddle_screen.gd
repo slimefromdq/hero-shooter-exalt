@@ -26,7 +26,7 @@ func dimensions() -> Vector2:
 	return Vector2(t.screen_width,t.screen_height)
 
 func active() -> bool:
-	return is_instance_valid(source) and source.alive and is_instance_valid(recipient) and recipient.alive and recipient.team == source.team and source.kit is HuddleKit and health > 0 and remaining > 0 and not source.resolver.protected_room(source) and not source.resolver.protected_room(recipient)
+	return is_instance_valid(source) and source.alive and is_instance_valid(recipient) and recipient.alive and recipient.team == source.team and source.kit is HuddleKit and health > 0 and remaining > 0 and not source.resolver.attack_locked(source) and not source.resolver.protected_room(recipient)
 
 func frame() -> Transform3D:
 	if not is_instance_valid(recipient): return global_transform
@@ -36,7 +36,7 @@ func frame() -> Transform3D:
 	return Transform3D(Basis(right,right.cross(forward),-forward),recipient.global_position + Vector3.UP * dimensions().y/2 + forward * 1.1)
 
 func receive_damage(attacker: HeroActor, amount: float, id: int) -> void:
-	if not active() or attacker.team == source.team or received.has(id) or attacker.resolver.protected_room(attacker): return
+	if not active() or attacker.team == source.team or received.has(id) or attacker.resolver.attack_locked(attacker): return
 	received[id] = true
 	health = maxf(0,health - amount * attacker.resolver.cast_multiplier(id,attacker))
 	flash = .18

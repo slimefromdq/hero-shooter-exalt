@@ -18,7 +18,7 @@ func _physics_process(delta: float) -> void:
 	if not is_instance_valid(source) or not source.alive or not is_instance_valid(target) or not target.alive or target.life_serial != target_life:
 		queue_free()
 		return
-	if source.resolver.protected_room(source) or source.resolver.protected_room(target) or target.invulnerable or target.state in ["wisp_phase","captured","throw_pair","boot_attached","boot_captured"]:
+	if source.resolver.attack_locked(source) or source.resolver.protected_room(target) or target.invulnerable or target.state in ["wisp_phase","captured","throw_pair","boot_attached","boot_captured"]:
 		queue_free()
 		return
 	var distance: float = minf(remaining,speed*minf(delta,duration))

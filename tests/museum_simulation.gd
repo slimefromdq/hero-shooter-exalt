@@ -66,7 +66,7 @@ func run() -> void:
 			if actor.global_position.y < -6: falls += 1
 			var window: Dictionary = windows[actor.get_instance_id()]
 			var moved: float = actor.global_position.distance_to(window.at)
-			var objective_at: Vector3 = session.payload.global_position if session.phase == "escort" else Vector3.ZERO
+			var objective_at: Vector3 = session.payload.global_position if session.phase == "escort" else session.definition.hill_center
 			var near_objective: bool = actor.global_position.distance_to(objective_at) < (6.0 if session.phase == "escort" else 11.0)
 			var expected: bool = actor.alive and session.winner < 0 and session.phase != "preparation" and not near_objective and actor.global_position.distance_to(actor.controller.destination) > 2.5 and actor.state in ["ready","reload"]
 			window.stall = window.stall+1 if expected and moved < .65 else 0.0

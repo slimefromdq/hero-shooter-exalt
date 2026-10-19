@@ -1,6 +1,6 @@
 # Meridian Museum
 
-Meridian Museum is an offline 6v6 hybrid capture/payload map. Attackers seize the Astrolabe Court in three permanent thirds, then escort an artifact transport through the Hall of Giants, Living Terrace, and Conservation Vault. The third payload checkpoint is the finish. Defenders win if the clock expires without a continuing attacker touch.
+Meridian Museum is an offline 6v6 hybrid capture/payload map, rebuilt as four connected wings around a central collection block within a 114 � 102 m footprint. Attackers seize the Astrolabe Court in three permanent thirds, then escort an artifact transport through the Hall of Giants, Living Terrace, and Conservation Vault. The third payload checkpoint is the finish. Defenders win if the clock expires without a continuing attacker touch.
 
 ## Play
 
@@ -27,11 +27,11 @@ Both vector plans are generated from the actual collision footprints, stairs, sh
 | Fight | Route choices | Movement and cover |
 | --- | --- | --- |
 | **A: Astrolabe Court** | Central arcade, sculpture cloister, café approach; northern crescent and southern cloister balconies | 18 × 14 m ground capture volume; astrolabe pedestal divides the fight; 1.2 m mantle steps and alternating kick walls reach +3.6 m positions |
-| **CP1: Hall of Giants** | Cart bends around the fossil island; research passage and offset education mezzanines | +4 m high ground, broad ordinary access from both ends; 4 m shared-dash gap with a safe gallery underneath; suspended skeleton and opaque exhibit bases |
-| **CP2: Living Terrace** | Curved promenade, planted roof walk, lower sculpture garden with two entries and two exits | Garden at −1.5 m, roof walk at +4.5 m; 1.5 m mantle chain and 5 m dash gap; both gaps land on playable lower space if missed |
-| **CP3: Conservation Vault** | Cart wraps restoration bays; packing-room and archive rotations contest a service gantry | Main floor +1.5 m, gantry +5 m; packing-crate mantles and service-wall kicks; final dock approached after a bend; defender service walls require a longer final rotation |
+| **CP1: Hall of Giants** | Cart bends around the fossil island; enclosed research suite and elevated education bridge | +4 m gallery and +5.8 m bridge, with ordinary stairs at both ends; 4 m shared-dash gap; bridge clears the cart and a standing artifact-top rider |
+| **CP2: Living Terrace** | Promenade wraps an enclosed botanical pavilion; connected roof walk and sunken garden flank | Garden at −1.5 m, roof walk at +4.5 m; 1.5 m mantle chain and 5 m dash gap; both gaps land on playable lower space if missed |
+| **CP3: Conservation Vault** | Cart wraps restoration bays; packing-room and archive rotations contest a service gantry | Main floor 0 m, gantry +3.5 m; packing-crate mantle chain and service-wall kicks; offset restoration and packing rooms divide the final fight |
 
-The payload path is 210.07 m: 70 m to CP1, another 70.07 m including the conservation rise, and 70 m to the dock. Solid walls, plinths, planters, and restoration bays supply cover. Transparent display glass and the decorative skeleton do not block bullets; the exhibit bases do. All primary perches have two ordinary approaches, and optional skill routes do not gate bot navigation.
+The payload follows a folded 210 m route: 73 m to CP1, 77 m through the terrace to CP2, and 60 m through the vault to CP3. Building mass separates adjacent stages; there is no central shortcut between the court and vault. Solid walls, plinths, planters, and restoration bays supply cover. Transparent display glass and the decorative skeleton do not block bullets; the exhibit bases do. All primary perches have two ordinary approaches, and optional skill routes do not gate bot navigation.
 
 Each area contains two 75-HP packs with a 10-second cooldown and one 400-HP pack with a 15-second cooldown. Packs are shared by both teams.
 
@@ -53,21 +53,31 @@ Each area contains two 75-HP packs with a 10-second cooldown and one 400-HP pack
 | CP3 | Immediate attacker victory |
 | Overtime | Attacker touch at clock expiry starts overtime; three continuous seconds without attackers ends it; a time-awarding objective exits overtime |
 | Respawn | 8 seconds; existing ultimate-retention rules apply |
-| Active spawn | Team-only gates, protected combat rules, 200 HP/s healing |
+| Active spawn | Team-operated sliding doors, friendly immunity, permitted outward firing, 200 HP/s healing |
 
 Capture activates A1/D1; CP1 activates A2/D2; CP2 activates A3. Friendly living occupants of the old room move safely into the new room without a health reset. Other living actors keep their positions. Dead actors use the new room when their respawn completes. Retired rooms lose protection, healing, and gate blocking.
+
+### Spawn doors and protection
+
+Each room has two physical sliding shutters facing a staging area. A living teammate within 3 m of the doorway opens it from either side in 0.25 seconds. It stays open while a teammate is nearby, waits 0.75 seconds after they leave, then closes over 0.25 seconds. The moving collision follows the visible shutter. Enemy body collision remains at the threshold while open; enemy proximity cannot operate the door.
+
+Inside an active friendly spawn, actors are immune to damage and hostile statuses/displacement, existing hostile effects are cleansed, and spawn healing continues. **Weapons and offensive abilities can fire outward through open doors while the actor remains protected.** Closed shutters block combat. Protection is queried from the actor's current feet position and ends immediately outside the authored boundary. Enemy breaches never grant immunity; ability motion into or through an enemy spawn is rejected. Preparation locks attacker doors and offensive actions; Explore releases them. Relocation retires old rooms as unprotected public space with open doors.
+
+Doors have team-colored shutters, ownership/state signs, floor thresholds, and an immunity HUD indicator. The museum policy is separate from the existing Gardens and training protection policy.
+
+[Protected firing through an open spawn door](maps/museum-spawn.png)
 
 The cart has a solid artifact core and a rideable platform. Riders move with the cart through bends and rollback. Nearby pedestrians are displaced through checked character movement. Dynamo wall previews turn invalid on the remaining track clearance, including the possible rollback route to the latest checkpoint; the HUD explains the restriction. Completed legs and ordinary off-track positions remain available for walls.
 
 ## Implementation and tuning
 
-`resources/maps/meridian_museum.tres` uses `MuseumMapDefinition`. Its script supplies exported defaults for capture timing, escort speed, bonuses, overtime, cart path, checkpoint vertices, spawn rooms, tactical landmarks, and pickup positions. Values can be overridden in the Inspector. Every arena duplicates the resource, keeping active spawn stages local to that match.
+`resources/maps/meridian_museum.tres` uses `MuseumMapDefinition`. Its script supplies exported defaults for capture timing, escort speed, bonuses, overtime, cart path, checkpoint vertices, spawn rooms and orientations/sizes, combat bounds, approach positions, named tactical routes, and pickup positions. Values can be overridden in the Inspector. Every arena duplicates the resource, keeping active spawn stages local to that match.
 
 `MuseumObjective` owns progression. `MuseumMatch` supplies physical occupancy and reuses the city session's combat feedback, hero selection, healing, and respawns. Its public state exposes `phase`, `capture_progress`, `payload_distance`, `checkpoint_index`, `time_remaining`, `overtime`, and `winner`; signals report phase, checkpoint, spawn-stage, and round-end changes.
 
-Bots retain shared hero tactics and ordinary navigation. Four slots pressure the active objective; additional slots rotate through high ground and flanks. Defenders stage forward when the cart is unattended and converge when a contest is urgent. No parkour planner or network mode is required.
+Bots retain shared hero tactics and ordinary navigation. Four slots pressure the active objective; additional slots follow named high-ground/flank routes through entry, intermediate, and exit positions. Route state resets on death/restart and changes with the objective sector; high-ground bots briefly hold a combat perch before completing the rotation. Defenders stage forward when the cart is unattended and converge when a contest is urgent. No parkour planner or network mode is required.
 
-The [route audit](validation/museum-routes.json) records navigation-distance lower bounds at 6 m/s. Initial attacker routes are roughly 9–10 seconds before acceleration and combat; defenders take roughly 11–14 seconds, with a 17.7-second final return. The intended combat return windows remain playtest targets, rather than accepted competitive balance.
+The [route audit](validation/museum-routes.json) records navigation-distance lower bounds at 6 m/s, checking both path endpoints. The current starting-position walks are A0 10.3 s, A1 7.6 s, A2 12.8 s, A3 9.2 s; D0 11.9 s, D1 13.9 s, D2 10.5 s to its first hold and 14.6 s to the final dock. Acceleration, doors, and the cart's changing position affect actual returns. A1's initial unlock return and D2's first hold remain faster than the original pacing targets; those are explicit balance-playtest items. No artificial screening-wall detours were added to force a timing number.
 
 ## Verification
 
@@ -87,10 +97,12 @@ Use the executable resolved by `tools/find_godot.ps1` if `godot` is not on PATH.
 
 The museum suites cover capture/escort rules, real movement over stairs and shortcuts, navigation, physical cart clearance and rider transport, both player sides, spawn relocation, all heroes, menus, and wall-placement restrictions. Rendered views under `artifacts/museum` include all four fights, their overheads, both atlas views, and the player camera. [Validation results](validation/museum-results.json) distinguish deterministic checks, natural combat simulations, and controlled full-route drills.
 
-The delivery audit adds real keyboard/mouse input and 192 physical edge checks, including 28 comparisons between the cart's rendered surfaces and bullet collision. It moved four packs out of exhibit/stair collisions; opened preparation gates in Explore mode; canceled old mantle trajectories during spawn transfers without resetting earned resources; preserved defenders in unchanged D2 rooms; added artifact-top rider transport and synchronized cart collision transforms; matched the artifact's visible cover to its physical collider; retained exit-facing cameras after spawn hero changes; and preserved capture-thirds feedback on a defense win. A shared movement correction excludes only the lowest 2 cm from standing-clearance probes, keeping the full standing head height while tolerating ordinary floor contact after crouching.
+The redesign audit checks every door's ownership, timing, physical passage, protected outgoing damage, incoming weapon/projectile/splash/DoT immunity, hostile effects, threshold transitions, ability exclusion, and retirement/reset. It also sweeps the complete route with cart-plus-standing-rider clearance, verifies ordinary tactical-route segments, and checks that each authored primary perch cannot see all three approach samples. The latter is a deterministic spatial check, not proof of balanced sightlines everywhere.
 
-Each long simulation also starts a 60-second live combat scenario at each payload checkpoint, then runs the controlled full-route drill. A staged defense may legitimately stop the cart; acceptance requires actual forward progress or a contest involving both teams, rather than a guaranteed attacker win. Natural combat, staged checkpoint combat, and unopposed route completion are recorded separately.
+The traversal suite exercises every step of the court, terrace, and packing mantle chains, both dash gaps, and wall kicks. Integration physically walks every ordinary stair in both directions and both outer lanes of the garden ramps. An initial stress run found a garden-edge gutter that could stall a bot; both ramps now fill the excavated opening. Cart cover, pickups, hero cameras, spawn transfers, queued switching, pause/reset, and both player sides retain focused regression checks.
 
-Recorded verification: **451 focused headless checks**, **16 native-input checks**, the existing project verification suite, **32 simulation checks** across two 600-second natural combat runs plus six 60-second checkpoint combat cases, and **16 rendered views** passed. Independent sampling found no persistent eight-second route stalls; the longest sampled stalls were 3 and 3 seconds. Both controlled drills captured A and completed CP1–CP3 using ordinary bot movement, in 164 and 165 seconds respectively. These drills establish route completion under controlled pressure, not attacker win rates in balanced combat. The baseline headless import/legacy tests still print their pre-existing renderer cleanup messages; no museum test reports a script error or failed assertion.
+Each seeded simulation runs 600 seconds of natural full-roster combat, three separate 60-second checkpoint fights, then a controlled bot-driven capture/escort drill. Staged combat requires real progress or contest; the controlled drill requires CP1�CP3 and the attacker victory. Natural outcomes and drill outcomes are recorded separately in [validation results](validation/museum-results.json). Rendered evidence includes all four fights, overheads, both atlas levels, objective HUD states, and closed/open spawn doors. Baseline headless import and some legacy tests still print renderer cleanup messages.
+
+Recorded verification: **849 focused checks**, **16 native-input checks**, **32 simulation checks**, and **18 rendered views** passed, alongside the existing project verification suite. Both 600-second seeds had zero falls, zero recovery teleports, and no persistent eight-second route stalls. The controlled drills completed capture and CP1�CP3 in 166 and 165 seconds. These results establish functional routes and rules, not competitive balance.
 
 Human playtesting remains necessary for choke pressure, long-range angles, flank commitment, final-point stalls, visual readability in combat, and movement feel. Current timing and geometry are editable first-playtest defaults.

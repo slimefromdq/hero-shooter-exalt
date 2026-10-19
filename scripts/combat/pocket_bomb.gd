@@ -61,4 +61,4 @@ func explode() -> void:
 	queue_free()
 
 func receive_shot(shooter: HeroActor) -> void:
-	if shooter == source and airborne and not source.resolver.protected_room(source): explode()
+	if shooter == source and airborne and not source.resolver.attack_locked(source): explode()
