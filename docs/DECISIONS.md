@@ -1,5 +1,9 @@
 # Implementation decisions Â· Nimbus training slice
 
+## MOVE-02 · Momentum flow, October 20, 2026
+
+This revision supersedes the historical movement restrictions below. Neutral air movement retains horizontal speed; steering cannot add overspeed. Above running speed, aligned ground movement sheds excess at 6 m/s²; release/reversal keeps 24 m/s² braking. Dash buildup retains momentum and burst entry takes max(20 m/s, incoming horizontal speed), bounded by the existing 26 m/s cap. Held Shift on a grounded ground-dash completion transfers actual tangent velocity into slide without a boost. Downward air-dash slides retain their fresh 0.12 s timing gate. Upward dash launch caps at 30 degrees and level/upward air dashes integrate gravity. Wall-jump lift is 8 m/s with stronger incoming lift retained. Ordinary jumping, melee's committed stop, and hero vertical abilities are preserved; Stitch hook release has its own 9.5 m/s tuning. [MOVEMENT_FLOW.md](MOVEMENT_FLOW.md) records verification and remaining playtest limits.
+
 ## QOL-01 Â· Current user-directed balance and usability pass
 
 October 17, 2026: [QOL.md](QOL.md) records the implemented movement, concurrent reload, hero, camera, training and menu revision. It supersedes historical numeric defaults and exclusive reload permissions below. Dash is wheel up; slide stays Shift. City hero changes preserve the match and queue outside spawn. Numerical buffs remain editable playtest defaults.

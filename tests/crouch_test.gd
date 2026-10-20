@@ -112,7 +112,7 @@ func run() -> void:
 	await step(11)
 	check(actor.motor.mode == "dash" and not actor.motor.dash_airborne and absf(actor.motor.dash_direction.y) < .001,"dash from crouch remains a horizontal ground dash")
 	await step(30)
-	check(actor.motor.mode == "crouch" and not actor.motor.slide_rearmed,"held crouch cannot bypass the ground-dash slide restriction")
+	check(actor.motor.mode == "slide" and actor.motor.slide_rearmed,"held crouch flows from ground dash into slide")
 	await low_cover_weapons()
 	await stronger_boot()
 	world.queue_free()

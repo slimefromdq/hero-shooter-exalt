@@ -133,7 +133,7 @@ func run() -> void:
 	check(actor.state == "ready" and actor.velocity.y > 7, "a tall wall starts with an ordinary jump instead of an impossible ground mantle")
 	await step(10)
 	await jump()
-	check(actor.velocity.z >= 2.9 and actor.velocity.y > 9 and actor.motor.mode == "air", "Space while airborne beside a wall kicks upward and outward")
+	check(actor.velocity.z >= 2.9 and actor.velocity.y > 7.5 and actor.motor.mode == "air", "Space while airborne beside a wall kicks upward and outward")
 	await step(3)
 	check(actor.presentation.animator.current_animation == "wall_jump" and actor.presentation.left_leg.rotation.x > .5, "wall jump has a visible leg kick pose")
 	var kicks: int = count_casts("wall_jump")
@@ -173,7 +173,7 @@ func run() -> void:
 	await reset(Vector3(-30,2,0) + normal * .8)
 	actor.intent.aim = Vector3.BACK
 	await jump()
-	check(actor.velocity.dot(normal) > 6 and actor.velocity.y > 9, "wall jump finds an angled wall even when the camera faces away")
+	check(actor.velocity.dot(normal) > 6 and actor.velocity.y > 7.5, "wall jump finds an angled wall even when the camera faces away")
 	await reset(Vector3(-15,.01,0))
 	actor.intent.hover = true
 	await step()

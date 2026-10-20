@@ -24,7 +24,7 @@ func run() -> void:
 	for other: HeroActor in get_nodes_in_group("actors"):
 		if other != actor: other.set_physics_process(false)
 	actor.movement_confirmed.connect(func(kind: String,_at: Vector3,_direction: Vector3,_normal: Vector3,_strength: float) -> void: movement_events.append(kind))
-	for timing: String in ["early","late","after"]:
+	for timing: String in ["unassisted","early","late","after"]:
 		movement_events.clear()
 		actor.reset_actor(Vector3(18,.01,-16.60))
 		actor.intent.aim = Vector3.FORWARD
@@ -39,10 +39,20 @@ func run() -> void:
 		await step()
 		actor.intent.jump = false
 		print("KICK ",timing," position=",actor.position," velocity=",actor.velocity)
+		# Reduced shared wall lift deliberately loses the old unassisted route.
+		# A committed upward air dash supplies the alternative without map edits.
+		if timing != "unassisted":
+			actor.intent.aim = Vector3(0,.5,-.8660254)
+			actor.intent.dash = true
+			await step()
+			actor.intent.dash = false
 		for frame: int in 80:
 			await step()
 			if actor.motor.traversal.active: break
-		check(actor.motor.traversal.active,timing+" reaches real 4.5m training tower mantle after wall kick")
+		if timing == "unassisted":
+			check(not actor.motor.traversal.active and not movement_events.has("mantle"),"reduced wall kick cannot reach the old unassisted 4.5m tower route")
+			continue
+		check(actor.motor.traversal.active,timing+" reaches real 4.5m training tower mantle using wall kick and air dash")
 		if not actor.motor.traversal.active: continue
 		print("MANTLE ",timing," carried=",actor.motor.traversal.carried_velocity," direction=",actor.motor.traversal.approach_direction)
 		if timing == "early":

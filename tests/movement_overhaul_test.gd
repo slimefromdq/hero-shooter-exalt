@@ -74,11 +74,11 @@ func run() -> void:
 		input.move = move
 		var direction: Vector3 = actor.motor.requested_dash_direction(input)
 		check(is_equal_approx(direction.length(),1),"WASD dash direction is normalized "+str(move))
-		if move == Vector3.FORWARD: check(direction.y > .59,"forward air dash preserves aim pitch")
+		if move == Vector3.FORWARD: check(is_equal_approx(direction.y,.5),"forward air dash caps upward aim at thirty degrees")
 		if move == Vector3.BACK: check(direction.y < -.59,"backward air dash reverses aim pitch")
 		if move == Vector3.RIGHT: check(direction.dot(Vector3.RIGHT) > .99,"strafe air dash ignores aim pitch")
 	input.move = Vector3.ZERO
-	check(actor.motor.requested_dash_direction(input).is_equal_approx(input.aim),"no-input air dash uses camera aim")
+	check(is_equal_approx(actor.motor.requested_dash_direction(input).y,.5),"no-input air dash caps camera pitch")
 	actor.motor.dash_airborne = false
 	check(actor.motor.requested_dash_direction(input).y == 0,"ground dash remains horizontal")
 	await reset()
@@ -88,7 +88,7 @@ func run() -> void:
 	actor.intent.slide_pressed = true
 	await step()
 	actor.intent.slide_pressed = false
-	check(actor.motor.mode != "slide","fresh crouch after a ground dash cannot use residual momentum")
+	check(actor.motor.mode == "slide","fresh crouch after a ground dash can use residual momentum")
 	await reset()
 	actor.velocity = Vector3.FORWARD*6
 	actor.intent.slide = true
@@ -184,7 +184,7 @@ func run() -> void:
 	actor.motor.traversal.reset()
 	actor.velocity = Vector3(0,0,6)
 	actor.aim_direction = Vector3.LEFT
-	check(actor.motor.traversal.try_wall_jump(Vector3.LEFT) and actor.velocity.x > 8.9 and absf(actor.velocity.z) < .001 and actor.velocity.y >= 9.49,"head-on wall kick launches up and back without sideways movement")
+	check(actor.motor.traversal.try_wall_jump(Vector3.LEFT) and actor.velocity.x > 8.9 and absf(actor.velocity.z) < .001 and actor.velocity.y >= 7.99,"head-on wall kick launches up and back without sideways movement")
 	kick_wall.queue_free()
 	await reset(Vector3(0,20,10))
 	actor.intent.stationary_melee = true

@@ -350,6 +350,8 @@ func build_advanced_menu() -> void:
 		["Counter window (s)", "counter_window", 0.24, 0.05, 0.4, 0.01],
 		["Throw outside damage multiplier", "throw_outside_multiplier", 0.1, 0.05, 1.0, 0.05],
 		["Guard bullet reduction (0 = none)", "bullet_guard_reduction", 0.0, 0.0, 0.8, 0.05],
+		["Ground excess-speed decay", "ground_overspeed_decay", 6.0, 0.0, 24.0, 0.5],
+		["Upward dash angle (degrees)", "dash_up_angle", 30.0, 0.0, 60.0, 5.0],
 		["Dash speed (m/s)", "dash_speed", 20.0, 12.0, 26.0, 1.0],
 		["Slide friction", "slide_friction", 4.0, 1.0, 8.0, 0.2],
 		["Hover ascent (m/s)", "hover_ascent", 8.5, 4.0, 14.0, 0.5]

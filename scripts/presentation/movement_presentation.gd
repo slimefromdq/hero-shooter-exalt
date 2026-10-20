@@ -13,7 +13,7 @@ const FAILURES := {
 	"too_early":"TOO EARLY - crouch just before landing",
 	"too_late":"TOO LATE - crouch before impact",
 	"hold_crouch":"HOLD CROUCH THROUGH LANDING",
-	"ground_dash":"START THE DASH IN THE AIR",
+	"ground_dash":"HOLD SHIFT THROUGH DASH EXIT",
 	"not_downward":"DASH DOWN INTO THE GROUND",
 	"too_slow":"NOT ENOUGH FORWARD SPEED",
 	"wall":"WALL BLOCKED THE DASH",

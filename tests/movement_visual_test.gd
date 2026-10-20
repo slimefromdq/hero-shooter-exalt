@@ -160,7 +160,7 @@ func run() -> void:
 	actor.intent.slide_pressed = true
 	await step()
 	actor.intent.slide_pressed = false
-	check(reasons == ["ground_dash"],"late crouch after a real ground dash explains the airborne requirement")
+	check(reasons.is_empty() and actor.motor.mode == "slide","crouch after a real ground dash slides without obsolete failure feedback")
 	await reset(Vector3(0,1.3,5))
 	actor.tuning.dash_buildup = .01
 	actor.intent.aim = Vector3(0,-.6,-.8)

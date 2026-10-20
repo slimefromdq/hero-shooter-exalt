@@ -15,6 +15,7 @@ var mantle_slide_direction: Vector3 = Vector3.FORWARD
 var hover_cd: float = 0.0
 var dash_direction: Vector3 = Vector3.FORWARD
 var dash_current_speed: float = 0.0
+var dash_vertical_speed: float = 0.0
 var coyote: float = 0.0
 var jump_buffer: float = 0.0
 var dash_slide: bool = false
@@ -149,23 +150,22 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			actor.resolver.record("cast", actor, "hover")
 	if mode == "dash_windup":
 		timer -= delta
-		actor.velocity.x = move_toward(actor.velocity.x, 0.0, delta * 8.0)
-		actor.velocity.z = move_toward(actor.velocity.z, 0.0, delta * 8.0)
 		actor.velocity.y -= t.gravity * delta
 		if timer <= 0.0:
 			dash_direction = requested_dash_direction(input)
 			if not dash_airborne:
 				dash_direction = Vector3(dash_direction.x,0,dash_direction.z).normalized()
 				if dash_direction.is_zero_approx(): dash_direction = -actor.global_basis.z
-			dash_current_speed = t.dash_speed
+			dash_current_speed = minf(t.speed_limit,maxf(t.dash_speed,Vector2(actor.velocity.x,actor.velocity.z).length()))
+			dash_vertical_speed = dash_direction.y * dash_current_speed
 			transition("dash", t.dash_duration)
 	elif mode == "dash":
 		timer -= delta
 		actor.velocity = dash_direction * dash_current_speed
+		if dash_airborne and dash_direction.y >= 0:
+			dash_vertical_speed -= t.gravity * delta
+			actor.velocity.y = dash_vertical_speed
 		dash_current_speed = maxf(t.ground_speed, dash_current_speed - t.dash_decay * delta)
-		if timer <= 0.0:
-			slide_feedback.resolve("ground_dash" if not dash_airborne else ("not_downward" if was_floor else "expired"),input,slide_press_age,0)
-			transition("air")
 	elif mode == "slide":
 		if not was_floor:
 			transition("air")
@@ -200,10 +200,9 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 		elif actor.state not in ["ready", "slayer_knife", "slayer_trap", "marshal_shield", "huddle_regroup", "wisp_phase", "samson_cross"]:
 			scale = minf(scale, 0.35)
 		var current := Vector3(actor.velocity.x, 0.0, actor.velocity.z)
-		var acceleration: float = t.acceleration if was_floor else t.air_steering
-		if wish.length_squared() < 0.01 and was_floor:
-			acceleration = t.braking
-		current = current.move_toward(wish * t.ground_speed * scale * actor.statuses.movement_scale() * actor.kit.movement_scale() * actor.benefits.speed_multiplier(), acceleration * delta)
+		var movement_scale: float = scale * actor.statuses.movement_scale() * actor.kit.movement_scale()
+		var target_speed: float = t.ground_speed * movement_scale * actor.benefits.speed_multiplier()
+		current = steer_horizontal(current,wish,target_speed,was_floor,not can_move or movement_scale < .999,delta)
 		actor.velocity.x = current.x
 		actor.velocity.z = current.z
 		if mode == "hover_ascent":
@@ -264,7 +263,8 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			if normal.dot(Vector3.UP) >= cos(actor.floor_max_angle) and before.dot(normal) < -0.5:
 				# Project once. No new impulse, no charge/cooldown reset.
 				actor.velocity = before.slide(normal)
-				slide_feedback.resolve("" if dash_airborne else "ground_dash",input,slide_press_age,actor.velocity.length())
+				if not dash_airborne: continue
+				slide_feedback.resolve("",input,slide_press_age,actor.velocity.length())
 				if dash_airborne and input.slide and slide_press_age <= t.dash_slide_window + .000001 and actor.velocity.length() >= t.slide_entry_speed:
 					slide_source = "air_dash"
 					transition("slide")
@@ -275,14 +275,14 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 					transition("ground")
 				break
 			elif absf(normal.y) < 0.7 or normal.y < -0.7:
-				slide_feedback.resolve("ground_dash" if not dash_airborne else ("ceiling" if normal.y < -.7 else "wall"),input,slide_press_age,0)
+				slide_feedback.resolve("ceiling" if normal.y < -.7 else "wall",input,slide_press_age,0)
 				actor.velocity = before.slide(normal)
 				transition("air")
 				break
-			elif normal.dot(Vector3.UP) >= cos(actor.floor_max_angle):
-				slide_feedback.resolve("ground_dash" if not dash_airborne else "not_downward",input,slide_press_age,0)
-		if not dash_airborne and slide_feedback.attempted:
-			slide_feedback.resolve("ground_dash",input,slide_press_age,0)
+			elif dash_airborne and normal.dot(Vector3.UP) >= cos(actor.floor_max_angle):
+				slide_feedback.resolve("not_downward",input,slide_press_age,0)
+		if mode == "dash" and timer <= 0:
+			finish_dash(input,can_move)
 	if mode == "hover_ascent" and actor.is_on_ceiling():
 		transition("hover", t.hover_duration)
 	if mode == "ground" and crouched: mode = "crouch"
@@ -374,7 +374,51 @@ func requested_dash_direction(input: CombatIntent) -> Vector3:
 	if not input.move.is_zero_approx():
 		direction = (aim if dash_airborne else forward) * input.move.dot(forward) + right * input.move.dot(right)
 	if not dash_airborne: direction.y = 0
-	return direction.normalized() if not direction.is_zero_approx() else forward
+	direction = direction.normalized() if not direction.is_zero_approx() else forward
+	if dash_airborne and direction.y > sin(deg_to_rad(actor.tuning.dash_up_angle)):
+		var flat: Vector3 = (direction * Vector3(1,0,1)).normalized()
+		if flat.is_zero_approx(): flat = forward
+		var angle: float = deg_to_rad(actor.tuning.dash_up_angle)
+		direction = flat * cos(angle) + Vector3.UP * sin(angle)
+	return direction
+
+func finish_dash(input: CombatIntent, can_move: bool) -> void:
+	if not dash_airborne:
+		dash_slide_locked = false
+		slide_rearmed = true
+		if grounded() and can_move and actor.state == "ready" and input.slide and not actor.concealed():
+			var tangent: Vector3 = actor.velocity.slide(actor.get_floor_normal())
+			if tangent.length() >= actor.tuning.slide_entry_speed:
+				actor.velocity = tangent
+				slide_source = "ground_dash"
+				slide_feedback.success()
+				transition("slide")
+				dash_slide = true
+				return
+		slide_feedback.clear()
+	else:
+		slide_feedback.resolve("not_downward" if grounded() else "expired",input,slide_press_age,0)
+	transition("ground" if grounded() else "air")
+
+func steer_horizontal(current: Vector3, wish: Vector3, target_speed: float, on_floor: bool, restricted: bool, delta: float) -> Vector3:
+	var t: HeroTuning = actor.tuning
+	if restricted:
+		return current.move_toward(wish * target_speed,t.braking * delta)
+	if wish.length_squared() < .01:
+		return current.move_toward(Vector3.ZERO,t.braking * delta) if on_floor else current
+	var speed: float = current.length()
+	var desired: Vector3 = wish.normalized()
+	var acceleration: float = t.acceleration if on_floor else t.air_steering
+	if speed > .001 and current.dot(desired) < 0:
+		return current.move_toward(Vector3.ZERO,(t.braking if on_floor else acceleration) * delta)
+	var desired_speed: float = target_speed * minf(1,wish.length())
+	if speed <= desired_speed:
+		return current.move_toward(desired * desired_speed,acceleration * delta)
+	# Rotate existing momentum rather than adding speed through strafing.
+	var angle: float = current.signed_angle_to(desired,Vector3.UP)
+	var turn: float = clampf(angle,-acceleration * delta / speed,acceleration * delta / speed)
+	var exit_speed: float = maxf(desired_speed,speed-t.ground_overspeed_decay * delta) if on_floor else speed
+	return current.rotated(Vector3.UP,turn).normalized() * exit_speed
 
 func grounded() -> bool:
 	if not actor.is_on_floor() and mode != "slide":
@@ -397,7 +441,7 @@ func transition(next: String, duration: float = 0.0) -> void:
 	if next == "slide":
 		slide_velocity = actor.velocity
 		set_crouched(true)
-		if changed: visual("dash_slide" if slide_source == "air_dash" else ("mantle_slide" if slide_source == "mantle" else "slide"),actor.velocity,actor.get_floor_normal() if actor.is_on_floor() else Vector3.UP)
+		if changed: visual("dash_slide" if slide_source in ["air_dash","ground_dash"] else ("mantle_slide" if slide_source == "mantle" else "slide"),actor.velocity,actor.get_floor_normal() if actor.is_on_floor() else Vector3.UP)
 	if next != "slide":
 		dash_slide = false
 	timer = duration
@@ -426,6 +470,8 @@ func cancel() -> void:
 	jump_buffer = 0.0
 	dash_slide = false
 	dash_airborne = false
+	dash_vertical_speed = 0
+	dash_current_speed = 0
 	slide_press_age = 99.0
 	slide_rearmed = true
 	slide_velocity = Vector3.ZERO

@@ -79,7 +79,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 			var jumping: bool = input.jump
 			end_reel()
 			if jumping:
-				actor.velocity = anchor_normal*actor.tuning.wall_jump_out+Vector3.UP*actor.tuning.wall_jump_up
+				actor.velocity = anchor_normal*actor.tuning.wall_jump_out+Vector3.UP*data().hook_release_up
 			return
 		if actor.state == "stitch_windup" and actor.state_time <= 0:
 			actor.state = "stitch_seam"

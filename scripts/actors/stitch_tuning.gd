@@ -37,6 +37,7 @@ extends HeroTuning
 @export var opening_bleed: float = 20.0
 @export var opening_bleed_duration: float = 3.0
 @export_category("Stitch · Spoolstep")
+@export var hook_release_up: float = 9.5
 @export var hook_range: float = 45.0
 @export var hook_speed: float = 40.0
 @export var reel_speed: float = 28.0

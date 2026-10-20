@@ -292,7 +292,7 @@ func movement_tests() -> void:
 	await step(12)
 	check(a.motor.mode == "dash" and not a.motor.dash_airborne and a.motor.dash_direction.y == 0, "ground dash stays horizontal without automatic slide")
 	await step(3)
-	check(a.motor.mode != "slide", "ground dash never creates automatic slide")
+	check(a.motor.mode != "slide", "ground dash without Shift does not create automatic slide")
 	var cooldown: float = a.motor.dash_cd
 	a.intent.slide = false
 	await step()
@@ -306,7 +306,7 @@ func movement_tests() -> void:
 	await step()
 	a.intent.dash = false
 	await step(12)
-	check(a.velocity.y > 10 and a.global_position.y > 1.5, "universal dash follows vertical crosshair direction")
+	check(a.velocity.y > 8 and a.velocity.y <= 10 and a.global_position.y > 1.0 and is_equal_approx(a.motor.dash_direction.y,.5), "upward dash caps launch pitch and applies gravity")
 	var fixed: Vector3 = a.motor.dash_direction
 	a.intent.aim = Vector3.RIGHT
 	await step(2)

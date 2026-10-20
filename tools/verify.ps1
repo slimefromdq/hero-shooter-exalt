@@ -30,6 +30,8 @@ try {
         & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script "res://tests/$taskSamsonTest.gd"
         if ($LASTEXITCODE -ne 0) { throw "Samson validation failed: $taskSamsonTest" }
     }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/momentum_flow_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Momentum flow failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/movement_overhaul_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Shared movement overhaul failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/movement_visual_test.gd
@@ -129,6 +131,8 @@ try {
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_navigation_regression.gd
     if ($LASTEXITCODE -ne 0) { throw 'City navigation recovery or healing route failed.' }
     if ($Capture) {
+        & $taskEngine --path $taskRoot --fixed-fps 60 --script res://tests/momentum_input_test.gd --windowed --resolution 1440x900 --audio-driver Dummy
+        if ($LASTEXITCODE -ne 0) { throw 'Momentum native inputs and rendered handoffs failed.' }
         & $taskEngine --path $taskRoot --fixed-fps 60 --script res://tests/wave_1_input_test.gd --windowed --resolution 1440x900 --audio-driver Dummy
         if ($LASTEXITCODE -ne 0) { throw 'Wave 1 rendered flight, hang and ambush inputs failed.' }
         & $taskEngine --path $taskRoot --script res://tests/ability_selection_test.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60

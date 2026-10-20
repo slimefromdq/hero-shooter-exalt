@@ -22,10 +22,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 
 func resolve(structural: String, input: CombatIntent, press_age: float, speed: float) -> void:
 	if not active: return
-	# Resting floor contacts happen throughout a ground dash. Keep observing
-	# until an attempted crouch or the actual dash end, rather than expiring
-	# the late-attempt window before the dash itself has finished.
-	if structural == "ground_dash" and not attempted and actor.motor.mode in ["dash","dash_windup"] and actor.motor.timer > 0: return
+
 	active = false
 	var reason: String = structural
 	if reason.is_empty():
