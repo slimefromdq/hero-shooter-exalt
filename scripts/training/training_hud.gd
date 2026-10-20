@@ -284,7 +284,7 @@ func build_advanced_menu() -> void:
 	button(left,"Play Huddle / mobile off-tank",training.select_hero.bind("huddle"))
 	button(left,"Play Relay / drone support",training.select_hero.bind("relay"))
 	button(left,"Play Dynamo / storm tank",training.select_hero.bind("dynamo"))
-	button(left,"Play Wisp / ghost DPS",training.select_hero.bind("wisp"))
+	button(left,"Play Wisp / phantom thief",training.select_hero.bind("wisp"))
 	button(left,"Play Samson / cockroach lawyer",training.select_hero.bind("samson"))
 	button(left,"Samson intervention / rescue and court",training.start_samson_drill)
 
@@ -292,7 +292,7 @@ func build_advanced_menu() -> void:
 	button(left,"Stitch hunt / marks, thread, ambush",training.start_stitch_drill)
 	button(left,"Relay circuit / drone and battery",training.start_roster_drill.bind("relay"))
 	button(left,"Dynamo siege / walls and storm",training.start_roster_drill.bind("dynamo"))
-	button(left,"Wisp ballet / marks and air combos",training.start_roster_drill.bind("wisp"))
+	button(left,"Wisp heist / marks and air combos",training.start_roster_drill.bind("wisp"))
 	button(left,"Huddle rescue / flight, screen, wave",training.start_huddle_drill)
 	button(left,"Doctor rounds / heal, cleanse, escape",training.start_care_drill.bind("doctor"))
 	button(left,"Marshal drill / shield and barrage",training.start_care_drill.bind("marshal"))

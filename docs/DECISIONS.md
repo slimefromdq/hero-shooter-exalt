@@ -170,3 +170,9 @@ Wall jumps follow facing while preserving at least 3 m/s outward clearance and a
 ## STITCH-01 · Doll assassin
 
 October 19, 2026. Implemented the accepted revised Stitch plan: 225 HP; 18-damage needles every 0.15 s out to 45 m; source-owned stacks consumed by shears; visible movement-only Red Thread leash; 20-second Play Dead with a 12-second cooldown starting on exit; 13-second Spoolstep cooldown on launch; and a telegraphed seam ultimate with marked-target execution at 25% pre-hit HP. No blindness. Preserve standard controls and existing movement/combat outside explicit ability interactions. Reuse shared damage, benefits, per-life cleanup and tactical perception. See [Stitch](STITCH.md) for rules, validation and limitations.
+
+## WISP-REWORK · Phantom thief
+
+October 19, 2026: targeted rework preserves Wisp's ID, bindings, primary mechanics, source-specific marks, dash-loaded shells and roster. Primary becomes 13 damage; wider 8-pellet burst gains bounded core assistance and distance falloff. Q gains 0.15 s damage immunity and a cosmetic afterimage. E becomes 1 s horizontal Vanishing hover with second-press cancellation and 0.20 s vulnerable recovery. Both immunity windows block outgoing damage and objective contribution.
+
+The subsequent accepted revision explicitly replaces Spectral Lift with forward/up Majestic Leap, hold-Jump float and second-press non-damaging dive, allowing fire throughout. It also explicitly replaces Death Ballet with the thrown, telegraphed Grand Heist calling-card blast. See [full tuning and verification](WISP_REWORK.md).

@@ -102,6 +102,11 @@ func run() -> void:
 	check(wisp.shells == 0,"selected Wisp begins with no shells")
 	await step(5)
 	await press("hover")
+	var immune_time: float = wisp.step_immunity_left
+	training.toggle_menu()
+	await step(12)
+	check(immune_time > 0 and is_equal_approx(immune_time,wisp.step_immunity_left),"pause freezes Q immunity timer")
+	training.toggle_menu()
 	await step(18)
 	check(wisp.steps == 2 and wisp.shells == 1,"native Q dashes and loads one shell [steps=%d shells=%d position=%s]" % [wisp.steps,wisp.shells,str(actor.position)])
 	await press("aim")
@@ -111,20 +116,34 @@ func run() -> void:
 	var remaining_ammo: int = wisp.ammo
 	await press("primary",5)
 	check(wisp.ammo == remaining_ammo,"native LMB cannot fire during phase")
-	await step(45)
+	await press("deflect")
+	check(actor.state == "ready" and wisp.phase_recovery_left > 0,"native second E cancels into vulnerable recovery")
+	await press("primary",5)
+	check(wisp.ammo == remaining_ammo,"native cancellation cannot produce an instant shot")
+	await step(80)
 	await press("bomb")
-	check(wisp.glide_left > 0 and actor.velocity.y > 0,"native 1 launches Spectral Lift")
+	check(wisp.glide_left > 0 and actor.velocity.y > 0,"native 1 launches Majestic Leap")
+	var leap_ammo: int = wisp.ammo
+	await press("primary")
+	check(wisp.ammo < leap_ammo,"native pistol fire works during leap")
+	await step(10)
+	await press("bomb")
+	check(wisp.diving and actor.velocity.y < -20,"native second 1 dives during the eight-second cooldown")
+	wisp.shot_cd = 0
+	leap_ammo = wisp.ammo
+	await press("primary")
+	check(wisp.ammo < leap_ammo,"native pistol fire works during dive")
 	wisp.ultimate_charge = 100
 	await press("ultimate")
-	await step(35)
-	check(actor.state == "wisp_ballet" and wisp.ballet_left > 3,"native 2 starts the four-second ballet")
+	await step(80)
+	check(is_instance_valid(wisp.heist) and wisp.heist.armed and wisp.ultimate_charge < 10,"native 2 throws and arms Grand Heist")
 	training.toggle_menu()
-	var duration: float = wisp.ballet_left
+	var duration: float = wisp.heist.remaining
 	await step(12)
-	check(is_equal_approx(duration,wisp.ballet_left),"pause freezes the ultimate duration")
+	check(is_equal_approx(duration,wisp.heist.remaining),"pause freezes the calling-card warning")
 	training.toggle_menu()
 	await step(260)
-	check(actor.state == "ready" and not wisp.ultimate_active(),"native ballet completes and restores ordinary controls")
+	check(actor.state == "ready" and not wisp.ultimate_active(),"native heist completes and restores ordinary controls")
 	arena.queue_free()
 	await step(4)
 	print("ROSTER INPUT: %d checks, %d failures" % [checks,failures.size()])

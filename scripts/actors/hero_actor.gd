@@ -125,6 +125,7 @@ func _physics_process(delta: float) -> void:
 # One authority boundary: controllers request actions; only components resolve them.
 func permits(action: String) -> bool:
 	if not statuses.permits(action): return false
+	if kit is WispKit and (kit as WispKit).phase_recovery_left > .000001 and action not in ["aim","reload","jump"]: return false
 	if action == "intervene" and statuses.movement_disabled(): return false
 
 	if kit is StitchKit:
@@ -275,7 +276,13 @@ func detectable_by(observer: HeroActor) -> bool:
 	return observer.global_position.distance_to(global_position) <= (tuning as StitchTuning).detection_range and resolver.visible(observer.body_point(1),self,[observer.get_rid()])
 
 func objective_eligible() -> bool:
-	return alive and not concealed()
+	return alive and not concealed() and not ability_damage_immune()
+
+func ability_damage_immune() -> bool:
+	return alive and (state == "wisp_phase" or (kit is WispKit and (kit as WispKit).ability_immune()))
+
+func damage_immune() -> bool:
+	return invulnerable or ability_damage_immune()
 
 func constrain_mobility(motion: Vector3) -> Vector3:
 	var result: Vector3 = RedThread.constrain(self,motion)

@@ -156,13 +156,20 @@ func evaluate(brain: BotBrain) -> void:
 				if wall_safe: offer("deflect",.91,wall_point)
 	elif k is WispKit:
 		var wisp := k as WispKit
-		if seen and wisp.shells > 0 and int(enemy.marks) >= 3 and distance < wisp.data().shotgun_range: offer("secondary_pressed",.86,point)
-		if seen and health < .45 and k.deflect_cd <= 0 and a.last_hit_age < 1.5: offer("deflect",.96,point)
+		var effective_health: float = float(enemy.get("health",INF))+float(enemy.get("shields",0))+float(enemy.get("overhealth",0))
+		if seen and clear_shot and wisp.shells > 0 and distance < wisp.data().shotgun_range and (int(enemy.marks) >= 3 or effective_health <= wisp.estimated_burst(distance,int(enemy.marks))): offer("secondary_pressed",.89,point)
+		if seen and health < .45 and k.deflect_cd <= 0 and a.last_hit_age < 1.5: offer("deflect",.98,point)
+		var evading: bool = seen and (a.last_hit_age < .3 or str(enemy.state) in ["melee_windup","ultimate","slayer_axe","wisp_heist_start"]) and Vector3(enemy.get("facing",Vector3.ZERO)).dot((a.global_position-point).normalized()) > .6
+		if evading and wisp.steps > 0:
+			var evade: Vector3 = RosterTactics.wisp_escape(a,point)
+			if brain.movement.safe_travel(a,evade,wisp.data().step_distance): offer("hover",.95,a.body_point(1.45)+evade*10)
 		if seen and wisp.steps > (0 if escaping else brain.hero_profile.escape_reserve) and (escaping or (wisp.shells < wisp.data().shell_limit and distance > 8 and distance < 23)):
 			var direction: Vector3 = ((a.global_position-point) if escaping else (point-a.global_position))*Vector3(1,0,1)
 			if brain.movement.safe_travel(a,direction,wisp.data().step_distance): offer("hover",.92 if escaping else .74,a.body_point(1.45)+direction.normalized()*10)
-		if seen and distance < 16 and a.motor.grounded() and k.bomb_cd <= 0 and not escaping and a.resolver.ray(a.body_point(2),a.body_point(6),[a.get_rid()],1).is_empty(): offer("bomb",.55,point)
-		if seen and distance < 18 and brain.nearby_enemies >= 2 and k.ultimate_charge >= 100 and not escaping: offer("ultimate",impact,point)
+		if seen and distance < 16 and a.motor.grounded() and k.bomb_cd <= 0 and not escaping and brain.movement.safe_travel(a,(point-a.global_position)*Vector3(1,0,1),5) and a.resolver.ray(a.body_point(2),a.body_point(6),[a.get_rid()],1).is_empty(): offer("bomb",.55,point)
+		if seen and clear_shot and distance < wisp.data().heist_range and (brain.nearby_enemies >= 2 or int(enemy.marks) >= 2) and k.ultimate_charge >= 100 and not escaping:
+			var predicted: Vector3 = point+Vector3(enemy.velocity)*(distance/wisp.data().heist_speed+wisp.data().heist_warning)*brain.skill.prediction
+			offer("ultimate",maxf(.8,impact),predicted)
 	if not choice.is_empty(): intention = str(choice.action)
 	elif not is_instance_valid(bomb) and not pending_bomb: intention = "pressure" if seen else "acquire"
 
@@ -242,6 +249,13 @@ func update_bomb(brain: BotBrain, input: CombatIntent, delta: float) -> bool:
 func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) -> void:
 	var a: HeroActor = brain.actor
 	if a.kit is SamsonKit and a.state.begins_with("samson_"): return
+	if a.kit is WispKit:
+		RosterTactics.wisp_air_controls(a,input,brain.tactical_state in ["retreat","regroup"])
+		if a.state == "wisp_phase":
+			input.primary = false
+			input.primary_held = false
+			input.deflect = false
+			return
 	if a.resolver.attack_locked(a):
 		cancel("protected room")
 		return

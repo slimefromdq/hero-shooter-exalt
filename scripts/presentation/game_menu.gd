@@ -18,7 +18,7 @@ const HEROES := {
 	"relay":["DRONE SUPPORT","RMB assigns the healing drone. Recall to recharge; attack while it heals.","Q Kickstart · E Shock Delivery · 1 Recall / Self · 2 Full Circuit"],
 	"dynamo":["STORM TANK","Prespin a ramping minigun, build physical walls and gather enemies.","Q Stormcharge · E Wall · 1 Lodestone · 2 Storm Dominion"],
 	"stitch":["DOLL ASSASSIN","Needles sew marks; close shears consume them. Thread prey and approach unseen.","Q Spoolstep · E Play Dead · 1 Red Thread · 2 Curtain Call"],
-	"wisp":["GHOST DPS","Pistols mark souls; dashes load shotgun shells. Land the core to detonate.","Q Ghoststep · E Phase · 1 Spectral Lift · 2 Death Ballet"]}
+	"wisp":["PHANTOM THIEF","Mark with pistols; dash to load a burst. Leap, float and dive; steal the finale.","Q Phantom Step · E Vanishing Act · 1 Majestic Leap · 2 Grand Heist"]}
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS

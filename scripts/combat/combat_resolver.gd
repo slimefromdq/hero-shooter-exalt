@@ -81,6 +81,7 @@ func protected_room(actor: HeroActor) -> bool:
 	return session.is_protected(actor) if session != null else actor.spawn_protected
 
 func attack_locked(actor: HeroActor) -> bool:
+	if actor.ability_damage_immune(): return true
 	var session: Node = get_tree().get_first_node_in_group("museum_match")
 	if session != null: return session.spawn_attack_locked(actor)
 	return protected_room(actor)
@@ -94,7 +95,7 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 		head: bool = false, execute: bool = false, incoming_from: Vector3 = Vector3.INF) -> String:
 	if not is_instance_valid(source) or not is_instance_valid(target) or not target.alive:
 		return "invalid"
-	if source.team == target.team or target.invulnerable or target.state == "wisp_phase":
+	if source.team == target.team or target.damage_immune():
 		return "immune"
 	# Query positions at the authority boundary, including attacks already in flight.
 	if attack_locked(source) or protected_room(target):
@@ -246,5 +247,6 @@ func splash(source: HeroActor, origin: Vector3, radius: float, amount: float, ta
 	for structure: CombatStructure in structures: structure.receive_damage(source,float(impact_damage.get(structure,amount)),id)
 
 func hit_object(collider: Object, source: HeroActor, amount: float, id: int) -> void:
+	if attack_locked(source): return
 	if is_instance_valid(collider) and collider.has_method("receive_damage"):
 		collider.receive_damage(source,amount,id)

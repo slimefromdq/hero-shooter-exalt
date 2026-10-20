@@ -436,8 +436,9 @@ func interrupt_mobility() -> void:
 	if traversal != null and traversal.active: traversal.abort()
 	end_hover()
 	transition("ground" if actor.is_on_floor() else "air")
-	if actor.state.begins_with("stitch_") or actor.state.begins_with("slayer_boot") or actor.state in ["huddle_scatter","huddle_wave","huddle_wave_start","wisp_step","wisp_ballet","wisp_ballet_start"]:
+	if actor.state.begins_with("stitch_") or actor.state.begins_with("slayer_boot") or actor.state in ["huddle_scatter","huddle_wave","huddle_wave_start","wisp_step","wisp_heist_start"]:
 		actor.kit.cancel()
+	if actor.kit is WispKit: (actor.kit as WispKit).clear_leap()
 	actor.velocity.x = 0.0
 	actor.velocity.z = 0.0
 	# A root/slow interrupts voluntary mobility, not an enemy's existing push.

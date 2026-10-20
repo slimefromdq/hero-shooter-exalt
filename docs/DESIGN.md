@@ -19,7 +19,7 @@ Build a hero shooter around expressive characters whose weapons, movement, and u
 | Huddle | Established and implemented | 600-HP mobile colony off-tank; seed volleys, Regroup self-heal, two-charge Scatterbound, ally interception screen, wingbeat peel, and a steerable displacing bug-wave ultimate. See [Huddle](HUDDLE.md). |
 | Relay | Established and implemented | Battery-managed indestructible healing drone, offensive carbine, evasive jump, 6 m drone shock and 80 HP/s team fire-rate overclock. See [new trio](RELAY_DYNAMO_WISP.md). |
 | Dynamo | Established and implemented | Ramping minigun tank, chain lightning, solid segmented walls, 28 m magnetic pull and 35 m storm ultimate. See [new trio](RELAY_DYNAMO_WISP.md). |
-| Wisp | Established and implemented | Aerial ghost burst DPS: pistol soul marks, dash-loaded precision shotgun, phase, lift/glide and four-second aimed barrage ultimate. See [new trio](RELAY_DYNAMO_WISP.md). |
+| Wisp | Established and implemented | Supernatural phantom thief: marked pistol/burst combos, briefly immune dash, Vanishing hover, forward/up Majestic Leap with float/dive, and Grand Heist calling-card ultimate. See [rework](WISP_REWORK.md). |
 | Ahab | Established | Moby-Dick-inspired aquatic tank wielding a harpoon; avoid the design problems associated with Roadhog |
 | Kung-fu heroine | Established concept, reserve roster | Palm chi blasts, acrobatic leaps, close-combat stance, Zen Breathing that heals and balances rage, dark side at full rage; ultimate install grants CC immunity |
 | Movement feel | Established | Acrobatic but weighty, demanding skill; every hero has limited advanced traversal; specific shared moves and tuning remain proposed |

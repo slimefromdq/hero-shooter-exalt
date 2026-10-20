@@ -64,14 +64,50 @@ static func apply(a: HeroActor, input: CombatIntent) -> void:
 	elif a.kit is WispKit:
 		var k := a.kit as WispKit
 		if not is_instance_valid(enemy): return
-		if a.state == "wisp_ballet": return
-		input.secondary_pressed = k.shells > 0 and enemy.statuses.soul_count(a) >= 3 and distance < k.data().shotgun_range
+		if a.state == "wisp_phase":
+			input.move = wisp_escape(a,enemy.global_position)
+			return
+		wisp_air_controls(a,input,a.health < a.effective_max_health()*.45)
+		input.secondary_pressed = k.shells > 0 and (enemy.statuses.soul_count(a) >= 3 or enemy.health+enemy.shields+enemy.overhealth.value() <= k.estimated_burst(distance,enemy.statuses.soul_count(a))) and distance < k.data().shotgun_range
 		input.deflect = distance < 12 and a.health < a.effective_max_health()*.45 and k.deflect_cd <= 0
-		input.ultimate = distance < 20 and k.ultimate_charge >= 100
+		input.ultimate = distance < k.data().heist_range and k.ultimate_charge >= 100 and enemy.statuses.soul_count(a) >= 2
+		if input.ultimate: input.aim = (enemy.body_point(1)+enemy.velocity*(distance/k.data().heist_speed+k.data().heist_warning)*.6-input.aim_origin).normalized()
 		if a.state == "ready" and k.steps > 0 and k.shells < k.data().shell_limit and distance > 8 and distance < 23:
 			var direction: Vector3 = (enemy.global_position-a.global_position).normalized()
 			if safe_step(a,direction):
 				input.hover = true
 				input.aim = direction
-		input.bomb = distance < 16 and a.motor.grounded() and k.bomb_cd <= 0 and a.resolver.ray(a.body_point(2),a.body_point(6),[a.get_rid()],1).is_empty()
+		input.bomb = input.bomb or distance < 16 and a.motor.grounded() and k.bomb_cd <= 0 and safe_step(a,(enemy.global_position-a.global_position)*Vector3(1,0,1)) and a.resolver.ray(a.body_point(2),a.body_point(6),[a.get_rid()],1).is_empty()
 		input.jump_held = k.glide_left > 0
+
+static func wisp_escape(a: HeroActor, threat: Vector3) -> Vector3:
+	var away: Vector3 = ((a.global_position-threat)*Vector3(1,0,1)).normalized()
+	if away.is_zero_approx(): away = a.global_basis.z
+	var best: Vector3 = Vector3.ZERO
+	var score: float = -INF
+	for direction: Vector3 in [away,away.rotated(Vector3.UP,PI/3),away.rotated(Vector3.UP,-PI/3)]:
+		var at: Vector3 = a.global_position+direction*.8
+		if a.test_move(a.global_transform,direction*.8): continue
+		var ground: Dictionary = a.resolver.ray(at+Vector3.UP,at-Vector3.UP*7,[a.get_rid()],1)
+		if ground.is_empty() or ground.normal.y < .7: continue
+		var city: Node = a.get_tree().get_first_node_in_group("city_match")
+		if city != null and city.definition.spawn_bounds(1-a.team).has_point(at): continue
+		var covered: bool = not a.resolver.attack_ray(a,at+Vector3.UP,threat+Vector3.UP,[a.get_rid()],1).is_empty()
+		var value: float = at.distance_to(threat)+(3.0 if covered else 0.0)
+		if value > score:
+			score = value
+			best = direction
+	return best
+
+static func wisp_safe_landing(a: HeroActor) -> bool:
+	var hit: Dictionary = a.resolver.ray(a.body_point(.1),a.global_position-Vector3.UP*18,[a.get_rid()],1)
+	if hit.is_empty() or hit.normal.y < .85: return false
+	var at: Vector3 = hit.position
+	var city: Node = a.get_tree().get_first_node_in_group("city_match")
+	if city != null and city.definition.spawn_bounds(1-a.team).has_point(at): return false
+	return true
+
+static func wisp_air_controls(a: HeroActor, input: CombatIntent, escaping: bool) -> void:
+	var k := a.kit as WispKit
+	input.jump_held = k.leap_active and k.glide_left > 0
+	if k.leap_active and not k.diving and a.velocity.y <= 0 and (escaping or k.glide_left < .4) and wisp_safe_landing(a): input.bomb = true

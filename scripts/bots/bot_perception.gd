@@ -25,12 +25,12 @@ func sense(actor: HeroActor, actors: Array, now: float, budget: int = 6) -> void
 		var first_seen: float = float(previous.get("first_seen",now))
 		if previous.is_empty() or now-float(previous.get("seen",now)) > .45 or int(previous.get("life",-1)) != other.life_serial: first_seen = now
 		var defense: float = float(previous.get("defense_seen",-99.0))
-		if other.state in ["deflect","wisp_phase","marshal_shield"]: defense = now
+		if other.damage_immune() or other.state in ["deflect","marshal_shield"]: defense = now
 		observations[id] = {"id":id,"actor":weakref(other),"life":other.life_serial,"position":other.global_position,
 			"velocity":other.velocity,"health":other.health,"maximum":other.effective_max_health(),"shields":other.shields,"overhealth":other.overhealth.value(),
 			"blocked_by_barrier":not actor.resolver.barrier_ray(actor,actor.body_point(1.45),other.body_point(1.0)).is_empty(),
 			"hero":other.tuning.hero_id,"role":HeroRoster.role_for(other.tuning.hero_id),"state":other.state,
-			"facing":other.aim_direction,"seen":now,"first_seen":first_seen,"defense_seen":defense,
+			"damage_immune":other.damage_immune(),"facing":other.aim_direction,"seen":now,"first_seen":first_seen,"defense_seen":defense,
 			"marks":other.statuses.stitch_count(actor) if actor.kit is StitchKit else other.statuses.soul_count(actor),"status_count":other.statuses.effects.size()}
 		visible_ids.append(id)
 	if not candidates.is_empty(): cursor = (cursor+budget)%candidates.size()

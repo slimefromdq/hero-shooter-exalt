@@ -1,0 +1,191 @@
+{
+  "date": "2026-10-19",
+  "engine": "4.7.2-stable (official)",
+  "hero_id": "wisp",
+  "full_verification": {
+    "passed": true,
+    "command": "powershell -ExecutionPolicy Bypass -File .\\tools\\verify.ps1",
+    "log": "artifacts/wisp-full-verify-final.log"
+  },
+  "focused": {
+    "checks": 173,
+    "failures": [],
+    "log": "artifacts/wisp-focused.log"
+  },
+  "native": {
+    "checks": 33,
+    "failures": [],
+    "log": "artifacts/wisp-native-final.log"
+  },
+  "simulations": [
+    {
+      "map": "city",
+      "seed": 971,
+      "seconds": 600,
+      "checks": 17,
+      "failures": [],
+      "captures": [
+        2,
+        4
+      ],
+      "falls": [],
+      "persistent_stalls": [],
+      "worst_stall": 5,
+      "wisp": [
+        {
+          "actor": "Wisp",
+          "abilities": {
+            "grand_heist": {
+              "casts": 17,
+              "hits": 6
+            },
+            "rifle": {
+              "casts": 745,
+              "hits": 377
+            },
+            "soulbreaker": {
+              "casts": 22,
+              "hits": 22
+            }
+          },
+          "damage": 7438.3
+        },
+        {
+          "actor": "crown_01",
+          "abilities": {
+            "grand_heist": {
+              "casts": 13,
+              "hits": 6
+            },
+            "rifle": {
+              "casts": 817,
+              "hits": 530
+            },
+            "soulbreaker": {
+              "casts": 61,
+              "hits": 59
+            }
+          },
+          "damage": 11843.4
+        }
+      ],
+      "report": "artifacts/city-simulation-971-600s-wisp.json"
+    },
+    {
+      "map": "museum",
+      "side": "defend",
+      "seed": 971,
+      "seconds": 600,
+      "checks": 16,
+      "failures": [],
+      "falls": 0,
+      "persistent_stalls": [],
+      "recovery_warps": 0,
+      "worst_stuck": 3,
+      "drill_seconds": 166,
+      "wisp": [
+        {
+          "actor": "Wisp",
+          "abilities": {
+            "grand_heist": {
+              "casts": 8,
+              "hits": 3
+            },
+            "rifle": {
+              "casts": 572,
+              "hits": 286
+            },
+            "soulbreaker": {
+              "casts": 34,
+              "hits": 31
+            }
+          },
+          "damage": 6392.1
+        },
+        {
+          "actor": "attack_01",
+          "abilities": {
+            "grand_heist": {
+              "casts": 8,
+              "hits": 1
+            },
+            "rifle": {
+              "casts": 421,
+              "hits": 274
+            },
+            "soulbreaker": {
+              "casts": 20,
+              "hits": 20
+            }
+          },
+          "damage": 5355.1
+        }
+      ],
+      "report": "artifacts/museum/simulation-971-defend-wisp.json"
+    }
+  ],
+  "rendered_review": {
+    "log": "artifacts/wisp-capture-final.log",
+    "frames": [
+      "artifacts/roster-wisp-portrait.png",
+      "artifacts/roster-wisp-step.png",
+      "artifacts/roster-wisp-phase.png",
+      "artifacts/roster-wisp-heist.png",
+      "artifacts/roster-wisp-leap.png",
+      "artifacts/roster-wisp-float.png",
+      "artifacts/roster-wisp-dive.png",
+      "artifacts/roster-wisp-burst.png"
+    ],
+    "notes": "Reviewed actual engine frames for opaque masked identity, cosmetic afterimage, immunity, planted warning, burst, airborne movement, dive and HUD labels."
+  },
+  "tuning": {
+    "primary_damage": {
+      "before": 14,
+      "after": 13
+    },
+    "pellets": {
+      "before": "6 x 8 at 6 degrees",
+      "after": "8 x 6 alternating 4/8 degrees"
+    },
+    "burst": {
+      "core_tolerance": 0.18,
+      "full_damage_range": 8,
+      "range": 24,
+      "edge_multiplier": 0.5
+    },
+    "q_immunity": {
+      "before": 0,
+      "after": 0.15
+    },
+    "phase_duration": {
+      "before": 0.65,
+      "after": 1
+    },
+    "phase_recovery": 0.2,
+    "leap": {
+      "up": 12,
+      "forward": 10,
+      "float": 1.5,
+      "float_descent": 2,
+      "dive": 24,
+      "cooldown": 8
+    },
+    "ultimate": {
+      "before": "Death Ballet",
+      "after": "Grand Heist",
+      "preparation": 0.35,
+      "speed": 32,
+      "range": 28,
+      "warning": 0.8,
+      "radius": 5,
+      "full_radius": 2,
+      "base_damage": 100,
+      "mark_damage": 12,
+      "edge_multiplier": 0.4
+    }
+  },
+  "limitations": [
+    "Automated validation does not establish competitive balance, control feel, or final art quality.",
+    "Procedural visuals and synthesized audio are temporary assets."
+  ]
+}

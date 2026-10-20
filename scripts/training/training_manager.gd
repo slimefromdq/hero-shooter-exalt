@@ -2,7 +2,7 @@ class_name TrainingManager
 extends Node
 
 const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring", "Guard trainer", "Slayer hunter", "Marshal", "Doctor", "Huddle", "Relay", "Dynamo", "Wisp", "Tactical Sparring", "Samson support", "Stitch"]
-const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt", "Doctor rounds", "Marshal drill", "Huddle rescue", "Practice range", "Relay circuit", "Dynamo siege", "Wisp ballet", "Tactical Sparring", "Samson intervention", "Stitch hunt"]
+const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt", "Doctor rounds", "Marshal drill", "Huddle rescue", "Practice range", "Relay circuit", "Dynamo siege", "Wisp heist", "Tactical Sparring", "Samson intervention", "Stitch hunt"]
 var arena: Node3D
 var player: HeroActor
 var bots: Array[HeroActor] = []
@@ -394,7 +394,7 @@ func start_roster_drill(id: String) -> void:
 	scenario = {"relay":12,"dynamo":13,"wisp":14}[id]
 	freeze_ai = false
 	reset_scenario()
-	show_notice({"relay":"RMB assign / 1 recall and recharge / E blast / 2 overclock allies","dynamo":"RMB prespin / E preview, LMB place, RMB rotate / 1 pull / 2 storm","wisp":"Pistols mark / Q loads shells / RMB core detonates / 1 lift / E phase"}[id])
+	show_notice({"relay":"RMB assign / 1 recall and recharge / E blast / 2 overclock allies","dynamo":"RMB prespin / E preview, LMB place, RMB rotate / 1 pull / 2 storm","wisp":"Q loads / RMB burst / E vanish / 1 leap, again dive / hold Jump float / 2 heist"}[id])
 	if menu_open: toggle_menu()
 
 func start_samson_drill() -> void:

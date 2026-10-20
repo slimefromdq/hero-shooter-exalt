@@ -7,7 +7,7 @@ static func labels(a: HeroActor) -> Array[String]:
 	if a.kit is StitchKit: return ["SPOOLSTEP","PLAY DEAD","RED THREAD"]
 	if a.kit is RelayKit: return ["KICKSTART","SHOCK DELIVERY","RECALL / SELF"]
 	if a.kit is DynamoKit: return ["STORMCHARGE","RAISE THE LINE","LODESTONE"]
-	if a.kit is WispKit: return ["GHOSTSTEP","BETWEEN WORLDS","SPECTRAL LIFT"]
+	if a.kit is WispKit: return ["PHANTOM STEP","VANISHING ACT","MAJESTIC LEAP"]
 	if a.kit is HuddleKit: return ["SCATTERBOUND","WE'VE GOT YOU!","PERSONAL SPACE!"]
 	var result: Array[String] = []
 	result.assign(["FORWARD MARCH","RALLYING COMMAND","ORBITAL BARRAGE"] if a.kit is MarshalKit else ["HOUSE CALL","WARD ROUND","PRESCRIPTION"])
@@ -50,7 +50,7 @@ static func ultimate_label(a: HeroActor) -> String:
 	match a.tuning.hero_id:
 		"relay": return "FULL CIRCUIT"
 		"dynamo": return "STORM DOMINION"
-		"wisp": return "DEATH BALLET"
+		"wisp": return "GRAND HEIST"
 		"huddle": return "NOBODY GETS SQUISHED!"
 		"marshal": return "MARSHAL'S VERDICT"
 		"doctor": return "EXEMPLARY CONDITION"
@@ -66,7 +66,7 @@ static func ultimate_detail(a: HeroActor) -> String:
 	match a.tuning.hero_id:
 		"relay": return "%d HP/S / +%d%% FIRE" % [roundi((a.tuning as RelayTuning).circuit_heal),roundi((a.tuning as RelayTuning).circuit_haste*100)]
 		"dynamo": return "%dM / %dM STORM / %d DPS" % [roundi((a.tuning as DynamoTuning).storm_range),roundi((a.tuning as DynamoTuning).storm_radius),roundi((a.tuning as DynamoTuning).storm_damage/(a.tuning as DynamoTuning).storm_interval)]
-		"wisp": return "%sS BARRAGE + FINALE" % String.num((a.tuning as WispTuning).ballet_duration,1)
+		"wisp": return "CALLING CARD / 5M BLAST + MARKS"
 		"huddle": return "5M WAVE / STEER TO PUSH"
 		"marshal": return "%d m / LEAP SLAM" % (a.tuning as MarshalTuning).verdict_range
 		"doctor": return "ALLY DAMAGE / SPEED / RESIST"
@@ -93,7 +93,7 @@ static func secondary_label(a: HeroActor) -> String:
 	if a.kit is StitchKit: return "LMB AUTO NEEDLES / SHEARS · Q HOOK · E HIDE · 1 THREAD"
 	if a.kit is RelayKit: return "RMB ASSIGN DRONE / 1 RECALL OR SELF"
 	if a.kit is DynamoKit: return "RMB PRESPIN / WALL: LMB PLACE, RMB ROTATE, E CANCEL"
-	if a.kit is WispKit: return "RMB SOULBREAKER / DASH TO LOAD SHELLS"
+	if a.kit is WispKit: return "RMB BURST / Q LOADS / LEAP: HOLD JUMP, 1 DIVE"
 	if a.kit is HuddleKit: return "RMB HOLD REGROUP / LMB HOLD FIRE"
 	if a.kit is MarshalKit: return "RMB HOLD SHIELD / LMB HOLD FIRE"
 	if a.kit is DoctorKit: return "RMB HOLD HEAL / LMB HOLD FIRE"
@@ -120,7 +120,7 @@ static func detail(a: HeroActor) -> String:
 		return "SPIN %d%% / %s%s" % [roundi(k.spin*100),"WALL: PLACE / ROTATE" if k.previewing else "WALL %.1fs" % k.wall.remaining if is_instance_valid(k.wall) else "NO WALL"," / LIGHTNING %.1fs" % k.charge_left if k.charge_left > 0 else ""]
 	if a.kit is WispKit:
 		var k := a.kit as WispKit
-		return "DASH %d/%d %.1fs / SHELLS %d/%d%s" % [k.steps,k.data().step_charges,k.recharge,k.shells,k.data().shell_limit," / BALLET %.1fs" % k.ballet_left if k.ultimate_active() else ""]
+		return "DASH %d/%d %.1fs / SHELLS %d/%d%s" % [k.steps,k.data().step_charges,k.recharge,k.shells,k.data().shell_limit," / IMMUNE" if k.ability_immune() else " / REAPPEAR %.1fs" % k.phase_recovery_left if k.phase_recovery_left > 0 else " / DIVE" if k.diving else " / LEAP %.1fs / 1 DIVE" % k.glide_left if k.leap_active else " / THROW" if k.ultimate_active() else " / CARD %.1fs" % k.heist.remaining if is_instance_valid(k.heist) and not k.heist.is_queued_for_deletion() and k.heist.armed else ""]
 	if a.kit is HuddleKit:
 		var k := a.kit as HuddleKit
 		var shield: String = "SCREEN %d / %.1fs" % [ceili(k.screen.health),k.screen.remaining] if is_instance_valid(k.screen) and k.screen.active() else "SCREEN READY" if k.deflect_cd <= 0 else "SCREEN %.1fs" % k.deflect_cd

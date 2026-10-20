@@ -42,22 +42,20 @@ Lightning cannot revisit a victim or recurse. Terrain and hostile barriers block
 
 The HUD reports spin, enchantment and wall duration. Wall previews show valid/invalid placement; minigun barrels rotate with spin. Visible zone boundaries and warnings precede both area attacks. Owner life cleanup retires walls, storms, warnings and pulls.
 
-## Wisp · ghost DPS
+## Wisp · phantom thief DPS
 
-A mischievous young-adult ghost gunslinger in spectral violet, with a dark bob, short spectral coat and dual pistols. 225 HP, 6.5 m/s movement and increased air steering.
+Wisp's targeted phantom-thief rework retains her ID, inputs, pistols, source-specific marks, dash-loaded shells and roster integration. The procedural character wears an ivory thief mask, violet tailoring and silk tails, with cards, smoke and afterimages.
 
-| Input | Ability | Prototype behavior |
+| Input | Ability | Current behavior |
 | --- | --- | --- |
-| LMB hold | Dual pistols | Alternating 14-damage shots; 12 total shots/s, 36 rounds, 1.1 s reload, 1.5× headshots. Hits apply soul marks. |
-| RMB press | Soulbreaker | One spectral shell fires a precise 20-damage core plus six 8-damage pellets; 24 m reach, 0.65 s recovery. Only the core can headshot or detonate marks. |
-| Q | Ghoststep | Three aim-directed 7 m dashes at 30 m/s; sequential 4 s recharge. Each completed dash loads one shell, up to two. Shooting is disabled during travel. Grounded downward aim becomes horizontal. |
-| E | Between Worlds | 0.65 s phase, 10 s cooldown: immune to incoming damage/control, unable to attack or use abilities. Retains terrain collision; supplies no healing or cleanse. |
-| 1 | Spectral Lift | 12 m/s upward launch, then hold Jump for up to 1.5 s of glide; 8 s cooldown. |
-| 2 | Death Ballet | 0.45 s warning/ascent, then **4 s** of aimed aerial volleys. Hold LMB: eight volleys/s, three 8-damage projectiles each. Move horizontally at 4 m/s. Completion launches an aimed, falloff 80-damage / 4 m explosive finale. |
+| LMB hold | Dual pistols | Alternating 13-damage hitscan shots; unchanged cadence/ammunition/reload/headshots and marking. |
+| RMB press | Soulbreaker | 20-damage core, eight 6-damage pellets in 4/8-degree rings; 0.18 m core assistance cannot headshot. 24 m reach, 0.65 s recovery. Full damage through 8 m; 50% at 24 m. Successful core consumes owned marks. |
+| Q | Phantom Step | Three 7 m / 30 m/s dashes, sequential 4 s recharge; completed dashes load a shell. First 0.15 s damage immunity, bounded by travel. Cosmetic afterimage. |
+| E | Vanishing Act | 1.0 s invulnerable horizontal hover at 3 m/s, 10 s cooldown. Second E cancels; either exit has a visible/audio return and 0.20 s vulnerable attack/ability recovery. |
+| 1 | Majestic Leap | 12 m/s up and 10 m/s forward, 8 s cooldown. Hold Jump for 1.5 s float opportunity at 2 m/s descent; fresh second 1 dives at 24 m/s. Firing remains available throughout; no landing damage or recovery. |
+| 2 | Grand Heist | Replaces Death Ballet. 0.35 s throw; card travels at 32 m/s up to 28 m, plants on impact, warns for 0.80 s, then deals 100 plus owned marks within 5 m. Full through 2 m, falling to 40% at the edge. Cover blocks; no direct-hit damage. |
 
-Pistol hits apply one source-specific mark, capped at four and refreshed for 3 s. A successful Soulbreaker core consumes that Wisp's marks for 12 extra damage each; pellets never detonate them. Marks expire, cleanse and clear with their source's life. Ordinary lives begin with no shells; training refill supplies two. A dash blocked before completion spends its movement charge without loading a shell.
-
-Phase does not overwrite training invulnerability settings. Death Ballet grants no immunity or automatic targeting; other abilities are unavailable. Crowd control/capture/death interrupts it and prevents the finale. Wisp retains ordinary collision and a readable silhouette. HUD counters show dash charges/recharge, shells, private target marks and ballet duration.
+Marks retain their four-stack cap, 3 s expiry and 12 damage each. Wisp begins ordinary lives without shells; training refill supplies two. Immunity blocks outgoing damage, including delayed attacks, and objective contribution. Training invulnerability remains independent. Q retains control counterplay; Vanishing retains control immunity without cleansing existing statuses. Full before/after tuning, interaction rules and validation are in [Wisp rework](WISP_REWORK.md).
 
 ## Shared roster and authority
 

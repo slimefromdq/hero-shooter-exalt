@@ -25,7 +25,7 @@ Profiles live in `resources/bots/classes`, `resources/bots/heroes`, and `resourc
 | Huddle | 6–14 m | Mobile pressure, ally interception, escape-charge reserve, safe Regroup and directed Wave |
 | Relay | 12–24 m | Drone triage, battery recall, drone-centered Shock, escape Kickstart and team Full Circuit |
 | Dynamo | 12–25 m | Prespin and sustained pressure, lightning, Lodestone, Storm and checked wall placement |
-| Wisp | 5–14 m | Mark-to-shell follow-up, safe steps with escape reserve, Phase, overhead lift/glide and Ballet |
+| Wisp | 5–14 m | Marked/lethal burst follow-up, defensive Q, Vanishing escape, safe Majestic Leap/float/dive and led Grand Heist throws |
 
 ### Nimbus bomb sequence
 

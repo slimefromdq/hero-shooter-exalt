@@ -342,7 +342,7 @@ func wisp_tests() -> void:
 	for i: int in 5:
 		k.shot_cd = 0
 		k.fire()
-	near(foes[0].health,1930,"dual pistols fire fourteen-damage shots")
+	near(foes[0].health,1935,"dual pistols fire thirteen-damage shots")
 	check(foes[0].statuses.soul_count(wisp) == 4,"pistol marks cap at four")
 	k.shells = 1
 	var before: float = foes[0].health
@@ -389,32 +389,26 @@ func wisp_tests() -> void:
 	wisp.state_time = 0
 	k.tick(0,CombatIntent.new())
 	check(wisp.state == "ready" and not wisp.invulnerable,"phase restores ordinary vulnerability")
+	k.tick(.21,CombatIntent.new())
 	request = CombatIntent.new()
 	request.bomb = true
 	k.tick(0,request)
-	near(wisp.velocity.y,12,"spectral lift supplies vertical launch")
+	near(wisp.velocity.y,12,"Majestic Leap supplies vertical launch")
 	await reset()
 	k = wisp.kit as WispKit
 	request = CombatIntent.new()
 	request.ultimate = true
 	k.tick(0,request)
-	check(k.ultimate_charge == 100 and wisp.state == "wisp_ballet_start","ballet preserves charge during preparation")
+	check(k.ultimate_charge == 100 and wisp.state == "wisp_heist_start","heist retains charge during preparation")
 	wisp.close.stagger()
-	check(k.ultimate_charge == 100 and k.ballet_left == 0,"interrupted preparation retains charge and has no finale")
+	check(k.ultimate_charge == 100 and not is_instance_valid(k.heist),"interrupted throw retains charge without a card")
 	wisp.state = "ready"
 	k.tick(0,request)
 	wisp.state_time = 0
 	k.tick(0,CombatIntent.new())
-	near(k.ballet_left,4,"Death Ballet begins a full four-second window")
-	k.tick(3,CombatIntent.new())
-	check(k.ultimate_active(),"ballet remains active beyond its former duration")
-	near(k.ultimate_charge,0,"active ballet does not recharge itself")
-	k.tick(1,CombatIntent.new())
-	check(not k.ultimate_active() and wisp.state == "ready","ballet ends after four seconds")
-	var finales: int = 0
-	for node: Node in get_nodes_in_group("owned_attacks"):
-		if node is CombatProjectile and node.blast_radius > 0: finales += 1
-	check(finales == 1,"completed ballet launches exactly one finale")
+	check(is_instance_valid(k.heist) and k.ultimate_charge == 0,"Grand Heist releases one calling card")
+	check(wisp.state == "ready" and not k.ultimate_active(),"released card restores ordinary actions")
+	check(resolver.ultimate_casts.has(k.heist.cast_id),"released card snapshots ultimate charge suppression")
 
 func lifecycle_tests() -> void:
 	await reset()
@@ -512,11 +506,11 @@ func timing_and_cover_tests() -> void:
 	await reset()
 	var source_id: int
 	var ballet := wisp.kit as WispKit
-	ballet.ballet_left = 1
+	wisp.state = "wisp_heist_start"
 	source_id = resolver.new_cast(wisp)
-	ballet.ballet_left = 0
+	wisp.state = "ready"
 	ballet.ultimate_charge = 0
-	resolver.damage(wisp,foes[0],80,"spectral_finale",source_id)
+	resolver.damage(wisp,foes[0],80,"grand_heist",source_id)
 	near(ballet.ultimate_charge,0,"delayed ultimate damage cannot charge its successor")
 	var storm := DynamoField.new()
 	storm.source = dynamo

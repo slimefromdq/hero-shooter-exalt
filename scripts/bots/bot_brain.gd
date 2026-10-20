@@ -149,7 +149,7 @@ func select_target() -> void:
 		score -= minf(.2,(float(entry.health)+float(entry.shields)+float(entry.get("overhealth",0)))/maxf(1,damage_rate)*.01)
 		if entry.position.distance_to(context.get("position",Vector3.ZERO)) < 10: score += .15
 		if is_instance_valid(patient) and patient.global_position.distance_to(entry.position) < 10 and patient.last_hit_age < 1.5: score += .2
-		if str(entry.state) in ["deflect","wisp_phase","marshal_shield"]: score -= .25
+		if bool(entry.get("damage_immune",false)) or str(entry.state) in ["deflect","marshal_shield"]: score -= .25
 		elif now-float(entry.defense_seen) < 3: score += .12
 		if id == target_id: score += .12
 		if is_instance_valid(director): score -= maxf(0,director.pressure_on(id,actor.get_instance_id())-2)*.15

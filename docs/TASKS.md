@@ -4,6 +4,7 @@ Implementation date: 2026-10-16. The project is playable; completion of human ac
 
 | Ticket | Status | Evidence |
 | --- | --- | --- |
+| WISP-REWORK | Implemented / automated and rendered validation; human balance review outstanding | [Phantom thief rework, Majestic Leap and Grand Heist](WISP_REWORK.md) |
 | BOOT-01 | Implemented / engine launch checked | Fresh scene, pinned Godot 4.7.2, README and launcher |
 | MOVE-01 | Implemented / automated physics checks | Acceleration, jump, air control, shoulder camera, route geometry |
 | MOVE-02 | Implemented / automated collision checks | 3D sampled dash, floor transition, ordinary and slope sliding, friction, cooldown isolation |

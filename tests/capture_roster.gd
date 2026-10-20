@@ -48,7 +48,7 @@ func run() -> void:
 	camera.fov = 36
 	camera.position = Vector3(2.2,2.25,-4.7)
 	camera.look_at(Vector3(0,1.13,0))
-	for id: String in ["relay","dynamo","wisp"]:
+	for id: String in (["wisp"] if OS.get_cmdline_user_args().has("--wisp-only") else ["relay","dynamo","wisp"]):
 		var actor := HeroActor.new()
 		actor.tuning = HeroRoster.tuning_for(id)
 		actor.actor_id = id
@@ -158,13 +158,41 @@ func training_review() -> void:
 	actor.intent.deflect = false
 	await step(5)
 	await capture("wisp-phase")
-	await step(45)
+	await step(80)
+	actor.intent.aim_origin = actor.body_point(1.4)
+	actor.intent.aim = (actor.global_position+Vector3(0,0,-8)-actor.intent.aim_origin).normalized()
 	actor.intent.ultimate = true
 	await step()
 	actor.intent.ultimate = false
-	actor.intent.primary_held = true
-	await step(70)
-	await capture("wisp-ballet")
+	await step(42)
+	await capture("wisp-heist")
+	await step(60)
+	actor.intent.aim = Vector3(0,.1,-1).normalized()
+	actor.intent.bomb = true
+	await step()
+	actor.intent.bomb = false
+	await step(10)
+	await capture("wisp-leap")
+	actor.intent.jump_held = true
+	await step(30)
+	await capture("wisp-float")
+	actor.intent.bomb = true
+	await step()
+	actor.intent.bomb = false
+	await capture("wisp-dive")
+	actor.intent.jump_held = false
+	await step(30)
+	var wisp_kit := actor.kit as WispKit
+	var burst_target: HeroActor = training.bots[0]
+	actor.intent.aim_origin = actor.body_point(1.4)
+	actor.intent.aim = (burst_target.body_point(1)-actor.intent.aim_origin).normalized()
+	actor.aim_direction = actor.intent.aim
+	for i: int in 4: burst_target.statuses.add_soul(actor,4,3)
+	wisp_kit.shells = 1
+	actor.intent.secondary_pressed = true
+	await step()
+	actor.intent.secondary_pressed = false
+	await capture("wisp-burst")
 	actor.intent.primary_held = false
 	training.toggle_menu()
 	await step(3)

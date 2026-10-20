@@ -399,7 +399,7 @@ func _process(delta: float) -> void:
 	if is_instance_valid(viewer) and viewer.kit is StitchKit and actor.statuses.stitch_count(viewer) > 0:
 		status_text += "STITCHES %d / %.1fs" % [actor.statuses.stitch_count(viewer),actor.statuses.stitches[viewer.get_instance_id()].remaining]
 	if is_instance_valid(viewer) and viewer.kit is WispKit and actor.statuses.soul_count(viewer) > 0:
-		status_text += "SOULS " + str(actor.statuses.soul_count(viewer))
+		status_text += "CARDS " + str(actor.statuses.soul_count(viewer))
 	if is_instance_valid(viewer) and viewer.tuning is SlayerTuning and actor.statuses.marked_for(viewer):
 		var slayer_data := viewer.tuning as SlayerTuning
 		if viewer.global_position.distance_to(actor.global_position) <= slayer_data.mark_range and actor.resolver.visible(viewer.global_position + Vector3.UP * 1.5,actor,[viewer.get_rid()]):

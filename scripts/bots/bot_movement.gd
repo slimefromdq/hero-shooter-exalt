@@ -81,6 +81,9 @@ func safe_travel(a: HeroActor, direction: Vector3, distance: float, rise: float 
 func apply(brain: BotBrain, input: CombatIntent, recovering: bool) -> void:
 	if recovering and brain.actor.state not in ["marshal_march","marshal_verdict"]: return
 	var a: HeroActor = brain.actor
+	if a.kit is WispKit and a.state == "wisp_phase":
+		input.move = RosterTactics.wisp_escape(a,brain.threat.get("position",a.global_position-a.global_basis.z*5))
+		return
 	if a.state in ["marshal_march","marshal_verdict"]:
 		input.move = Vector3.ZERO
 		var marshal_kit := a.kit as MarshalKit
