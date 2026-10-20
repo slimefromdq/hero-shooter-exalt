@@ -4,8 +4,8 @@
 script = ExtResource("1")
 hero_id = "relay"
 max_health = 250.0
-rifle_damage = 14.0
-shot_interval = 0.1
-magazine = 30
-reload_time = 1.2
-head_multiplier = 1.5
+rifle_damage = 60.0
+shot_interval = 0.8
+magazine = 1
+reload_time = 0.0
+head_multiplier = 1.75

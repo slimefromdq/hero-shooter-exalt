@@ -39,17 +39,14 @@ func damage_multiplier() -> float:
 	return 1.0
 
 func speed_multiplier() -> float:
+	var boost: float = 0
 	for entry: Dictionary in effects.values():
-		if entry.kind == "exemplary": return 1.0 + (entry.source.get_ref().tuning as DoctorTuning).exemplary_speed
-	return 1.0
+		if entry.kind == "exemplary": boost = maxf(boost,(entry.source.get_ref().tuning as DoctorTuning).exemplary_speed)
+		if entry.kind == "guiding_wing": boost = maxf(boost,entry.strength)
+	return 1.0+boost
 
 func fire_rate_multiplier() -> float:
-	var haste: float = 0.0
-	for entry: Dictionary in effects.values():
-		var source: HeroActor = entry.source.get_ref() as HeroActor
-		if entry.kind == "circuit" and is_instance_valid(source) and source.alive and source.kit.ultimate_active():
-			haste = maxf(haste,entry.strength)
-	return 1.0 + haste
+	return 1.0
 
 func tick(delta: float) -> void:
 	# Split at expiry boundaries so rates do not depend on physics timestep.

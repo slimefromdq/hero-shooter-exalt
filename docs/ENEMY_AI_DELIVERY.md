@@ -6,9 +6,9 @@ Implemented shared tactical AI for all eight heroes in City and Museum, plus opt
 
 - Added modular brain, perception, positioning/movement, combat scoring/execution, team director, diagnostics, and editable class/hero/skill resources.
 - City and Museum retain authored routes, phase-specific objectives, reset hooks, path budgets and checked recovery. Training gains a static navigation bake and a shared tactical controller.
-- Every current hero is specialized: **Nimbus, Slayer, Marshal, Doctor, Huddle, Relay, Dynamo and Wisp**. Actual kits enforce all mechanics.
+- Every current hero is specialized: **Nimbus, Slayer, Marshal, Doctor, Huddle, Seeker, Dynamo and Wisp**. Actual kits enforce all mechanics.
 - Nimbus performs throw, bounded tracking, ordinary rifle shot and owner-only airborne explosion. It compares current and near-future blast value, respects first-collision eligibility and can miss. Its three-shot ultimate keeps execution priority over Hover.
-- Other specializations include bounded Slayer boot steering, Marshal shield pressure, Doctor triage/self-defense, Huddle escape reserves/Regroup, Relay battery/drone management, Dynamo fields/walls and Wisp mark/shell follow-ups.
+- Other specializations include bounded Slayer boot steering, Marshal shield pressure, Doctor triage/self-defense, Huddle escape reserves/Regroup, Seeker bird assignment, charged volleys, Omen and Wing, Dynamo fields/walls and Wisp mark/shell follow-ups.
 - Added four saved difficulty levels, selectable F3 diagnostics with bracket cycling, and JSON metric export. Added cast provenance and shot/fuse detonation diagnostics without bypassing damage resolution.
 
 Shared generic behavior remains in utility selection, cover sampling, path following, aiming, reservations and recovery. Unknown heroes use conservative fallback tactics. Existing controlled training profiles retain their earlier scripted behavior. Matchups use observed range/health/defense and local numbers; movement uses authored navigation plus checked local traversal opportunities. A full matchup matrix and general parkour route planner are not part of this implementation.

@@ -54,7 +54,7 @@ func run() -> void:
 		check(not actor.kit.free_slide_ammo(),hero+" crouch never grants free slide ammo")
 		actor.kit.ammo = 1
 		actor.kit.consume_ammo()
-		check(actor.kit.ammo == 0,hero+" crouch shot consumes loaded round")
+		check(actor.kit.ammo == (1 if actor.kit is RelayKit else 0),hero+" crouch respects weapon ammo policy")
 		actor.kit.start_reload()
 		await step(maxi(100,ceili(actor.kit.reload_total*60)+3))
 		check(not actor.kit.reloading and actor.kit.ammo == actor.tuning.magazine,hero+" reload completes while crouch-walking")
@@ -134,7 +134,7 @@ func low_cover_weapons() -> void:
 		actor.kit.fire(false)
 		await step(25)
 		check(victim.health < victim.tuning.max_health,hero+" fires from the lower muzzle beneath low cover")
-		check(actor.kit.ammo == actor.tuning.magazine-1,hero+" crouch firing spends exactly one shot")
+		check(actor.kit.ammo == actor.tuning.magazine-(0 if actor.kit is RelayKit else 1),hero+" crouch firing respects weapon ammo policy")
 		roof.queue_free()
 		await step(2)
 	await reset("doctor")

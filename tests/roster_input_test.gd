@@ -45,23 +45,44 @@ func run() -> void:
 	var friend: HeroActor = training.spawn_bot(0,Vector3(0,.1,3),false,actor.team)
 	friend.health = 50
 	await step(10)
-	await press("aim")
+	await press("bomb")
 	var relay := actor.kit as RelayKit
-	check(relay.recipient == friend,"native RMB assigns the aimed ally")
+	check(relay.recipient == friend,"native 1 assigns the aimed ally")
 	await step(30)
-	check(friend.health > 50 and relay.battery < 100,"drone heals without holding RMB")
+	check(friend.health > 50,"bird heals without held input")
 	var ammo: int = relay.ammo
 	await press("primary",10)
-	check(relay.ammo < ammo,"native LMB fires carbine while the drone is deployed")
-	await press("bomb")
-	check(relay.recipient == null,"native 1 recalls drone")
-	relay.transfer_cd = 0
-	await press("bomb")
-	check(relay.recipient == actor,"native 1 while docked selects self healing")
+	check(relay.ammo == ammo and relay.shot_cd > 0,"native LMB fires infinite arrows while bird heals")
+	await step(55)
+	event("aim",true)
+	await step(45)
+	check(relay.volley_charging,"native RMB charges Talon Volley")
+	event("aim",false)
+	await step(2)
+	check(not relay.volley_charging and relay.volley_cd > 0,"native RMB release fires volley")
 	await press("deflect")
-	check(relay.deflect_cd > 0,"native E activates the drone blast")
+	check(relay.deflect_cd > 0,"native E commands Guiding Wing")
+	# Place on the shoulder camera's reticle ray, rather than the actor's centerline.
+	var omen_at: Vector3 = controller.camera.global_position-controller.camera.global_basis.z*10
+	omen_at.y = actor.global_position.y
+	var omen_foe: HeroActor = training.spawn_bot(0,omen_at,false,1-actor.team)
+	await step(3)
 	await press("hover")
-	check(relay.mobility_cd > 0 and actor.position.y > .2,"native Q launches Kickstart")
+	check(relay.omen_target == omen_foe and relay.mobility_cd > 0,"native Q marks a visible enemy with Omen")
+	omen_foe.queue_free()
+	await step(3)
+	check(not relay.valid_omen(),"removed native Omen target safely clears reveal")
+	relay.transfer_cd = 0
+	controller.yaw = PI
+	await press("bomb")
+	check(relay.recipient == actor,"native 1 without an aimed ally assigns self")
+	await press("jump")
+	await step(4)
+	await press("jump")
+	check(relay.bomb_cd > 0 and actor.position.y > .2,"native airborne Space activates spirit jump")
+	await press("ultimate")
+	await step(25)
+	check(relay.ultimate_active() and relay.birds.size() == 3,"native 2 activates three-bird Murmuration")
 	training.select_hero("dynamo")
 	training.despawn_bots()
 	actor = training.player

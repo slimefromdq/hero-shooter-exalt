@@ -122,6 +122,7 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 		confirmed_block.emit(source, target)
 		return "blocked"
 	var amount: float = base * (1.0 if tag == "bleed" else cast_multiplier(cast_id,source))
+	if source.kit is RelayKit: amount *= (source.kit as RelayKit).omen_multiplier(target)
 	var executed: bool = execute and target.overhealth.value() <= 0.0 and target.shields <= 0.0 and target.health / target.tuning.max_health <= source.tuning.execute_threshold
 	if executed:
 		amount = target.health
@@ -194,7 +195,7 @@ func heal(source: HeroActor, target: HeroActor, amount: float, tag: String, awar
 	if award_charge and not source.kit.ultimate_active(): source.kit.ultimate_charge = minf(100,source.kit.ultimate_charge + restored * .06)
 	confirmed_heal.emit(source,target,restored)
 	# Beam ticks would otherwise crowd out useful combat history every frame.
-	if tag not in ["attending_care","aftercare","ward","regroup","drone","circuit"]: record("heal",source,tag,"target=%s applied=%.1f" % [target.actor_id,restored])
+	if tag not in ["attending_care","aftercare","ward","regroup","guiding_spirit","murmuration"]: record("heal",source,tag,"target=%s applied=%.1f" % [target.actor_id,restored])
 	return restored
 
 func barrier_ray(source: HeroActor, from: Vector3, to: Vector3) -> Dictionary:

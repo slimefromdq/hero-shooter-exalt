@@ -119,16 +119,16 @@ func draw_hud() -> void:
 	CombatHUD.vitals(canvas,p,font,bold,Vector2(32,816))
 	rect(Vector2(450, 738), Vector2(88, 126), paper, 4)
 	label_at(CareHUD.weapon_label(p), Vector2(460, 763), 11, ink, true)
-	label_at("%02d" % p.kit.ammo, Vector2(460, 811), 30 if p.tuning.magazine >= 100 else 37, ink, true)
-	label_at("/ %02d" % p.tuning.magazine, Vector2(460,830) if p.tuning.magazine >= 100 else Vector2(503,808), 11 if p.tuning.magazine >= 100 else 13, ink)
-	label_at("R  LOAD" if not p.kit.reloading else "LOAD %.1f" % p.kit.reload_remaining, Vector2(460, 844), 10, ink)
+	label_at("∞" if p.kit is RelayKit else "%02d" % p.kit.ammo, Vector2(460, 811), 30 if p.tuning.magazine >= 100 else 37, ink, true)
+	label_at("INFINITE" if p.kit is RelayKit else "/ %02d" % p.tuning.magazine, Vector2(460,830) if p.kit is RelayKit or p.tuning.magazine >= 100 else Vector2(503,808), 10 if p.kit is RelayKit else 11 if p.tuning.magazine >= 100 else 13, ink)
+	label_at("RMB VOLLEY" if p.kit is RelayKit else "R  LOAD" if not p.kit.reloading else "LOAD %.1f" % p.kit.reload_remaining, Vector2(460, 844), 10, ink)
 	ability_card(550, TrainingInputs.key_label("dash"), "DASH %d/%d" % [p.motor.dash_charges,p.tuning.dash_capacity], "READY", p.motor.dash_cd, p.tuning.dash_cooldown, p.motor.dash_charges > 0)
 	if p.kit is CareKit:
 		var labels: Array[String] = CareHUD.labels(p)
 		var times: Array[float] = CareHUD.cooldowns(p)
 		for i: int in 3: ability_card(663+i*113,TrainingInputs.key_label(["hover","deflect","bomb"][i]),labels[i],"",times[i],CareHUD.durations(p)[i])
-		rect(Vector2(470,674),Vector2(720,31),Color(.06,.13,.17,.85),4)
-		label_at(CareHUD.detail(p) + "  " + CareHUD.status(p),Vector2(480,695),14,paper,true)
+		rect(Vector2(470,674),Vector2(940 if p.kit is RelayKit else 720,31),Color(.06,.13,.17,.85),4)
+		label_at(CareHUD.detail(p) + "  " + CareHUD.status(p),Vector2(480,695),12 if p.kit is RelayKit else 14,paper,true)
 	elif p.kit is SlayerKit:
 		var hunter := p.kit as SlayerKit
 		var t := p.tuning as SlayerTuning
@@ -282,7 +282,7 @@ func build_advanced_menu() -> void:
 	button(left,"Play Marshal / shield tank",training.select_hero.bind("marshal"))
 	button(left,"Play Doctor / main support",training.select_hero.bind("doctor"))
 	button(left,"Play Huddle / mobile off-tank",training.select_hero.bind("huddle"))
-	button(left,"Play Relay / drone support",training.select_hero.bind("relay"))
+	button(left,"Play Seeker / spirit bow",training.select_hero.bind("relay"))
 	button(left,"Play Dynamo / storm tank",training.select_hero.bind("dynamo"))
 	button(left,"Play Rogue / phantom thief",training.select_hero.bind("wisp"))
 	button(left,"Play Samson / cockroach lawyer",training.select_hero.bind("samson"))
@@ -290,7 +290,7 @@ func build_advanced_menu() -> void:
 
 	button(left,"Play Stitch / doll assassin",training.select_hero.bind("stitch"))
 	button(left,"Stitch hunt / marks, thread, ambush",training.start_stitch_drill)
-	button(left,"Relay circuit / drone and battery",training.start_roster_drill.bind("relay"))
+	button(left,"Seeker murmuration / three spirit birds",training.start_roster_drill.bind("relay"))
 	button(left,"Dynamo siege / walls and storm",training.start_roster_drill.bind("dynamo"))
 	button(left,"Rogue heist / marks and air combos",training.start_roster_drill.bind("wisp"))
 	button(left,"Huddle rescue / flight, screen, wave",training.start_huddle_drill)

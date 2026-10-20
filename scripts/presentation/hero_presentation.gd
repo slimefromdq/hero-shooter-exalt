@@ -34,6 +34,7 @@ var cc_previous: String = ""
 var control_sound: ProceduralSound
 var slayer_axe: Node3D
 var muzzle_flash: MeshInstance3D
+var omen_sigil: Label3D
 var status_label: Label3D
 var status_ring: MeshInstance3D
 var held_knife: Node3D
@@ -207,6 +208,10 @@ func _ready() -> void:
 	team_shape.outer_radius = .49
 	team_ring = Geometry.mesh(self, team_shape, Vector3(0, .07, 0), team_material)
 	team_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	omen_sigil = Geometry.text3d(self,"◇ OMEN ◇",Vector3(0,2.6,0),32,Color("8dfff0"))
+	omen_sigil.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	omen_sigil.no_depth_test = true
+	omen_sigil.visible = false
 	status_label = Geometry.text3d(self,"",Vector3(0,2.3,0),23,Color("e3b8ff"))
 	status_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	status_label.no_depth_test = false
@@ -404,6 +409,12 @@ func _process(delta: float) -> void:
 		var slayer_data := viewer.tuning as SlayerTuning
 		if viewer.global_position.distance_to(actor.global_position) <= slayer_data.mark_range and actor.resolver.visible(viewer.global_position + Vector3.UP * 1.5,actor,[viewer.get_rid()]):
 			status_text += "WOUNDED ◆" if actor.health / actor.effective_max_health() <= slayer_data.wounded_threshold else "HUNTED ◇"
+	omen_sigil.visible = false
+	for source: HeroActor in actor.get_tree().get_nodes_in_group("actors"):
+		if source.kit is RelayKit and (source.kit as RelayKit).reveals(actor,viewer):
+			omen_sigil.visible = true
+			omen_sigil.text = "◇ OMEN %.1fs ◇" % (source.kit as RelayKit).omen_left
+			break
 	status_label.text = status_text
 	status_label.visible = actor.alive and status_text != "" and actor != viewer
 	status_ring.visible = actor.alive and (not ControlFeedback.snapshot(actor).is_empty() or actor.statuses.effects.has("max_health") or actor.statuses.effects.has("root") or actor.benefits.has_kind("exemplary") or actor.benefits.has_kind("prescription"))

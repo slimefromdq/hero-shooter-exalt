@@ -23,7 +23,7 @@ Profiles live in `resources/bots/classes`, `resources/bots/heroes`, and `resourc
 | Stitch | 2–16 m | Sampled isolation/marks, pursuit thread, tethered hook, bounded ambush/escape concealment, marked-target Curtain Call |
 | Doctor | 14–22 m | Recoverable-patient triage, beam positioning, self-defense, Ward, cleanse/reduction, safe House Call and ally ultimate |
 | Huddle | 6–14 m | Mobile pressure, ally interception, escape-charge reserve, safe Regroup and directed Wave |
-| Relay | 12–24 m | Drone triage, battery recall, drone-centered Shock, escape Kickstart and team Full Circuit |
+| Seeker | 18–30 m | Bird assignment/triage, aimed spirit arrows and charged volley, Omen pressure, vulnerable-ally Wing, airborne spirit jump and multi-recipient Murmuration |
 | Dynamo | 12–25 m | Prespin and sustained pressure, lightning, Lodestone, Storm and checked wall placement |
 | Rogue (Wisp ID) | 8–22 m | Long explosive finishers, lateral dodge/loading, Vanishing escape, high Majestic Leap/float/dive and led suction Heist throws |
 

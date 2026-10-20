@@ -127,18 +127,21 @@ func evaluate(brain: BotBrain) -> void:
 			if brain.movement.safe_travel(a,point-a.body_point(1),distance-1): offer("hover",.85,point)
 		if seen and clear_shot and not escaping and int(enemy.get("marks",0)) > 0 and distance < stitch.data().seam_range and k.ultimate_charge >= 100 and float(enemy.health) <= stitch.data().seam_damage+int(enemy.marks)*stitch.data().mark_damage: offer("ultimate",.94,point)
 	elif k is RelayKit:
-		var relay := k as RelayKit
-		if is_instance_valid(relay.recipient) and relay.battery < 22 and not relay.ultimate_active(): offer("bomb",.92)
-		elif patient_visible and patient_need > .18 and relay.recipient != patient and relay.transfer_cd <= 0 and (relay.battery >= 55 or relay.ultimate_active()): offer("secondary_pressed",.8,patient.body_point(1.2))
-		elif not is_instance_valid(relay.recipient) and health < .55 and relay.battery >= 40: offer("bomb",.88)
-		if seen and point.distance_to(relay.drone_position()) < relay.data().shock_radius and relay.battery >= relay.data().shock_energy+20 and k.deflect_cd <= 0: offer("deflect",.83,point)
-		if escaping and seen and relay.mobility_cd <= 0:
-			var away: Vector3 = ((a.global_position-point)*Vector3(1,0,1)).normalized()
-			if brain.movement.safe_travel(a,away,5): offer("hover",.96,a.body_point(1.45)+away*10)
+		var seeker := k as RelayKit
+		if not is_instance_valid(seeker.recipient) and not is_instance_valid(patient):
+			for ally: HeroActor in brain.allies:
+				if seeker.can_assign(ally):
+					offer("bomb",.88,ally.body_point(1.2))
+					break
+		if patient_visible and seeker.can_assign(patient) and (not is_instance_valid(seeker.recipient) or patient_need > .35): offer("bomb",.88,patient.body_point(1.2))
+		elif not is_instance_valid(seeker.recipient) and health < .75 and seeker.can_assign(a): offer("bomb",.87,a.body_point(1.2))
+		if seen and k.mobility_cd <= 0 and distance <= seeker.data().arrow_range: offer("hover",.72,point)
+		if seeker.valid_friend(seeker.recipient,seeker.recipient_life) and seeker.recipient.health < seeker.recipient.effective_max_health()*.75 and seeker.sight(seeker.recipient) and k.deflect_cd <= 0: offer("deflect",.93)
+		if seen and not escaping and seeker.volley_cd <= 0 and seeker.shot_cd <= 0 and not seeker.volley_charging: offer("secondary_pressed",.65,point)
 		var beneficiaries: int = 0
 		for ally: HeroActor in brain.allies:
-			if ally.global_position.distance_to(relay.drone_position()) < relay.data().circuit_radius and (ally.last_hit_age < 2 or ally.health < ally.effective_max_health()*.8): beneficiaries += 1
-		if beneficiaries >= 2 and brain.nearby_enemies > 0 and k.ultimate_charge >= 100 and not relay.ultimate_active(): offer("ultimate",.9)
+			if seeker.valid_friend(ally) and seeker.sight(ally) and ally.health < ally.effective_max_health()*.85: beneficiaries += 1
+		if beneficiaries >= 2 and brain.nearby_enemies > 0 and k.ultimate_charge >= 100 and not seeker.ultimate_active(): offer("ultimate",.9)
 	elif k is DynamoKit:
 		var dynamo := k as DynamoKit
 		if dynamo.previewing:
@@ -274,7 +277,7 @@ func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) ->
 		var lead: float = 0.0
 		if a.kit is SamsonKit: lead = a.global_position.distance_to(point)/(a.tuning as SamsonTuning).ink_speed
 		elif a.kit is StitchKit: lead = a.global_position.distance_to(point)/(a.tuning as StitchTuning).needle_speed
-		elif a.kit is RelayKit: lead = a.global_position.distance_to(point)/(a.tuning as RelayTuning).carbine_speed
+		elif a.kit is RelayKit: lead = a.global_position.distance_to(point)/(a.tuning as RelayTuning).arrow_speed
 		elif a.kit is MarshalKit: lead = a.global_position.distance_to(point)/(a.tuning as MarshalTuning).cannon_speed
 		elif a.kit is HuddleKit: lead = a.global_position.distance_to(point)/(a.tuning as HuddleTuning).seed_speed
 		if str(choice.get("action","")) == "hover" and a.kit is SlayerKit:
@@ -295,6 +298,13 @@ func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) ->
 		input.reload = not a.kit.reloading
 	if a.kit is DynamoKit and acquired and not a.kit.reloading: input.secondary_held = true
 	if a.kit is WispKit: input.jump_held = (a.kit as WispKit).glide_left > 0
+	if a.kit is RelayKit:
+		var seeker := a.kit as RelayKit
+		input.secondary_held = seeker.volley_charging and seeker.volley_age < seeker.data().volley_charge and acquired
+		if seeker.volley_charging:
+			input.primary = false
+			input.primary_held = false
+		if brain.tactical_state == "retreat" and not a.motor.grounded() and seeker.bomb_cd <= 0: input.jump = true
 	if action.is_empty(): return
 	# Aiming can take multiple ticks. One-shot actions are consumed only when emitted.
 	if action_point != Vector3.INF and not aligned: return
@@ -322,7 +332,12 @@ func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) ->
 	if a.kit is MarshalKit and action == "deflect":
 		# The shout is instant: retain or raise a warranted barrier in the same tick.
 		input.secondary_held = a.state == "marshal_shield" or ability_scores.has("secondary_held")
-	if action == "hover" and a.kit is RelayKit: input.move = desired.normalized()*Vector3(1,0,1)
+	if a.kit is RelayKit:
+		var seeker := a.kit as RelayKit
+		input.secondary_held = seeker.volley_charging and seeker.volley_age < seeker.data().volley_charge
+		if action == "secondary_pressed":
+			input.secondary_pressed = not seeker.volley_charging
+			input.secondary_held = not seeker.volley_charging or seeker.volley_age < seeker.data().volley_charge
 	if action == "bomb" and a.kit is NimbusKit:
 		pending_bomb = true
 		bomb_started = a.resolver.combat_time

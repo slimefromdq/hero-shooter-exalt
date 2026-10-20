@@ -38,15 +38,20 @@ static func hit(canvas: Control, font: Font, caption: String, center: Vector2, h
 	canvas.draw_string(font,at,caption,HORIZONTAL_ALIGNMENT_LEFT,-1,30,color)
 
 static func ammo(canvas: Control, actor: HeroActor, font: Font, center: Vector2) -> void:
-	var caption: String = "%d / %d" % [actor.kit.ammo,actor.tuning.magazine]
+	var caption: String = "∞" if actor.kit is RelayKit else "%d / %d" % [actor.kit.ammo,actor.tuning.magazine]
 	var color := Color("ffe080") if actor.kit.ammo == 0 or actor.kit.reloading else Color("fbfff4")
 	var at: Vector2 = center + Vector2(40,23)
 	canvas.draw_string_outline(font,at,caption,HORIZONTAL_ALIGNMENT_LEFT,-1,22,4,Color(.025,.04,.06,.95))
 	canvas.draw_string(font,at,caption,HORIZONTAL_ALIGNMENT_LEFT,-1,22,color)
-	if actor.kit.reloading or actor.kit.ammo == 0:
+	if not actor.kit is RelayKit and (actor.kit.reloading or actor.kit.ammo == 0):
 		var prompt: String = "LOADING %.1fs" % actor.kit.reload_remaining if actor.kit.reloading else "R  RELOAD"
 		canvas.draw_string_outline(font,at + Vector2(0,17),prompt,HORIZONTAL_ALIGNMENT_LEFT,-1,11,3,Color(.025,.04,.06,.95))
 		canvas.draw_string(font,at + Vector2(0,17),prompt,HORIZONTAL_ALIGNMENT_LEFT,-1,11,color)
+
+	if actor.kit is RelayKit and (actor.kit as RelayKit).volley_charging:
+		var k := actor.kit as RelayKit
+		canvas.draw_rect(Rect2(at+Vector2(0,8),Vector2(100,5)),Color("193b43"))
+		canvas.draw_rect(Rect2(at+Vector2(0,8),Vector2(100*k.volley_age/k.data().volley_charge,5)),Color("a5ffe9"))
 
 	if actor.kit.free_slide_ammo():
 		canvas.draw_string_outline(font,at+Vector2(0,18),"SLIDE / FREE AMMO",HORIZONTAL_ALIGNMENT_LEFT,-1,11,3,Color("10252e"))

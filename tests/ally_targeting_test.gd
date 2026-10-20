@@ -73,15 +73,15 @@ func run() -> void:
 	relay.position = Vector3.ZERO
 	aim(relay,friend)
 	var r := relay.kit as RelayKit
-	check(r.aimed_ally() == AllyTargeting.aimed(relay,r.data().assign_range),"Relay wrapper uses shared acquisition")
-	check(r.assign(friend),"Relay still assigns a visible ally")
+	check(r.aimed_ally() == AllyTargeting.aimed(relay,r.data().assign_range),"Seeker wrapper uses shared acquisition")
+	check(r.assign(friend),"Seeker still assigns a visible ally")
 	r.transfer_left = 0
 	friend.health = 100
 	wall = Geometry.box(world,Vector3(6,4,.3),Vector3(0,1.8,-4),Color.GRAY)
 	await step()
-	check(r.aimed_ally() == null,"Relay cannot acquire through new cover")
-	r.tick_drone(.1)
-	check(friend.health > 100,"existing Relay companion keeps healing behind cover")
+	check(r.aimed_ally() == null,"Seeker cannot acquire through new cover")
+	r.tick_spirit(.1)
+	check(friend.health > 100,"existing Seeker companion keeps healing behind cover")
 	friend.health = 100
 	k.patient = friend
 	aim(doctor,friend)

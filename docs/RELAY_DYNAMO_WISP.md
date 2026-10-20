@@ -1,27 +1,12 @@
-# Relay, Dynamo and Wisp
+# Seeker, Dynamo and Wisp
 
 Three complete offline heroes extend EXALT's roster to eight. All use the shared actor, collision, combat authority, traversal, close combat and shoulder camera. The original procedural models and portraits match the existing prototype's geometric art. Every gameplay value is editable in the respective tuning class or `resources/relay.tres`, `resources/dynamo.tres` and `resources/wisp.tres`.
 
-Run `Launch.ps1 -Relay`, `-Dynamo` or `-Wisp`; add `-Training` to enter the arena. Startup, city and training menus include all eight heroes. Advanced training provides **Relay circuit**, **Dynamo siege** and **Wisp ballet**, plus individual bot profiles. Input labels follow the existing named bindings.
+Run `Launch.ps1 -Seeker`, `-Dynamo` or `-Wisp`; add `-Training` to enter the arena. Startup, city and training menus include all eight heroes. Advanced training provides **Seeker murmuration**, **Dynamo siege** and **Wisp ballet**, plus individual bot profiles. Input labels follow the existing named bindings.
 
-## Relay · drone support
+## Seeker · offensive spirit support
 
-An androgynous field engineer in amber workwear with an indestructible two-rotor healing drone. 250 HP, 6 m/s movement.
-
-| Input | Ability | Prototype behavior |
-| --- | --- | --- |
-| LMB hold | Carbine | 14-damage projectiles at 70 m/s; 10 shots/s, 30 rounds, 1.2 s reload, 1.5× headshots. |
-| RMB press | Assign drone | Aim at a visible ally within 35 m. 0.25 s transfer gap and 1 s reassignment cooldown. Invalid targets preserve the previous recipient. |
-| Q | Kickstart | Physical directional jump: 11 m/s upward and 8 m/s horizontal; 8 s cooldown. |
-| E | Shock Delivery | 60 damage within **6 m** of the drone, or Relay while docked. 20 energy and 8 s cooldown. Cover and barriers block it. |
-| 1 | Return to Sender | Recall an attached drone; while docked, attach to self. Self assignment observes the ordinary energy and reassignment gates. |
-| 2 | Full Circuit | 0.35 s preparation, then an 8 s / 12 m aura: **80 HP/s** and +25% ordinary primary fire rate. Move the drone to move the aura. |
-
-Normal attachment heals 55 HP/s without sightline or continued-distance checks. The 100-energy battery drains 10/s even on a healthy recipient. Transfers pause healing and battery drain. Docking recharges 20/s; depletion recalls automatically, and deployment requires 20 energy. Ally and self-healing use the same supply. Drone relocation is magical rather than a physical navigation problem.
-
-Full Circuit can begin with an empty battery. It freezes battery drain/recharge and replaces single-target healing. Its healing and haste pass through cover; overlapping circuits use the strongest healing and haste, not their sum. It provides no resistance or invulnerability. Haste changes primary shot intervals for every hero, preserving reloads, secondary recovery and ultimate shot cadence.
-
-The HUD reports battery, recipient/charging state and ultimate duration. The drone follows the recipient and visibly disappears on its owner's death. Recipient death, respawn, hero change or team change detaches it. Owner death/hero change/reset retires its aura and benefits.
+Relay has been reworked into **Seeker**, preserving the stable `relay` resource and registration IDs. The old battery, drone, shock and overclock kit has been removed. See [Seeker's current kit, controls and tuning](SEEKER_REWORK.md).
 
 ## Dynamo · storm tank
 
@@ -59,9 +44,9 @@ Full behavior, before/after tuning and verification are in [Rogue rework](ROGUE_
 
 ## Shared roster and authority
 
-Seeded compositions select two tanks from Marshal/Huddle/Dynamo, both supports Doctor/Relay, and two DPS from Nimbus/Slayer/Wisp, always including the selected player in slot zero. Both teams use the composition. A DPS bot retains the subway route. New rounds refresh bot kits/routes to preserve the role balance and stable six-slot layout. Mid-match hero selection preserves existing bots and match progress.
+Seeded compositions select two tanks from Marshal/Huddle/Dynamo, both supports Doctor/Seeker, and two DPS from Nimbus/Slayer/Wisp, always including the selected player in slot zero. Both teams use the composition. A DPS bot retains the subway route. New rounds refresh bot kits/routes to preserve the role balance and stable six-slot layout. Mid-match hero selection preserves existing bots and match progress.
 
-Bots manage drone charge, self-preservation and assignments; prespin, chain, build, pull and storm; and combine pistol marks, safe dash paths, shells, phase and aerial attacks. Physical walls do not rebake or replace city navigation.
+Bots manage healing-bird assignments, charged volleys, Omen and Wing; prespin, chain, build, pull and storm; and combine pistol marks, safe dash paths, shells, phase and aerial attacks. Physical walls do not rebake or replace city navigation.
 
 New ultimates consume charge after preparation; interrupted preparation retains it. Active ultimates cannot earn their owner's passive/damage/healing charge. Cast snapshots also prevent delayed ultimate projectiles from charging the next ultimate. Source-bound effects and physical sections retire on restart, scene exit and hero/life cleanup.
 

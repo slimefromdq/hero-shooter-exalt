@@ -101,6 +101,10 @@ func movement() -> void:
 func reloads() -> void:
 	for hero: String in HeroRoster.IDS:
 		await reset(hero)
+		if a.kit is RelayKit:
+			a.kit.start_reload()
+			check(not a.kit.reloading and a.permits("primary"),"Seeker infinite bow ignores reload and remains ready")
+			continue
 		a.kit.ammo = 0
 		a.kit.start_reload()
 		check(a.state == "ready" and a.kit.reloading,hero+" reload is independent")

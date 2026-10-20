@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 hero = "relay"
-minimum_range = 12.0
-maximum_range = 24.0
-aggression = 0.4
+minimum_range = 18.0
+maximum_range = 30.0
+aggression = 0.65
 mobility = 0.6
 vulnerable_bias = 0.1

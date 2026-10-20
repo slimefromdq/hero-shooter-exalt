@@ -1,8 +1,8 @@
 class_name TrainingManager
 extends Node
 
-const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring", "Guard trainer", "Slayer hunter", "Marshal", "Doctor", "Huddle", "Relay", "Dynamo", "Rogue", "Tactical Sparring", "Samson support", "Stitch"]
-const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt", "Doctor rounds", "Marshal drill", "Huddle rescue", "Practice range", "Relay circuit", "Dynamo siege", "Rogue heist", "Tactical Sparring", "Samson intervention", "Stitch hunt"]
+const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring", "Guard trainer", "Slayer hunter", "Marshal", "Doctor", "Huddle", "Seeker", "Dynamo", "Rogue", "Tactical Sparring", "Samson support", "Stitch"]
+const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt", "Doctor rounds", "Marshal drill", "Huddle rescue", "Practice range", "Seeker murmuration", "Dynamo siege", "Rogue heist", "Tactical Sparring", "Samson intervention", "Stitch hunt"]
 var arena: Node3D
 var player: HeroActor
 var bots: Array[HeroActor] = []
@@ -226,7 +226,7 @@ func reset_scenario() -> void:
 		12:
 			for index: int in 3:
 				var friend: HeroActor = spawn_bot(0,Vector3(-5+index*5,.1,3-index*3),false,player.team)
-				friend.actor_id = "Circuit_ally_%d" % (index+1)
+				friend.actor_id = "Spirit_ally_%d" % (index+1)
 				friend.health = 80
 			spawn_bot(2,Vector3(8,.1,-12))
 		13:
@@ -361,7 +361,7 @@ func on_event(entry: Dictionary) -> void:
 func select_hero(id: String) -> void:
 	HeroRoster.selected = id
 	player.select_hero(id)
-	player.actor_id = "Rogue" if id == "wisp" else id
+	player.actor_id = HeroRoster.display_name(id)
 	player_max_health = player.tuning.max_health
 	reset_scenario()
 	hud.rebuild_menu()
@@ -394,7 +394,7 @@ func start_roster_drill(id: String) -> void:
 	scenario = {"relay":12,"dynamo":13,"wisp":14}[id]
 	freeze_ai = false
 	reset_scenario()
-	show_notice({"relay":"RMB assign / 1 recall and recharge / E blast / 2 overclock allies","dynamo":"RMB prespin / E preview, LMB place, RMB rotate / 1 pull / 2 storm","wisp":"Q dodge + load / RMB long burst / E vanish / 1 leap-dive / 2 suction heist"}[id])
+	show_notice({"relay":"LMB arrows / RMB volley / 1 assign / Q Omen / E Wing / 2 Murmuration / air Space jump","dynamo":"RMB prespin / E preview, LMB place, RMB rotate / 1 pull / 2 storm","wisp":"Q dodge + load / RMB long burst / E vanish / 1 leap-dive / 2 suction heist"}[id])
 	if menu_open: toggle_menu()
 
 func start_samson_drill() -> void:

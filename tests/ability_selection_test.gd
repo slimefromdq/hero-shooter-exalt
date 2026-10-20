@@ -45,15 +45,13 @@ func run() -> void:
 	await step()
 	aim(doctor,friend)
 	var r := doctor.kit as RelayKit
-	check(offered(doctor,"aim",friend),"Relay offers assignable ally")
-	r.battery = 0
-	check(r.selection_previews().is_empty(),"Relay requires assignment energy")
-	r.battery = 100
+	check(offered(doctor,"bomb",friend),"Seeker offers assignable ally")
+	check(not r.selection_previews().is_empty(),"Seeker assignment requires no resource")
 	check(r.assign(friend) and r.selection_previews().is_empty(),"assigned recipient and transfer cooldown remove Relay prompt")
 	r.transfer_cd = 0
 	check(r.selection_previews().is_empty(),"current recipient remains excluded after cooldown")
 	r.recall()
-	check(offered(doctor,"aim",friend),"recall restores valid assignment preview")
+	check(offered(doctor,"bomb",friend),"recall restores valid assignment preview")
 	doctor.select_hero("huddle")
 	await step()
 	aim(doctor,friend)

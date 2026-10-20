@@ -12,6 +12,9 @@ static func orb(parent: Node3D, at: Vector3, scale: Vector3, color: String, glow
 	return mesh
 
 static func remodel(p: HeroPresentation) -> void:
+	if p.actor.kit is RelayKit:
+		SeekerPresentation.build(p)
+		return
 	if p.actor.kit is StitchKit:
 		StitchPresentation.build(p)
 		return
@@ -95,6 +98,10 @@ static func remodel(p: HeroPresentation) -> void:
 		Geometry.box(p.rifle,Vector3(.11,.23,.16),Vector3(0,-.17,.05),Color("b9a275"),false)
 
 static func animate(p: HeroPresentation, delta: float) -> void:
+	if p.actor.kit is RelayKit:
+		p.umbrella.visible = false
+		SeekerPresentation.animate(p)
+		return
 	if p.actor.kit is StitchKit:
 		StitchPresentation.animate(p,delta)
 		return

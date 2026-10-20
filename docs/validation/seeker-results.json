@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-19",
+  "engine": "4.7.2.stable.official.ed1daf0bf",
+  "hero_id": "relay",
+  "display_name": "Seeker",
+  "focused_checks": 104,
+  "bot_tactics_checks": 86,
+  "native_roster_input_checks": 40,
+  "roster_checks": 262,
+  "full_verification": "passed",
+  "simulation": {
+    "seed": 76,
+    "seconds": 600,
+    "checks": 17,
+    "failures": 0,
+    "falls": 0,
+    "persistent_stalls": 0,
+    "recovery_warps": 0
+  },
+  "captures": [
+    "seeker-model-healing.png",
+    "seeker-volley-charge.png",
+    "seeker-volley-flight.png",
+    "seeker-murmuration.png",
+    "seeker-guiding-wing.png",
+    "seeker-omen-cover.png",
+    "seeker-omen-expired.png"
+  ],
+  "notes": [
+    "Full verification and simulation ran during implementation; focused suites and final import were rerun after subsequent targeted cleanup.",
+    "Automated tests and captures do not establish human balance or control feel."
+  ],
+  "crouch_checks": 109,
+  "full_verification_pass_lines": 4412
+}

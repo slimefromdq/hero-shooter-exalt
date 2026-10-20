@@ -245,6 +245,8 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			coyote = 0.0
 			transition("air")
 			visual("jump",actor.velocity)
+		elif not was_floor and input.jump and actor.kit is RelayKit and (actor.kit as RelayKit).spirit_jump(input):
+			jump_buffer = 0
 	actor.velocity = actor.velocity.limit_length(t.speed_limit)
 	var before: Vector3 = actor.velocity
 	actor.floor_stop_on_slope = mode != "slide"

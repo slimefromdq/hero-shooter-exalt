@@ -91,98 +91,34 @@ func run() -> void:
 func relay_tests() -> void:
 	await reset()
 	var k := relay.kit as RelayKit
-	check(relay.health == 250 and dynamo.health == 650 and wisp.health == 225,"new hero health defaults")
+	check(relay.health == 250 and dynamo.health == 650 and wisp.health == 225,"hero health defaults")
+	check(HeroRoster.display_name("relay") == "Seeker","stable Relay ID displays Seeker")
 	check(k.assign(friend),"assign visible ally")
 	friend.health = 50
 	k.tick(.25,CombatIntent.new())
 	near(friend.health,50,"transfer has a healing gap")
 	k.tick(1,CombatIntent.new())
-	near(friend.health,105,"drone heals 55 HP/s")
-	near(k.battery,90,"attached drone drains ten energy per second")
-	var block: Node3D = Geometry.box(world,Vector3(5,4,1),Vector3(0,2,-4),Color.GRAY)
-	await step()
-	k.tick(1,CombatIntent.new())
-	near(friend.health,160,"attachment heals through solid cover")
-	friend.position = Vector3(0,.01,-60)
-	k.tick(1,CombatIntent.new())
-	near(friend.health,215,"attachment persists beyond assignment range")
+	near(friend.health,75,"bird heals 25 HP/s")
 	check(not k.assign(foes[0]) and k.recipient == friend,"invalid enemy assignment preserves recipient")
-	check(not k.assign(relay) and k.recipient == friend,"self transfer still observes shared transfer cooldown") if k.transfer_cd > 0 else check(true,"assignment cooldown expires normally")
 	k.recall()
-	k.tick(1,CombatIntent.new())
-	near(k.battery,90,"docking recharges twenty energy per second")
 	k.transfer_cd = 0
-	check(k.assign(relay),"self attachment shares the drone")
+	check(k.assign(relay),"self assignment shares the main bird")
 	k.transfer_left = 0
 	relay.health = 100
 	k.tick(1,CombatIntent.new())
-	near(relay.health,155,"self attachment heals at the same rate")
-	k.battery = 5
-	k.tick(.5,CombatIntent.new())
-	check(k.recipient == null,"depletion automatically recalls")
-	near(k.battery,0,"depletion does not overspend energy")
-	check(not k.assign(friend),"empty battery cannot deploy")
-	k.battery = 100
-	k.transfer_cd = 0
-	check(k.assign(relay),"battery recovery permits redeployment")
-	relay.spawn_protected = true
-	var docking := CombatIntent.new()
-	docking.bomb = true
-	k.tick(0,docking)
-	check(k.recipient == null,"returning to a safe room still permits docking")
-	check(not k.assign(relay),"safe rooms still prohibit healing deployment")
-	relay.spawn_protected = false
-	block.queue_free()
-	await step()
-	await reset()
-	k = relay.kit as RelayKit
-	foes[0].position = Vector3(5,.01,0)
+	near(relay.health,125,"self bird heals at the same rate")
 	var request := CombatIntent.new()
-	request.deflect = true
-	k.tick(0,request)
-	near(foes[0].health,1940,"Shock Delivery reaches a target beyond the former four-meter radius")
-	near(k.battery,80,"shock costs twenty battery")
-	await reset()
-	k = relay.kit as RelayKit
-	friend.health = 50
-	k.battery = 0
-	request = CombatIntent.new()
 	request.ultimate = true
 	k.tick(0,request)
-	check(relay.state == "relay_circuit_start" and k.ultimate_charge == 100,"circuit preparation retains charge")
+	check(relay.state == "seeker_murmuration_start" and k.ultimate_charge == 100,"preparation retains charge")
 	relay.state_time = 0
 	k.tick(0,CombatIntent.new())
-	check(k.ultimate_active() and k.ultimate_charge == 0,"circuit begins at empty battery")
+	check(k.ultimate_active() and k.ultimate_charge == 0 and k.birds.size() == 3,"ultimate splits into three birds")
 	k.tick(.5,CombatIntent.new())
-	near(friend.health,90,"Full Circuit heals eighty HP per second")
-	near(k.battery,0,"ultimate freezes battery")
-	near(friend.benefits.fire_rate_multiplier(),1.25,"overclock grants twenty-five percent primary haste")
-	near(friend.kit.primary_interval(),friend.tuning.shot_interval/1.25,"shared primary interval applies haste")
+	near(relay.health,141.875,"ultimate increases healing by 35 percent")
 	near(k.ultimate_charge,0,"ultimate healing and passive ticks cannot recharge itself")
-	check(k.assign(friend),"ultimate allows reassignment at empty battery")
-	k.tick(.25,CombatIntent.new())
-	friend.position = Vector3(30,.01,0)
-	foes[0].position = Vector3(31,.01,0)
-	var charge: float = k.ultimate_charge
-	resolver.damage(relay,foes[0],50,"projectile",resolver.new_cast(relay))
-	near(k.ultimate_charge,charge,"damage while circuit is active grants no charge")
-	near(k.drone_position().x,30.5,"aura follows recipient relocation")
-	k.tick(8,CombatIntent.new())
-	check(not k.ultimate_active(),"circuit expires")
-	near(friend.benefits.fire_rate_multiplier(),1,"expired circuit cannot leave active haste")
-	await reset()
-	k = relay.kit as RelayKit
-	var other: HeroActor = spawn("relay",0,Vector3(1,.01,0))
-	var second := other.kit as RelayKit
-	k.circuit_left = 8
-	second.circuit_left = 8
-	friend.health = 50
-	k.tick(.5,CombatIntent.new())
-	second.tick(.5,CombatIntent.new())
-	near(friend.health,90,"overlapping circuits do not stack healing")
-	near(friend.benefits.fire_rate_multiplier(),1.25,"overlapping circuits do not stack haste")
-	other.queue_free()
-	await step()
+	k.tick(10,CombatIntent.new())
+	check(not k.ultimate_active() and k.extras.is_empty() and k.birds.size() == 1,"ultimate cleans up extra birds")
 
 func dynamo_tests() -> void:
 	await reset()
@@ -416,11 +352,11 @@ func lifecycle_tests() -> void:
 	k.assign(friend)
 	friend.reset_actor()
 	k.tick(.2,CombatIntent.new())
-	check(k.recipient == null,"recipient respawn detaches the old drone")
+	check(k.recipient == null,"recipient respawn detaches the old bird")
 	k.transfer_cd = 0
 	k.assign(friend)
 	relay.select_hero("wisp")
-	check(relay.kit is WispKit and (relay.kit as WispKit).shells == 0,"hero switch clears drone and starts Wisp without shells")
+	check(relay.kit is WispKit and (relay.kit as WispKit).shells == 0,"hero switch clears bird and starts Wisp without shells")
 	relay.select_hero("relay")
 	wisp.kit.refill()
 	check((wisp.kit as WispKit).shells == 2,"training refill supplies two shells")
@@ -452,7 +388,7 @@ func timing_and_cover_tests() -> void:
 			input.primary_held = true
 			if a.kit is DynamoKit: a.kit.spin = 1
 			for frame: int in fps: a.kit.tick(1.0/fps,input)
-			var expected: int = {"relay":10,"dynamo":18,"wisp":12}[id]
+			var expected: int = {"relay":0,"dynamo":18,"wisp":12}[id]
 			near(a.tuning.magazine-a.kit.ammo,expected,id+" primary cadence at %d FPS" % fps,1)
 	await reset()
 	wisp.position = Vector3(0,.01,0)

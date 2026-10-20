@@ -180,3 +180,8 @@ The subsequent accepted revision explicitly replaces Spectral Lift with forward/
 ## ROGUE-02 · Height, dodge, explosions and suction
 
 The follow-up renames Wisp to Rogue in presentation while retaining the internal ID and bindings. Majestic Leap rises at 18 rather than 12 m/s; measured apex more than doubles at 30/60/144 Hz. Q becomes a 2.5 m / 12.5 m/s dodge with a 2 m/s exit cap, preserving charges, loading, collision and bounded immunity. Right-click becomes one 32 m / 3 m-radius explosion with 80 base damage, radial falloff and owned mark detonation. Grand Heist grows to 6 m and 220 base damage, with a strong horizontal suction during its final 0.25 s. Full values, compatibility and evidence are in [Rogue rework](ROGUE_REWORK.md).
+
+
+## Seeker rework · 2026-10-19
+
+Seeker replaces Relay visibly while retaining the `relay` ID. The battery/drone implementation and its former validation expectations are superseded by the [Seeker rework](SEEKER_REWORK.md). The new kit includes a procedural bow marksman and magical birds; no Blender asset or Git delivery is included.

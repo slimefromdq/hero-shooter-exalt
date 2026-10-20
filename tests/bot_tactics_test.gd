@@ -266,14 +266,33 @@ func profiles() -> void:
 	await reset("relay")
 	friend.health = 100
 	decide()
-	check(brain.combat.ability_scores.has("secondary_pressed"),"Relay chooses an injured drone recipient")
+	check(brain.combat.ability_scores.has("bomb"),"Seeker chooses an injured bird recipient")
 	perform_choice()
-	check((a.kit as RelayKit).recipient == friend,"Relay tactical intent assigns its real drone")
+	check((a.kit as RelayKit).recipient == friend,"Seeker tactical intent assigns its real bird")
 	var relay := a.kit as RelayKit
 	relay.recipient = friend
-	relay.battery = 10
+	relay.recipient_life = friend.life_serial
+	relay.transfer_left = 0
 	brain.combat.evaluate(brain)
-	check(str(brain.combat.choice.get("action","")) == "bomb","Relay recalls depleted drone before reassignment")
+	check(brain.combat.ability_scores.has("deflect"),"Seeker offers Wing to its vulnerable recipient")
+	await reset("relay")
+	relay = a.kit as RelayKit
+	relay.assign(friend)
+	relay.transfer_left = 0
+	relay.mobility_cd = 12
+	friend.health = friend.effective_max_health()
+	decide()
+	check(brain.combat.ability_scores.has("secondary_pressed"),"Seeker scores a charged offensive volley")
+	perform_choice()
+	check(relay.volley_charging,"bot secondary intent begins a real volley")
+	for frame: int in 75:
+		var volley_input := CombatIntent.new()
+		volley_input.aim_origin = a.body_point(1.45)
+		brain.combat.execute(brain,volley_input,1.0/60,false)
+		a.intent = volley_input
+		a.aim_direction = volley_input.aim
+		relay.tick(1.0/60,volley_input)
+	check(not relay.volley_charging and relay.volley_cd > 0,"bot holds its charge and releases the real volley")
 	await reset("dynamo")
 	decide()
 	check(brain.combat.ability_scores.has("bomb"),"Dynamo scores Lodestone in its actual range")

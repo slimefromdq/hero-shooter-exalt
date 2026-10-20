@@ -1,22 +1,6 @@
 class_name RosterEffects
 extends RefCounted
 
-static func drone(parent: Node) -> Node3D:
-	var root := Node3D.new()
-	parent.add_child(root)
-	Geometry.box(root,Vector3(.38,.18,.3),Vector3.ZERO,Color("d79b38"),false)
-	var eye := SphereMesh.new()
-	eye.radius = .075
-	eye.height = .15
-	Geometry.mesh(root,eye,Vector3(0,0,-.18),Geometry.material(Color("fff0b1"),1.5))
-	for side: float in [-1.0,1.0]:
-		Geometry.box(root,Vector3(.4,.045,.055),Vector3(side*.3,.04,0),Color("394957"),false)
-		var ring := TorusMesh.new()
-		ring.inner_radius = .12
-		ring.outer_radius = .15
-		Geometry.mesh(root,ring,Vector3(side*.38,.07,0),Geometry.material(Color("ffd774"),.7))
-	return root
-
 static func zone(parent: Node, at: Vector3, radius: float, color: Color) -> Node3D:
 	var root := Node3D.new()
 	parent.add_child(root)

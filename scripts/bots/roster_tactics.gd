@@ -28,20 +28,22 @@ static func apply(a: HeroActor, input: CombatIntent) -> void:
 		return
 	if a.kit is RelayKit:
 		var k := a.kit as RelayKit
-		if is_instance_valid(k.recipient) and k.battery < 22 and not k.ultimate_active(): input.bomb = true
-		elif k.transfer_cd <= 0 and (k.battery >= 55 or k.ultimate_active()) and is_instance_valid(friend) and friend.health < friend.effective_max_health()*.85:
-			if k.recipient != friend and a.resolver.attack_ray(a,a.body_point(1.4),friend.body_point(1.2),[],1).is_empty():
-				input.aim = (friend.body_point(1.2)-input.aim_origin).normalized()
-				input.secondary_pressed = true
-		elif not is_instance_valid(k.recipient) and a.health < a.effective_max_health()*.55 and k.battery >= 40: input.bomb = true
-		if is_instance_valid(enemy):
-			input.deflect = enemy.body_point(1).distance_to(k.drone_position()) < k.data().shock_radius and k.battery >= 45
-			input.hover = distance < 7 and a.health < a.effective_max_health()*.6 and k.mobility_cd <= 0
-			if input.hover: input.move = ((a.global_position-enemy.global_position)*Vector3(1,0,1)).normalized()
+		if is_instance_valid(friend) and k.can_assign(friend) and (not is_instance_valid(k.recipient) or friend.health < friend.effective_max_health()*.65):
+			input.aim = (friend.body_point(1.2)-input.aim_origin).normalized()
+			input.bomb = true
+		elif not is_instance_valid(k.recipient) and a.health < a.effective_max_health()*.6:
+			input.aim = Vector3.UP
+			input.bomb = true
+		input.deflect = k.valid_friend(k.recipient,k.recipient_life) and k.recipient.health < k.recipient.effective_max_health()*.75
+		if is_instance_valid(enemy) and not input.bomb:
+			input.aim = (enemy.body_point(1.2)+enemy.velocity*distance/k.data().arrow_speed-input.aim_origin).normalized()
+			input.hover = k.mobility_cd <= 0
+			input.secondary_pressed = not k.volley_charging and k.volley_cd <= 0 and k.shot_cd <= 0
+			input.secondary_held = input.secondary_pressed or k.volley_charging and k.volley_age < k.data().volley_charge
 		var allies: int = 0
 		for other: HeroActor in a.get_tree().get_nodes_in_group("actors"):
-			if other.alive and other.team == a.team and other.global_position.distance_to(k.drone_position()) < k.data().circuit_radius: allies += 1
-		input.ultimate = is_instance_valid(enemy) and allies >= 2 and k.ultimate_charge >= 100
+			if k.valid_friend(other) and k.sight(other) and other.health < other.effective_max_health()*.85: allies += 1
+		input.ultimate = is_instance_valid(enemy) and allies >= 2 and k.ultimate_charge >= 100 and not k.ultimate_active()
 	elif a.kit is DynamoKit:
 		var k := a.kit as DynamoKit
 		if k.previewing:

@@ -13,19 +13,22 @@ static func consume_direct_entry() -> bool:
 	return requested
 
 static func display_name(id: String) -> String:
-	return "Rogue" if id == "wisp" else id.capitalize()
+	return "Seeker" if id == "relay" else "Rogue" if id == "wisp" else id.capitalize()
 
 static func initial_selection() -> String:
+	if OS.get_cmdline_user_args().has("--hero=seeker"): return "relay"
 	if OS.get_cmdline_user_args().has("--hero=rogue"): return "wisp"
 	for id: String in IDS:
 		if "--hero=" + id in OS.get_cmdline_user_args(): return id
 	return "nimbus"
 
 static func tuning_for(id: String) -> HeroTuning:
+	if id == "seeker": id = "relay"
 	return load("res://resources/%s.tres" % (id if id in IDS else "nimbus")).duplicate() as HeroTuning
 
 static func kit_for(id: String) -> HeroKit:
 	match id:
+		"seeker": return RelayKit.new()
 		"stitch": return StitchKit.new()
 		"slayer": return SlayerKit.new()
 		"marshal": return MarshalKit.new()

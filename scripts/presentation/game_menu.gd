@@ -15,7 +15,7 @@ const HEROES := {
 	"samson":["PEEL SUPPORT","Rescue allies, cross-examine threats, and establish Witness Protection.","Q Intervene · E Cross-Examination · 1 Cease and Desist · 2 Roach Court"],
 	"doctor":["MAIN SUPPORT","Hold RMB to heal allies; use LMB for precise sidearm fire.","Q House Call · E Ward Round · 1 Prescription · 2 Exemplary Condition"],
 	"huddle":["MOBILE OFF-TANK","A colony with seed fire, two flight bursts and ally protection.","Q Scatterbound · E Screen · 1 Personal Space · 2 Nobody Gets Squished"],
-	"relay":["DRONE SUPPORT","RMB assigns the healing drone. Recall to recharge; attack while it heals.","Q Kickstart · E Shock Delivery · 1 Recall / Self · 2 Full Circuit"],
+	"relay":["SPIRITUAL MARKSMAN","Infinite bow arrows and a passive healing bird. Charge a spiraling volley; Omen reveals and amplifies damage.","RMB Talon Volley · Q Omen · E Wing · 1 Assign / Self · 2 Murmuration · Air Space Jump"],
 	"dynamo":["STORM TANK","Prespin a ramping minigun, build physical walls and gather enemies.","Q Stormcharge · E Wall · 1 Lodestone · 2 Storm Dominion"],
 	"stitch":["DOLL ASSASSIN","Needles sew marks; close shears consume them. Thread prey and approach unseen.","Q Spoolstep · E Play Dead · 1 Red Thread · 2 Curtain Call"],
 	"wisp":["PHANTOM THIEF","Mark with pistols; dodge to load a long explosive burst. Leap high; pull enemies into Grand Heist.","Q Phantom Dodge · E Vanishing Act · 1 Majestic Leap · 2 Grand Heist"]}

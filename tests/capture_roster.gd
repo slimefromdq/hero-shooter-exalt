@@ -48,7 +48,8 @@ func run() -> void:
 	camera.fov = 36
 	camera.position = Vector3(2.2,2.25,-4.7)
 	camera.look_at(Vector3(0,1.13,0))
-	for id: String in (["wisp"] if OS.get_cmdline_user_args().has("--wisp-only") else ["relay","dynamo","wisp"]):
+	for id: String in (["relay"] if OS.get_cmdline_user_args().has("--seeker-only") else ["wisp"] if OS.get_cmdline_user_args().has("--wisp-only") else ["relay","dynamo","wisp"]):
+		camera.fov = 44 if id == "relay" else 36
 		var actor := HeroActor.new()
 		actor.tuning = HeroRoster.tuning_for(id)
 		actor.actor_id = id
@@ -100,17 +101,17 @@ func training_review() -> void:
 	var friend: HeroActor = training.bots[1]
 	relay.assign(friend)
 	await step(24)
-	await capture("relay-healing")
+	await capture("seeker-healing")
 	actor.intent.ultimate = true
 	await step()
 	actor.intent.ultimate = false
 	await step(30)
-	await capture("relay-circuit")
+	await capture("seeker-murmuration")
 	actor.intent.deflect = true
 	await step()
 	actor.intent.deflect = false
 	await step(5)
-	await capture("relay-shock")
+	await capture("seeker-wing")
 	actor.controller = driver
 	training.start_roster_drill("dynamo")
 	training.freeze_ai = true

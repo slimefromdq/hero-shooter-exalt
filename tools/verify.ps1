@@ -16,6 +16,8 @@ Push-Location -LiteralPath $taskRoot
 try {
     & $taskEngine --headless --path $taskRoot --editor --import --quit
     if ($LASTEXITCODE -ne 0) { throw 'Godot import failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/seeker_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Seeker combat, companion or lifecycle checks failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/ally_targeting_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Shared ally targeting failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/ability_selection_test.gd
@@ -159,7 +161,9 @@ try {
         & $taskEngine --path $taskRoot --script res://tests/capture_slayer_presentation.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
         if ($LASTEXITCODE -ne 0) { throw 'Slayer Phase 1 rendered capture failed.' }
         & $taskEngine --path $taskRoot --script res://tests/roster_input_test.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
-        if ($LASTEXITCODE -ne 0) { throw 'Relay, Dynamo or Wisp native input failed.' }
+        if ($LASTEXITCODE -ne 0) { throw 'Seeker, Dynamo or Rogue native input failed.' }
+        & $taskEngine --path $taskRoot --script res://tests/capture_seeker.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
+        if ($LASTEXITCODE -ne 0) { throw 'Seeker rendered review failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_roster.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
         if ($LASTEXITCODE -ne 0) { throw 'Roster rendered capture failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_crouch.gd --windowed --resolution 1600x900 --audio-driver Dummy --fixed-fps 60

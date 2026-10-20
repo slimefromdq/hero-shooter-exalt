@@ -162,6 +162,7 @@ func permits(action: String) -> bool:
 
 func muzzle() -> Vector3:
 	var shoulder: float = -.32 if kit is WispKit and kit.ammo%2 == 0 else .32
+	if kit is RelayKit: shoulder = -.35
 	return body_point(1.36) + global_basis.x * shoulder + aim_direction * 0.55
 
 func body_point(standing_height: float) -> Vector3:

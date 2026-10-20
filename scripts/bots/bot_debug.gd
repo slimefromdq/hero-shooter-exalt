@@ -36,15 +36,15 @@ func canonical(ability: String) -> String:
 	if ability == "projectile":
 		if actor.tuning.hero_id == "huddle": return "seeds"
 		if actor.tuning.hero_id == "wisp": return "grand_heist"
-		if actor.tuning.hero_id == "relay": return "rifle"
-	if ability in ["minigun","carbine","pistols","lightning"]: return "rifle"
+		if actor.tuning.hero_id == "relay": return "spirit_bolts"
+	if ability in ["minigun","pistols","lightning"]: return "rifle"
 	if actor.tuning.hero_id == "wisp" and ability in ["shotgun","soulburst","rogue_burst"]: return "soulbreaker"
 	return str({"street_sweeper":"shotgun","silver_knife":"knife","heads_will_roll":"axe","boot_rush":"boot",
 		"snare_toss":"snare","ultimate_shot":"ultimate","storm_dominion":"storm","seed_spitter":"seeds",
 		"seed":"seeds","seed_swarm":"seeds","ballet":"grand_heist","spectral_finale":"grand_heist",
 		"forward_march":"march","breach_line":"breach","marshals_verdict":"verdict",
 		"personal_space":"wingbeat","nobody_gets_squished":"wave","bug_wave":"wave",
-		"shock_delivery":"shock","drone_shock":"shock"}.get(ability,ability))
+		"talon_volley":"spirit_bolts"}.get(ability,ability))
 
 func cast_key(ability: String, tick: int, life: int) -> String:
 	return "%d:%d:%s" % [life,tick,ability]
@@ -59,7 +59,7 @@ func on_event(entry: Dictionary) -> void:
 		last_bomb_attempts = bomb_attempts
 	if entry.event == "cast":
 		if str(entry.ability) == "ultimate" and actor.kit is NimbusKit: return
-		if ability not in ["rifle","shotgun","cannon","sidearm","knife","axe","boot","snare","ultimate","bomb","march","breach","verdict","seeds","wingbeat","wave","shock","storm","lodestone","grand_heist","soulbreaker"]: return
+		if ability not in ["rifle","shotgun","cannon","sidearm","knife","axe","boot","snare","ultimate","bomb","march","breach","verdict","seeds","wingbeat","wave","shock","storm","lodestone","grand_heist","soulbreaker","spirit_bolts","omen","guiding_spirit","guiding_wing","spirit_jump","murmuration"]: return
 		if not casts.has(key): casts[key] = ability
 		recent_casts[ability] = key
 	if entry.event in ["damage","execution"]:

@@ -5,7 +5,7 @@ static func labels(a: HeroActor) -> Array[String]:
 	if a.kit is SamsonKit: return ["INTERVENE","CROSS-EXAMINATION","CEASE AND DESIST"]
 
 	if a.kit is StitchKit: return ["SPOOLSTEP","PLAY DEAD","RED THREAD"]
-	if a.kit is RelayKit: return ["KICKSTART","SHOCK DELIVERY","RECALL / SELF"]
+	if a.kit is RelayKit: return ["OMEN","GUIDING WING","GUIDING SPIRIT"]
 	if a.kit is DynamoKit: return ["STORMCHARGE","RAISE THE LINE","LODESTONE"]
 	if a.kit is WispKit: return ["PHANTOM DODGE","VANISHING ACT","MAJESTIC LEAP"]
 	if a.kit is HuddleKit: return ["SCATTERBOUND","WE'VE GOT YOU!","PERSONAL SPACE!"]
@@ -15,6 +15,7 @@ static func labels(a: HeroActor) -> Array[String]:
 
 static func cooldowns(a: HeroActor) -> Array[float]:
 	var k := a.kit as CareKit
+	if k is RelayKit: return [k.mobility_cd,k.deflect_cd,(k as RelayKit).transfer_cd]
 	return [k.mobility_cd,k.deflect_cd,k.bomb_cd]
 
 static func durations(a: HeroActor) -> Array[float]:
@@ -27,7 +28,7 @@ static func durations(a: HeroActor) -> Array[float]:
 		return [t.hook_cooldown,t.conceal_cooldown,t.thread_cooldown]
 	if a.tuning is RelayTuning:
 		var t := a.tuning as RelayTuning
-		return [t.jump_cooldown,t.shock_cooldown,t.transfer_cooldown]
+		return [t.omen_cooldown,t.wing_cooldown,t.transfer_cooldown]
 	if a.tuning is DynamoTuning:
 		var t := a.tuning as DynamoTuning
 		return [t.charge_cooldown,t.wall_cooldown,t.stone_cooldown]
@@ -48,7 +49,7 @@ static func ultimate_label(a: HeroActor) -> String:
 
 	if a.kit is StitchKit: return "CURTAIN CALL"
 	match a.tuning.hero_id:
-		"relay": return "FULL CIRCUIT"
+		"relay": return "MURMURATION"
 		"dynamo": return "STORM DOMINION"
 		"wisp": return "GRAND HEIST"
 		"huddle": return "NOBODY GETS SQUISHED!"
@@ -64,7 +65,7 @@ static func ultimate_detail(a: HeroActor) -> String:
 
 	if a.kit is StitchKit: return "18M SEAM / MARKED EXECUTE <=25%"
 	match a.tuning.hero_id:
-		"relay": return "%d HP/S / +%d%% FIRE" % [roundi((a.tuning as RelayTuning).circuit_heal),roundi((a.tuning as RelayTuning).circuit_haste*100)]
+		"relay": return "10s / THREE BIRDS / 33.75 HP/S EACH / PIERCING"
 		"dynamo": return "%dM / %dM STORM / %d DPS" % [roundi((a.tuning as DynamoTuning).storm_range),roundi((a.tuning as DynamoTuning).storm_radius),roundi((a.tuning as DynamoTuning).storm_damage/(a.tuning as DynamoTuning).storm_interval)]
 		"wisp": return "%dM SUCTION / %d BLAST + MARKS" % [roundi((a.tuning as WispTuning).heist_radius),roundi((a.tuning as WispTuning).heist_damage)]
 		"huddle": return "5M WAVE / STEER TO PUSH"
@@ -78,7 +79,7 @@ static func weapon_label(a: HeroActor) -> String:
 
 	if a.kit is StitchKit: return "SHEARS" if (a.kit as StitchKit).shears_mode else "NEEDLEPOINT"
 	match a.tuning.hero_id:
-		"relay": return "CARBINE"
+		"relay": return "SPIRIT BOLTS"
 		"dynamo": return "MINIGUN"
 		"wisp": return "DUAL PISTOLS"
 		"huddle": return "SEEDS"
@@ -91,7 +92,7 @@ static func secondary_label(a: HeroActor) -> String:
 	if a.kit is SamsonKit: return "Q RESCUE / E CHANNEL / 1 NO-MOBILITY ZONE"
 
 	if a.kit is StitchKit: return "LMB AUTO NEEDLES / SHEARS · Q HOOK · E HIDE · 1 THREAD"
-	if a.kit is RelayKit: return "RMB ASSIGN DRONE / 1 RECALL OR SELF"
+	if a.kit is RelayKit: return "RMB CHARGE VOLLEY / 1 ASSIGN OR SELF / AIR SPACE SPIRIT JUMP"
 	if a.kit is DynamoKit: return "RMB PRESPIN / WALL: LMB PLACE, RMB ROTATE, E CANCEL"
 	if a.kit is WispKit: return "RMB %dM EXPLOSION / Q LOADS / LEAP: HOLD JUMP, 1 DIVE" % roundi((a.tuning as WispTuning).burst_range)
 	if a.kit is HuddleKit: return "RMB HOLD REGROUP / LMB HOLD FIRE"
@@ -114,7 +115,14 @@ static func detail(a: HeroActor) -> String:
 		return ("CONCEALED %.1fs / E REVEAL / COOLDOWN ON EXIT" % k.conceal_left if k.concealed else "PLAY DEAD %.1fs" % k.deflect_cd)+(" / THREAD %.1fs" % k.thread.remaining if is_instance_valid(k.thread) and k.thread.valid() else " / NO THREAD")
 	if a.kit is RelayKit:
 		var k := a.kit as RelayKit
-		return "BATTERY %d/%d / %s%s" % [ceili(k.battery),ceili(k.data().battery_capacity),k.recipient.actor_id.to_upper() if is_instance_valid(k.recipient) else "DOCKED / CHARGING"," / CIRCUIT %.1fs" % k.circuit_left if k.ultimate_active() else " / TRANSFER" if k.transfer_left > 0 else ""]
+		var result: String = "BIRD: "+(k.recipient.actor_id if is_instance_valid(k.recipient) else "FOLLOWING")
+		if k.sight_lost > 0: result += " / SIGHT %.1fs" % maxf(0,k.data().sight_grace-k.sight_lost)
+		result += " / JUMP %.1fs" % k.bomb_cd if k.bomb_cd > 0 else " / JUMP READY"
+		if k.volley_charging: result += " / VOLLEY %d%%" % roundi(100*k.volley_age/k.data().volley_charge)
+		if k.ultimate_active():
+			result += " / MURMURATION %.1fs" % k.murmuration_left
+			for entry: Dictionary in k.extras: result += " / AUTO: "+(entry.target.actor_id if is_instance_valid(entry.target) else "SEARCHING")
+		return result
 	if a.kit is DynamoKit:
 		var k := a.kit as DynamoKit
 		return "SPIN %d%% / %s%s" % [roundi(k.spin*100),"WALL: PLACE / ROTATE" if k.previewing else "WALL %.1fs" % k.wall.remaining if is_instance_valid(k.wall) else "NO WALL"," / LIGHTNING %.1fs" % k.charge_left if k.charge_left > 0 else ""]
@@ -143,7 +151,7 @@ static func status(a: HeroActor, include_overhealth: bool = true) -> String:
 
 	for entry: Dictionary in a.statuses.stitches.values():
 		result += "STITCHES %d / %.1fs  " % [entry.count,entry.remaining]
-	for kind: String in ["exemplary","prescription","aftercare","ward","circuit"]:
+	for kind: String in ["exemplary","prescription","aftercare","ward","guiding_wing"]:
 		var duration: float = a.benefits.remaining(kind)
-		if duration > 0: result += "OVERCLOCKED  " if kind == "circuit" else "%s %.1fs  " % [kind.to_upper(),duration]
+		if duration > 0: result += "%s %.1fs  " % [kind.to_upper(),duration]
 	return result

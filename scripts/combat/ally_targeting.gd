@@ -1,7 +1,7 @@
 class_name AllyTargeting
 extends RefCounted
 ## Stateless acquisition only. Cast permissions, self fallback and channel retention
-## belong to the kit; in particular this does not constrain ongoing drone healing.
+## belong to the kit; ongoing healing grace and range validation remain kit-owned.
 
 static func sight(source: HeroActor, target: HeroActor) -> bool:
 	if not is_instance_valid(source) or not is_instance_valid(target): return false
