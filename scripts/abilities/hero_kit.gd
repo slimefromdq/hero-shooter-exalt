@@ -62,6 +62,9 @@ func move_override(_delta: float) -> bool:
 func movement_scale() -> float:
 	return 1.0
 
+func prepare_input(_input: CombatIntent) -> void:
+	pass
+
 func fire(_ultimate: bool) -> void:
 	pass
 

@@ -119,6 +119,13 @@ func evaluate(brain: BotBrain) -> void:
 			var direction: Vector3 = ((a.global_position-point) if escaping else (point-a.global_position)).normalized()
 			if brain.movement.safe_travel(a,direction,huddle.data().scatter_distance): offer("hover",.95 if escaping else .7,a.body_point(1.45)+direction*10)
 		if seen and brain.nearby_enemies >= 2 and k.ultimate_charge >= 100 and not escaping and huddle.supported(a.global_position): offer("ultimate",impact,point)
+	elif k is StitchKit:
+		var stitch := k as StitchKit
+		if not stitch.concealed and k.deflect_cd <= 0 and a.state == "ready" and (escaping or (seen and distance > 10 and brain.nearby_enemies <= 1)): offer("deflect",.93 if escaping else .66)
+		if seen and not escaping and distance > 3 and distance <= stitch.data().thread_range and k.bomb_cd <= 0: offer("bomb",.81,point)
+		if seen and not escaping and distance > 5 and distance < stitch.data().hook_range and k.mobility_cd <= 0 and is_instance_valid(stitch.thread) and stitch.thread.valid() and int(enemy.id) == stitch.thread.target.get_instance_id():
+			if brain.movement.safe_travel(a,point-a.body_point(1),distance-1): offer("hover",.85,point)
+		if seen and clear_shot and not escaping and int(enemy.get("marks",0)) > 0 and distance < stitch.data().seam_range and k.ultimate_charge >= 100 and float(enemy.health) <= stitch.data().seam_damage+int(enemy.marks)*stitch.data().mark_damage: offer("ultimate",.94,point)
 	elif k is RelayKit:
 		var relay := k as RelayKit
 		if is_instance_valid(relay.recipient) and relay.battery < 22 and not relay.ultimate_active(): offer("bomb",.92)
@@ -238,6 +245,13 @@ func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) ->
 	if a.resolver.attack_locked(a):
 		cancel("protected room")
 		return
+	if a.kit is StitchKit and a.concealed():
+		var stitch := a.kit as StitchKit
+		var close_prey: bool = brain.ready_to_attack() and a.global_position.distance_to(brain.threat.position) < stitch.data().opening_range
+		if not close_prey:
+			input.aim = aim
+			input.deflect = stitch.conceal_left < stitch.data().conceal_duration-3 and brain.tactical_state in ["contest","hold","investigate","pressure"]
+			return
 	if update_bomb(brain,input,delta): return
 	var acquired: bool = brain.ready_to_attack()
 	var desired: Vector3 = input.move if input.move.length() > .1 else aim
@@ -245,6 +259,7 @@ func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) ->
 		var point: Vector3 = brain.threat.position+Vector3.UP*1.1
 		var lead: float = 0.0
 		if a.kit is SamsonKit: lead = a.global_position.distance_to(point)/(a.tuning as SamsonTuning).ink_speed
+		elif a.kit is StitchKit: lead = a.global_position.distance_to(point)/(a.tuning as StitchTuning).needle_speed
 		elif a.kit is RelayKit: lead = a.global_position.distance_to(point)/(a.tuning as RelayTuning).carbine_speed
 		elif a.kit is MarshalKit: lead = a.global_position.distance_to(point)/(a.tuning as MarshalTuning).cannon_speed
 		elif a.kit is HuddleKit: lead = a.global_position.distance_to(point)/(a.tuning as HuddleTuning).seed_speed

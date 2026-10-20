@@ -5,6 +5,7 @@ var actor: HeroActor
 var effects: Dictionary = {}
 var marks: Dictionary = {}
 var souls: Dictionary = {}
+var stitches: Dictionary = {}
 
 func apply(kind: String, source: HeroActor, duration: float, strength: float = 0.0) -> bool:
 	if not actor.alive or actor.invulnerable or actor.state == "wisp_phase" or source.team == actor.team or actor.resolver.protected_room(actor) or actor.resolver.attack_locked(source):
@@ -29,6 +30,10 @@ func apply(kind: String, source: HeroActor, duration: float, strength: float = 0
 	return true
 
 func tick(delta: float) -> void:
+	for key: int in stitches.keys():
+		stitches[key].remaining -= delta
+		var owner_actor: HeroActor = stitches[key].source.get_ref() as HeroActor
+		if stitches[key].remaining <= 0 or not is_instance_valid(owner_actor) or not owner_actor.alive or owner_actor.life_serial != int(stitches[key].life): stitches.erase(key)
 	if actor.get_tree().get_first_node_in_group("museum_match") != null and actor.resolver.protected_room(actor):
 		cleanse()
 		marks.clear()
@@ -82,11 +87,15 @@ func movement_scale() -> float:
 	return scale
 
 func cleanse() -> void:
+	RedThread.clear_actor(actor,true)
+	stitches.clear()
 	if actor.boot_pair != null and actor.boot_pair.victim == actor: actor.boot_pair.release(false)
 	effects.clear()
 	souls.clear()
 
 func clear() -> void:
+	RedThread.clear_actor(actor)
+	stitches.clear()
 	effects.clear()
 	marks.clear()
 	souls.clear()
@@ -94,6 +103,22 @@ func clear() -> void:
 	for other: HeroActor in actor.get_tree().get_nodes_in_group("actors"):
 		if other.statuses != null: other.statuses.marks.erase(actor.get_instance_id())
 		if other.statuses != null: other.statuses.souls.erase(actor.get_instance_id())
+		if other.statuses != null: other.statuses.stitches.erase(actor.get_instance_id())
+
+func add_stitch(source: HeroActor, limit: int, seconds: float) -> void:
+	if not actor.alive or not source.alive or source.team == actor.team or actor.invulnerable or actor.state == "wisp_phase" or actor.resolver.protected_room(actor): return
+	stitches[source.get_instance_id()] = {"source":weakref(source),"life":source.life_serial,"count":mini(limit,stitch_count(source)+1),"remaining":seconds}
+
+func stitch_count(source: HeroActor) -> int:
+	if not is_instance_valid(source): return 0
+	var entry: Dictionary = stitches.get(source.get_instance_id(),{})
+	if entry.is_empty() or not source.alive or source.life_serial != int(entry.life) or float(entry.remaining) <= 0: return 0
+	return int(entry.count)
+
+func take_stitches(source: HeroActor) -> int:
+	var count: int = stitch_count(source)
+	stitches.erase(source.get_instance_id())
+	return count
 
 func add_soul(source: HeroActor, limit: int, seconds: float) -> void:
 	var key: int = source.get_instance_id()
@@ -121,7 +146,7 @@ func mobility_locked() -> bool:
 func permits(action: String) -> bool:
 	if stunned(): return false
 	if silenced() and action not in ["primary","secondary","aim","reload","jump","melee","throw","counter","guard"]: return false
-	var mobility_action: bool = action in ["dash","hover","boot","march","house_call","step","lift","kickstart","scatter","wave","intervene"] or (action == "ultimate" and actor.tuning.hero_id in ["marshal","wisp"])
+	var mobility_action: bool = action in ["dash","hover","boot","march","house_call","step","lift","kickstart","scatter","wave","intervene","stitch_hook"] or (action == "ultimate" and actor.tuning.hero_id in ["marshal","wisp","stitch"])
 	if mobility_action and mobility_locked(): return false
 	return true
 

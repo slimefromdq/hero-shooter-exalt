@@ -30,6 +30,9 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Movement visuals or dash-slide feedback failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/training_mantle_slide_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Training tower wall-kick mantle slide failed.' }
+
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/stitch_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Stitch combat, concealment or mobility checks failed.' }
     foreach ($taskBotTest in @('bot_tactics_test', 'bot_integration_test')) {
         & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script "res://tests/$taskBotTest.gd"
         if ($LASTEXITCODE -ne 0) { throw "Tactical bot check failed: $taskBotTest" }
@@ -124,6 +127,9 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'Samson native input and rendered validation failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_movement_visuals.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
         if ($LASTEXITCODE -ne 0) { throw 'Movement visual captures failed.' }
+
+        & $taskEngine --path $taskRoot --fixed-fps 60 --script res://tests/stitch_input_test.gd --windowed --resolution 1280x800 --audio-driver Dummy
+        if ($LASTEXITCODE -ne 0) { throw 'Stitch native inputs or rendered feedback failed.' }
         & $taskEngine --path $taskRoot --script res://tests/marshal_character_test.gd --windowed --resolution 1440x1100 --audio-driver Dummy --fixed-fps 60
         if ($LASTEXITCODE -ne 0) { throw 'Marshal rendered rig validation failed.' }
         & $taskEngine --path $taskRoot --script res://tests/capture_marshal_character_game.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60

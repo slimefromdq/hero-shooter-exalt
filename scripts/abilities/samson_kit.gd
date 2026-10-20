@@ -39,7 +39,7 @@ func target_valid(target: Variant, life: int, friendly: bool, reach: float) -> b
 	if not target.alive or target.life_serial != life or target == actor: return false
 	if (target.team == actor.team) != friendly: return false
 	if actor.resolver.attack_locked(actor) or actor.resolver.protected_room(target): return false
-	if not friendly and (target.invulnerable or target.state == "wisp_phase"): return false
+	if not friendly and (target.invulnerable or target.state == "wisp_phase" or not target.detectable_by(actor)): return false
 	if actor.global_position.distance_to(target.global_position) > reach: return false
 	if actor.resolver.spawn_door_blocks(actor.body_point(1.4),target.body_point(1.2)): return false
 	return actor.resolver.attack_ray(actor,actor.body_point(1.4),target.body_point(1.2),[],1).is_empty()
@@ -234,9 +234,9 @@ func move_override(delta: float) -> bool:
 	var offset: Vector3 = recipient.global_position-actor.global_position
 	var distance: float = maxf(0,offset.length()-data().intervene_stop)
 	var motion: Vector3 = offset.normalized()*minf(distance,data().intervene_speed*delta)
-	var hit: KinematicCollision3D = actor.move_and_collide(motion)
+	var hit: KinematicCollision3D = actor.move_ability_collide(motion)
 	actor.velocity = Vector3.ZERO
-	if hit != null:
+	if hit != null or actor.mobility_limited:
 		cancel()
 	elif distance <= data().intervene_speed*delta+.001: arrive()
 	return true

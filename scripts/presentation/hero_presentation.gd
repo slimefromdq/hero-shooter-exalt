@@ -188,18 +188,20 @@ func _ready() -> void:
 	var team_colour := Color("38dfff") if actor.team == 0 else Color("ff4f65")
 	var team_material: StandardMaterial3D = Geometry.material(team_colour, .65)
 	team_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	var team_parent: Node3D = roster_parts["doll"] if actor.kit is StitchKit else body
 	for side: float in [-1.0, 1.0]:
 		var badge := BoxMesh.new()
-		badge.size = Vector3(.065,.10,.055) if is_instance_valid(slayer_model) else Vector3(.14, .18, .37)
+		badge.size = Vector3(.065,.10,.055) if is_instance_valid(slayer_model) or actor.kit is StitchKit else Vector3(.14, .18, .37)
 		if is_instance_valid(marshal_model):
 			badge.size = Vector3(.05,.045,.24)
-		Geometry.mesh(body, badge, Vector3(side*.48,1.57,0) if is_instance_valid(marshal_model) else Vector3(side * (.225 if is_instance_valid(slayer_model) else .31),1.44,0),team_material)
+		Geometry.mesh(team_parent, badge, Vector3(side*.48,1.57,0) if is_instance_valid(marshal_model) else Vector3(side * (.225 if is_instance_valid(slayer_model) else .31),1.44,0),team_material)
 	for z: float in [-.23, .23]:
 		var band := BoxMesh.new()
 		band.size = Vector3(.5, .09, .04)
+		if actor.kit is StitchKit: band.size = Vector3(.16,.025,.012)
 		if is_instance_valid(slayer_model): band.size = Vector3(.29,.025,.012)
 		if is_instance_valid(marshal_model): band.size = Vector3(.27,.024,.012)
-		Geometry.mesh(body,band,Vector3(0,1.33,z*.61) if is_instance_valid(slayer_model) else Vector3(0,1.25,z),team_material)
+		Geometry.mesh(team_parent,band,Vector3(0,1.33,z*.61) if is_instance_valid(slayer_model) else Vector3(0,1.25,z),team_material)
 	var team_shape := TorusMesh.new()
 	team_shape.inner_radius = .43
 	team_shape.outer_radius = .49
@@ -394,6 +396,8 @@ func _process(delta: float) -> void:
 		if effect in ["root","slow"]: continue
 		status_text += "%s %.1f  " % [effect.replace("max_health","MAX HP WOUND").to_upper(),actor.statuses.effects[effect].remaining]
 	var viewer: HeroActor = session.player if session != null else null
+	if is_instance_valid(viewer) and viewer.kit is StitchKit and actor.statuses.stitch_count(viewer) > 0:
+		status_text += "STITCHES %d / %.1fs" % [actor.statuses.stitch_count(viewer),actor.statuses.stitches[viewer.get_instance_id()].remaining]
 	if is_instance_valid(viewer) and viewer.kit is WispKit and actor.statuses.soul_count(viewer) > 0:
 		status_text += "SOULS " + str(actor.statuses.soul_count(viewer))
 	if is_instance_valid(viewer) and viewer.tuning is SlayerTuning and actor.statuses.marked_for(viewer):
@@ -417,6 +421,12 @@ func _process(delta: float) -> void:
 			CombatEffect.pulse(actor.get_parent(),actor.global_position+Vector3.UP*.2,effect.color,.7 if effect.kind == "root" else 1.1)
 			break
 	cc_previous = current
+	if actor.concealed() and is_instance_valid(viewer) and viewer.team != actor.team:
+		team_ring.visible = false
+		nameplate.visible = false
+		health_bar.visible = false
+		status_ring.visible = false
+		status_label.visible = false
 	if not effects.is_empty():
 		var kind: String = effects[0].kind
 		match kind:

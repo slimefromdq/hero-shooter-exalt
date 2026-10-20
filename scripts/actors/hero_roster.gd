@@ -1,8 +1,8 @@
 class_name HeroRoster
 extends RefCounted
 
-const IDS: Array[String] = ["nimbus", "slayer", "marshal", "doctor", "huddle", "relay", "dynamo", "wisp", "samson"]
-const ROLES: Dictionary = {"nimbus":"dps","slayer":"dps","marshal":"tank","doctor":"support","huddle":"tank","relay":"support","dynamo":"tank","wisp":"dps","samson":"support"}
+const IDS: Array[String] = ["nimbus", "slayer", "marshal", "doctor", "huddle", "relay", "dynamo", "wisp", "samson", "stitch"]
+const ROLES: Dictionary = {"nimbus":"dps","slayer":"dps","marshal":"tank","doctor":"support","huddle":"tank","relay":"support","dynamo":"tank","wisp":"dps","samson":"support","stitch":"dps"}
 static var composition_seed: int = 76
 static var selected: String = initial_selection()
 static var direct_entry_pending: bool = OS.get_cmdline_user_args().has("--direct")
@@ -22,6 +22,7 @@ static func tuning_for(id: String) -> HeroTuning:
 
 static func kit_for(id: String) -> HeroKit:
 	match id:
+		"stitch": return StitchKit.new()
 		"slayer": return SlayerKit.new()
 		"marshal": return MarshalKit.new()
 		"doctor": return DoctorKit.new()

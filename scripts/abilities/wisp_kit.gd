@@ -143,27 +143,27 @@ func move_override(delta: float) -> bool:
 	if actor.state == "wisp_step":
 		var distance: float = minf(step_left,data().step_speed*delta)
 		var start: Vector3 = actor.global_position
-		var hit: KinematicCollision3D = actor.move_and_collide(step_direction*distance)
+		var hit: KinematicCollision3D = actor.move_ability_collide(step_direction*distance)
 		if hit != null and hit.get_normal().dot(step_direction) >= -.02:
 			var remainder: Vector3 = hit.get_remainder().slide(hit.get_normal())
-			hit = actor.move_and_collide(remainder) if remainder.length() > .0001 else null
+			hit = actor.move_ability_collide(remainder) if remainder.length() > .0001 else null
 		step_left -= distance
 		CombatEffect.streak(actor.get_parent(),start+Vector3.UP,actor.body_point(1),.1,.16)
 		actor.velocity = step_direction*data().step_speed
-		if hit != null or step_left <= .00001:
-			if hit == null: shells = mini(data().shell_limit,shells+1)
-			else: actor.velocity = actor.velocity.slide(hit.get_normal())
+		if hit != null or actor.mobility_limited or step_left <= .00001:
+			if hit == null and not actor.mobility_limited: shells = mini(data().shell_limit,shells+1)
+			elif hit != null: actor.velocity = actor.velocity.slide(hit.get_normal())
 			actor.state = "ready"
 		return true
 	if actor.state in ["wisp_ballet_start","wisp_ballet"]:
 		actor.velocity = actor.intent.move*data().ballet_movement+Vector3.UP*(8.0 if actor.state == "wisp_ballet_start" else 0.0)
-		actor.move_and_slide()
+		actor.move_ability_slide(delta)
 		return true
 	if actor.state == "ready" and glide_left > 0 and actor.velocity.y <= 0 and actor.intent.jump_held and not actor.motor.grounded():
 		actor.velocity.x = move_toward(actor.velocity.x,actor.intent.move.x*actor.tuning.ground_speed,actor.tuning.air_steering*delta)
 		actor.velocity.z = move_toward(actor.velocity.z,actor.intent.move.z*actor.tuning.ground_speed,actor.tuning.air_steering*delta)
 		actor.velocity.y = -data().glide_descent
-		actor.move_and_slide()
+		actor.move_ability_slide(delta)
 		return true
 	return false
 

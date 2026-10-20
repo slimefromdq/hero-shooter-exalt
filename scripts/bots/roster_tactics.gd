@@ -22,6 +22,10 @@ static func apply(a: HeroActor, input: CombatIntent) -> void:
 		input.aim = (enemy.body_point(1.2)-input.aim_origin).normalized()
 		input.primary_held = true
 	var distance: float = a.global_position.distance_to(enemy.global_position) if is_instance_valid(enemy) else INF
+	if a.kit is StitchKit:
+		# Stitch training uses the perception-driven tactical controller.
+		input.primary_held = is_instance_valid(enemy) and not a.concealed()
+		return
 	if a.kit is RelayKit:
 		var k := a.kit as RelayKit
 		if is_instance_valid(k.recipient) and k.battery < 22 and not k.ultimate_active(): input.bomb = true

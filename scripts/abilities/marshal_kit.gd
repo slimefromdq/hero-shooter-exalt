@@ -148,7 +148,7 @@ func move_override(delta: float) -> bool:
 		var motion: Vector3 = actor.velocity*dt
 		var blocked: bool = false
 		for iteration: int in 3:
-			var hit: KinematicCollision3D = actor.move_and_collide(motion)
+			var hit: KinematicCollision3D = actor.move_ability_collide(motion)
 			if hit == null: break
 			if hit.get_normal().y < cos(actor.floor_max_angle):
 				blocked = true
@@ -182,7 +182,7 @@ func march_contacts(from: Vector3, to: Vector3) -> void:
 	var shield: Dictionary = actor.resolver.barrier_ray(actor,from+Vector3.UP,to+Vector3.UP)
 	if not shield.is_empty():
 		(shield.collider as CombatBarrier).receive_damage(actor,data().march_damage,cast_id)
-		actor.global_position = shield.position-Vector3.UP-march_direction*.05
+		actor.move_ability_collide(shield.position-Vector3.UP-march_direction*.05-actor.global_position)
 		finish_march(true)
 		return
 	var candidates: Array[HeroActor] = []
@@ -231,7 +231,7 @@ func move_verdict(delta: float) -> bool:
 	actor.velocity.z = horizontal.z
 	actor.velocity.y = -t.verdict_slam_speed if verdict_diving else actor.velocity.y - actor.tuning.gravity * delta
 	var descending: bool = actor.velocity.y < 0
-	actor.move_and_slide()
+	actor.move_ability_slide(delta)
 	verdict_forward_left = maxf(0,verdict_forward_left-advance)
 	verdict_steer_left = maxf(0,verdict_steer_left-steering_distance)
 	for index: int in actor.get_slide_collision_count():

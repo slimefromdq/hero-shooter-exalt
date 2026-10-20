@@ -148,7 +148,7 @@ func advance(delta: float) -> bool:
 	var from: Vector3 = actor.global_position
 	for index: int in range(1,steps + 1):
 		var next: Vector3 = from.lerp(desired,float(index) / steps)
-		if actor.move_and_collide(next - actor.global_position) != null:
+		if actor.move_ability_collide(next - actor.global_position) != null or actor.mobility_limited:
 			abort()
 			return false
 	actor.velocity = Vector3.ZERO
@@ -210,6 +210,7 @@ func try_wall_jump(wish: Vector3) -> bool:
 	actor.motor.end_hover()
 	actor.motor.transition("air")
 	actor.velocity = (launch+Vector3.UP*upward).limit_length(actor.tuning.speed_limit)
+	actor.motor.voluntary_airborne = true
 	last_wall_normal = normal
 	wall_cooldown = actor.tuning.wall_jump_cooldown
 	wall_pose = .28

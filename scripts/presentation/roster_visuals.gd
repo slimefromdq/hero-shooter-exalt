@@ -12,6 +12,9 @@ static func orb(parent: Node3D, at: Vector3, scale: Vector3, color: String, glow
 	return mesh
 
 static func remodel(p: HeroPresentation) -> void:
+	if p.actor.kit is StitchKit:
+		StitchPresentation.build(p)
+		return
 	for mesh: MeshInstance3D in p.body.find_children("*","MeshInstance3D",true,false): mesh.visible = false
 	var id: String = p.actor.tuning.hero_id
 	var heavy: bool = id == "dynamo"
@@ -85,6 +88,9 @@ static func remodel(p: HeroPresentation) -> void:
 		Geometry.box(p.rifle,Vector3(.11,.23,.16),Vector3(0,-.17,.05),Color("b9a275"),false)
 
 static func animate(p: HeroPresentation, delta: float) -> void:
+	if p.actor.kit is StitchKit:
+		StitchPresentation.animate(p,delta)
+		return
 	var actor: HeroActor = p.actor
 	p.umbrella.visible = false
 	if actor.kit is DynamoKit:

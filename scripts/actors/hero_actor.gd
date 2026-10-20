@@ -35,6 +35,7 @@ var presentation: HeroPresentation
 var spawn_position: Vector3
 var last_hit_age: float = 99.0
 var boot_pair: BootAttachment
+var mobility_limited: bool = false
 
 func _ready() -> void:
 	if tuning == null:
@@ -76,6 +77,7 @@ func _ready() -> void:
 	health = tuning.max_health
 
 func _physics_process(delta: float) -> void:
+	mobility_limited = false
 	var before_motion: Vector3 = global_position
 	last_hit_age += delta
 	if controller != null and controller.has_method("gather_intent"):
@@ -107,9 +109,14 @@ func _physics_process(delta: float) -> void:
 	if state == "marshal_shield" and (intent.melee or intent.throw_action or intent.guard): (kit as MarshalKit).lower_barrier()
 	if state == "huddle_regroup" and (intent.melee or intent.throw_action or intent.guard or intent.dash): state = "ready"
 	if kit is SamsonKit: (kit as SamsonKit).prepare_actions(intent)
+
+	kit.prepare_input(intent)
 	close.tick(delta, intent)
 	kit.tick(delta, intent)
 	motor.tick(delta, intent)
+	if mobility_limited:
+		motor.interrupt_mobility()
+		if state != "ready": kit.cancel()
 	var session: Node = get_tree().get_first_node_in_group("museum_match")
 	if session != null: session.enforce_spawn_exclusion(self,before_motion)
 	if global_position.y < -8.0:
@@ -119,6 +126,11 @@ func _physics_process(delta: float) -> void:
 func permits(action: String) -> bool:
 	if not statuses.permits(action): return false
 	if action == "intervene" and statuses.movement_disabled(): return false
+
+	if kit is StitchKit:
+		if concealed() and action in ["dash","jump","hover"]: return false
+		if action in ["stitch_hook","stitch_hide","stitch_thread"] and resolver.attack_locked(self): return false
+		if action == "stitch_hook" and statuses.movement_disabled(): return false
 	if kit is ExpansionKit:
 		if action in ["step","lift","kickstart"] and statuses.movement_disabled(): return false
 		if action in ["secondary","step","lift","kickstart","phase","assign","wall"] and resolver.attack_locked(self): return false
@@ -222,6 +234,9 @@ func reset_actor(at: Vector3 = Vector3.INF) -> void:
 	resolver.record("reset", self, "scenario")
 
 func _exit_tree() -> void:
+	if is_inside_tree():
+		RedThread.clear_actor(self)
+		if statuses != null: statuses.clear()
 	if boot_pair != null: boot_pair.release(false)
 	if is_instance_valid(kit): kit.cancel(true)
 	if overhealth != null:
@@ -250,3 +265,26 @@ func select_hero(id: String) -> void:
 	presentation.actor = self
 	add_child(presentation)
 	health = tuning.max_health
+
+func concealed() -> bool:
+	return kit is StitchKit and (kit as StitchKit).concealed
+
+func detectable_by(observer: HeroActor) -> bool:
+	if not concealed() or observer == self or (is_instance_valid(observer) and observer.team == team): return true
+	if not is_instance_valid(observer): return false
+	return observer.global_position.distance_to(global_position) <= (tuning as StitchTuning).detection_range and resolver.visible(observer.body_point(1),self,[observer.get_rid()])
+
+func objective_eligible() -> bool:
+	return alive and not concealed()
+
+func constrain_mobility(motion: Vector3) -> Vector3:
+	var result: Vector3 = RedThread.constrain(self,motion)
+	if not result.is_equal_approx(motion): mobility_limited = true
+	return result
+
+func move_ability_collide(motion: Vector3) -> KinematicCollision3D:
+	return move_and_collide(constrain_mobility(motion))
+
+func move_ability_slide(delta: float) -> bool:
+	velocity = constrain_mobility(velocity*delta)/maxf(delta,.000001)
+	return move_and_slide()

@@ -76,3 +76,8 @@ Remaining work is stages 2–8 above: resolve actual kit rules, then implement r
 ## Samson implementation follow-up
 
 Samson is now implemented as the first Wave 1 hero. The final kit uses a 1.5-second full-speed Cross-Examination, 0.6-second stun followed by 2.5 seconds of silence, a 11 x 7.5 m / six-second occupancy injunction that blocks new movement casts without interrupting committed travel, and Roach Court with 750 HP and an 11 m Witness Protection radius. See [Samson](SAMSON.md) for balance, shared changes, controls and validation evidence. The original foundation-only audit above remains the historical first-stage plan; Stitch, Wisp and Seeker work remains deferred.
+
+
+## Stitch implementation follow-up
+
+Stitch is now playable alongside Samson. Her revised kit includes 18-damage needles at 0.15-second intervals over 45 m, source-owned Stitches, a visible Red Thread mobility leash, 20-second Play Dead with a 12-second cooldown on exit, a 13-second Spoolstep and a telegraphed marked-target execute. Shared stun, silence and movement-cast denial remain authoritative; committed Samson Intervene movement also respects the leash. See [Stitch](STITCH.md) and its [validation report](validation/stitch-results.json). Wisp/Seeker follow-ups in the historical foundation plan remain separate work.

@@ -127,7 +127,7 @@ func _physics_process(delta: float) -> void:
 func objective_occupancy() -> Array[int]:
 	var result: Array[int] = [0,0]
 	for actor: HeroActor in actors:
-		if not actor.alive or is_protected(actor): continue
+		if not actor.objective_eligible() or is_protected(actor): continue
 		if phase == "capture":
 			var at: Vector3 = actor.global_position-definition.hill_center
 			if absf(at.x) <= definition.hill_half_extents.x and absf(at.z) <= definition.hill_half_extents.z and at.y >= definition.hill_min_height and at.y <= definition.hill_max_height: result[actor.team] += 1

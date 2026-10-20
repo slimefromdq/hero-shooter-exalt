@@ -1,8 +1,8 @@
 class_name TrainingManager
 extends Node
 
-const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring", "Guard trainer", "Slayer hunter", "Marshal", "Doctor", "Huddle", "Relay", "Dynamo", "Wisp", "Tactical Sparring", "Samson support"]
-const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt", "Doctor rounds", "Marshal drill", "Huddle rescue", "Practice range", "Relay circuit", "Dynamo siege", "Wisp ballet", "Tactical Sparring", "Samson intervention"]
+const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring", "Guard trainer", "Slayer hunter", "Marshal", "Doctor", "Huddle", "Relay", "Dynamo", "Wisp", "Tactical Sparring", "Samson support", "Stitch"]
+const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt", "Doctor rounds", "Marshal drill", "Huddle rescue", "Practice range", "Relay circuit", "Dynamo siege", "Wisp ballet", "Tactical Sparring", "Samson intervention", "Stitch hunt"]
 var arena: Node3D
 var player: HeroActor
 var bots: Array[HeroActor] = []
@@ -148,7 +148,7 @@ func spawn_bot(profile: int, at: Vector3 = Vector3.INF, built_in: bool = false, 
 	var bot := preload("res://scenes/actors/hero_actor.tscn").instantiate() as HeroActor
 	bot.set_meta("built_in",built_in)
 	bot.team = team_id
-	bot.tuning = HeroRoster.tuning_for({6:"slayer",7:"marshal",8:"doctor",9:"huddle",10:"relay",11:"dynamo",12:"wisp",14:"samson"}.get(profile,"nimbus"))
+	bot.tuning = HeroRoster.tuning_for({6:"slayer",7:"marshal",8:"doctor",9:"huddle",10:"relay",11:"dynamo",12:"wisp",14:"samson",15:"stitch"}.get(profile,"nimbus"))
 	bot.actor_id = "%s_%02d" % [PROFILES[profile].to_lower().replace(" ", "_"), spawn_serial]
 	bot.position = Vector3(-4 + bots.size() * 3, 0.1, -7 - bots.size() * 2) if at == Vector3.INF else at
 	arena.add_child(bot)
@@ -156,11 +156,11 @@ func spawn_bot(profile: int, at: Vector3 = Vector3.INF, built_in: bool = false, 
 	bot.health = bot.tuning.max_health
 	bot.shields = target_shields
 	bot.invulnerable = target_invulnerable
-	var controller: BotController = TrainingTacticalController.new() if profile == 13 else BotController.new()
+	var controller: BotController = TrainingTacticalController.new() if profile in [13,15] else BotController.new()
 	if controller is TrainingTacticalController:
 		controller.slot = bots.size()
-		bot.select_hero(HeroRoster.selected)
-		bot.tuning.max_health = bot_max_health if target_health_override else HeroRoster.tuning_for(HeroRoster.selected).max_health
+		bot.select_hero("stitch" if profile == 15 else HeroRoster.selected)
+		bot.tuning.max_health = bot_max_health if target_health_override else HeroRoster.tuning_for(bot.tuning.hero_id).max_health
 		bot.health = bot.tuning.max_health
 		bot.shields = target_shields
 		bot.invulnerable = target_invulnerable
@@ -216,6 +216,10 @@ func reset_scenario() -> void:
 			diver.controller.target = patient
 			var gunner: HeroActor = spawn_bot(2,Vector3(7,.1,-10))
 			gunner.controller.target = patient
+		17:
+			spawn_bot(0,Vector3(0,.1,7))
+			spawn_bot(1,Vector3(-4,.1,-2))
+			spawn_bot(15,Vector3(8,.1,-10))
 		15:
 			arena.ensure_tactical_navigation()
 			spawn_bot(13,Vector3(3,.1,-11))
@@ -399,4 +403,12 @@ func start_samson_drill() -> void:
 	freeze_ai = false
 	reset_scenario()
 	show_notice("Q rescue Witness / E cross-examine / 1 deny movement / 2 Witness Protection")
+	if menu_open: toggle_menu()
+
+func start_stitch_drill() -> void:
+	select_hero("stitch")
+	scenario = 17
+	freeze_ai = false
+	reset_scenario()
+	show_notice("Needles mark / close shears consume / Q hook / E hide up to 20s / 1 thread / 2 seam")
 	if menu_open: toggle_menu()

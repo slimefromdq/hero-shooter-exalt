@@ -144,7 +144,7 @@ func move_override(delta: float) -> bool:
 		return false
 	var offset: Vector3 = call_destination - actor.global_position
 	var motion: Vector3 = offset.limit_length(data().call_speed * delta)
-	var collision: KinematicCollision3D = actor.move_and_collide(motion)
+	var collision: KinematicCollision3D = actor.move_ability_collide(motion)
 	actor.velocity = Vector3.ZERO
 	if collision != null or offset.length() <= data().call_speed * delta + .001: actor.state = "ready"
 	return true

@@ -20,7 +20,7 @@ func sense(actor: HeroActor, actors: Array, now: float, budget: int = 6) -> void
 		ray_count += 1
 		var hit: Dictionary = actor.resolver.ray(actor.body_point(1.45),other.body_point(1.0),[actor.get_rid()])
 		if not hit.is_empty() and hit.get("collider") != other: continue
-		if actor.resolver.protected_room(other): continue
+		if actor.resolver.protected_room(other) or not other.detectable_by(actor): continue
 		var previous: Dictionary = observations.get(id,{})
 		var first_seen: float = float(previous.get("first_seen",now))
 		if previous.is_empty() or now-float(previous.get("seen",now)) > .45 or int(previous.get("life",-1)) != other.life_serial: first_seen = now
@@ -31,7 +31,7 @@ func sense(actor: HeroActor, actors: Array, now: float, budget: int = 6) -> void
 			"blocked_by_barrier":not actor.resolver.barrier_ray(actor,actor.body_point(1.45),other.body_point(1.0)).is_empty(),
 			"hero":other.tuning.hero_id,"role":HeroRoster.role_for(other.tuning.hero_id),"state":other.state,
 			"facing":other.aim_direction,"seen":now,"first_seen":first_seen,"defense_seen":defense,
-			"marks":other.statuses.soul_count(actor),"status_count":other.statuses.effects.size()}
+			"marks":other.statuses.stitch_count(actor) if actor.kit is StitchKit else other.statuses.soul_count(actor),"status_count":other.statuses.effects.size()}
 		visible_ids.append(id)
 	if not candidates.is_empty(): cursor = (cursor+budget)%candidates.size()
 	expire(now)

@@ -3,6 +3,8 @@ extends RefCounted
 
 static func labels(a: HeroActor) -> Array[String]:
 	if a.kit is SamsonKit: return ["INTERVENE","CROSS-EXAMINATION","CEASE AND DESIST"]
+
+	if a.kit is StitchKit: return ["SPOOLSTEP","PLAY DEAD","RED THREAD"]
 	if a.kit is RelayKit: return ["KICKSTART","SHOCK DELIVERY","RECALL / SELF"]
 	if a.kit is DynamoKit: return ["STORMCHARGE","RAISE THE LINE","LODESTONE"]
 	if a.kit is WispKit: return ["GHOSTSTEP","BETWEEN WORLDS","SPECTRAL LIFT"]
@@ -19,6 +21,10 @@ static func durations(a: HeroActor) -> Array[float]:
 	if a.tuning is SamsonTuning:
 		var s := a.tuning as SamsonTuning
 		return [s.intervene_recharge,s.cross_cooldown,s.notice_cooldown]
+
+	if a.tuning is StitchTuning:
+		var t := a.tuning as StitchTuning
+		return [t.hook_cooldown,t.conceal_cooldown,t.thread_cooldown]
 	if a.tuning is RelayTuning:
 		var t := a.tuning as RelayTuning
 		return [t.jump_cooldown,t.shock_cooldown,t.transfer_cooldown]
@@ -39,6 +45,8 @@ static func durations(a: HeroActor) -> Array[float]:
 
 static func ultimate_label(a: HeroActor) -> String:
 	if a.kit is SamsonKit: return "ROACH COURT"
+
+	if a.kit is StitchKit: return "CURTAIN CALL"
 	match a.tuning.hero_id:
 		"relay": return "FULL CIRCUIT"
 		"dynamo": return "STORM DOMINION"
@@ -53,6 +61,8 @@ static func ultimate_detail(a: HeroActor) -> String:
 	if a.kit is SamsonKit:
 		var t := a.tuning as SamsonTuning
 		return "%dM / %d%% RESIST / %d HP COURT" % [roundi(t.court_radius),roundi(t.court_reduction*100),roundi(t.court_health)]
+
+	if a.kit is StitchKit: return "18M SEAM / MARKED EXECUTE <=25%"
 	match a.tuning.hero_id:
 		"relay": return "%d HP/S / +%d%% FIRE" % [roundi((a.tuning as RelayTuning).circuit_heal),roundi((a.tuning as RelayTuning).circuit_haste*100)]
 		"dynamo": return "%dM / %dM STORM / %d DPS" % [roundi((a.tuning as DynamoTuning).storm_range),roundi((a.tuning as DynamoTuning).storm_radius),roundi((a.tuning as DynamoTuning).storm_damage/(a.tuning as DynamoTuning).storm_interval)]
@@ -65,6 +75,8 @@ static func ultimate_detail(a: HeroActor) -> String:
 
 static func weapon_label(a: HeroActor) -> String:
 	if a.kit is SamsonKit: return "DEPOSITION"
+
+	if a.kit is StitchKit: return "SHEARS" if (a.kit as StitchKit).shears_mode else "NEEDLEPOINT"
 	match a.tuning.hero_id:
 		"relay": return "CARBINE"
 		"dynamo": return "MINIGUN"
@@ -77,6 +89,8 @@ static func weapon_label(a: HeroActor) -> String:
 
 static func secondary_label(a: HeroActor) -> String:
 	if a.kit is SamsonKit: return "Q RESCUE / E CHANNEL / 1 NO-MOBILITY ZONE"
+
+	if a.kit is StitchKit: return "LMB AUTO NEEDLES / SHEARS · Q HOOK · E HIDE · 1 THREAD"
 	if a.kit is RelayKit: return "RMB ASSIGN DRONE / 1 RECALL OR SELF"
 	if a.kit is DynamoKit: return "RMB PRESPIN / WALL: LMB PLACE, RMB ROTATE, E CANCEL"
 	if a.kit is WispKit: return "RMB SOULBREAKER / DASH TO LOAD SHELLS"
@@ -94,6 +108,10 @@ static func detail(a: HeroActor) -> String:
 		if is_instance_valid(k.notice) and k.notice.active(): result += " / NOTICE %d %.1fs" % [ceili(k.notice.health),k.notice.remaining]
 		if k.ultimate_active(): result += " / COURT %d %.1fs" % [ceili(k.court.health),k.court.remaining]
 		return result
+
+	if a.kit is StitchKit:
+		var k := a.kit as StitchKit
+		return ("CONCEALED %.1fs / E REVEAL / COOLDOWN ON EXIT" % k.conceal_left if k.concealed else "PLAY DEAD %.1fs" % k.deflect_cd)+(" / THREAD %.1fs" % k.thread.remaining if is_instance_valid(k.thread) and k.thread.valid() else " / NO THREAD")
 	if a.kit is RelayKit:
 		var k := a.kit as RelayKit
 		return "BATTERY %d/%d / %s%s" % [ceili(k.battery),ceili(k.data().battery_capacity),k.recipient.actor_id.to_upper() if is_instance_valid(k.recipient) else "DOCKED / CHARGING"," / CIRCUIT %.1fs" % k.circuit_left if k.ultimate_active() else " / TRANSFER" if k.transfer_left > 0 else ""]
@@ -122,6 +140,9 @@ static func status(a: HeroActor, include_overhealth: bool = true) -> String:
 	var result: String = ("OVERHEALTH +%d / %.1fs  " % [ceili(a.overhealth.value()),a.overhealth.remaining()]) if include_overhealth and a.overhealth.value() > 0 else ""
 	if a.statuses.mobility_locked(): disable += "MOBILITY DENIED  "
 	result = disable + result
+
+	for entry: Dictionary in a.statuses.stitches.values():
+		result += "STITCHES %d / %.1fs  " % [entry.count,entry.remaining]
 	for kind: String in ["exemplary","prescription","aftercare","ward","circuit"]:
 		var duration: float = a.benefits.remaining(kind)
 		if duration > 0: result += "OVERCLOCKED  " if kind == "circuit" else "%s %.1fs  " % [kind.to_upper(),duration]

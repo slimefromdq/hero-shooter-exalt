@@ -7,6 +7,8 @@ static func snapshot(actor: HeroActor) -> Array[Dictionary]:
 		var effect: Dictionary = actor.statuses.effects[kind]
 		if kind == "root": result.append(entry("root","[#] ROOTED","Movement locked; attacks available",effect.remaining,Color("d9b4ff"),220))
 		elif kind == "slow": result.append(entry("slow","[~] SLOWED","Movement reduced; mobility disabled",effect.remaining,Color("91d6ff"),330))
+	for thread: RedThread in actor.get_tree().get_nodes_in_group("red_threads"):
+		if thread.target == actor and thread.valid(): result.append(entry("thread","RED THREAD","Outward mobility limited to 16m; walk or break sight",thread.remaining,Color("ff4968"),180))
 	var state: String = actor.state
 	if state in ["stagger","counterthrow","throw_release"]:
 		result.append(entry(state,"[!] STAGGER" if state == "stagger" else "[X] COUNTER BREAK","Actions locked",actor.state_time,Color("ffca78"),160 if state == "stagger" else 260))

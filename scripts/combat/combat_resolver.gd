@@ -158,6 +158,7 @@ func knockback(source: HeroActor, target: HeroActor, impulse: Vector3, tag: Stri
 		# Upward launches use normal gravity, not the horizontal shove's braking.
 		# Interrupt a competing mobility override without adding a control lock.
 		target.motor.interrupt_mobility()
+		target.motor.voluntary_airborne = false
 		if target.state in ["doctor_call","marshal_march"]: target.kit.cancel()
 		target.velocity.y = maxf(target.velocity.y,impulse.y)
 		impulse.y = 0

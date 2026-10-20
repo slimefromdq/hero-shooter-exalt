@@ -19,7 +19,7 @@ static func enemy(a: HeroActor) -> HeroActor:
 	var best: HeroActor
 	var distance: float = 35
 	for other: HeroActor in a.get_tree().get_nodes_in_group("actors"):
-		if other.team == a.team or not other.alive or a.resolver.protected_room(other): continue
+		if other.team == a.team or not other.alive or not other.detectable_by(a) or a.resolver.protected_room(other): continue
 		var d: float = a.global_position.distance_to(other.global_position)
 		if d < distance and a.resolver.visible(a.global_position + Vector3.UP,other,[a.get_rid()]):
 			best = other

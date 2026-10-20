@@ -189,7 +189,7 @@ func supported(at: Vector3) -> bool:
 func move_override(delta: float) -> bool:
 	if actor.state == "huddle_scatter":
 		var distance: float = minf(scatter_left,data().scatter_speed*delta)
-		var collision: KinematicCollision3D = actor.move_and_collide(travel_direction*distance)
+		var collision: KinematicCollision3D = actor.move_ability_collide(travel_direction*distance)
 		scatter_left -= distance
 		actor.velocity = travel_direction*data().scatter_speed
 		if collision != null or scatter_left <= .0001:
@@ -208,7 +208,7 @@ func move_override(delta: float) -> bool:
 		actor.state = "ready"
 		return false
 	actor.velocity = travel_direction*t.wave_speed+Vector3.DOWN*actor.tuning.gravity*slice
-	actor.move_and_slide()
+	actor.move_ability_slide(delta)
 	actor.apply_floor_snap()
 	wave_contacts(start,actor.global_position,slice)
 	wave_left = maxf(0,wave_left-slice)

@@ -1,0 +1,265 @@
+{
+  "date": "2026-10-19",
+  "engine": "4.7.2.stable.official.ed1daf0bf",
+  "hero": "stitch",
+  "status": "implemented_with_reported_city_soak_limitation",
+  "tuning": {
+    "health": 225,
+    "needle_damage": 18,
+    "needle_interval": 0.15,
+    "needle_range": 45,
+    "play_dead_concealment": 20,
+    "play_dead_cooldown": 12,
+    "play_dead_cooldown_starts": "on_any_concealment_exit",
+    "spoolstep_cooldown": 13
+  },
+  "validation": {
+    "full_verifier": {
+      "command": "powershell -ExecutionPolicy Bypass -File .\\tools\\verify.ps1",
+      "passed": true,
+      "pass_lines": 3706,
+      "log": "artifacts/stitch-verification.log"
+    },
+    "final_shared_movement_regressions": {
+      "passed": true,
+      "checks": 873,
+      "log": "artifacts/stitch-final-motion.log"
+    },
+    "focused": {
+      "checks": 162,
+      "failures": []
+    },
+    "native_input": {
+      "checks": 15,
+      "failures": []
+    },
+    "rendered_frames": [
+      "artifacts/roster-stitch-portrait.png",
+      "artifacts/roster-stitch-concealed-far.png",
+      "artifacts/roster-stitch-concealed-near.png",
+      "artifacts/roster-stitch-revealed.png",
+      "artifacts/stitch-thread.png",
+      "artifacts/stitch-play-dead.png",
+      "artifacts/stitch-curtain-windup.png",
+      "artifacts/stitch-curtain-finish.png"
+    ],
+    "simulations": [
+      {
+        "seed": 76,
+        "seconds": 600,
+        "checks": 17,
+        "failures": [
+          "no bot remains physically stalled for eight seconds outside the objective"
+        ],
+        "falls": [],
+        "worst_stall": 9.0,
+        "persistent_stalls": [
+          {
+            "actor": "crown_02",
+            "goal": "(-14.0, 0.35, 0.0)",
+            "path_finished": false,
+            "position": "(-13.26058, 0.000941, 14.1145)",
+            "role": "high_ground",
+            "route_index": 7,
+            "second": 84
+          },
+          {
+            "actor": "crown_06",
+            "goal": "(-24.0, 0.0, 28.0)",
+            "path_finished": false,
+            "position": "(-12.87017, 0.00094, 13.48473)",
+            "role": "frontline",
+            "route_index": 4,
+            "second": 84
+          }
+        ],
+        "artifact": "artifacts/city-simulation-76-600s-stitch.json",
+        "stitch_participants": 2
+      },
+      {
+        "seed": 971,
+        "seconds": 180,
+        "checks": 15,
+        "failures": [],
+        "falls": [],
+        "worst_stall": 5.0,
+        "persistent_stalls": [],
+        "artifact": "artifacts/city-simulation-971-180s-stitch.json",
+        "stitch_participants": 2
+      },
+      {
+        "seed": 76,
+        "seconds": 180.0,
+        "checks": 16,
+        "failures": [],
+        "falls": 0,
+        "worst_stuck": 3.0,
+        "persistent_stalls": [],
+        "recovery_warps": 0,
+        "drill_seconds": 166,
+        "staged_combat": [
+          {
+            "contest_samples": 8,
+            "falls": 0,
+            "furthest_distance": 57.1966663122168,
+            "seconds": 60,
+            "stage": 1,
+            "start_distance": 0.0
+          },
+          {
+            "contest_samples": 26,
+            "falls": 0,
+            "furthest_distance": 84.0749999324493,
+            "seconds": 60,
+            "stage": 2,
+            "start_distance": 73.0
+          },
+          {
+            "contest_samples": 7,
+            "falls": 0,
+            "furthest_distance": 198.021666244672,
+            "seconds": 60,
+            "stage": 3,
+            "start_distance": 150.0
+          }
+        ],
+        "artifact": "artifacts/museum/simulation-76-attack-stitch.json",
+        "stitch_participants": 2
+      },
+      {
+        "seed": 971,
+        "seconds": 120.0,
+        "checks": 16,
+        "failures": [],
+        "falls": 0,
+        "worst_stuck": 3.0,
+        "persistent_stalls": [],
+        "recovery_warps": 0,
+        "drill_seconds": 166,
+        "staged_combat": [
+          {
+            "contest_samples": 13,
+            "falls": 0,
+            "furthest_distance": 43.3933329462997,
+            "seconds": 60,
+            "stage": 1,
+            "start_distance": 0.0
+          },
+          {
+            "contest_samples": 12,
+            "falls": 0,
+            "furthest_distance": 75.444999992848,
+            "seconds": 60,
+            "stage": 2,
+            "start_distance": 73.0
+          },
+          {
+            "contest_samples": 5,
+            "falls": 0,
+            "furthest_distance": 159.659999958676,
+            "seconds": 60,
+            "stage": 3,
+            "start_distance": 150.0
+          }
+        ],
+        "artifact": "artifacts/museum/simulation-971-defend-stitch.json",
+        "stitch_participants": 2
+      }
+    ]
+  },
+  "limitations": [
+    "Procedural model, portrait, effects and synthesized audio are placeholders.",
+    "Competitive balance and 20-second concealment game feel require human playtesting.",
+    "Offline only; no networking implementation.",
+    "City seed 76 600-second soak failed its strict stall check for Huddle and Dynamo, who later recovered; no Stitch stalls, falls or recovery teleports were recorded."
+  ],
+  "commit_or_push_performed": true,
+  "changed_files": [
+    "Launch.ps1",
+    "README.md",
+    "assets/portraits/stitch.png",
+    "assets/portraits/stitch.png.import",
+    "docs/DECISIONS.md",
+    "docs/ENEMY_AI.md",
+    "docs/STITCH.md",
+    "docs/WAVE_1_THE_UNQUIET.md",
+    "docs/validation/stitch-results.json",
+    "resources/bots/heroes/stitch.tres",
+    "resources/stitch.tres",
+    "scripts/abilities/doctor_kit.gd",
+    "scripts/abilities/hero_kit.gd",
+    "scripts/abilities/huddle_kit.gd",
+    "scripts/abilities/marshal_kit.gd",
+    "scripts/abilities/relay_kit.gd",
+    "scripts/abilities/samson_kit.gd",
+    "scripts/abilities/slayer_kit.gd",
+    "scripts/abilities/stitch_kit.gd",
+    "scripts/abilities/stitch_kit.gd.uid",
+    "scripts/abilities/wisp_kit.gd",
+    "scripts/actors/hero_actor.gd",
+    "scripts/actors/hero_motor.gd",
+    "scripts/actors/hero_roster.gd",
+    "scripts/actors/stitch_tuning.gd",
+    "scripts/actors/stitch_tuning.gd.uid",
+    "scripts/actors/traversal_motion.gd",
+    "scripts/bots/bot_brain.gd",
+    "scripts/bots/bot_combat.gd",
+    "scripts/bots/bot_controller.gd",
+    "scripts/bots/bot_perception.gd",
+    "scripts/bots/care_tactics.gd",
+    "scripts/bots/roster_tactics.gd",
+    "scripts/city/city_hill.gd",
+    "scripts/combat/combat_resolver.gd",
+    "scripts/combat/combat_statuses.gd",
+    "scripts/combat/projectile.gd",
+    "scripts/combat/red_thread.gd",
+    "scripts/combat/red_thread.gd.uid",
+    "scripts/museum/museum_match.gd",
+    "scripts/presentation/care_hud.gd",
+    "scripts/presentation/control_feedback.gd",
+    "scripts/presentation/game_menu.gd",
+    "scripts/presentation/hero_presentation.gd",
+    "scripts/presentation/roster_visuals.gd",
+    "scripts/presentation/stitch_presentation.gd",
+    "scripts/presentation/stitch_presentation.gd.uid",
+    "scripts/training/training_hud.gd",
+    "scripts/training/training_manager.gd",
+    "tests/capture_stitch.gd",
+    "tests/capture_stitch.gd.uid",
+    "tests/stitch_input_test.gd",
+    "tests/stitch_input_test.gd.uid",
+    "tests/stitch_test.gd",
+    "tests/stitch_test.gd.uid",
+    "tools/verify.ps1"
+  ],
+  "initial_implementation_base": "b3bb5d5",
+  "integration_validation": {
+    "base_commit": "17aaa33",
+    "preserved_upstream": [
+      "Samson support hero and ability selection",
+      "shared movement overhaul",
+      "slide steering and mantle exits",
+      "movement and dash-slide feedback"
+    ],
+    "full_verifier": {
+      "passed": true,
+      "pass_lines": 4147,
+      "log": "artifacts/stitch-push-verification.log"
+    },
+    "compatibility": {
+      "passed": true,
+      "checks": 345,
+      "stitch_checks": 168,
+      "samson_checks": 120,
+      "samson_integration_checks": 18,
+      "ability_selection_checks": 39,
+      "log": "artifacts/stitch-push-compatibility.log"
+    },
+    "native_input": {
+      "passed": true,
+      "checks": 15,
+      "log": "artifacts/stitch-push-input.log"
+    },
+    "note": "Initial long-soak results above predate integration of the newer upstream commits; they were not rerun during push preparation."
+  }
+}

@@ -308,7 +308,7 @@ func move_override(delta: float) -> bool:
 		var requested_velocity: Vector3 = actor.velocity
 		for step_index: int in step_count:
 			actor.velocity = requested_velocity / step_count
-			actor.move_and_slide()
+			actor.move_ability_slide(delta)
 			if boot_targets():
 				connected = true
 				break

@@ -51,7 +51,7 @@ func advance(delta: float, participants: Array[HeroActor]) -> void:
 	unlocked = unlock_remaining <= 0.0
 	occupancy = [0, 0]
 	for actor: HeroActor in participants:
-		if is_instance_valid(actor) and actor.alive and actor.team in [0, 1] and contains(actor.global_position):
+		if is_instance_valid(actor) and actor.objective_eligible() and actor.team in [0, 1] and contains(actor.global_position):
 			occupancy[actor.team] += 1
 	contested = occupancy[0] > 0 and occupancy[1] > 0
 	if not unlocked:

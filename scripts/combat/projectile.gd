@@ -15,6 +15,9 @@ var reflected_events: Dictionary = {}
 var headshots: bool = false
 var head_multiplier: float = 1.0
 var blast_radius: float = 0.0
+var confirmed_impact: Callable
+var needle_trail: bool = false
+var trail_clock: float = 0.0
 
 func _ready() -> void:
 	add_to_group("owned_attacks")
@@ -22,7 +25,10 @@ func _ready() -> void:
 	var ball := SphereMesh.new()
 	ball.radius = 0.1
 	ball.height = 0.2
-	Geometry.mesh(self, ball, Vector3.ZERO, Geometry.material(color, 1.5))
+	if needle_trail:
+		Geometry.box(self,Vector3(.025,.025,.45),Vector3.ZERO,color,false)
+		if not direction.is_zero_approx(): look_at_from_position(position,position+direction,Vector3.RIGHT if absf(direction.y) > .99 else Vector3.UP)
+	else: Geometry.mesh(self, ball, Vector3.ZERO, Geometry.material(color, 1.5))
 
 func _physics_process(delta: float) -> void:
 	if is_queued_for_deletion(): return
@@ -34,6 +40,11 @@ func _physics_process(delta: float) -> void:
 	var distance: float = minf(speed*delta,max_distance-traveled)
 	traveled += distance
 	var next: Vector3 = global_position + direction * distance
+	if needle_trail:
+		trail_clock += delta
+		if trail_clock >= .04:
+			trail_clock = 0
+			CombatEffect.streak(get_parent(),global_position-direction*.4,global_position,.012,.07)
 	var hit: Dictionary = source.resolver.attack_ray(source, global_position, next, [source.get_rid()])
 	if hit.is_empty():
 		global_position = next
@@ -46,12 +57,14 @@ func _physics_process(delta: float) -> void:
 	if target != null:
 		var head: bool = headshots and hit.position.y-target.global_position.y >= target.headshot_height()
 		var result: String = source.resolver.damage(source, target, damage_amount*(head_multiplier if head else 1.0), "projectile", cast_id, head, false, global_position)
+		if result == "hit" and confirmed_impact.is_valid(): confirmed_impact.call(source,target)
 		if result == "deflect":
 			var event_key: String = "%d:%d" % [target.get_instance_id(), target.kit.cast_id]
 			if reflections < 2 and not reflected_events.has(event_key):
 				reflected_events[event_key] = true
 				reflections += 1
 				source = target
+				confirmed_impact = Callable()
 				direction = target.aim_direction
 				cast_id = target.resolver.new_cast(target)
 				global_position = hit["position"] + direction * 0.25

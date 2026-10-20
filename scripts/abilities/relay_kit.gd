@@ -73,6 +73,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 		else: assign(actor)
 	if input.hover and mobility_cd <= 0 and can_act("kickstart"):
 		actor.motor.interrupt_mobility()
+		actor.motor.voluntary_airborne = true
 		var wish: Vector3 = input.move if not input.move.is_zero_approx() else actor.aim_direction*Vector3(1,0,1)
 		actor.velocity = wish.normalized()*t.jump_forward+Vector3.UP*t.jump_up
 		actor.motor.transition("air")

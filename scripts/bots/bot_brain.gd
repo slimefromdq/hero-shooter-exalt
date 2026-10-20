@@ -143,6 +143,8 @@ func select_target() -> void:
 		for other: Dictionary in perception.observations.values():
 			if now-float(other.seen) < 1 and other.position.distance_to(entry.position) < 10: retaliation += 1
 		var score: float = range_value*.3+vulnerability*(.25+hero_profile.vulnerable_bias)+(.3 if visible else 0.0)-float(retaliation)*.045
+		if actor.kit is StitchKit:
+			score += .25 / maxf(1,retaliation) + int(entry.get("marks",0))*.06
 		var damage_rate: float = actor.tuning.rifle_damage/maxf(.1,actor.tuning.shot_interval)
 		score -= minf(.2,(float(entry.health)+float(entry.shields)+float(entry.get("overhealth",0)))/maxf(1,damage_rate)*.01)
 		if entry.position.distance_to(context.get("position",Vector3.ZERO)) < 10: score += .15

@@ -61,7 +61,8 @@ func gather_intent(delta: float) -> CombatIntent:
 	action_timer -= delta
 	var offset: Vector3 = target.global_position - actor.global_position
 	var distance: float = offset.length()
-	var sees: bool = actor.resolver.visible(input.aim_origin, target, [actor.get_rid()])
+	var sees: bool = target.detectable_by(actor) and actor.resolver.visible(input.aim_origin, target, [actor.get_rid()])
+	if not target.detectable_by(actor): return input
 	if think_timer <= 0.0:
 		think_timer = reaction_delay
 		if sees:

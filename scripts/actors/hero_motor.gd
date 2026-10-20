@@ -29,6 +29,7 @@ var crouched: bool = false
 var body_collision: CollisionShape3D
 var standing_capsule: CapsuleShape3D
 var standing_clearance_capsule: CapsuleShape3D
+var voluntary_airborne: bool = false
 
 func _ready() -> void:
 	body_collision = actor.get_node("BodyCollision") as CollisionShape3D
@@ -66,7 +67,8 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 	var t: HeroTuning = actor.tuning
 	slide_feedback.tick(delta,input)
 	var was_floor: bool = grounded()
-	update_posture(was_floor and input.slide and mode not in ["dash","dash_windup","mantle"] and actor.state not in ["captured","throw_pair","boot_attached","boot_captured","stagger","counterthrow","throw_release"])
+	if was_floor and actor.velocity.y <= 0: voluntary_airborne = false
+	update_posture(actor.concealed() or was_floor and input.slide and mode not in ["dash","dash_windup","mantle"] and actor.state not in ["captured","throw_pair","boot_attached","boot_captured","stagger","counterthrow","throw_release"])
 	slide_press_age += delta
 	if input.slide_pressed: slide_press_age = 0.0
 	if not input.slide and mode not in ["dash","dash_windup"]: slide_rearmed = true
@@ -111,7 +113,7 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 		else:
 			actor.velocity.y -= t.gravity * delta
 		actor.velocity = actor.velocity.limit_length(t.speed_limit)
-		actor.move_and_slide()
+		actor.move_ability_slide(delta)
 		for index: int in actor.get_slide_collision_count():
 			var normal: Vector3 = actor.get_slide_collision(index).get_normal()
 			if normal.dot(actor.close.melee_motion_direction()) < -0.25:
@@ -142,6 +144,7 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			end_hover()
 		else:
 			transition("hover_ascent", t.hover_ascent_time)
+			voluntary_airborne = true
 			actor.velocity.y = t.hover_ascent
 			actor.resolver.record("cast", actor, "hover")
 	if mode == "dash_windup":
@@ -186,9 +189,10 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 	else:
 		# Test incoming momentum before crouch braking. Slide takes priority,
 		# including downhill entry, but cannot bypass the dash landing gate.
-		var enter_slide: bool = input.slide and slide_rearmed and not dash_slide_locked and was_floor and can_move and actor.state == "ready" and (Vector2(actor.velocity.x,actor.velocity.z).length() >= t.slide_entry_speed or rad_to_deg(actor.get_floor_angle()) >= t.slide_slope)
+		var enter_slide: bool = not actor.concealed() and input.slide and slide_rearmed and not dash_slide_locked and was_floor and can_move and actor.state == "ready" and (Vector2(actor.velocity.x,actor.velocity.z).length() >= t.slide_entry_speed or rad_to_deg(actor.get_floor_angle()) >= t.slide_slope)
 		var scale: float = 1.0
-		if crouched and not enter_slide: scale = t.crouch_speed_scale
+		if crouched and not enter_slide: scale = (actor.tuning as StitchTuning).conceal_speed if actor.concealed() else t.crouch_speed_scale
+		if actor.concealed() and (actor.kit as StitchKit).collapse_left > 0: scale = 0
 		if input.aim_held and actor.tuning.hero_id in ["nimbus","slayer"]:
 			scale = minf(scale,0.6)
 		if actor.state == "guard":
@@ -235,6 +239,7 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 		if not was_floor and coyote <= 0 and traversal.try_wall_jump(wish):
 			jump_buffer = 0
 		elif coyote > 0 and mode not in ["hover", "hover_ascent"]:
+			voluntary_airborne = true
 			actor.velocity.y = t.jump_impulse
 			jump_buffer = 0.0
 			coyote = 0.0
@@ -243,7 +248,9 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 	actor.velocity = actor.velocity.limit_length(t.speed_limit)
 	var before: Vector3 = actor.velocity
 	actor.floor_stop_on_slope = mode != "slide"
-	actor.move_and_slide()
+	if mode in ["dash","dash_windup","slide","hover","hover_ascent"] or voluntary_airborne:
+		actor.move_ability_slide(delta)
+	else: actor.move_and_slide()
 	if mode == "slide":
 		for index: int in actor.get_slide_collision_count():
 			var normal: Vector3 = actor.get_slide_collision(index).get_normal()
@@ -323,7 +330,7 @@ func finish_mantle(delta: float) -> void:
 		mantle_slide_left = 0
 		visual("jump",actor.velocity)
 	actor.velocity = actor.velocity.limit_length(actor.tuning.speed_limit)
-	actor.move_and_slide()
+	actor.move_ability_slide(delta)
 	# Mantles end slightly above the validated roof. Airborne approaches have
 	# no cached floor contact, so settle onto that roof in the handoff tick.
 	if coyote > 0: actor.apply_floor_snap()
@@ -400,6 +407,7 @@ func end_hover() -> void:
 
 func cancel() -> void:
 	if slide_feedback != null: slide_feedback.clear()
+	voluntary_airborne = false
 	set_crouched(false)
 	external_velocity = Vector3.ZERO
 	if traversal != null:
@@ -428,7 +436,7 @@ func interrupt_mobility() -> void:
 	if traversal != null and traversal.active: traversal.abort()
 	end_hover()
 	transition("ground" if actor.is_on_floor() else "air")
-	if actor.state.begins_with("slayer_boot") or actor.state in ["huddle_scatter","huddle_wave","huddle_wave_start","wisp_step","wisp_ballet","wisp_ballet_start"]:
+	if actor.state.begins_with("stitch_") or actor.state.begins_with("slayer_boot") or actor.state in ["huddle_scatter","huddle_wave","huddle_wave_start","wisp_step","wisp_ballet","wisp_ballet_start"]:
 		actor.kit.cancel()
 	actor.velocity.x = 0.0
 	actor.velocity.z = 0.0
