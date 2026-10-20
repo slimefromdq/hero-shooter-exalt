@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 hero = "wisp"
-minimum_range = 5.0
-maximum_range = 14.0
+minimum_range = 8.0
+maximum_range = 22.0
 aggression = 0.8
 mobility = 0.95
 vulnerable_bias = 0.4

@@ -152,80 +152,33 @@ func fire(_ultimate: bool = false) -> void:
 	feedback(660 if ammo%2 == 0 else 740)
 	actor.resolver.record("cast",actor,"pistols")
 
-func burst_multiplier(distance: float) -> float:
-	return lerpf(1.0,data().shotgun_minimum,clampf((distance-data().shotgun_falloff_start)/(data().shotgun_range-data().shotgun_falloff_start),0,1))
-
 func estimated_burst(distance: float, marks: int) -> float:
-	# Conservative finishing estimate: no assumption that spread pellets connect.
-	return (data().core_damage+mini(marks,data().mark_limit)*data().mark_damage)*burst_multiplier(distance)
+	# Bots assume an aimed impact, never a speculative hit at the blast fringe.
+	if distance > data().burst_range: return 0
+	return data().burst_damage+mini(marks,data().mark_limit)*data().mark_damage
 
-func burst_ray(direction: Vector3, amount: float, core: bool) -> Dictionary:
+func explosive_burst(direction: Vector3) -> Dictionary:
+	var t := data()
 	var from: Vector3 = safe_muzzle()
-	var reach: float = data().shotgun_range
-	var hit: Dictionary = actor.resolver.attack_ray(actor,from,from+direction*reach,[actor.get_rid()])
-	var assisted: bool = false
-	if core and not hit.get("collider") is HeroActor:
-		# Sweep a small sphere against actor bodies, then independently validate the
-		# contact ray against terrain, intervening actors and hostile barriers.
-		var sphere := SphereShape3D.new()
-		sphere.radius = data().core_tolerance
-		var query := PhysicsShapeQueryParameters3D.new()
-		query.shape = sphere
-		query.transform = Transform3D(Basis.IDENTITY,from)
-		query.motion = direction*reach
-		query.collision_mask = 2
-		query.exclude = [actor.get_rid()]
-		var space := actor.get_world_3d().direct_space_state
-		var fractions: PackedFloat32Array = space.cast_motion(query)
-		if fractions.size() == 2 and fractions[0] < 1:
-			query.transform.origin = from+direction*reach*fractions[1]
-			query.motion = Vector3.ZERO
-			var contacts: Array[Dictionary] = space.intersect_shape(query,16)
-			var nearest: float = from.distance_to(hit.get("position",from+direction*reach))
-			for contact: Dictionary in contacts:
-				var candidate := contact.get("collider") as HeroActor
-				if candidate == null or not candidate.alive or candidate.team == actor.team: continue
-				var to: Vector3 = candidate.body_point(clampf(query.transform.origin.y-candidate.global_position.y,.25,1.8))
-				var visible: Dictionary = actor.resolver.attack_ray(actor,from,to,[actor.get_rid()])
-				if visible.get("collider") == candidate and from.distance_to(visible.position) <= nearest:
-					hit = visible
-					nearest = from.distance_to(visible.position)
-					assisted = true
-	var endpoint: Vector3 = hit.get("position",from+direction*reach)
-	var target := hit.get("collider") as HeroActor
-	var multiplier: float = burst_multiplier(from.distance_to(endpoint))
-	if target != null:
-		var head: bool = core and not assisted and endpoint.y-target.global_position.y >= target.headshot_height()
-		var marks: int = target.statuses.soul_count(actor) if core else 0
-		var total: float = amount*(actor.tuning.head_multiplier if head else 1.0)+marks*data().mark_damage
-		hit["result"] = actor.resolver.damage(actor,target,total*multiplier,"shotgun",actor.resolver.new_cast(actor),head,false,from)
-		if hit.result == "hit":
-			if core: target.statuses.take_souls(actor)
-			WispEffects.flourish(actor,endpoint,.8 if core else .18)
-	else: actor.resolver.hit_object(hit.get("collider"),actor,amount*multiplier,actor.resolver.new_cast(actor))
-	CombatEffect.line(actor.get_parent(),from,endpoint,Color("bd71ff"),.035 if core else .014)
-	return hit
+	var hit: Dictionary = actor.resolver.attack_ray(actor,from,from+direction*t.burst_range,[actor.get_rid()])
+	var at: Vector3 = hit.get("position",from+direction*t.burst_range)
+	if not hit.is_empty(): at += Vector3(hit.normal)*.04
+	var id: int = actor.resolver.new_cast(actor)
+	var result: Dictionary = WispBlast.resolve(actor,at,t.burst_radius,t.burst_full_radius,t.burst_damage,t.burst_minimum,id,"rogue_burst")
+	CombatEffect.line(actor.get_parent(),from,at,Color("c174ff"),.055)
+	CombatEffect.pulse(actor.get_parent(),at,Color("aa4cde"),t.burst_radius)
+	WispEffects.flourish(actor,at,1.3)
+	if int(result.hits) > 0: actor.presentation.impact_sound.play_tone(1040,.11,.15)
+	return result
 
 func soulbreaker() -> void:
 	if shells <= 0 or secondary_cd > 0 or not can_act("secondary"): return
-	var t := data()
 	shells -= 1
-	secondary_cd = t.shotgun_recovery
-	shot_cd = maxf(shot_cd,t.shotgun_recovery)
-	var direction: Vector3 = shot_direction(t.shotgun_range)
-	var core: Dictionary = burst_ray(direction,t.core_damage,true)
-	var connected: bool = core.get("result","") == "hit"
-	var right: Vector3 = direction.cross(Vector3.UP).normalized()
-	if right.is_zero_approx(): right = Vector3.RIGHT
-	var up: Vector3 = right.cross(direction)
-	for i: int in t.pellet_count:
-		var angle: float = i*TAU/t.pellet_count
-		var spread: float = t.pellet_inner_spread if i%2 == 0 else t.pellet_spread
-		var pellet: Vector3 = (direction+(right*cos(angle)+up*sin(angle))*tan(deg_to_rad(spread))).normalized()
-		var result: Dictionary = burst_ray(pellet,t.pellet_damage,false)
-		connected = connected or result.get("result","") == "hit"
+	secondary_cd = data().burst_recovery
+	shot_cd = maxf(shot_cd,secondary_cd)
+	explosive_burst(shot_direction(data().burst_range))
 	feedback(160)
-	if connected: actor.presentation.impact_sound.play_tone(1040,.11,.15)
+	# Keep the existing event/resource identity for telemetry and saved drills.
 	actor.resolver.record("cast",actor,"soulbreaker")
 
 func move_override(delta: float) -> bool:
@@ -243,6 +196,7 @@ func move_override(delta: float) -> bool:
 			if hit == null and not actor.mobility_limited: shells = mini(data().shell_limit,shells+1)
 			elif hit != null: actor.velocity = actor.velocity.slide(hit.get_normal())
 			actor.state = "ready"
+			actor.velocity = actor.velocity.limit_length(data().step_exit_speed)
 			step_immunity_left = 0
 		return true
 	if actor.state == "wisp_phase":

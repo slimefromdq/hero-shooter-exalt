@@ -284,15 +284,15 @@ func profiles() -> void:
 	wisp.shells = 1
 	for i: int in 3: b.statuses.add_soul(a,4,3)
 	decide()
-	check(brain.combat.ability_scores.has("secondary_pressed"),"Wisp plans mark-to-shotgun follow-up")
+	check(brain.combat.ability_scores.has("secondary_pressed"),"Rogue plans mark-to-explosion follow-up")
 	perform_choice()
 	check(wisp.shells == 0 and b.statuses.soul_count(a) == 0,"Wisp tactical intent consumes shell and detonates actual marks")
 	var rates: Dictionary = brain.diagnostics.summary().ability_casts
-	check(rates.has("soulbreaker") and rates.soulbreaker.casts == 1 and rates.soulbreaker.hits == 1,"multi-pellet core and mark burst count as one successful ability cast")
+	check(rates.has("soulbreaker") and rates.soulbreaker.casts == 1 and rates.soulbreaker.hits == 1,"explosion and mark damage count as one successful ability cast")
 	wisp.steps = 1
 	wisp.shells = 0
 	brain.combat.evaluate(brain)
-	check(not brain.combat.ability_scores.has("hover"),"Wisp preserves its last escape step during aggression")
+	check(not brain.combat.ability_scores.has("hover"),"Rogue preserves its last escape dodge during aggression")
 	var fallback: BotHeroProfile = BotHeroProfile.for_hero("future_hero")
 	check(fallback.hero == "fallback" and fallback.minimum_range > 0,"unknown hero has conservative fallback")
 

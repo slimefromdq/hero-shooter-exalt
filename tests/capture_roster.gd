@@ -166,6 +166,13 @@ func training_review() -> void:
 	actor.intent.ultimate = false
 	await step(42)
 	await capture("wisp-heist")
+	for i: int in 45:
+		var active_card: WispCallingCard = (actor.kit as WispKit).heist
+		if not is_instance_valid(active_card) or active_card.is_queued_for_deletion(): break
+		if active_card.suction_started:
+			await capture("rogue-suction")
+			break
+		await step()
 	await step(60)
 	actor.intent.aim = Vector3(0,.1,-1).normalized()
 	actor.intent.bomb = true
@@ -174,7 +181,7 @@ func training_review() -> void:
 	await step(10)
 	await capture("wisp-leap")
 	actor.intent.jump_held = true
-	await step(30)
+	await step(45)
 	await capture("wisp-float")
 	actor.intent.bomb = true
 	await step()
@@ -184,6 +191,7 @@ func training_review() -> void:
 	await step(30)
 	var wisp_kit := actor.kit as WispKit
 	var burst_target: HeroActor = training.bots[0]
+	burst_target.health = burst_target.effective_max_health()
 	actor.intent.aim_origin = actor.body_point(1.4)
 	actor.intent.aim = (burst_target.body_point(1)-actor.intent.aim_origin).normalized()
 	actor.aim_direction = actor.intent.aim

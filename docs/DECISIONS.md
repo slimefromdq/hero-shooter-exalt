@@ -176,3 +176,7 @@ October 19, 2026. Implemented the accepted revised Stitch plan: 225 HP; 18-damag
 October 19, 2026: targeted rework preserves Wisp's ID, bindings, primary mechanics, source-specific marks, dash-loaded shells and roster. Primary becomes 13 damage; wider 8-pellet burst gains bounded core assistance and distance falloff. Q gains 0.15 s damage immunity and a cosmetic afterimage. E becomes 1 s horizontal Vanishing hover with second-press cancellation and 0.20 s vulnerable recovery. Both immunity windows block outgoing damage and objective contribution.
 
 The subsequent accepted revision explicitly replaces Spectral Lift with forward/up Majestic Leap, hold-Jump float and second-press non-damaging dive, allowing fire throughout. It also explicitly replaces Death Ballet with the thrown, telegraphed Grand Heist calling-card blast. See [full tuning and verification](WISP_REWORK.md).
+
+## ROGUE-02 · Height, dodge, explosions and suction
+
+The follow-up renames Wisp to Rogue in presentation while retaining the internal ID and bindings. Majestic Leap rises at 18 rather than 12 m/s; measured apex more than doubles at 30/60/144 Hz. Q becomes a 2.5 m / 12.5 m/s dodge with a 2 m/s exit cap, preserving charges, loading, collision and bounded immunity. Right-click becomes one 32 m / 3 m-radius explosion with 80 base damage, radial falloff and owned mark detonation. Grand Heist grows to 6 m and 220 base damage, with a strong horizontal suction during its final 0.25 s. Full values, compatibility and evidence are in [Rogue rework](ROGUE_REWORK.md).

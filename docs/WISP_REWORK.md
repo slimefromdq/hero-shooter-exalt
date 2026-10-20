@@ -1,4 +1,6 @@
-# Wisp · phantom thief rework
+# Wisp · initial phantom thief rework
+
+This records the first phantom-thief revision. The current hero is named **Rogue** and has a higher leap, short dodge, explosive right-click and suction Heist; see [current Rogue tuning and validation](ROGUE_REWORK.md).
 
 Implemented October 19, 2026 in the existing `wisp` registration. Inputs and shared movement bindings are unchanged. This revision deliberately replaces Spectral Lift and Death Ballet with the accepted Majestic Leap and Grand Heist design.
 

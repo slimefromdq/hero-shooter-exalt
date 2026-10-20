@@ -20,7 +20,7 @@ func _ready() -> void:
 	player = preload("res://scenes/actors/hero_actor.tscn").instantiate() as HeroActor
 	player.team = 1 if "--defend" in OS.get_cmdline_user_args() else MuseumMatch.selected_side
 	player.tuning = HeroRoster.tuning_for(HeroRoster.selected)
-	player.actor_id = HeroRoster.selected.capitalize()
+	player.actor_id = HeroRoster.display_name(HeroRoster.selected)
 	player.position = definition.team_spawns(player.team)[0]
 	add_child(player)
 	var controller := PlayerController.new()

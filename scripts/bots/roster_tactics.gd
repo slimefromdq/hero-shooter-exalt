@@ -68,12 +68,12 @@ static func apply(a: HeroActor, input: CombatIntent) -> void:
 			input.move = wisp_escape(a,enemy.global_position)
 			return
 		wisp_air_controls(a,input,a.health < a.effective_max_health()*.45)
-		input.secondary_pressed = k.shells > 0 and (enemy.statuses.soul_count(a) >= 3 or enemy.health+enemy.shields+enemy.overhealth.value() <= k.estimated_burst(distance,enemy.statuses.soul_count(a))) and distance < k.data().shotgun_range
+		input.secondary_pressed = k.shells > 0 and (enemy.statuses.soul_count(a) >= 3 or enemy.health+enemy.shields+enemy.overhealth.value() <= k.estimated_burst(distance,enemy.statuses.soul_count(a))) and distance < k.data().burst_range
 		input.deflect = distance < 12 and a.health < a.effective_max_health()*.45 and k.deflect_cd <= 0
 		input.ultimate = distance < k.data().heist_range and k.ultimate_charge >= 100 and enemy.statuses.soul_count(a) >= 2
 		if input.ultimate: input.aim = (enemy.body_point(1)+enemy.velocity*(distance/k.data().heist_speed+k.data().heist_warning)*.6-input.aim_origin).normalized()
-		if a.state == "ready" and k.steps > 0 and k.shells < k.data().shell_limit and distance > 8 and distance < 23:
-			var direction: Vector3 = (enemy.global_position-a.global_position).normalized()
+		if a.state == "ready" and k.steps > 0 and k.shells < k.data().shell_limit and distance > 5 and distance < k.data().burst_range:
+			var direction: Vector3 = (enemy.global_position-a.global_position).cross(Vector3.UP).normalized()
 			if safe_step(a,direction):
 				input.hover = true
 				input.aim = direction

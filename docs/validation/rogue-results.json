@@ -1,0 +1,206 @@
+{
+  "engine": "4.7.2-stable (official)",
+  "display_name": "Rogue",
+  "hero_id": "wisp",
+  "full_verification": {
+    "passed": true,
+    "command": "powershell -ExecutionPolicy Bypass -File .\\tools\\verify.ps1",
+    "log": "artifacts/rogue-full-verify.log"
+  },
+  "focused": {
+    "checks": 210,
+    "failures": [],
+    "log": "artifacts/rogue-focused.log",
+    "includes_rogue_argument_alias": true,
+    "measured_apex": [
+      {
+        "hz": 30,
+        "before_m": 3.0756,
+        "after_m": 7.0667,
+        "ratio": 2.2977
+      },
+      {
+        "hz": 60,
+        "before_m": 3.1733,
+        "after_m": 7.2139,
+        "ratio": 2.2733
+      },
+      {
+        "hz": 144,
+        "before_m": 3.2307,
+        "after_m": 7.301,
+        "ratio": 2.2599
+      }
+    ]
+  },
+  "native": {
+    "checks": 36,
+    "failures": [],
+    "log": "artifacts/rogue-native-final.log"
+  },
+  "simulations": [
+    {
+      "map": "city",
+      "seconds": 600,
+      "seed": 971,
+      "checks": 17,
+      "failures": [],
+      "captures": [
+        3,
+        2
+      ],
+      "falls": [],
+      "persistent_stalls": [],
+      "worst_stall": 5,
+      "bots": [
+        {
+          "actor": "Rogue",
+          "abilities": {
+            "grand_heist": {
+              "casts": 9,
+              "hits": 6
+            },
+            "rifle": {
+              "casts": 579,
+              "hits": 278
+            },
+            "soulbreaker": {
+              "casts": 48,
+              "hits": 40
+            }
+          },
+          "damage": 9748.8
+        },
+        {
+          "actor": "crown_01",
+          "abilities": {
+            "grand_heist": {
+              "casts": 10,
+              "hits": 6
+            },
+            "rifle": {
+              "casts": 541,
+              "hits": 270
+            },
+            "soulbreaker": {
+              "casts": 49,
+              "hits": 36
+            }
+          },
+          "damage": 8199.4
+        }
+      ],
+      "report": "artifacts/rogue-city-simulation-971.json"
+    },
+    {
+      "map": "museum",
+      "side": "defend",
+      "seconds": 600,
+      "seed": 971,
+      "checks": 16,
+      "failures": [],
+      "falls": 0,
+      "persistent_stalls": [],
+      "recovery_warps": 0,
+      "drill_seconds": 166,
+      "bots": [
+        {
+          "actor": "Rogue",
+          "abilities": {
+            "grand_heist": {
+              "casts": 7,
+              "hits": 4
+            },
+            "rifle": {
+              "casts": 473,
+              "hits": 230
+            },
+            "soulbreaker": {
+              "casts": 24,
+              "hits": 17
+            }
+          },
+          "damage": 5614.1
+        },
+        {
+          "actor": "attack_01",
+          "abilities": {
+            "grand_heist": {
+              "casts": 6,
+              "hits": 2
+            },
+            "rifle": {
+              "casts": 227,
+              "hits": 112
+            },
+            "soulbreaker": {
+              "casts": 18,
+              "hits": 11
+            }
+          },
+          "damage": 3717.4
+        }
+      ],
+      "report": "artifacts/rogue-museum-simulation-971.json"
+    }
+  ],
+  "presentation": {
+    "log": "artifacts/rogue-capture-final.log",
+    "frames": [
+      "artifacts/roster-hero-selection.png",
+      "artifacts/roster-wisp-step.png",
+      "artifacts/roster-wisp-phase.png",
+      "artifacts/roster-wisp-heist.png",
+      "artifacts/roster-rogue-suction.png",
+      "artifacts/roster-wisp-leap.png",
+      "artifacts/roster-wisp-float.png",
+      "artifacts/roster-wisp-dive.png",
+      "artifacts/roster-wisp-burst.png"
+    ]
+  },
+  "tuning": {
+    "lift_speed": {
+      "before": 12,
+      "after": 18
+    },
+    "q_distance": {
+      "before": 7,
+      "after": 2.5
+    },
+    "q_speed": {
+      "before": 30,
+      "after": 12.5
+    },
+    "q_exit_speed": {
+      "before": 30,
+      "after": 2
+    },
+    "burst": {
+      "before": "24 m core and eight pellets",
+      "after": "32 m ray impact explosion, 3 m radius",
+      "base_damage": 80,
+      "full_radius": 1,
+      "edge_multiplier": 0.6,
+      "recovery": 0.65
+    },
+    "heist": {
+      "radius": {
+        "before": 5,
+        "after": 6
+      },
+      "damage": {
+        "before": 100,
+        "after": 220
+      },
+      "full_radius": 2.5,
+      "edge_multiplier": 0.4,
+      "suction_duration": 0.25,
+      "suction_speed": 20,
+      "suction_stop": 0.8
+    }
+  },
+  "limitations": [
+    "No automated check establishes competitive balance or human control feel.",
+    "Suction is horizontal and collision-aware; aerial cards do not levitate grounded targets."
+  ]
+}

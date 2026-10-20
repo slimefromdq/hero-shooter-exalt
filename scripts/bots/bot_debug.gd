@@ -38,7 +38,7 @@ func canonical(ability: String) -> String:
 		if actor.tuning.hero_id == "wisp": return "grand_heist"
 		if actor.tuning.hero_id == "relay": return "rifle"
 	if ability in ["minigun","carbine","pistols","lightning"]: return "rifle"
-	if actor.tuning.hero_id == "wisp" and ability in ["shotgun","soulburst"]: return "soulbreaker"
+	if actor.tuning.hero_id == "wisp" and ability in ["shotgun","soulburst","rogue_burst"]: return "soulbreaker"
 	return str({"street_sweeper":"shotgun","silver_knife":"knife","heads_will_roll":"axe","boot_rush":"boot",
 		"snare_toss":"snare","ultimate_shot":"ultimate","storm_dominion":"storm","seed_spitter":"seeds",
 		"seed":"seeds","seed_swarm":"seeds","ballet":"grand_heist","spectral_finale":"grand_heist",

@@ -321,14 +321,14 @@ func select_hero(id: String) -> void:
 	HeroRoster.selected = id
 	if player.alive and spawn_contains(player.global_position,player.team):
 		apply_pending_hero()
-		show_notice(id.to_upper()+" SELECTED")
-	else: show_notice(id.to_upper()+" QUEUED FOR NEXT RESPAWN")
+		show_notice(HeroRoster.display_name(id).to_upper()+" SELECTED")
+	else: show_notice(HeroRoster.display_name(id).to_upper()+" QUEUED FOR NEXT RESPAWN")
 	if menu_open: toggle_menu()
 
 func apply_pending_hero() -> void:
 	if pending_hero == "": return
 	player.select_hero(pending_hero)
-	player.actor_id = pending_hero.capitalize()
+	player.actor_id = HeroRoster.display_name(pending_hero)
 	player.kit.ultimate_charge = 0
 	player.spawn_protected = is_protected(player)
 	pending_hero = ""

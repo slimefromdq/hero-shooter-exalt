@@ -12,7 +12,11 @@ static func consume_direct_entry() -> bool:
 	direct_entry_pending = false
 	return requested
 
+static func display_name(id: String) -> String:
+	return "Rogue" if id == "wisp" else id.capitalize()
+
 static func initial_selection() -> String:
+	if OS.get_cmdline_user_args().has("--hero=rogue"): return "wisp"
 	for id: String in IDS:
 		if "--hero=" + id in OS.get_cmdline_user_args(): return id
 	return "nimbus"

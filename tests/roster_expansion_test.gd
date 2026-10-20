@@ -347,8 +347,8 @@ func wisp_tests() -> void:
 	k.shells = 1
 	var before: float = foes[0].health
 	k.soulbreaker()
-	check(foes[0].statuses.soul_count(wisp) == 0,"precise shotgun core consumes marks")
-	check(before-foes[0].health >= 68,"core delivers its damage plus the four-mark detonation")
+	check(foes[0].statuses.soul_count(wisp) == 0,"explosive burst consumes owned marks")
+	check(before-foes[0].health >= 128,"explosion combines base damage and four marks")
 	check(k.shells == 0,"Soulbreaker spends exactly one shell")
 	await reset()
 	wisp.position = Vector3(0,2,0)
@@ -360,7 +360,7 @@ func wisp_tests() -> void:
 	check(wisp.state == "wisp_step" and k.steps == 2,"dash spends one charge")
 	check(not wisp.permits("primary"),"dash prevents shooting")
 	for i: int in 14: k.move_override(1.0/60)
-	near(wisp.position.z,-7,"dash covers seven meters")
+	near(wisp.position.z,-2.5,"Rogue dodge covers two and a half meters")
 	check(k.shells == 1,"completed dash supplies one shell")
 	k.tick(4,CombatIntent.new())
 	check(k.steps == 3 and k.recharge == 0,"dash charges recharge sequentially")
@@ -393,7 +393,7 @@ func wisp_tests() -> void:
 	request = CombatIntent.new()
 	request.bomb = true
 	k.tick(0,request)
-	near(wisp.velocity.y,12,"Majestic Leap supplies vertical launch")
+	near(wisp.velocity.y,18,"Majestic Leap supplies the higher launch")
 	await reset()
 	k = wisp.kit as WispKit
 	request = CombatIntent.new()
@@ -466,7 +466,7 @@ func timing_and_cover_tests() -> void:
 	await step()
 	k.shells = 1
 	k.soulbreaker()
-	check(foes[0].statuses.soul_count(wisp) == 2,"pellet contact without a core hit preserves marks")
+	check(foes[0].statuses.soul_count(wisp) == 2,"an explosion beyond a near-missed target preserves marks")
 	foes[0].statuses.tick(3.1)
 	check(foes[0].statuses.soul_count(wisp) == 0,"soul marks expire after three seconds")
 	foes[0].statuses.add_soul(wisp,4,3)

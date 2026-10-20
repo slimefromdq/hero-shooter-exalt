@@ -17,8 +17,8 @@ static func vitals(canvas: Control, actor: HeroActor, regular: Font, heavy: Font
 	var health_text: String = "%d  /  %d" % [ceili(actor.health),actor.effective_max_health()]
 	canvas.draw_string_outline(heavy,at + Vector2(12,17),health_text,HORIZONTAL_ALIGNMENT_LEFT,-1,18,3,Color("14301a"))
 	canvas.draw_string(heavy,at + Vector2(12,17),health_text,HORIZONTAL_ALIGNMENT_LEFT,-1,18,paper)
-	canvas.draw_string_outline(heavy,at + Vector2(0,-12),actor.tuning.hero_id.to_upper(),HORIZONTAL_ALIGNMENT_LEFT,-1,20,4,background)
-	canvas.draw_string(heavy,at + Vector2(0,-12),actor.tuning.hero_id.to_upper(),HORIZONTAL_ALIGNMENT_LEFT,-1,20,paper)
+	canvas.draw_string_outline(heavy,at + Vector2(0,-12),HeroRoster.display_name(actor.tuning.hero_id).to_upper(),HORIZONTAL_ALIGNMENT_LEFT,-1,20,4,background)
+	canvas.draw_string(heavy,at + Vector2(0,-12),HeroRoster.display_name(actor.tuning.hero_id).to_upper(),HORIZONTAL_ALIGNMENT_LEFT,-1,20,paper)
 	canvas.draw_string(regular,at + Vector2(0,44),"HEALTH",HORIZONTAL_ALIGNMENT_LEFT,-1,10,Color("c5d7c4"))
 	if actor.shields > 0:
 		canvas.draw_rect(Rect2(at + Vector2(0,-44),Vector2(width,11)),background)

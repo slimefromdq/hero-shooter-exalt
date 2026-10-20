@@ -157,14 +157,14 @@ func evaluate(brain: BotBrain) -> void:
 	elif k is WispKit:
 		var wisp := k as WispKit
 		var effective_health: float = float(enemy.get("health",INF))+float(enemy.get("shields",0))+float(enemy.get("overhealth",0))
-		if seen and clear_shot and wisp.shells > 0 and distance < wisp.data().shotgun_range and (int(enemy.marks) >= 3 or effective_health <= wisp.estimated_burst(distance,int(enemy.marks))): offer("secondary_pressed",.89,point)
+		if seen and clear_shot and wisp.shells > 0 and distance < wisp.data().burst_range and (int(enemy.marks) >= 3 or effective_health <= wisp.estimated_burst(distance,int(enemy.marks))): offer("secondary_pressed",.89,point)
 		if seen and health < .45 and k.deflect_cd <= 0 and a.last_hit_age < 1.5: offer("deflect",.98,point)
 		var evading: bool = seen and (a.last_hit_age < .3 or str(enemy.state) in ["melee_windup","ultimate","slayer_axe","wisp_heist_start"]) and Vector3(enemy.get("facing",Vector3.ZERO)).dot((a.global_position-point).normalized()) > .6
 		if evading and wisp.steps > 0:
 			var evade: Vector3 = RosterTactics.wisp_escape(a,point)
 			if brain.movement.safe_travel(a,evade,wisp.data().step_distance): offer("hover",.95,a.body_point(1.45)+evade*10)
-		if seen and wisp.steps > (0 if escaping else brain.hero_profile.escape_reserve) and (escaping or (wisp.shells < wisp.data().shell_limit and distance > 8 and distance < 23)):
-			var direction: Vector3 = ((a.global_position-point) if escaping else (point-a.global_position))*Vector3(1,0,1)
+		if seen and wisp.steps > (0 if escaping else brain.hero_profile.escape_reserve) and (escaping or (wisp.shells < wisp.data().shell_limit and distance > 5 and distance < wisp.data().burst_range)):
+			var direction: Vector3 = ((a.global_position-point) if escaping else (point-a.global_position).cross(Vector3.UP)*brain.movement.side)*Vector3(1,0,1)
 			if brain.movement.safe_travel(a,direction,wisp.data().step_distance): offer("hover",.92 if escaping else .74,a.body_point(1.45)+direction.normalized()*10)
 		if seen and distance < 16 and a.motor.grounded() and k.bomb_cd <= 0 and not escaping and brain.movement.safe_travel(a,(point-a.global_position)*Vector3(1,0,1),5) and a.resolver.ray(a.body_point(2),a.body_point(6),[a.get_rid()],1).is_empty(): offer("bomb",.55,point)
 		if seen and clear_shot and distance < wisp.data().heist_range and (brain.nearby_enemies >= 2 or int(enemy.marks) >= 2) and k.ultimate_charge >= 100 and not escaping:

@@ -210,7 +210,7 @@ func draw_team_slot(actor: HeroActor, at: Vector2, friendly: bool, accent: Color
 		canvas.draw_texture_rect_region(portrait,Rect2(at + Vector2(1,1),Vector2(69,79)),Rect2(Vector2((source_size.x - source_width) * .5,0),Vector2(source_width,source_size.y)))
 	box(at,Vector2(71,3),paper if local else accent)
 	box(at + Vector2(1,65),Vector2(69,16),Color(.025,.04,.06,.9))
-	centered(actor.tuning.hero_id.to_upper(),at + Vector2(35,77),10,paper,true)
+	centered(HeroRoster.display_name(actor.tuning.hero_id).to_upper(),at + Vector2(35,77),10,paper,true)
 	if not actor.alive:
 		box(at + Vector2(0,3),Vector2(71,78),Color(0.025,0.04,0.06,.78))
 		centered("%d" % ceili(match_controller.respawn_remaining(actor)),at + Vector2(35,40),25,coral,true)
@@ -275,7 +275,7 @@ func draw_reticle_resources(p: HeroActor, center: Vector2) -> void:
 func draw_player_rail(p: HeroActor) -> void:
 	var origin := Vector2(600,764)
 	panel(origin - Vector2(8,30),Vector2(420,57))
-	text(p.tuning.hero_id.to_upper(),origin + Vector2(2,-12),12,paper,true)
+	text(HeroRoster.display_name(p.tuning.hero_id).to_upper(),origin + Vector2(2,-12),12,paper,true)
 	text("%d / %d HP" % [ceili(p.health if p.alive else 0),p.effective_max_health()],origin + Vector2(263,-12),15,paper,true)
 	box(origin,Vector2(404,16),Color("25452d"))
 	var hp: float = clampf(p.health / p.tuning.max_health,0,1) if p.alive else 0.0

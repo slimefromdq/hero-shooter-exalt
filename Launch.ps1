@@ -1,4 +1,4 @@
-param([ValidateSet("Dawn","Afternoon","Night")][string]$Lighting, [switch]$Editor, [switch]$Museum, [switch]$Defend, [switch]$Explore, [switch]$Training, [switch]$Slayer, [switch]$Marshal, [switch]$Doctor, [switch]$Huddle, [switch]$Relay, [switch]$Dynamo, [switch]$Wisp, [switch]$Samson, [switch]$Stitch, [switch]$Windowed, [switch]$Fullscreen)
+param([ValidateSet("Dawn","Afternoon","Night")][string]$Lighting, [switch]$Editor, [switch]$Museum, [switch]$Defend, [switch]$Explore, [switch]$Training, [switch]$Slayer, [switch]$Marshal, [switch]$Doctor, [switch]$Huddle, [switch]$Relay, [switch]$Dynamo, [switch]$Wisp, [switch]$Rogue, [switch]$Samson, [switch]$Stitch, [switch]$Windowed, [switch]$Fullscreen)
 $ErrorActionPreference = 'Stop'
 $taskEngine = & (Join-Path $PSScriptRoot 'tools/find_godot.ps1')
 if ($Windowed -and $Fullscreen) { throw 'Choose either -Windowed or -Fullscreen.' }
@@ -13,12 +13,12 @@ else {
     elseif ($Fullscreen) { $taskGameArgs += '--fullscreen' }
     if ($Training) { $taskGameArgs += 'res://scenes/training/combat_sandbox.tscn' }
     if ($Museum) { $taskGameArgs += 'res://scenes/museum/meridian_museum.tscn' }
-    if ((@($Slayer, $Marshal, $Doctor, $Huddle, $Relay, $Dynamo, $Wisp, $Samson, $Stitch) | Where-Object { $_ }).Count -gt 1) { throw 'Choose one hero switch.' }
+    if ((@($Slayer, $Marshal, $Doctor, $Huddle, $Relay, $Dynamo, $Wisp, $Rogue, $Samson, $Stitch) | Where-Object { $_ }).Count -gt 1) { throw 'Choose one hero switch.' }
     if ($Samson) { $taskGameArgs += @('--', '--hero=samson', '--direct') }
     elseif ($Stitch) { $taskGameArgs += @('--', '--hero=stitch', '--direct') }
     elseif ($Relay) { $taskGameArgs += @('--', '--hero=relay', '--direct') }
     elseif ($Dynamo) { $taskGameArgs += @('--', '--hero=dynamo', '--direct') }
-    elseif ($Wisp) { $taskGameArgs += @('--', '--hero=wisp', '--direct') }
+    elseif ($Wisp -or $Rogue) { $taskGameArgs += @('--', '--hero=wisp', '--direct') }
     elseif ($Huddle) { $taskGameArgs += @("--", "--hero=huddle", "--direct") }
     elseif ($Slayer) { $taskGameArgs += @('--', '--hero=slayer', '--direct') }
     elseif ($Marshal) { $taskGameArgs += @('--', '--hero=marshal', '--direct') }

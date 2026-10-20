@@ -12,6 +12,9 @@ var detonated: bool = false
 var warning_ring: MeshInstance3D
 var card: Node3D
 var tone_left: float = 0
+var suction_started: bool = false
+var suction_ring: MeshInstance3D
+var pulled: Dictionary = {}
 
 func data() -> WispTuning:
 	return source.tuning as WispTuning
@@ -58,7 +61,20 @@ func _physics_process(delta: float) -> void:
 			global_position = next
 			if traveled >= data().heist_range-.00001: arm(global_position)
 		return
+	var before: float = remaining
 	remaining = maxf(0,remaining-delta)
+	if remaining <= data().heist_suction_duration and not suction_started:
+		suction_started = true
+		var ring := TorusMesh.new()
+		ring.inner_radius = data().heist_radius-.08
+		ring.outer_radius = data().heist_radius+.08
+		suction_ring = Geometry.mesh(self,ring,Vector3(0,.06,0),Geometry.material(Color("ead2ff"),2))
+		source.presentation.sound.play_tone(180,data().heist_suction_duration,.2)
+		source.resolver.record("suction",source,"grand_heist")
+	if suction_started:
+		var active: float = maxf(0,minf(before,data().heist_suction_duration)-minf(remaining,data().heist_suction_duration))
+		suction_ring.scale = Vector3.ONE*lerpf(.13,1.0,remaining/data().heist_suction_duration)
+		pull_enemies(active)
 	tone_left -= delta
 	if tone_left <= 0:
 		tone_left = lerpf(.08,.25,remaining/data().heist_warning)
@@ -66,39 +82,44 @@ func _physics_process(delta: float) -> void:
 	warning_ring.scale = Vector3.ONE*(1+.025*sin(remaining*40))
 	if remaining <= .000001: detonate()
 
+func pull_enemies(delta: float) -> void:
+	if delta <= 0 or detonated or is_queued_for_deletion() or not valid_source() or source.resolver.attack_locked(source): return
+	var t := data()
+	for target: HeroActor in get_tree().get_nodes_in_group("actors"):
+		if target.team == source.team or not target.alive or target.damage_immune() or source.resolver.protected_room(target): continue
+		if target.state in ["captured","throw_pair","boot_attached","boot_captured"]: continue
+		var at: Vector3 = target.body_point(.9)
+		if global_position.distance_to(at) > t.heist_radius: continue
+		if source.resolver.spawn_door_blocks(global_position,at) or not source.resolver.attack_ray(source,global_position,at,[],1).is_empty(): continue
+		# Ground-safe horizontal suction clusters bodies without lifting them into
+		# an aerial card, overlapping them, or overshooting the center.
+		var toward: Vector3 = (global_position-at)*Vector3(1,0,1)
+		var distance: float = minf(t.heist_suction_speed*delta,maxf(0,toward.length()-t.heist_suction_stop))
+		if distance <= .00001: continue
+		var motion: Vector3 = toward.normalized()*distance
+		var session: Node = get_tree().get_first_node_in_group("city_match")
+		var crosses_spawn: bool = false
+		if session != null:
+			for team: int in 2:
+				if session.definition.spawn_bounds(team).intersects_segment(target.global_position,target.global_position+motion) != null: crosses_spawn = true
+		if crosses_spawn: continue
+		var key: int = target.get_instance_id()
+		if int(pulled.get(key,-1)) != target.life_serial:
+			pulled[key] = target.life_serial
+			target.motor.interrupt_mobility()
+			source.resolver.record("displacement",source,"grand_heist","target=%s suction" % target.actor_id)
+		var collision: KinematicCollision3D = target.move_ability_collide(motion)
+		if collision != null and collision.get_normal().dot(toward.normalized()) >= -.02:
+			target.move_ability_collide(collision.get_remainder().slide(collision.get_normal()))
+
 func multiplier(distance: float) -> float:
-	return lerpf(1.0,data().heist_minimum,clampf((distance-data().heist_full_radius)/(data().heist_radius-data().heist_full_radius),0,1))
+	return WispBlast.multiplier(distance,data().heist_full_radius,data().heist_radius,data().heist_minimum)
 
 func detonate() -> void:
 	if detonated or is_queued_for_deletion() or not valid_source(): return
 	detonated = true
 	var t := data()
-	var victims: Array[Dictionary] = []
-	var objects: Array[Dictionary] = []
-	if not source.resolver.attack_locked(source):
-		# All cover is snapshotted before any structure or barrier takes damage.
-		for target: HeroActor in get_tree().get_nodes_in_group("actors"):
-			if not target.alive or target.team == source.team or target.damage_immune() or source.resolver.protected_room(target): continue
-			var at: Vector3 = target.body_point(.9)
-			var distance: float = global_position.distance_to(at)
-			if distance <= t.heist_radius and source.resolver.attack_ray(source,global_position,at,[],1).is_empty():
-				victims.append({"actor":target,"damage":(t.heist_damage+target.statuses.soul_count(source)*t.mark_damage)*multiplier(distance)})
-		for barrier: CombatBarrier in get_tree().get_nodes_in_group("barriers"):
-			if not barrier.active() or barrier.source.team == source.team: continue
-			var at: Vector3 = barrier.nearest_point(global_position)
-			var hit: Dictionary = source.resolver.attack_ray(source,global_position,at,[],1)
-			if global_position.distance_to(at) <= t.heist_radius and (hit.is_empty() or hit.get("collider") == barrier):
-				objects.append({"object":barrier,"damage":t.heist_damage*multiplier(global_position.distance_to(at))})
-		for structure: CombatStructure in get_tree().get_nodes_in_group("structures"):
-			var at: Vector3 = structure.nearest_point(global_position)
-			var hit: Dictionary = source.resolver.attack_ray(source,global_position,at,[],1)
-			if global_position.distance_to(at) <= t.heist_radius and (hit.is_empty() or hit.get("collider") == structure):
-				objects.append({"object":structure,"damage":t.heist_damage*multiplier(global_position.distance_to(at))})
-		for victim: Dictionary in victims:
-			var target: HeroActor = victim.actor
-			var result: String = source.resolver.damage(source,target,victim.damage,"grand_heist",cast_id,false,false,global_position)
-			if result == "hit": target.statuses.take_souls(source)
-		for object: Dictionary in objects: source.resolver.hit_object(object.object,source,object.damage,cast_id)
+	WispBlast.resolve(source,global_position,t.heist_radius,t.heist_full_radius,t.heist_damage,t.heist_minimum,cast_id,"grand_heist")
 	WispEffects.flourish(source,global_position,2)
 	CombatEffect.pulse(get_parent(),global_position,Color("9c42dc"),t.heist_radius)
 	source.presentation.impact_sound.play_tone(110,.25,.2)

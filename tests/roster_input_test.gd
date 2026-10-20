@@ -99,7 +99,8 @@ func run() -> void:
 	training.despawn_bots()
 	actor = training.player
 	var wisp := actor.kit as WispKit
-	check(wisp.shells == 0,"selected Wisp begins with no shells")
+	check(actor.actor_id == "Rogue" and HeroRoster.display_name(actor.tuning.hero_id) == "Rogue","native selection exposes Rogue while retaining wisp ID")
+	check(wisp.shells == 0,"selected Rogue begins with no shells")
 	await step(5)
 	await press("hover")
 	var immune_time: float = wisp.step_immunity_left
@@ -110,7 +111,7 @@ func run() -> void:
 	await step(18)
 	check(wisp.steps == 2 and wisp.shells == 1,"native Q dashes and loads one shell [steps=%d shells=%d position=%s]" % [wisp.steps,wisp.shells,str(actor.position)])
 	await press("aim")
-	check(wisp.shells == 0 and wisp.secondary_cd > 0,"native RMB fires Soulbreaker")
+	check(wisp.shells == 0 and wisp.secondary_cd > 0,"native RMB fires the explosive burst")
 	await press("deflect")
 	check(actor.state == "wisp_phase","native E starts phase")
 	var remaining_ammo: int = wisp.ammo
@@ -141,6 +142,15 @@ func run() -> void:
 	var duration: float = wisp.heist.remaining
 	await step(12)
 	check(is_equal_approx(duration,wisp.heist.remaining),"pause freezes the calling-card warning")
+	training.toggle_menu()
+	for i: int in 60:
+		if is_instance_valid(wisp.heist) and wisp.heist.suction_started: break
+		await step(1)
+	check(is_instance_valid(wisp.heist) and wisp.heist.suction_started,"native Heist enters suction before exploding")
+	training.toggle_menu()
+	duration = wisp.heist.remaining
+	await step(12)
+	check(is_equal_approx(duration,wisp.heist.remaining),"pause freezes suction without extending active simulation time")
 	training.toggle_menu()
 	await step(260)
 	check(actor.state == "ready" and not wisp.ultimate_active(),"native heist completes and restores ordinary controls")

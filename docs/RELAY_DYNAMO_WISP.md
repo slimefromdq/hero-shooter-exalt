@@ -42,20 +42,20 @@ Lightning cannot revisit a victim or recurse. Terrain and hostile barriers block
 
 The HUD reports spin, enchantment and wall duration. Wall previews show valid/invalid placement; minigun barrels rotate with spin. Visible zone boundaries and warnings precede both area attacks. Owner life cleanup retires walls, storms, warnings and pulls.
 
-## Wisp · phantom thief DPS
+## Rogue · phantom thief DPS (existing Wisp ID)
 
-Wisp's targeted phantom-thief rework retains her ID, inputs, pistols, source-specific marks, dash-loaded shells and roster integration. The procedural character wears an ivory thief mask, violet tailoring and silk tails, with cards, smoke and afterimages.
+Rogue preserves the Wisp registration, resources, inputs, marks and burst ammunition. Her current rework makes Majestic Leap more than twice as high, replaces the long Q dash with a short dodge, converts right-click to an aimed explosion and adds powerful pre-blast suction to Grand Heist.
 
 | Input | Ability | Current behavior |
 | --- | --- | --- |
-| LMB hold | Dual pistols | Alternating 13-damage hitscan shots; unchanged cadence/ammunition/reload/headshots and marking. |
-| RMB press | Soulbreaker | 20-damage core, eight 6-damage pellets in 4/8-degree rings; 0.18 m core assistance cannot headshot. 24 m reach, 0.65 s recovery. Full damage through 8 m; 50% at 24 m. Successful core consumes owned marks. |
-| Q | Phantom Step | Three 7 m / 30 m/s dashes, sequential 4 s recharge; completed dashes load a shell. First 0.15 s damage immunity, bounded by travel. Cosmetic afterimage. |
-| E | Vanishing Act | 1.0 s invulnerable horizontal hover at 3 m/s, 10 s cooldown. Second E cancels; either exit has a visible/audio return and 0.20 s vulnerable attack/ability recovery. |
-| 1 | Majestic Leap | 12 m/s up and 10 m/s forward, 8 s cooldown. Hold Jump for 1.5 s float opportunity at 2 m/s descent; fresh second 1 dives at 24 m/s. Firing remains available throughout; no landing damage or recovery. |
-| 2 | Grand Heist | Replaces Death Ballet. 0.35 s throw; card travels at 32 m/s up to 28 m, plants on impact, warns for 0.80 s, then deals 100 plus owned marks within 5 m. Full through 2 m, falling to 40% at the edge. Cover blocks; no direct-hit damage. |
+| LMB hold | Dual pistols | Unchanged 13-damage alternating hitscan shots and source-specific marks. |
+| RMB press | Explosive burst | 32 m impact/airburst, 3 m radius, 80 base damage plus owned marks. Full within 1 m; 60% at the edge. One burst charge and 0.65 s recovery; no pellets/headshots. |
+| Q | Phantom Dodge | 2.5 m at 12.5 m/s; exit velocity capped at 2 m/s. Retains three charges, 4 s recharge, shell loading, 0.15 s damage immunity and cosmetic afterimage. |
+| E | Vanishing Act | Retained 1 s defensive horizontal hover, second-press cancellation and 0.20 s vulnerable recovery. |
+| 1 | Majestic Leap | 18 m/s up, 10 m/s forward; hold-Jump float and second-press 24 m/s dive. Firing remains available throughout. Measured apex at 60 Hz: 3.17 -> 7.21 m. |
+| 2 | Grand Heist | Retained calling-card throw and 0.80 s impact warning. Final 0.25 s pulls enemies inward at 20 m/s, then a 6 m blast deals 220 base plus marks with radial falloff. Cover and immunity block pull/damage. |
 
-Marks retain their four-stack cap, 3 s expiry and 12 damage each. Wisp begins ordinary lives without shells; training refill supplies two. Immunity blocks outgoing damage, including delayed attacks, and objective contribution. Training invulnerability remains independent. Q retains control counterplay; Vanishing retains control immunity without cleansing existing statuses. Full before/after tuning, interaction rules and validation are in [Wisp rework](WISP_REWORK.md).
+Full behavior, before/after tuning and verification are in [Rogue rework](ROGUE_REWORK.md). The [initial Wisp revision](WISP_REWORK.md) remains a historical record.
 
 ## Shared roster and authority
 

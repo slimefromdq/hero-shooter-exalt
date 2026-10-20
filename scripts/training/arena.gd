@@ -13,7 +13,7 @@ func _ready() -> void:
 	player = preload("res://scenes/actors/hero_actor.tscn").instantiate() as HeroActor
 	player.position = Vector3(0, 0.1, 11)
 	player.tuning = HeroRoster.tuning_for(HeroRoster.selected)
-	player.actor_id = HeroRoster.selected
+	player.actor_id = "Rogue" if HeroRoster.selected == "wisp" else HeroRoster.selected
 	add_child(player)
 	var controller := PlayerController.new()
 	controller.actor = player

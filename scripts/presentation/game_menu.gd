@@ -18,7 +18,7 @@ const HEROES := {
 	"relay":["DRONE SUPPORT","RMB assigns the healing drone. Recall to recharge; attack while it heals.","Q Kickstart · E Shock Delivery · 1 Recall / Self · 2 Full Circuit"],
 	"dynamo":["STORM TANK","Prespin a ramping minigun, build physical walls and gather enemies.","Q Stormcharge · E Wall · 1 Lodestone · 2 Storm Dominion"],
 	"stitch":["DOLL ASSASSIN","Needles sew marks; close shears consume them. Thread prey and approach unseen.","Q Spoolstep · E Play Dead · 1 Red Thread · 2 Curtain Call"],
-	"wisp":["PHANTOM THIEF","Mark with pistols; dash to load a burst. Leap, float and dive; steal the finale.","Q Phantom Step · E Vanishing Act · 1 Majestic Leap · 2 Grand Heist"]}
+	"wisp":["PHANTOM THIEF","Mark with pistols; dodge to load a long explosive burst. Leap high; pull enemies into Grand Heist.","Q Phantom Dodge · E Vanishing Act · 1 Majestic Leap · 2 Grand Heist"]}
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -122,10 +122,10 @@ func show_heroes() -> void:
 		var detail := VBoxContainer.new()
 		detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(detail)
-		label(id.to_upper()+" / "+HEROES[id][0],18,Color("eed8a2"),detail)
+		label(HeroRoster.display_name(id).to_upper()+" / "+HEROES[id][0],18,Color("eed8a2"),detail)
 		label(HEROES[id][1],14,Color("d6e6df"),detail)
 		label(HEROES[id][2].replace("Q ",TrainingInputs.key_label("hover")+" ").replace("E ",TrainingInputs.key_label("deflect")+" ").replace("1 ",TrainingInputs.key_label("bomb")+" ").replace("2 ",TrainingInputs.key_label("ultimate")+" "),12,Color("9ed6d3"),detail)
-		button("SELECT "+id.to_upper(),choose.bind(id),detail)
+		button("SELECT "+HeroRoster.display_name(id).to_upper(),choose.bind(id),detail)
 	button("BACK",show_home)
 
 func choose(id: String) -> void:
