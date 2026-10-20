@@ -82,6 +82,8 @@ func protected_room(actor: HeroActor) -> bool:
 
 func attack_locked(actor: HeroActor) -> bool:
 	if actor.ability_damage_immune(): return true
+	var match_session: Node = get_tree().get_first_node_in_group("city_match")
+	if match_session != null and match_session.winner >= 0: return true
 	var session: Node = get_tree().get_first_node_in_group("museum_match")
 	if session != null: return session.spawn_attack_locked(actor)
 	return protected_room(actor)
@@ -115,10 +117,10 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 		resolved.clear()
 	if target.state == "guard" and frontal and tag in ["melee", "boot", "march"]:
 		target.close.guard_meter = maxf(0.0, target.close.guard_meter - target.tuning.guard_cost)
-		source.close.stagger()
+		source.close.stagger(target)
 		record("block", target, tag)
 		if target.close.guard_meter <= 0.0:
-			target.close.stagger()
+			target.close.stagger(source)
 		confirmed_block.emit(source, target)
 		return "blocked"
 	var amount: float = base * (1.0 if tag == "bleed" else cast_multiplier(cast_id,source))

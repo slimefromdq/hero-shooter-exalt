@@ -91,7 +91,7 @@ func weapon_tests() -> void:
 	var k := stitch.kit as StitchKit
 	near(stitch.health,225,"Stitch has requested 225 HP")
 	k.fire()
-	near(k.shot_cd,.15,"needles use .15s cadence")
+	near(k.shot_cd,.30,"needles use .30s cadence")
 	near(k.ammo,23,"needles consume one round")
 	await frames(15)
 	near(enemy.health,232,"physical needle deals 18 damage")
@@ -140,8 +140,8 @@ func weapon_tests() -> void:
 	k.reload_remaining = 1
 	k.fire()
 	check(not k.reloading and k.ammo == 0,"shears interrupt reload without spending ammo")
-	near(enemy.health,202,"shears deal 48 base damage")
-	near(k.shot_cd,.32,"shears use .32s shared cooldown")
+	near(enemy.health,190,"shears deal 60 base damage")
+	near(k.shot_cd,.42,"shears use .42s shared cooldown")
 
 func mark_tests() -> void:
 	await reset(2)
@@ -151,7 +151,7 @@ func mark_tests() -> void:
 	enemy.statuses.add_stitch(second,3,4)
 	k.update_mode(0)
 	k.fire()
-	near(enemy.health,166,"shears consume three marks for 84 damage")
+	near(enemy.health,154,"shears consume three marks for 96 damage")
 	check(enemy.statuses.stitch_count(stitch) == 0 and enemy.statuses.stitch_count(second) == 1,"consumption is source-specific")
 	marks()
 	k.shot_cd = 0
@@ -191,7 +191,7 @@ func conceal_tests() -> void:
 	k.tick(.11,CombatIntent.new())
 	check(not k.concealed,"concealment expires at twenty seconds")
 	near(k.deflect_cd,12,"timeout starts full twelve-second cooldown")
-	for action: String in ["deflect","primary","melee","guard","throw_action","hover","bomb","ultimate"]:
+	for action: String in ["deflect","primary","melee","guard","throw_action","bomb","ultimate"]:
 		await reset()
 		k = stitch.kit as StitchKit
 		k.start_conceal()
@@ -216,8 +216,11 @@ func conceal_tests() -> void:
 	attack.primary = true
 	k.prepare_input(attack)
 	k.fire()
+	for i: int in 20:
+		if stitch.state == "stitch_lunge": k.move_override(1.0/60)
 	check(stitch.global_position.z < -1.0,"opening lunge advances collision-safely")
-	near(enemy.health,187,"opening shears deal modest +15 damage")
+	near(enemy.health,205,"opening slicing lunge deals 45 direct damage")
+	check(enemy.statuses.effects.has("bleed"),"opening lunge applies bleed")
 	check(not k.opening,"opening bonus is consumed by one attack")
 	await reset()
 	k = stitch.kit as StitchKit
@@ -235,7 +238,7 @@ func tether_tests() -> void:
 	near(k.thread.remaining,5,"thread lasts five seconds")
 	enemy.global_position.z = -15
 	var motion: Vector3 = enemy.constrain_mobility(Vector3(0,0,-5))
-	near(motion.z,-1,"outward mobility is clamped at sixteen metres")
+	near(motion.z,0,"outward mobility is clamped outside ten metres")
 	near(enemy.constrain_mobility(Vector3(0,0,4)).z,4,"inward mobility remains available")
 	enemy.global_position.z = -17
 	near(enemy.constrain_mobility(Vector3(0,0,-5)).length(),0,"outside leash cannot increase separation by mobility")
@@ -263,7 +266,7 @@ func tether_tests() -> void:
 			"death": enemy.die()
 			"reset": enemy.reset_actor()
 			"phase": enemy.state = "wisp_phase"
-			"distance": enemy.global_position.z = -21
+			"distance": enemy.global_position.z = -29
 			"expiry": k.thread.remaining = 0
 		if is_instance_valid(k.thread): k.thread._physics_process(.01)
 		check(not is_instance_valid(k.thread) or not k.thread.valid(),"tether cleans up on "+reason)
@@ -311,10 +314,10 @@ func hook_tests() -> void:
 	k.launch_hook()
 	for i: int in 15:
 		if k.hook_flying: k.tick_hook(.02)
-	check(stitch.state == "stitch_reel","hook connects to current tethered enemy")
+	check(stitch.state == "ready","hook rejects even a tethered enemy")
 	for i: int in 60:
 		if stitch.state == "stitch_reel": k.move_override(1.0/60)
-	check(stitch.state == "ready" and stitch.global_position.z < -6,"reel arrives safely and returns control")
+	check(stitch.state == "ready" and stitch.global_position.z > -1,"rejected actor hook leaves control and position intact")
 	check(stitch.global_position.distance_to(enemy.global_position) >= .8,"reel stops before overlapping victim")
 	await reset()
 	k = stitch.kit as StitchKit
@@ -337,7 +340,7 @@ func hook_tests() -> void:
 	check(stitch.state == "stitch_reel","terrain hook finds supported landing")
 	for i: int in 65:
 		if stitch.state == "stitch_reel": k.move_override(1.0/60)
-	check(stitch.state == "ready" and stitch.global_position.z > -5.8,"terrain reel never passes through wall")
+	check(stitch.state == "stitch_hang" and stitch.global_position.z > -5.8,"terrain reel hangs safely before wall")
 	wall.queue_free()
 	await frames()
 
@@ -430,7 +433,7 @@ func seam_tests() -> void:
 	k.start_seam()
 	near(k.ultimate_charge,0,"ultimate commits charge on activation")
 	near(stitch.state_time,.65,"ultimate has readable .65s windup")
-	near(k.seam_distance,18,"ultimate telegraphs eighteen-metre lane")
+	near(k.seam_distance,26,"ultimate telegraphs twenty-six-metre lane")
 	stitch.state_time = 0
 	k.tick(.01,CombatIntent.new())
 	check(stitch.state == "stitch_seam","windup transitions into committed travel")
@@ -526,7 +529,7 @@ func edge_tests() -> void:
 	k.launch_hook()
 	for i: int in 10:
 		if k.hook_flying: k.tick_hook(.05)
-	check(stitch.state == "ready" and not k.hook_flying,"ceiling hook is rejected without airborne lock")
+	check(stitch.state == "stitch_reel" and not k.hook_flying,"ceiling hook accepts a capsule-safe reel")
 	ceiling.queue_free()
 	await frames()
 	await reset()

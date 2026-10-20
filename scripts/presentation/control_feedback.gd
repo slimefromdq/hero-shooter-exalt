@@ -5,13 +5,15 @@ static func snapshot(actor: HeroActor) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for kind: String in actor.statuses.effects:
 		var effect: Dictionary = actor.statuses.effects[kind]
+		if kind in ["stun","silence"]: result.append(entry(kind,kind.to_upper(),"Actions locked" if kind == "stun" else "Abilities locked",effect.remaining,Color("ffd178"),180))
+		if float(effect.get("disable_scale",1)) < 1: result.append(entry("resistance","CONTROL RESISTANCE","Disable duration %d%%" % roundi(float(effect.disable_scale)*100),effect.remaining,Color("a9f3df"),440))
 		if kind == "root": result.append(entry("root","[#] ROOTED","Movement locked; attacks available",effect.remaining,Color("d9b4ff"),220))
 		elif kind == "slow": result.append(entry("slow","[~] SLOWED","Movement reduced; mobility disabled",effect.remaining,Color("91d6ff"),330))
 	for thread: RedThread in actor.get_tree().get_nodes_in_group("red_threads"):
-		if thread.target == actor and thread.valid(): result.append(entry("thread","RED THREAD","Outward mobility limited to 16m; walk or break sight",thread.remaining,Color("ff4968"),180))
+		if thread.target == actor and thread.valid(): result.append(entry("thread","RED THREAD","Pulled beyond 10m; break sight or cleanse",thread.remaining,Color("ff4968"),180))
 	var state: String = actor.state
 	if state in ["stagger","counterthrow","throw_release"]:
-		result.append(entry(state,"[!] STAGGER" if state == "stagger" else "[X] COUNTER BREAK","Actions locked",actor.state_time,Color("ffca78"),160 if state == "stagger" else 260))
+		result.append(entry(state,"[!] STAGGER" if state == "stagger" else "[X] COUNTER BREAK","Actions locked / CONTROL RESISTANCE %d%%" % roundi(actor.close.stagger_scale*100) if state == "stagger" and actor.close.stagger_scale < 1 else "Actions locked",actor.state_time,Color("ffca78"),160 if state == "stagger" else 260))
 	if state in ["captured","throw_pair"]:
 		var left: float = actor.tuning.throw_duration * (1-actor.close.pair_progress)
 		result.append(entry("throw","[<>] THROW CAPTURE","Paired action; controls locked",left,Color("ff99a9"),120))

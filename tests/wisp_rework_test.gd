@@ -413,7 +413,7 @@ func extra_regressions() -> void:
 		check(k.ammo < before and not k.diving,"firing continues through dive and landing at %d Hz" % fps)
 	await reset()
 	k.tick(0,request("hover"))
-	for i: int in 15: drive(1.0/60,CombatIntent.new())
+	for i: int in 21: drive(1.0/60,CombatIntent.new())
 	check(a.state == "ready" and not a.damage_immune(),"first Q leaves an ordinary vulnerable endpoint")
 	k.tick(0,request("hover"))
 	near(k.step_immunity_left,.15,"consecutive accepted Q starts a fresh bounded window")
@@ -545,8 +545,9 @@ func rogue_followup() -> void:
 	Engine.physics_ticks_per_second = 60
 	await reset()
 	k.tick(0,request("hover"))
-	for i: int in 12: k.move_override(1.0/60)
-	near(a.position.z,-2.5,"Q is a short dodge rather than seven-meter travel")
+	for i: int in 21:
+		if a.state == "wisp_step": k.move_override(1.0/60)
+	near(a.position.z,-4,"Q travels four meters")
 	check(a.velocity.length() <= 2.001,"Q leaves at most two meters per second of momentum")
 	near(k.shells,1,"short dodge still loads one burst")
 	near(k.steps,2,"short dodge keeps existing charge accounting")

@@ -2,6 +2,8 @@ class_name WispEffects
 extends Node3D
 ## Short-lived procedural cards, silk-colored smoke and collision-free decoys.
 var source: HeroActor
+var source_life: int
+var meshes: Array[Node] = []
 var remaining: float = .35
 var duration: float = .35
 var spin: float = 1.5
@@ -21,6 +23,7 @@ static func afterimage(actor: HeroActor) -> void:
 		copy.material_override = mat
 		effect.add_child(copy)
 		copy.global_transform = mesh.global_transform
+	effect.meshes = effect.find_children("*","MeshInstance3D",true,false)
 	effect.spin = 0
 
 static func flourish(actor: HeroActor, at: Vector3, size: float) -> void:
@@ -38,17 +41,20 @@ static func flourish(actor: HeroActor, at: Vector3, size: float) -> void:
 		(puff.material_override as StandardMaterial3D).transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		(puff.material_override as StandardMaterial3D).albedo_color.a = .3
 
+	effect.meshes = effect.find_children("*","MeshInstance3D",true,false)
+
 func _ready() -> void:
+	source_life = source.life_serial
 	add_to_group("transient")
 	add_to_group("owned_attacks")
 
 func _process(delta: float) -> void:
 	remaining -= delta
-	if remaining <= 0 or not is_instance_valid(source) or not source.alive:
+	if remaining <= 0 or not is_instance_valid(source) or not source.alive or source.life_serial != source_life or not source.kit is WispKit:
 		queue_free()
 		return
 	rotation.y += delta*spin
-	for mesh: MeshInstance3D in find_children("*","MeshInstance3D",true,false):
+	for mesh: MeshInstance3D in meshes:
 		var mat := mesh.material_override as StandardMaterial3D
 		if mat.transparency != BaseMaterial3D.TRANSPARENCY_ALPHA:
 			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA

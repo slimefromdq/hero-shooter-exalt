@@ -201,7 +201,7 @@ func march_contacts(from: Vector3, to: Vector3) -> void:
 		var result: String = actor.resolver.damage(actor,target,data().march_damage,"march",cast_id,false,false,from+Vector3.UP)
 		if result == "hit":
 			if target.alive and target.state not in ["captured","throw_pair"]:
-				target.close.stagger()
+				target.close.stagger(actor)
 				target.state_time = data().march_stagger
 			actor.resolver.knockback(actor,target,Vector3.UP*data().march_up+march_direction*data().march_forward,"march")
 			actor.presentation.impact_sound.play_marshal_slam()
@@ -324,7 +324,7 @@ func verdict() -> void:
 		if not target.alive or target.team == actor.team or flat.length() > data().verdict_range or absf(offset.y) > 1.5: continue
 		if not target.motor.grounded() or flat.normalized().dot(verdict_direction) < cos(PI / 4): continue
 		if not actor.resolver.ray(actor.global_position + Vector3.UP,target.global_position + Vector3.UP,[actor.get_rid()],1).is_empty(): continue
-		if actor.resolver.damage(actor,target,data().verdict_damage,"verdict",cast_id) == "hit" and target.alive and target.state not in ["captured","throw_pair"]: target.close.stagger()
+		if actor.resolver.damage(actor,target,data().verdict_damage,"verdict",cast_id) == "hit" and target.alive and target.state not in ["captured","throw_pair"]: target.statuses.apply("stun",actor,data().verdict_stun)
 	actor.presentation.impact_sound.play_marshal_slam()
 
 func cancel(clear_owned: bool = false) -> void:

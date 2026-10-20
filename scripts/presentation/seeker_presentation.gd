@@ -29,6 +29,8 @@ static func bird(parent: Node, index: int) -> Node3D:
 	shape.bottom_radius = .5
 	shape.height = 1
 	var beam := Geometry.mesh(root,shape,Vector3.ZERO,Geometry.material(Color(tint),.8))
+	if parent is RelayKit:
+		beam.material_override = Geometry.material(Color("38dfff") if (parent as RelayKit).actor.team == 0 else Color("ff4f65"),1.0)
 	beam.name = "Healing"
 	beam.visible = false
 	return root

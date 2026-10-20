@@ -131,7 +131,7 @@ func permits(action: String) -> bool:
 	if kit is StitchKit:
 		if concealed() and action in ["dash","jump","hover"]: return false
 		if action in ["stitch_hook","stitch_hide","stitch_thread"] and resolver.attack_locked(self): return false
-		if action == "stitch_hook" and statuses.movement_disabled(): return false
+		if action in ["stitch_hook","stitch_lunge"] and statuses.movement_disabled(): return false
 	if kit is ExpansionKit:
 		if action in ["step","lift","kickstart"] and statuses.movement_disabled(): return false
 		if action in ["secondary","step","lift","kickstart","phase","assign","wall"] and resolver.attack_locked(self): return false

@@ -88,6 +88,7 @@ func gather_intent(_delta: float) -> CombatIntent:
 	var right: Vector3 = camera.global_basis.x
 	right.y = 0.0
 	input.move = (right.normalized() * axes.x - forward.normalized() * axes.y).limit_length(1.0)
+	input.flight_move = (camera.global_basis.x*axes.x + camera.global_basis.z*axes.y + Vector3.UP*(float(Input.is_action_pressed("jump"))-float(Input.is_action_pressed("slide")))).limit_length(1.0)
 	input.primary = Input.is_action_just_pressed("primary")
 	input.primary_held = Input.is_action_pressed("primary")
 	input.secondary_held = Input.is_action_pressed("aim")

@@ -151,6 +151,11 @@ func select_target() -> void:
 		if is_instance_valid(patient) and patient.global_position.distance_to(entry.position) < 10 and patient.last_hit_age < 1.5: score += .2
 		if bool(entry.get("damage_immune",false)) or str(entry.state) in ["deflect","marshal_shield"]: score -= .25
 		elif now-float(entry.defense_seen) < 3: score += .12
+		if bool(entry.get("channeling",false)): score += .3
+		if bool(entry.get("protected",false)): score -= .2
+		if int(entry.get("healing_source",0)) != 0: score -= .12
+		if int(entry.get("tether_source",0)) == actor.get_instance_id(): score += .25
+		if bool(entry.get("pursuing",false)) and actor.health < actor.effective_max_health()*.5: score += .15
 		if id == target_id: score += .12
 		if is_instance_valid(director): score -= maxf(0,director.pressure_on(id,actor.get_instance_id())-2)*.15
 		if score > best:

@@ -43,6 +43,7 @@ extends HeroTuning
 @export var orbital_column_clearance: float = 0.30
 @export var verdict_range: float = 16.0
 @export var verdict_damage: float = 100.0
+@export var verdict_stun: float = 1.5
 @export var verdict_windup: float = 0.8
 @export var verdict_takeoff_delay: float = 0.2
 @export var verdict_forward_range: float = 9.0

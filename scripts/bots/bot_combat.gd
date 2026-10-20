@@ -50,7 +50,7 @@ func evaluate(brain: BotBrain) -> void:
 	if k is NimbusKit and a.state == "ultimate":
 		intention = "Final Notice shots"
 		return
-	var seen: bool = brain.ready_to_attack()
+	var seen: bool = brain.ready_to_attack() and not bool(brain.threat.get("damage_immune",false))
 	var enemy: Dictionary = brain.threat
 	var clear_shot: bool = not bool(enemy.get("blocked_by_barrier",false))
 	var point: Vector3 = enemy.get("position",a.global_position)+Vector3.UP
@@ -62,6 +62,7 @@ func evaluate(brain: BotBrain) -> void:
 	if is_instance_valid(patient): patient_visible = a.resolver.attack_ray(a,a.body_point(1.45),patient.body_point(1.2),[a.get_rid()],1).is_empty()
 	var patient_need: float = 1-patient.health/patient.effective_max_health() if is_instance_valid(patient) else 0.0
 	var impact: float = .4+mini(3,brain.nearby_enemies)*.15+(.15 if float(brain.context.get("urgency",0)) > .8 else 0.0)
+	if seen and bool(enemy.get("channeling",false)) and distance < a.tuning.melee_range: offer("melee",.96,point)
 	if seen and distance < 3.5 and str(enemy.state) in ["melee_windup","melee_active"] and a.close.guard_meter > 30: offer("guard",.98,point,true)
 	if seen and a.close.incoming_throw() != null and brain.rng.randf() < brain.skill.consistency: offer("throw_action",.99,point)
 	if seen and distance < a.tuning.melee_range and float(enemy.health) < a.tuning.melee_damage and a.permits("melee"): offer("melee",.87,point)
@@ -123,9 +124,10 @@ func evaluate(brain: BotBrain) -> void:
 		var stitch := k as StitchKit
 		if not stitch.concealed and k.deflect_cd <= 0 and a.state == "ready" and (escaping or (seen and distance > 10 and brain.nearby_enemies <= 1)): offer("deflect",.93 if escaping else .66)
 		if seen and not escaping and distance > 3 and distance <= stitch.data().thread_range and k.bomb_cd <= 0: offer("bomb",.81,point)
-		if seen and not escaping and distance > 5 and distance < stitch.data().hook_range and k.mobility_cd <= 0 and is_instance_valid(stitch.thread) and stitch.thread.valid() and int(enemy.id) == stitch.thread.target.get_instance_id():
-			if brain.movement.safe_travel(a,point-a.body_point(1),distance-1): offer("hover",.85,point)
-		if seen and clear_shot and not escaping and int(enemy.get("marks",0)) > 0 and distance < stitch.data().seam_range and k.ultimate_charge >= 100 and float(enemy.health) <= stitch.data().seam_damage+int(enemy.marks)*stitch.data().mark_damage: offer("ultimate",.94,point)
+		if seen and distance > 10 and k.mobility_cd <= 0:
+			var surface: Vector3 = RosterTactics.stitch_surface(a,point)
+			if surface != Vector3.INF: offer("hover",.86 if escaping else .7,surface)
+		if seen and clear_shot and not escaping and distance < stitch.data().seam_range and k.ultimate_charge >= 100 and (brain.nearby_enemies >= 2 or float(enemy.health) <= stitch.data().seam_damage+int(enemy.get("marks",0))*stitch.data().mark_damage): offer("ultimate",.94,point)
 	elif k is RelayKit:
 		var seeker := k as RelayKit
 		if not is_instance_valid(seeker.recipient) and not is_instance_valid(patient):
@@ -255,6 +257,7 @@ func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) ->
 	if a.kit is WispKit:
 		RosterTactics.wisp_air_controls(a,input,brain.tactical_state in ["retreat","regroup"])
 		if a.state == "wisp_phase":
+			RosterTactics.wisp_flight(a,input,Vector3(brain.threat.get("position",a.global_position-a.global_basis.z)))
 			input.primary = false
 			input.primary_held = false
 			input.deflect = false
@@ -262,15 +265,28 @@ func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) ->
 	if a.resolver.attack_locked(a):
 		cancel("protected room")
 		return
+	if a.kit is StitchKit and a.state in ["stitch_reel","stitch_hang"]:
+		input.primary = false
+		input.primary_held = false
+		if a.state == "stitch_hang":
+			input.hover = true
+			if a.concealed() and brain.ready_to_attack() and not bool(brain.threat.get("damage_immune",false)) and a.global_position.distance_to(brain.threat.position) < (a.tuning as StitchTuning).opening_range:
+				input.aim = (Vector3(brain.threat.position)+Vector3.UP-input.aim_origin).normalized()
+				input.primary = true
+		return
 	if a.kit is StitchKit and a.concealed():
 		var stitch := a.kit as StitchKit
-		var close_prey: bool = brain.ready_to_attack() and a.global_position.distance_to(brain.threat.position) < stitch.data().opening_range
+		var close_prey: bool = brain.ready_to_attack() and not bool(brain.threat.get("damage_immune",false)) and a.global_position.distance_to(brain.threat.position) < stitch.data().opening_range
 		if not close_prey:
 			input.aim = aim
+			if fresh and str(choice.get("action","")) == "hover":
+				input.aim = (Vector3(choice.point)-input.aim_origin).normalized()
+				input.hover = true
+				return
 			input.deflect = stitch.conceal_left < stitch.data().conceal_duration-3 and brain.tactical_state in ["contest","hold","investigate","pressure"]
 			return
 	if update_bomb(brain,input,delta): return
-	var acquired: bool = brain.ready_to_attack()
+	var acquired: bool = brain.ready_to_attack() and not bool(brain.threat.get("damage_immune",false))
 	var desired: Vector3 = input.move if input.move.length() > .1 else aim
 	if acquired and brain.tactical_state not in ["retreat","regroup"]:
 		var point: Vector3 = brain.threat.position+Vector3.UP*1.1
@@ -305,6 +321,7 @@ func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) ->
 			input.primary = false
 			input.primary_held = false
 		if brain.tactical_state == "retreat" and not a.motor.grounded() and seeker.bomb_cd <= 0: input.jump = true
+	if bool(brain.threat.get("damage_immune",false)) and action in ["primary","secondary_pressed","ultimate","melee","throw_action"]: return
 	if action.is_empty(): return
 	# Aiming can take multiple ticks. One-shot actions are consumed only when emitted.
 	if action_point != Vector3.INF and not aligned: return

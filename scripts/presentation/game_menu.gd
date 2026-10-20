@@ -12,13 +12,13 @@ const HEROES := {
 	"nimbus":["FIELD AGENT","Precise umbrella rifle, aerial Hover and explosive setups.","Q Hover · E Deflect · 1 Pocket Bomb · 2 Final Notice"],
 	"slayer":["MONSTER HUNTER","Shotgun pressure, bleeding knives and directional boot captures.","Q Silver Knives · E Boot Rush · 1 Snare · 2 Heads Will Roll"],
 	"marshal":["MAIN TANK","Lead the advance behind an arcane barrier.","Q Forward March · E Rallying Command · 1 Orbital Barrage · 2 Verdict"],
-	"samson":["PEEL SUPPORT","Rescue allies, cross-examine threats, and establish Witness Protection.","Q Intervene · E Cross-Examination · 1 Cease and Desist · 2 Roach Court"],
+	"samson":["PEEL SUPPORT","Rescue allies and cross-examine threats to earn Evidence; spend it on larger injunctions. Establish Witness Protection.","Q Intervene · E Cross-Examination · 1 Cease and Desist · 2 Roach Court"],
 	"doctor":["MAIN SUPPORT","Hold RMB to heal allies; use LMB for precise sidearm fire.","Q House Call · E Ward Round · 1 Prescription · 2 Exemplary Condition"],
 	"huddle":["MOBILE OFF-TANK","A colony with seed fire, two flight bursts and ally protection.","Q Scatterbound · E Screen · 1 Personal Space · 2 Nobody Gets Squished"],
 	"relay":["SPIRITUAL MARKSMAN","Infinite bow arrows and a passive healing bird. Charge a spiraling volley; Omen reveals and amplifies damage.","RMB Talon Volley · Q Omen · E Wing · 1 Assign / Self · 2 Murmuration · Air Space Jump"],
 	"dynamo":["STORM TANK","Prespin a ramping minigun, build physical walls and gather enemies.","Q Stormcharge · E Wall · 1 Lodestone · 2 Storm Dominion"],
-	"stitch":["DOLL ASSASSIN","Needles sew marks; close shears consume them. Thread prey and approach unseen.","Q Spoolstep · E Play Dead · 1 Red Thread · 2 Curtain Call"],
-	"wisp":["PHANTOM THIEF","Mark with pistols; dodge to load a long explosive burst. Leap high; pull enemies into Grand Heist.","Q Phantom Dodge · E Vanishing Act · 1 Majestic Leap · 2 Grand Heist"]}
+	"stitch":["DOLL ASSASSIN","Needles mark; scissors consume marks. Pull threaded prey, hang from surfaces unseen, then lunge with bleeding shears.","Q Spoolstep · E Play Dead · 1 Red Thread · 2 Curtain Call"],
+	"wisp":["PHANTOM THIEF","Mark with pistols; dodge to load a long explosive burst. Fly freely while vanished; leap high and pull enemies into Grand Heist.","Q Phantom Dodge · E Vanishing Act · 1 Majestic Leap · 2 Grand Heist"]}
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS

@@ -16,6 +16,10 @@ Push-Location -LiteralPath $taskRoot
 try {
     & $taskEngine --headless --path $taskRoot --editor --import --quit
     if ($LASTEXITCODE -ne 0) { throw 'Godot import failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/wave_1_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Wave 1 integration and tuning checks failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/wave_1_round_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Wave 1 end-of-round combat and cleanup failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/seeker_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Seeker combat, companion or lifecycle checks failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/ally_targeting_test.gd
@@ -125,6 +129,8 @@ try {
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_navigation_regression.gd
     if ($LASTEXITCODE -ne 0) { throw 'City navigation recovery or healing route failed.' }
     if ($Capture) {
+        & $taskEngine --path $taskRoot --fixed-fps 60 --script res://tests/wave_1_input_test.gd --windowed --resolution 1440x900 --audio-driver Dummy
+        if ($LASTEXITCODE -ne 0) { throw 'Wave 1 rendered flight, hang and ambush inputs failed.' }
         & $taskEngine --path $taskRoot --script res://tests/ability_selection_test.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60
         if ($LASTEXITCODE -ne 0) { throw 'Universal ability selection rendered feedback failed.' }
         & $taskEngine --path $taskRoot --script res://tests/samson_integration_test.gd --windowed --resolution 1440x900 --audio-driver Dummy --fixed-fps 60 -- --capture

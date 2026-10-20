@@ -6,13 +6,28 @@ var effects: Dictionary = {}
 var marks: Dictionary = {}
 var souls: Dictionary = {}
 var stitches: Dictionary = {}
+var hard_disable_count: int = 0
+var hard_disable_window: float = 0.0
+var last_disable_scale: float = 1.0
+
+func hard_duration(kind: String, duration: float) -> float:
+	if effects.has(kind) or (kind == "stagger" and actor.state == "stagger"): return 0.0
+	last_disable_scale = 1.0 if hard_disable_count == 0 else .5 if hard_disable_count == 1 else .25
+	hard_disable_count += 1
+	hard_disable_window = 4.0
+	return duration*last_disable_scale
 
 func apply(kind: String, source: HeroActor, duration: float, strength: float = 0.0) -> bool:
 	if not actor.alive or actor.invulnerable or actor.state == "wisp_phase" or source.team == actor.team or actor.resolver.protected_room(actor) or actor.resolver.attack_locked(source):
 		return false
 	if actor.resolver.spawn_door_blocks(source.body_point(1),actor.body_point(1)): return false
 	if duration <= 0: return false
-	if kind in ["stun","silence"]: duration = maxf(duration,float(effects.get(kind,{}).get("remaining",0)))
+	var disable_scale: float = 1.0
+	if kind in ["stun","root"]:
+		duration = hard_duration(kind,duration)
+		if duration <= 0: return false
+		disable_scale = last_disable_scale
+	if kind == "silence": duration = maxf(duration,float(effects.get(kind,{}).get("remaining",0)))
 	if kind == "stun":
 		if actor.boot_pair != null: actor.boot_pair.release(false)
 		actor.close.cancel()
@@ -20,7 +35,7 @@ func apply(kind: String, source: HeroActor, duration: float, strength: float = 0
 		actor.motor.interrupt_mobility()
 	# Refresh retains the DoT clock, preventing repeated hits from postponing ticks.
 	var clock: float = float(effects.get(kind, {}).get("clock", 0.0))
-	effects[kind] = {"source": weakref(source), "remaining": duration, "strength": strength, "clock": clock}
+	effects[kind] = {"source": weakref(source), "remaining": duration, "strength": strength, "clock": clock, "disable_scale":disable_scale}
 	if kind == "max_health":
 		actor.health = minf(actor.health, effective_max())
 	if kind in ["root", "slow"]:
@@ -30,6 +45,8 @@ func apply(kind: String, source: HeroActor, duration: float, strength: float = 0
 	return true
 
 func tick(delta: float) -> void:
+	hard_disable_window = maxf(0,hard_disable_window-delta)
+	if hard_disable_window <= .000001: hard_disable_count = 0
 	for key: int in stitches.keys():
 		stitches[key].remaining -= delta
 		var owner_actor: HeroActor = stitches[key].source.get_ref() as HeroActor
@@ -94,6 +111,9 @@ func cleanse() -> void:
 	souls.clear()
 
 func clear() -> void:
+	hard_disable_count = 0
+	hard_disable_window = 0
+	last_disable_scale = 1
 	RedThread.clear_actor(actor)
 	stitches.clear()
 	effects.clear()
@@ -146,7 +166,7 @@ func mobility_locked() -> bool:
 func permits(action: String) -> bool:
 	if stunned(): return false
 	if silenced() and action not in ["primary","secondary","aim","reload","jump","melee","throw","counter","guard"]: return false
-	var mobility_action: bool = action in ["dash","hover","boot","march","house_call","step","lift","kickstart","scatter","wave","intervene","stitch_hook"] or (action == "ultimate" and actor.tuning.hero_id in ["marshal","wisp","stitch"])
+	var mobility_action: bool = action in ["dash","hover","boot","march","house_call","step","lift","kickstart","scatter","wave","intervene","stitch_hook","stitch_lunge"] or (action == "ultimate" and actor.tuning.hero_id in ["marshal","wisp","stitch"])
 	if mobility_action and mobility_locked(): return false
 	return true
 

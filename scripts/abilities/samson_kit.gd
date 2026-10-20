@@ -2,6 +2,8 @@ class_name SamsonKit
 extends ExpansionKit
 
 var charges: int = 2
+var evidence: int = 0
+
 var recharge: float = 0.0
 var recipient: HeroActor
 var recipient_life: int = -1
@@ -17,6 +19,13 @@ var court_yaw: float = 0.0
 var court_warning: Node3D
 var feedback_text: String = ""
 var feedback_left: float = 0.0
+
+func notice_scale() -> float:
+	return 1.0 + .5*evidence
+
+func gain_evidence() -> void:
+	evidence = mini(2,evidence+1)
+	actor.resolver.record("evidence",actor,"evidence","charges=%d" % evidence)
 
 func data() -> SamsonTuning:
 	return actor.tuning as SamsonTuning
@@ -92,6 +101,7 @@ func arrive() -> void:
 		actor.resolver.knockback(actor,enemy,away.normalized()*t.peel_speed,"intervene")
 	CombatEffect.pulse(actor.get_parent(),actor.body_point(1),Color("64edc3"),t.peel_radius)
 	actor.resolver.record("arrival",actor,"motion_to_intervene")
+	gain_evidence()
 	recipient = null
 	actor.velocity = Vector3.ZERO
 	actor.state = "ready"
@@ -163,6 +173,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 				CombatEffect.line(actor.get_parent(),actor.muzzle(),defendant.body_point(1.2),Color("ffcf6b"))
 			if channel_age >= data().cross_duration-.000001:
 				var target: HeroActor = defendant
+				gain_evidence()
 				if target.statuses.apply("stun",actor,data().cross_stun):
 					target.statuses.apply("silence",actor,data().cross_stun+data().cross_silence)
 					CombatEffect.pulse(actor.get_parent(),target.body_point(1),Color("ffd178"),1.2)
@@ -195,13 +206,15 @@ func place_notice() -> bool:
 	if bomb_cd > 0 or not can_act("bomb"): return false
 	var hit: Dictionary = aimed_ground(data().notice_range)
 	if hit.is_empty(): return false
-	if not SamsonNotice.placement_clear(actor,hit.position,actor.rotation.y): return false
+	if not SamsonNotice.placement_clear(actor,hit.position,actor.rotation.y,notice_scale()): return false
 	if is_instance_valid(notice): notice.retire()
 	notice = SamsonNotice.new()
 	notice.source = actor
+	notice.footprint_scale = notice_scale()
 	notice.position = hit.position
 	notice.rotation.y = actor.rotation.y
 	actor.get_parent().add_child(notice)
+	evidence = 0
 	bomb_cd = data().notice_cooldown
 	actor.resolver.record("cast",actor,"cease_and_desist")
 	feedback_message("CEASE AND DESIST",410)
@@ -215,7 +228,7 @@ func start_court() -> bool:
 	court_yaw = actor.rotation.y
 	actor.state = "samson_court_start"
 	actor.state_time = data().court_preparation
-	court_warning = RosterEffects.zone(actor.get_parent(),court_at,data().court_radius,Color("84e8c9"))
+	court_warning = RosterEffects.zone(actor.get_parent(),court_at,data().court_radius,Color("38dfff") if actor.team == 0 else Color("ff4f65"))
 	feedback_message("COURT IS IN SESSION",110)
 	actor.presentation.sound.play_tone(110,data().court_preparation,.25)
 	return true
@@ -258,6 +271,7 @@ func cancel(clear_owned: bool = false) -> void:
 	cancel_preparation()
 	if actor.state.begins_with("samson_"): actor.state = "ready"
 	if clear_owned:
+		evidence = 0
 		if is_instance_valid(notice): notice.retire()
 		if is_instance_valid(court): court.retire()
 	super.cancel(clear_owned)

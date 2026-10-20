@@ -40,6 +40,8 @@ func destination(brain: BotBrain, fallback: Vector3, map: RID, route_pending: bo
 			goal = a.global_position
 			intentional_hold = true
 		if goal.distance_to(brain.context.position) > 19 and state not in ["retreat","support"]: goal = fallback
+	if brain.perception.incoming_thread:
+		goal = a.global_position
 	# Small bounded cover/angle sample; authored routes remain the strategic fallback.
 	var best_score: float = -INF
 	var best: Vector3 = fallback
@@ -53,9 +55,10 @@ func destination(brain: BotBrain, fallback: Vector3, map: RID, route_pending: bo
 		var score: float = -point.distance_to(goal)*.2
 		if is_instance_valid(brain.director) and brain.director.reserved(point,a.get_instance_id()): score -= 1.2
 		if not brain.threat.is_empty():
-			var blocked: bool = not a.resolver.attack_ray(a,point+Vector3.UP*1.45,brain.threat.position+Vector3.UP,[a.get_rid()],1).is_empty()
+			var threat_at: Vector3 = brain.perception.thread_anchor if brain.perception.incoming_thread else Vector3(brain.threat.position)
+			var blocked: bool = not a.resolver.attack_ray(a,point+Vector3.UP*1.45,threat_at+Vector3.UP,[a.get_rid()],1).is_empty()
 			query_count += 1
-			score += (.8 if blocked else -.3) if state in ["retreat","regroup","support"] else (.3 if not blocked else -.3)
+			score += (1.2 if blocked else -.7) if brain.perception.incoming_thread else (.8 if blocked else -.3) if state in ["retreat","regroup","support"] else (.3 if not blocked else -.3)
 		if score > best_score:
 			best_score = score
 			best = point
@@ -70,6 +73,7 @@ func destination(brain: BotBrain, fallback: Vector3, map: RID, route_pending: bo
 func safe_travel(a: HeroActor, direction: Vector3, distance: float, rise: float = 0.0) -> bool:
 	if direction.is_zero_approx(): return false
 	var motion: Vector3 = direction.normalized()*distance
+	if not RedThread.constrain(a,motion).is_equal_approx(motion): return false
 	if a.test_move(a.global_transform,motion): return false
 	var end: Vector3 = a.global_position+motion
 	var floor_hit: Dictionary = a.resolver.ray(end+Vector3.UP*maxf(1,rise),end-Vector3.UP*3,[a.get_rid()],1)

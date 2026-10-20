@@ -63,7 +63,7 @@ static func ultimate_detail(a: HeroActor) -> String:
 		var t := a.tuning as SamsonTuning
 		return "%dM / %d%% RESIST / %d HP COURT" % [roundi(t.court_radius),roundi(t.court_reduction*100),roundi(t.court_health)]
 
-	if a.kit is StitchKit: return "18M SEAM / MARKED EXECUTE <=25%"
+	if a.kit is StitchKit: return "26M PIERCE / MARK EXECUTE"
 	match a.tuning.hero_id:
 		"relay": return "10s / THREE BIRDS / 33.75 HP/S EACH / PIERCING"
 		"dynamo": return "%dM / %dM STORM / %d DPS" % [roundi((a.tuning as DynamoTuning).storm_range),roundi((a.tuning as DynamoTuning).storm_radius),roundi((a.tuning as DynamoTuning).storm_damage/(a.tuning as DynamoTuning).storm_interval)]
@@ -89,12 +89,12 @@ static func weapon_label(a: HeroActor) -> String:
 	return "RIFLE"
 
 static func secondary_label(a: HeroActor) -> String:
-	if a.kit is SamsonKit: return "Q RESCUE / E CHANNEL / 1 NO-MOBILITY ZONE"
+	if a.kit is SamsonKit: return "Q/E GAIN EVIDENCE / 1 SPENDS FOR LARGER ZONE"
 
-	if a.kit is StitchKit: return "LMB AUTO NEEDLES / SHEARS · Q HOOK · E HIDE · 1 THREAD"
+	if a.kit is StitchKit: return "LMB HIDDEN LUNGE / Q HOOK-RELEASE / SPACE DROP / 1 THREAD"
 	if a.kit is RelayKit: return "RMB CHARGE VOLLEY / 1 ASSIGN OR SELF / AIR SPACE SPIRIT JUMP"
 	if a.kit is DynamoKit: return "RMB PRESPIN / WALL: LMB PLACE, RMB ROTATE, E CANCEL"
-	if a.kit is WispKit: return "RMB %dM EXPLOSION / Q LOADS / LEAP: HOLD JUMP, 1 DIVE" % roundi((a.tuning as WispTuning).burst_range)
+	if a.kit is WispKit: return "RMB %dM EXPLOSION / E FLIGHT: SPACE UP, SHIFT DOWN / LEAP: 1 DIVE" % roundi((a.tuning as WispTuning).burst_range)
 	if a.kit is HuddleKit: return "RMB HOLD REGROUP / LMB HOLD FIRE"
 	if a.kit is MarshalKit: return "RMB HOLD SHIELD / LMB HOLD FIRE"
 	if a.kit is DoctorKit: return "RMB HOLD HEAL / LMB HOLD FIRE"
@@ -104,6 +104,7 @@ static func detail(a: HeroActor) -> String:
 	if a.kit is SamsonKit:
 		var k := a.kit as SamsonKit
 		var result: String = "INTERVENE [%s][%s] %d/%d / NEXT %.1fs" % ["+" if k.charges > 0 else "-","+" if k.charges > 1 else "-",k.charges,k.data().intervene_charges,k.recharge]
+		result += " / EVIDENCE %d/2 / 1: %.1f x %.1fm" % [k.evidence,k.data().notice_width*k.notice_scale(),k.data().notice_depth*k.notice_scale()]
 		if a.state == "samson_cross": result += " / %s %d%%" % [k.defendant.actor_id if is_instance_valid(k.defendant) else "CHANNEL",roundi(100*k.channel_age/k.data().cross_duration)]
 		elif k.feedback_left > 0: result += " / " + k.feedback_text
 		if is_instance_valid(k.notice) and k.notice.active(): result += " / NOTICE %d %.1fs" % [ceili(k.notice.health),k.notice.remaining]
@@ -112,7 +113,7 @@ static func detail(a: HeroActor) -> String:
 
 	if a.kit is StitchKit:
 		var k := a.kit as StitchKit
-		return ("CONCEALED %.1fs / E REVEAL / COOLDOWN ON EXIT" % k.conceal_left if k.concealed else "PLAY DEAD %.1fs" % k.deflect_cd)+(" / THREAD %.1fs" % k.thread.remaining if is_instance_valid(k.thread) and k.thread.valid() else " / NO THREAD")
+		return ("CONCEALED %.1fs / E REVEAL / COOLDOWN ON EXIT" % k.conceal_left if k.concealed else "PLAY DEAD %.1fs" % k.deflect_cd)+(" / HANG: Q/JUMP RELEASE" if a.state == "stitch_hang" else "")+(" / THREAD %.1fs" % k.thread.remaining if is_instance_valid(k.thread) and k.thread.valid() else " / NO THREAD")
 	if a.kit is RelayKit:
 		var k := a.kit as RelayKit
 		var result: String = "BIRD: "+(k.recipient.actor_id if is_instance_valid(k.recipient) else "FOLLOWING")

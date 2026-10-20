@@ -4,6 +4,7 @@ extends CombatStructure
 var owner_life: int
 var remaining: float = 8.0
 var witnesses: Dictionary = {}
+var procession: Node3D
 
 static func ground_clear(owner_actor: HeroActor, at: Vector3, yaw: float, footprint: Vector3) -> bool:
 	var t := owner_actor.tuning as SamsonTuning
@@ -52,10 +53,12 @@ func _ready() -> void:
 	var ring := TorusMesh.new()
 	ring.inner_radius = t.court_radius-.06
 	ring.outer_radius = t.court_radius
-	Geometry.mesh(self,ring,Vector3(0,-size.y/2+.04,0),Geometry.material(Color("66ddba"),.7))
+	Geometry.mesh(self,ring,Vector3(0,-size.y/2+.04,0),Geometry.material(Color("38dfff") if source.team == 0 else Color("ff4f65"),.7))
+	procession = Node3D.new()
+	add_child(procession)
 	for i: int in 18:
 		var angle: float = i*TAU/18
-		SamsonVisuals.roach(self,Vector3(cos(angle)*2.8,-size.y/2+.12,sin(angle)*1.3),.22,Color("7ee8c6"))
+		SamsonVisuals.roach(procession,Vector3(cos(angle)*2.8,-size.y/2+.12,sin(angle)*1.3),.22,Color("7ee8c6"))
 	update_witnesses()
 
 func active() -> bool:
@@ -90,6 +93,7 @@ func _physics_process(delta: float) -> void:
 func _process(delta: float) -> void:
 	if not active(): return
 	super._process(delta)
+	if is_instance_valid(procession): procession.rotation.y += delta*.45
 	plate.text = "COURT %d / %.1fs" % [ceili(health),remaining]
 
 func retire() -> void:

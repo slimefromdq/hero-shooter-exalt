@@ -10,13 +10,13 @@ Use `Launch.ps1 -Samson`, add `-Training` or `-Museum`, or select Samson through
 | --- | --- | --- |
 | LMB hold | Deposition | Accurate ink projectiles; 12 damage, 1.5× headshots, 0.15 s interval, 70 m/s, 35 m range; 24 rounds and 1 s reload. |
 | Q | Motion to Intervene | Two charges, sequential 8 s recharge; aimed ally within 22 m, 26 m/s swept travel stopping 1.5 m away. Arrival: 65 healing and 60 overhealth for that ally, 30 overhealth for Samson, 3 s shield duration; nearby enemies within 4 m receive a 9 m/s horizontal outward impulse. |
-| E | Cross-Examination | Aimed enemy within 20 m; 1.5 s LOS channel at unchanged movement speed. Success: 0.6 s stun, then 2.5 more seconds of silence. 10 s cooldown. Second E cancels. |
-| 1 | Cease and Desist | Shootable 120-HP notice and traversable 11 × 7.5 m jurisdiction; 15 m placement range, 0.2 s warning, 6 s active lifetime, 12 s cooldown. Enemies inside suffer 30% ordinary-movement slow and cannot start movement abilities or shared dashes. |
+| E | Cross-Examination | Aimed enemy within 20 m; 1.5 s LOS channel at unchanged movement speed. Success: 0.6 s base stun and a 3.1 s silence timer; hard-disable diminishing returns can shorten the stun. 10 s cooldown. Second E cancels. |
+| 1 | Cease and Desist | Shootable 120-HP notice; 11 x 7.5 m base jurisdiction, 16.5 x 11.25 m with one Evidence, 22 x 15 m with two. Successful placement spends all Evidence. 15 m cast range, 0.2 s warning, 6 s active lifetime, 12 s cooldown. Enemies inside suffer 30% slow and cannot start mobility. |
 | 2 | Roach Court: Witness Protection | Ground placement within 18 m; 0.6 s summon warning. Open 4 × 2 × 1 m physical court with 750 HP, 8 s lifetime and 11 m protection radius. Qualifying allies gain 25% damage reduction and 75 overhealth once per cast, lasting 4 s. No healing, enemy disable or movement-speed buff. |
 
-Samson has 250 HP, ordinary traversal, no separate RMB ability and no additional passive. His rescue charges are independent of shared dash charges. The HUD shows rescue charge pips/count, the next recharge timer, selected channel target/progress, field durability/lifetime and ordinary overhealth bars.
+Samson has 250 HP, ordinary traversal, no separate RMB ability and a two-charge per-life Evidence meter. Successful Q arrival or completed E grants one Evidence; successful 1 placement spends all charges for +50% width and depth each. Failed placement spends none. Death, switch and reset clear Evidence. His rescue charges are independent of shared dash charges. The HUD shows rescue charge pips/count, the next recharge timer, selected channel target/progress, field durability/lifetime and ordinary overhealth bars.
 
-The jurisdiction footprint is now 82.5 m², approximately 53% larger than its original 54 m². Witness Protection's radius increased from 10 to 11 m; its physical bench and 750 HP are unchanged.
+Jurisdiction covers 82.5 square meters at base, 185.625 with one Evidence, or 330 with two. Placement support checks, gameplay bounds and visuals use identical cast-time dimensions. Witness Protection retains its 11 m radius and 750-HP bench.
 
 All current hero abilities that select another actor show an overhead key marker when their aimed target can be used: Samson Q/E, Doctor Q/RMB/1/2, Relay RMB and Huddle E. Friendly prompts are mint; enemy prompts are orange. Multiple usable abilities share one target marker. Markers respect targeting cones, range, cover, resources, cooldowns, immunity, movement restrictions and collision sweeps as applicable. They disappear during unavailable states, menus, pause, death and target loss. This is local-player feedback and does not change aim, acquisition or bot behavior.
 
@@ -77,3 +77,7 @@ $taskEngine = & ./tools/find_godot.ps1
 ## Known limits
 
 The court and notice require mostly level supported ground; difficult terrain can reject placement without spending resources. Models, poses, portrait and synthesized cues are placeholders. The new states use the existing offline authority; this adds no networking. Correctness tests and seeded matches establish functionality, not competitive balance, human aiming comfort or final animation readability.
+
+## Wave 1 integration
+
+Shared hostile stun, root and forced stagger durations diminish to 100%, 50%, then 25%, resetting after four seconds without an accepted hard disable. Active same-category disables cannot be refreshed. Capture/throw choreography is excluded. Current validation and remaining limitations are in [WAVE_1_CHANGELOG.md](../WAVE_1_CHANGELOG.md).

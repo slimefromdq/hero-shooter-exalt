@@ -295,8 +295,9 @@ func wisp_tests() -> void:
 	k.tick(0,request)
 	check(wisp.state == "wisp_step" and k.steps == 2,"dash spends one charge")
 	check(not wisp.permits("primary"),"dash prevents shooting")
-	for i: int in 14: k.move_override(1.0/60)
-	near(wisp.position.z,-2.5,"Rogue dodge covers two and a half meters")
+	for i: int in 21:
+		if wisp.state == "wisp_step": k.move_override(1.0/60)
+	near(wisp.position.z,-4,"Rogue dodge covers four meters")
 	check(k.shells == 1,"completed dash supplies one shell")
 	k.tick(4,CombatIntent.new())
 	check(k.steps == 3 and k.recharge == 0,"dash charges recharge sequentially")

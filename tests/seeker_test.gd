@@ -170,7 +170,7 @@ func arrow_cases() -> void:
 	for node: Node in shots:
 		var a := node as SeekerArrow
 		a.set_physics_process(false)
-		near(a.damage_amount,22,"full-charge arrow damage")
+		near(a.damage_amount,28,"full-charge arrow damage")
 		if a.orbit_index < 0: central = a
 	check(central != null,"volley has one central arrow")
 	var outer: SeekerArrow = shots[1] as SeekerArrow
@@ -182,7 +182,7 @@ func arrow_cases() -> void:
 	check(central.volley.locked and central.volley.patient() == enemy,"central confirmed hit locks volley")
 	for node: Node in shots:
 		if node != central: (node as SeekerArrow)._physics_process(.4)
-	near(enemy.health,4890,"all five volley arrows converge for 110 body damage")
+	near(enemy.health,4860,"all five volley arrows converge for 140 body damage")
 	await fresh()
 	var group := SeekerVolley.new()
 	shot = arrow(22,0,group)

@@ -2,17 +2,20 @@ class_name SamsonNotice
 extends CombatStructure
 ## Shootable paper notice, traversable floor jurisdiction. Queries are live:
 ## no stale enter/exit cache and no interruption of already committed movement.
+var footprint_scale: float = 1.0
+var footprint: Vector2
 var age: float = 0.0
 var owner_life: int
 var remaining: float = 6.0
 
-static func placement_clear(owner_actor: HeroActor, at: Vector3, yaw: float) -> bool:
+static func placement_clear(owner_actor: HeroActor, at: Vector3, yaw: float, scale_factor: float = 1.0) -> bool:
 	var t := owner_actor.tuning as SamsonTuning
-	return SamsonCourt.ground_clear(owner_actor,at,yaw,Vector3(t.notice_width,0,t.notice_depth))
+	return SamsonCourt.ground_clear(owner_actor,at,yaw,Vector3(t.notice_width*scale_factor,0,t.notice_depth*scale_factor))
 
 func _ready() -> void:
 	var t := source.tuning as SamsonTuning
 	owner_life = source.life_serial
+	footprint = Vector2(t.notice_width,t.notice_depth)*footprint_scale
 	health = t.notice_health
 	maximum = health
 	size = t.notice_size
@@ -25,11 +28,11 @@ func _ready() -> void:
 	add_to_group("movement_zones")
 	remaining = t.notice_duration+t.notice_arm
 	stone.material_override = Geometry.material(Color("e0c989"),.3)
-	Geometry.text3d(self,"CEASE\n& DESIST",Vector3(0,.1,-.15),22,Color("183e39"))
+	Geometry.text3d(self,("LANTERN" if source.team == 0 else "CROWN")+"\nCEASE & DESIST",Vector3(0,.1,-.15),22,Color("183e39"))
 	for side: float in [-1.0,1.0]:
-		Geometry.box(self,Vector3(t.notice_width,.04,.08),Vector3(0,-size.y/2+.035,side*t.notice_depth/2),Color("ecbd6d"),false)
-		Geometry.box(self,Vector3(.08,.04,t.notice_depth),Vector3(side*t.notice_width/2,-size.y/2+.035,0),Color("ecbd6d"),false)
-	Geometry.text3d(self,"NO MOBILITY",Vector3(0,-size.y/2+.08,-t.notice_depth/2),23,Color("ffe49a"))
+		Geometry.box(self,Vector3(footprint.x,.04,.08),Vector3(0,-size.y/2+.035,side*footprint.y/2),(Color("38dfff") if source.team == 0 else Color("ff4f65")),false)
+		Geometry.box(self,Vector3(.08,.04,footprint.y),Vector3(side*footprint.x/2,-size.y/2+.035,0),(Color("38dfff") if source.team == 0 else Color("ff4f65")),false)
+	Geometry.text3d(self,"NO MOBILITY / x%.1f" % footprint_scale,Vector3(0,-size.y/2+.08,-footprint.y/2),23,Color("ffe49a"))
 
 func active() -> bool:
 	return not is_queued_for_deletion() and health > 0 and remaining > 0 and is_instance_valid(source) and source.alive and source.life_serial == owner_life and not source.resolver.attack_locked(source)
@@ -39,7 +42,7 @@ func hostile_contains(target: HeroActor) -> bool:
 	if not target.alive or target.team == source.team or target.invulnerable or target.state == "wisp_phase" or source.resolver.protected_room(target): return false
 	var t := source.tuning as SamsonTuning
 	var at: Vector3 = to_local(target.global_position)+Vector3.UP*size.y/2
-	if absf(at.x) > t.notice_width/2 or absf(at.z) > t.notice_depth/2 or absf(at.y) > t.notice_height: return false
+	if absf(at.x) > footprint.x/2 or absf(at.z) > footprint.y/2 or absf(at.y) > t.notice_height: return false
 	return not source.resolver.spawn_door_blocks(global_position,target.body_point(1)) and source.resolver.attack_ray(source,global_position,target.body_point(1),[get_rid()],1).is_empty()
 
 func movement_multiplier() -> float:

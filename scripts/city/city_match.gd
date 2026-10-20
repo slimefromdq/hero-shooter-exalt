@@ -347,6 +347,18 @@ func _on_ownership_changed(team: int) -> void:
 func _on_round_won(team: int) -> void:
 	winner = team
 	show_notice("VICTORY  /  LANTERN TEAM" if team == 0 else "ROUND COMPLETE  /  CROWN TEAM WINS", 10000.0)
+	# End all committed combat before the result screen. Movement and menus
+	# remain available, but delayed hits cannot change the finished score.
+	for actor: HeroActor in actors:
+		if not is_instance_valid(actor): continue
+		actor.close.cancel()
+		actor.kit.cancel(true)
+		actor.motor.interrupt_mobility()
+		actor.statuses.clear()
+		actor.overhealth.clear_owned()
+		actor.overhealth.clear()
+		actor.benefits.clear_owned()
+		actor.benefits.clear()
 	for bot: HeroActor in bots:
 		bot.controller.frozen = true
 

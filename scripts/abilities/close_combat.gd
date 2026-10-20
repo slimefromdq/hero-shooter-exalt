@@ -4,6 +4,7 @@ extends Node
 var actor: HeroActor
 var guard_meter: float = 100.0
 var guard_cd: float = 0.0
+var stagger_scale: float = 1.0
 var grace: float = 0.0
 var last_throw_time: float = -100.0
 var cast_id: int = 0
@@ -225,13 +226,20 @@ func interrupt_startup() -> void:
 	actor.state_time = actor.tuning.throw_recovery
 	actor.resolver.record("interrupt", actor, "throw")
 
-func stagger() -> void:
+func stagger(source: HeroActor = null) -> void:
+	var duration: float = actor.tuning.stagger_duration
+	stagger_scale = 1.0
+	if is_instance_valid(source) and source.team != actor.team:
+		if actor.damage_immune() or actor.resolver.protected_room(actor): return
+		duration = actor.statuses.hard_duration("stagger",duration)
+		stagger_scale = actor.statuses.last_disable_scale
+		if duration <= 0: return
 	if actor.boot_pair != null: actor.boot_pair.release(false)
 	cancel()
 	actor.kit.cancel()
 	actor.motor.end_hover()
 	actor.state = "stagger"
-	actor.state_time = actor.tuning.stagger_duration
+	actor.state_time = duration
 	actor.velocity.x = 0.0
 	actor.velocity.z = 0.0
 	actor.resolver.record("status", actor, "stagger")

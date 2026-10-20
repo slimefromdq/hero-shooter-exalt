@@ -398,7 +398,7 @@ func _process(delta: float) -> void:
 	if status_text != "": status_text += "\n"
 	status_text += CareHUD.status(actor,false)
 	for effect: String in actor.statuses.effects:
-		if effect in ["root","slow"]: continue
+		if effect in ["root","slow","stun","silence"]: continue
 		status_text += "%s %.1f  " % [effect.replace("max_health","MAX HP WOUND").to_upper(),actor.statuses.effects[effect].remaining]
 	var viewer: HeroActor = session.player if session != null else null
 	if is_instance_valid(viewer) and viewer.kit is StitchKit and actor.statuses.stitch_count(viewer) > 0:

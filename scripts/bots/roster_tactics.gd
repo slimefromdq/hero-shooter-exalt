@@ -67,7 +67,7 @@ static func apply(a: HeroActor, input: CombatIntent) -> void:
 		var k := a.kit as WispKit
 		if not is_instance_valid(enemy): return
 		if a.state == "wisp_phase":
-			input.move = wisp_escape(a,enemy.global_position)
+			wisp_flight(a,input,enemy.global_position)
 			return
 		wisp_air_controls(a,input,a.health < a.effective_max_health()*.45)
 		input.secondary_pressed = k.shells > 0 and (enemy.statuses.soul_count(a) >= 3 or enemy.health+enemy.shields+enemy.overhealth.value() <= k.estimated_burst(distance,enemy.statuses.soul_count(a))) and distance < k.data().burst_range
@@ -113,3 +113,23 @@ static func wisp_air_controls(a: HeroActor, input: CombatIntent, escaping: bool)
 	var k := a.kit as WispKit
 	input.jump_held = k.leap_active and k.glide_left > 0
 	if k.leap_active and not k.diving and a.velocity.y <= 0 and (escaping or k.glide_left < .4) and wisp_safe_landing(a): input.bomb = true
+
+static func wisp_flight(a: HeroActor, input: CombatIntent, threat: Vector3) -> void:
+	var direction: Vector3 = wisp_escape(a,threat)
+	# Rise gently only with overhead clearance; never climb over an unlandable void.
+	if not direction.is_zero_approx() and a.motor.grounded(): direction += Vector3.UP*.5
+	direction = direction.normalized()
+	if a.test_move(a.global_transform,direction*.7): direction = Vector3.ZERO
+	input.flight_move = direction
+	input.move = direction*Vector3(1,0,1)
+
+static func stitch_surface(a: HeroActor, toward: Vector3) -> Vector3:
+	var flat: Vector3 = (toward-a.global_position)*Vector3(1,0,1)
+	# Probe above prey for walls, then a floor point before prey. Never hook actors.
+	var points: Array[Vector3] = [toward+Vector3.UP*3,a.global_position+flat.normalized()*minf(flat.length()*.7,(a.tuning as StitchTuning).hook_range*.7)]
+	for point: Vector3 in points:
+		var direction: Vector3 = (point-a.body_point(1)).normalized()
+		var hit: Dictionary = a.resolver.attack_ray(a,a.body_point(1),a.body_point(1)+direction*(a.tuning as StitchTuning).hook_range,[a.get_rid()])
+		if hit.is_empty() or hit.get("collider") is HeroActor or hit.get("collider") is CombatStructure or hit.get("collider") is CombatBarrier: continue
+		return hit.position
+	return Vector3.INF

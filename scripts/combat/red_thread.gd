@@ -1,6 +1,6 @@
 class_name RedThread
 extends Node3D
-## One source-owned, cleanseable leash. Never pulls or roots its recipient.
+## Source-owned spring leash; cover and lifetime checks precede displacement.
 var source: HeroActor
 var target: HeroActor
 var remaining: float = 5.0
@@ -9,6 +9,7 @@ var source_life: int
 var target_life: int
 var retired: bool = false
 var visual: MeshInstance3D
+var line_mesh: BoxMesh
 
 func _ready() -> void:
 	add_to_group("red_threads")
@@ -17,6 +18,9 @@ func _ready() -> void:
 	source_life = source.life_serial
 	target_life = target.life_serial
 	visual = MeshInstance3D.new()
+	line_mesh = BoxMesh.new()
+	line_mesh.size = Vector3(.055,.055,1)
+	visual.mesh = line_mesh
 	visual.material_override = Geometry.material(Color("ff234a"),2)
 	visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(visual)
@@ -35,12 +39,16 @@ func _physics_process(delta: float) -> void:
 	if remaining <= 0 or source.global_position.distance_to(target.global_position) > t.thread_break_range or obstruction >= t.thread_obstruction:
 		retire()
 		return
-	var line := ImmediateMesh.new()
-	line.surface_begin(Mesh.PRIMITIVE_LINES)
-	line.surface_add_vertex(to_local(source.body_point(1)))
-	line.surface_add_vertex(to_local(target.body_point(1)))
-	line.surface_end()
-	visual.mesh = line
+	var offset: Vector3 = source.global_position-target.global_position
+	var excess: float = offset.length()-t.thread_leash
+	if not blocked and excess > 0 and not target.damage_immune() and target.boot_pair == null and target.state not in ["captured","throw_pair"]:
+		var motion: Vector3 = offset.normalized()*minf(excess,minf(t.thread_pull_speed,excess*t.thread_spring)*delta)
+		target.move_and_collide(motion)
+	var from: Vector3 = source.body_point(1)
+	var to: Vector3 = target.body_point(1)
+	visual.global_position = (from+to)*.5
+	visual.scale = Vector3(1.7 if excess > 0 else 1.0,1.7 if excess > 0 else 1.0,maxf(.01,from.distance_to(to)))
+	if from.distance_to(to) > .001: visual.look_at(to,Vector3.RIGHT if absf((to-from).normalized().y) > .99 else Vector3.UP)
 
 func retire() -> void:
 	if retired: return

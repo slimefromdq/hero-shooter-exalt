@@ -9,7 +9,7 @@ Rogue is the existing Wisp hero, renamed in presentation without replacing her r
 | Display name | Wisp | Rogue across selection, HUD, player nameplates, training and match feedback |
 | Majestic Leap upward speed | 12 m/s | 18 m/s; unchanged gravity, forward launch, float, dive and cooldown |
 | Measured apex at 60 Hz | 3.1733 m above launch | 7.2139 m, **2.2733x** higher |
-| Q travel | 7 m at 30 m/s | **2.5 m at 12.5 m/s** |
+| Q travel | 7 m at 30 m/s | **4 m at 12.5 m/s** |
 | Q exit momentum | Up to 30 m/s | **2 m/s maximum** on completion or collision |
 | Right-click | 24 m core + eight pellet rays | **32 m aimed impact explosion**, 3 m radius, no pellets or headshots |
 | Burst base damage | 20 core + up to 48 pellet damage | **80** within 1 m, radial falloff to **48** at 3 m |
@@ -23,7 +23,7 @@ The physical apex regression measured 3.0756 -> 7.0667 m at 30 Hz (2.2977x), 3.1
 
 - **LMB:** unchanged 13-damage alternating pistols, 12 shots/s, 36 rounds and 1.1 s reload. Marks remain source-specific, capped at four, lasting 3 s, with 12 damage per mark.
 - **Q — Phantom Dodge:** short, aim-directed evasive movement with existing collision rules, three sequentially recharging charges at 4 s each, 0.15 s bounded damage immunity and a cosmetic afterimage. Successful completion still loads one burst, maximum two. Blocked travel loads none. Low exit speed removes the old movement carryover. The separate scrollwheel dash is unchanged.
-- **E — Vanishing Act:** unchanged 1 s collision-aware horizontal hover, 3 m/s movement, second-press cancellation and 0.20 s vulnerable exit recovery. Existing statuses are not cleansed. Both Rogue immunity windows reject outgoing damage and objective contribution.
+- **E - Vanishing Act:** 1.6 s invulnerable free flight at the existing 3 m/s. W/S follow camera pitch; A/D strafe; Space rises and Shift descends. Combined input is normalized. World, barriers and existing movement constraints remain authoritative; cooldown and return recovery are unchanged. Press E again to end early. Outgoing attacks remain suppressed.
 - **1 — Majestic Leap:** 18 m/s up and the retained 10 m/s horizontal launch. Hold Jump to float during the 1.5 s descending opportunity; press 1 again to dive at 24 m/s. Existing 8 s cooldown, airborne activation and firing throughout ascent/float/dive remain.
 - **2 — Grand Heist:** retained 0.35 s preparation, 32 m/s calling card, 28 m travel and 0.80 s warning. The last 0.25 s gathers enemies before the stronger blast.
 
@@ -50,3 +50,5 @@ Recorded results: full repository verification passed; **210/210 focused checks*
 Validation is recorded in [validation/rogue-results.json](validation/rogue-results.json). The focused suite covers measured apex height at 30/60/144 Hz, Q travel and exit momentum, long-range multi-target explosion/mark/deduplication rules, frame-clipped suction, clustering, collision, cover, immunity, protection and lifecycle cleanup. Existing roster, bot and native-input suites cover connected integration. Rendered frames and combat simulations supplement these checks.
 
 Automated checks establish mechanics and stability. Human playtesting is still needed for competitive balance, movement feel and final visual polish.
+
+Wave 1 increases Q travel to 4 m and E duration to 1.6 s; the historical validation below describes the earlier pass. See [current Wave 1 validation](../WAVE_1_CHANGELOG.md).

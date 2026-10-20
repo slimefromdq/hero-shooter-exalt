@@ -394,7 +394,7 @@ func start_roster_drill(id: String) -> void:
 	scenario = {"relay":12,"dynamo":13,"wisp":14}[id]
 	freeze_ai = false
 	reset_scenario()
-	show_notice({"relay":"LMB arrows / RMB volley / 1 assign / Q Omen / E Wing / 2 Murmuration / air Space jump","dynamo":"RMB prespin / E preview, LMB place, RMB rotate / 1 pull / 2 storm","wisp":"Q dodge + load / RMB long burst / E vanish / 1 leap-dive / 2 suction heist"}[id])
+	show_notice({"relay":"LMB arrows / RMB volley / 1 assign / Q Omen / E Wing / 2 Murmuration / air Space jump","dynamo":"RMB prespin / E preview, LMB place, RMB rotate / 1 pull / 2 storm","wisp":"Q 4m dodge + load / RMB burst / E flight: Space up, Shift down / 1 leap-dive / 2 heist"}[id])
 	if menu_open: toggle_menu()
 
 func start_samson_drill() -> void:
@@ -402,7 +402,7 @@ func start_samson_drill() -> void:
 	scenario = 16
 	freeze_ai = false
 	reset_scenario()
-	show_notice("Q rescue Witness / E cross-examine / 1 deny movement / 2 Witness Protection")
+	show_notice("Q/E earn Evidence / 1 spend for larger injunction / 2 Witness Protection")
 	if menu_open: toggle_menu()
 
 func start_stitch_drill() -> void:
@@ -410,5 +410,5 @@ func start_stitch_drill() -> void:
 	scenario = 17
 	freeze_ai = false
 	reset_scenario()
-	show_notice("Needles mark / close shears consume / Q hook / E hide up to 20s / 1 thread / 2 seam")
+	show_notice("Needles mark / shears consume / E hide then LMB lunge / Q surface hang, Q or Space release / 1 pull / 2 pierce")
 	if menu_open: toggle_menu()

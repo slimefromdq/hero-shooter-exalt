@@ -6,9 +6,29 @@ var observations: Dictionary = {}
 var visible_ids: Array[int] = []
 var ray_count: int = 0
 var cursor: int = 0
+var incoming_thread: bool = false
+var thread_anchor: Vector3 = Vector3.ZERO
 
 func sense(actor: HeroActor, actors: Array, now: float, budget: int = 6) -> void:
 	visible_ids.clear()
+	incoming_thread = false
+	var healing: Dictionary = {}
+	var tethered: Dictionary = {}
+	# Build small sampled maps once per sensing pass, not once per opponent/frame.
+	for ally: HeroActor in actors:
+		if not is_instance_valid(ally) or not ally.alive or not ally.kit is RelayKit: continue
+		var seeker := ally.kit as RelayKit
+		if seeker.valid_friend(seeker.recipient,seeker.recipient_life) and seeker.transfer_left <= 0 and seeker.sight_lost < seeker.data().sight_grace:
+			healing[seeker.recipient.get_instance_id()] = ally.get_instance_id()
+		for entry: Dictionary in seeker.extras:
+			if seeker.valid_friend(entry.target,entry.life) and float(entry.lost) < seeker.data().sight_grace: healing[entry.target.get_instance_id()] = ally.get_instance_id()
+	for thread: RedThread in actor.get_tree().get_nodes_in_group("red_threads"):
+		if thread.valid():
+			tethered[thread.target.get_instance_id()] = thread.source.get_instance_id()
+			if thread.target == actor:
+				incoming_thread = true
+				thread_anchor = thread.source.global_position
+	var fields: Array[Node] = actor.get_tree().get_nodes_in_group("protection_fields")
 	var candidates: Array[HeroActor] = []
 	for other: HeroActor in actors:
 		if not is_instance_valid(other) or other == actor or other.team == actor.team: continue
@@ -26,10 +46,14 @@ func sense(actor: HeroActor, actors: Array, now: float, budget: int = 6) -> void
 		if previous.is_empty() or now-float(previous.get("seen",now)) > .45 or int(previous.get("life",-1)) != other.life_serial: first_seen = now
 		var defense: float = float(previous.get("defense_seen",-99.0))
 		if other.damage_immune() or other.state in ["deflect","marshal_shield"]: defense = now
+		var protected: bool = false
+		for field: Node in fields:
+			if field is SamsonCourt and field.qualifies(other): protected = true
 		observations[id] = {"id":id,"actor":weakref(other),"life":other.life_serial,"position":other.global_position,
 			"velocity":other.velocity,"health":other.health,"maximum":other.effective_max_health(),"shields":other.shields,"overhealth":other.overhealth.value(),
 			"blocked_by_barrier":not actor.resolver.barrier_ray(actor,actor.body_point(1.45),other.body_point(1.0)).is_empty(),
 			"hero":other.tuning.hero_id,"role":HeroRoster.role_for(other.tuning.hero_id),"state":other.state,
+			"channeling":other.state == "samson_cross","protected":protected,"healing_source":int(healing.get(id,0)),"tether_source":int(tethered.get(id,0)),"pursuing":other.kit is StitchKit and is_instance_valid((other.kit as StitchKit).thread),
 			"damage_immune":other.damage_immune(),"facing":other.aim_direction,"seen":now,"first_seen":first_seen,"defense_seen":defense,
 			"marks":other.statuses.stitch_count(actor) if actor.kit is StitchKit else other.statuses.soul_count(actor),"status_count":other.statuses.effects.size()}
 		visible_ids.append(id)
@@ -53,6 +77,8 @@ func merge_shared(shared: Dictionary, now: float) -> void:
 	expire(now)
 
 func reset() -> void:
+	incoming_thread = false
+	thread_anchor = Vector3.ZERO
 	observations.clear()
 	visible_ids.clear()
 	cursor = 0

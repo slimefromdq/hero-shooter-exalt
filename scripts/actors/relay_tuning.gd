@@ -2,9 +2,9 @@ class_name RelayTuning
 extends HeroTuning
 ## Stable resource class for Seeker (legacy hero ID: relay).
 @export_category("Seeker · spirit bow")
-@export var arrow_speed: float = 90.0
+@export var arrow_speed: float = 115.0
 @export var arrow_range: float = 65.0
-@export var volley_damage: float = 22.0
+@export var volley_damage: float = 28.0
 @export var volley_min_charge: float = .2
 @export var volley_charge: float = 1.0
 @export var volley_recovery: float = 1.5

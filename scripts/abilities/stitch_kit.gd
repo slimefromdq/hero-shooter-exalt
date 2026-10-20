@@ -13,8 +13,12 @@ var hook_position: Vector3
 var hook_origin: Vector3
 var hook_direction: Vector3
 var hook_traveled: float = 0.0
-var reel_target: HeroActor
-var reel_life: int = -1
+var anchor: WeakRef
+var anchor_local: Vector3
+var anchor_normal: Vector3
+var lunge_left: float = 0.0
+var lunge_direction: Vector3
+var lunge_cast: int = 0
 var reel_point: Vector3
 var reel_left: float = 0.0
 var seam_direction: Vector3
@@ -45,14 +49,17 @@ func prepare_input(input: CombatIntent) -> void:
 	if input.primary or input.primary_held:
 		opening = collapse_left <= 0
 		reveal("attack")
-	elif input.melee or input.guard or input.throw_action or input.hover or input.bomb or input.ultimate or input.projectile_fire:
+	elif input.melee or input.guard or input.throw_action or input.bomb or input.ultimate or input.projectile_fire:
 		reveal("action")
 
 func tick(delta: float, input: CombatIntent) -> void:
+	var reeling_before: bool = actor.state in ["stitch_reel","stitch_hang"]
 	tick_common(delta)
+	if opening and actor.state in ["stitch_reel","stitch_hang"] and not actor.statuses.movement_disabled():
+		start_lunge()
 	if reveal_frame == Engine.get_physics_frames(): deflect_cd = data().conceal_cooldown
 	if concealed:
-		if actor.state != "ready": reveal("control")
+		if actor.state not in ["ready","stitch_reel","stitch_hang"]: reveal("control")
 		else:
 			if input.deflect:
 				reveal("manual")
@@ -61,17 +68,25 @@ func tick(delta: float, input: CombatIntent) -> void:
 			collapse_left = maxf(0,collapse_left-delta)
 			conceal_left = maxf(0,conceal_left-active_delta)
 			if conceal_left <= 0: reveal("timeout")
-			else: return
+			else:
+				if input.hover and mobility_cd <= 0 and actor.state == "ready" and actor.permits("stitch_hook"): launch_hook()
 	if hook_flying: tick_hook(delta)
-	if actor.state in ["stitch_windup","stitch_seam","stitch_reel"]:
+	if actor.state in ["stitch_windup","stitch_seam","stitch_reel","stitch_hang","stitch_lunge"]:
 		if actor.statuses.movement_disabled():
 			cancel()
+			return
+		if reeling_before and actor.state in ["stitch_reel","stitch_hang"] and (input.hover or input.jump):
+			var jumping: bool = input.jump
+			end_reel()
+			if jumping:
+				actor.velocity = anchor_normal*actor.tuning.wall_jump_out+Vector3.UP*actor.tuning.wall_jump_up
 			return
 		if actor.state == "stitch_windup" and actor.state_time <= 0:
 			actor.state = "stitch_seam"
 			cue = "curtain_snap"
 			feedback(75)
 		return
+	if concealed: return
 	if reel_left > 0: end_reel()
 	update_mode(delta)
 	if input.hover and mobility_cd <= 0 and can_act("stitch_hook"):
@@ -86,6 +101,24 @@ func tick(delta: float, input: CombatIntent) -> void:
 	if input.primary or input.primary_held: fire()
 	if input.reload: start_reload()
 	opening = false
+
+func start_lunge() -> void:
+	opening = false
+	hook_flying = false
+	if actor.state in ["stitch_reel","stitch_hang"]: end_reel()
+	if not actor.permits("stitch_lunge"): return
+	reloading = false
+	reload_remaining = 0
+	if not actor.permits("primary"): return
+	actor.motor.interrupt_mobility()
+	lunge_direction = (actor.aim_direction*Vector3(1,0,1)).normalized()
+	if lunge_direction.is_zero_approx(): lunge_direction = -actor.global_basis.z
+	lunge_left = data().opening_lunge
+	lunge_cast = actor.resolver.new_cast(actor)
+	shot_cd = data().shears_interval
+	actor.state = "stitch_lunge"
+	cue = "lunge"
+	actor.resolver.record("cast",actor,"stitch_lunge")
 
 func frontal(reach: float, angle: float) -> HeroActor:
 	var nearest: HeroActor
@@ -119,24 +152,22 @@ func fire(_ultimate: bool = false) -> void:
 	if concealed:
 		opening = collapse_left <= 0
 		reveal("attack")
+	if opening and actor.state in ["ready","stitch_reel","stitch_hang"] and not actor.resolver.attack_locked(actor):
+		start_lunge()
+		return
 	if shot_cd > 0 or actor.state != "ready" or actor.resolver.attack_locked(actor): return
 	var t := data()
-	if opening:
-		var prey: HeroActor = frontal(t.opening_range,t.shears_angle)
-		if prey != null:
-			var toward: Vector3 = (prey.global_position-actor.global_position)*Vector3(1,0,1)
-			actor.move_ability_collide(toward.normalized()*minf(t.opening_lunge,maxf(0,toward.length()-.85)))
-		update_mode(0)
 	if shears_mode:
 		if reloading:
 			reloading = false
 			reload_remaining = 0
 		if not actor.permits("primary"): return
 		shot_cd = primary_interval(t.shears_interval)+cadence_debt
+		cue = "shears_swing"
 		var target: HeroActor = frontal(t.shears_range,t.shears_angle)
 		if target != null:
 			var count: int = target.statuses.stitch_count(actor)
-			var result: String = actor.resolver.damage(actor,target,t.shears_damage+count*t.mark_damage+(t.opening_damage if opening else 0.0),"melee",actor.resolver.new_cast(actor))
+			var result: String = actor.resolver.damage(actor,target,t.shears_damage+count*t.mark_damage,"melee",actor.resolver.new_cast(actor))
 			if result == "hit":
 				target.statuses.take_stitches(actor)
 				cue = "shears_hit"
@@ -155,7 +186,7 @@ func fire(_ultimate: bool = false) -> void:
 		projectile.direction = shot_direction(t.needle_range)
 		projectile.speed = t.needle_speed
 		projectile.max_distance = t.needle_range
-		projectile.damage_amount = t.rifle_damage+(t.opening_damage if opening else 0.0)
+		projectile.damage_amount = t.rifle_damage
 		projectile.color = Color("f5d9da")
 		projectile.cast_id = actor.resolver.new_cast(actor)
 		projectile.confirmed_impact = needle_hit
@@ -261,34 +292,27 @@ func tick_hook(delta: float) -> void:
 		if hook_traveled >= data().hook_range: hook_flying = false
 		return
 	hook_flying = false
-	reel_life = -1
-	reel_target = hit.get("collider") as HeroActor
-	if reel_target != null:
-		if not is_instance_valid(thread) or not thread.valid() or thread.target != reel_target: return
-		reel_life = reel_target.life_serial
-		reel_point = enemy_landing()
-	else:
-		if hit.get("collider") is CombatBarrier or hit.normal.y < -.1: return
-		var probe: Vector3 = hit.position+hit.normal*.65
-		var ground: Dictionary = actor.resolver.ray(probe+Vector3.UP*.5,probe-Vector3.UP*2.5,[actor.get_rid()],1)
-		if ground.is_empty() or ground.normal.y < cos(actor.floor_max_angle): return
-		reel_point = ground.position+Vector3.UP*.035
+	var collider: Object = hit.get("collider")
+	if collider is HeroActor or collider is CombatStructure or collider is CombatBarrier or not collider is Node3D: return
+	anchor = weakref(collider)
+	anchor_local = (collider as Node3D).to_local(hit.position)
+	anchor_normal = hit.normal
+	# The standing capsule center is one half-height above the actor's feet.
+	# Its support extent in the surface normal keeps floors AND ceilings safe.
+	var capsule: CapsuleShape3D = actor.motor.standing_clearance_capsule
+	var extent: float = capsule.radius+absf(anchor_normal.y)*(capsule.height*.5-capsule.radius)
+	reel_point = hit.position+anchor_normal*(extent+.08)-Vector3.UP*(actor.motor.standing_capsule.height*.5+.01)
 	if not landing_clear(reel_point): return
 	if actor.test_move(actor.global_transform,reel_point-actor.global_position): return
 	actor.motor.interrupt_mobility()
 	actor.state = "stitch_reel"
 	reel_left = data().reel_timeout
 	cue = "hook_connect"
-
-func enemy_landing() -> Vector3:
-	var away: Vector3 = (actor.global_position-reel_target.global_position)*Vector3(1,0,1)
-	return reel_target.global_position+away.normalized()*.95
+	actor.resolver.record("attach",actor,"spoolstep")
 
 func end_reel() -> void:
 	reel_left = 0
-	reel_target = null
-	reel_life = -1
-	if actor.state == "stitch_reel": actor.state = "ready"
+	if actor.state in ["stitch_reel","stitch_hang"]: actor.state = "ready"
 	actor.velocity = Vector3.ZERO
 	actor.motor.transition("air")
 
@@ -335,31 +359,64 @@ func move_override(delta: float) -> bool:
 		actor.move_and_slide()
 		seam_origin.y = actor.global_position.y
 		return true
-	if actor.state == "stitch_reel":
-		reel_left -= delta
-		if reel_life >= 0 and not is_instance_valid(reel_target):
+	if actor.state in ["stitch_reel","stitch_hang"]:
+		var surface: Node3D = anchor.get_ref() as Node3D if anchor != null else null
+		if not is_instance_valid(surface) or not surface.to_global(anchor_local).is_equal_approx(hook_position):
 			end_reel()
 			return true
-		if is_instance_valid(reel_target):
-			if not is_instance_valid(thread) or not thread.valid() or reel_target.life_serial != reel_life or not actor.resolver.visible(actor.body_point(1),reel_target,[actor.get_rid()]):
-				end_reel()
-				return true
-			reel_point = enemy_landing()
-			if not landing_clear(reel_point):
-				end_reel()
-				return true
+		if actor.state == "stitch_hang":
+			actor.velocity = Vector3.ZERO
+			return true
+		reel_left -= delta
 		var offset: Vector3 = reel_point-actor.global_position
 		var motion: Vector3 = offset.limit_length(data().reel_speed*delta)
 		var hit: KinematicCollision3D = actor.move_ability_collide(motion)
 		actor.velocity = motion/maxf(delta,.00001)
-		if hit != null or actor.mobility_limited or offset.length() <= motion.length()+.03 or reel_left <= 0: end_reel()
+		if hit != null or actor.mobility_limited or reel_left <= 0:
+			end_reel()
+		elif offset.length() <= motion.length()+.03:
+			actor.state = "stitch_hang"
+			actor.resolver.record("hang",actor,"spoolstep")
+			actor.velocity = Vector3.ZERO
+		return true
+	if actor.state == "stitch_lunge":
+		var distance: float = minf(lunge_left,data().opening_speed*delta)
+		var from: Vector3 = actor.global_position
+		var barrier: Dictionary = actor.resolver.barrier_ray(actor,actor.body_point(1),actor.body_point(1)+lunge_direction*distance)
+		if not barrier.is_empty(): distance = minf(distance,actor.body_point(1).distance_to(barrier.position))
+		var hit: KinematicCollision3D = actor.move_ability_collide(lunge_direction*distance)
+		var to: Vector3 = actor.global_position
+		var prey: HeroActor
+		var nearest: float = INF
+		for target: HeroActor in actor.get_tree().get_nodes_in_group("actors"):
+			if target == actor or not target.alive or target.team == actor.team or target.damage_immune(): continue
+			var closest: Vector3 = Geometry3D.get_closest_point_to_segment(target.body_point(1),from+Vector3.UP,to+Vector3.UP+lunge_direction*.65)
+			if target.body_point(1).distance_to(closest) > .8: continue
+			if not actor.resolver.visible(from+Vector3.UP,target,[actor.get_rid()]): continue
+			if not actor.resolver.barrier_ray(actor,from+Vector3.UP,target.body_point(1)).is_empty(): continue
+			var along: float = from.distance_to(target.global_position)
+			if along < nearest:
+				nearest = along
+				prey = target
+		if prey != null:
+			if actor.resolver.damage(actor,prey,data().opening_damage,"stitch_lunge",lunge_cast) == "hit" and prey.alive:
+				prey.statuses.apply("bleed",actor,data().opening_bleed_duration,data().opening_bleed)
+			cue = "shears_hit"
+		lunge_left -= distance
+		if prey != null or hit != null or not barrier.is_empty() or actor.mobility_limited or lunge_left <= .00001:
+			actor.state = "ready"
+			actor.velocity = Vector3.ZERO
 		return true
 	if actor.state == "stitch_seam":
 		var distance: float = minf(seam_left,data().seam_speed*delta)
 		var from: Vector3 = actor.global_position
 		var barrier: Dictionary = actor.resolver.barrier_ray(actor,actor.body_point(1),actor.body_point(1)+seam_direction*distance)
 		if not barrier.is_empty(): distance = minf(distance,actor.body_point(1).distance_to(barrier.position))
+		# Actors are damage recipients, never physical stops for Curtain Call.
+		var mask: int = actor.collision_mask
+		actor.collision_mask = mask & ~2
 		var hit: KinematicCollision3D = actor.move_ability_collide(seam_direction*distance)
+		actor.collision_mask = mask
 		seam_damage(from,actor.global_position)
 		seam_left -= distance
 		if hit != null or not barrier.is_empty() or actor.mobility_limited or seam_left <= .00001:
@@ -372,11 +429,13 @@ func move_override(delta: float) -> bool:
 func cancel(clear_owned: bool = false) -> void:
 	reveal("cancel")
 	hook_flying = false
-	if reel_left > 0: end_reel()
+	if reel_left > 0 or actor.state == "stitch_hang": end_reel()
 	if actor.state.begins_with("stitch_"):
 		actor.state = "ready"
 		actor.velocity = Vector3.ZERO
 	seam_left = 0
+	lunge_left = 0
+	anchor = null
 	opening = false
 	if clear_owned and is_instance_valid(thread): thread.retire()
 	super.cancel(clear_owned)

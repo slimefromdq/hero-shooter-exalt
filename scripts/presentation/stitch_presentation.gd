@@ -47,6 +47,7 @@ static func build(p: HeroPresentation) -> void:
 	for side: float in [-1.0,1.0]:
 		var blade: Node3D = Geometry.box(shears,Vector3(.055,.06,.65),Vector3(side*.08,0,-.22),Color("dce3e3"),false)
 		blade.rotation.y = side*.22
+		p.roster_parts["blade_left" if side < 0 else "blade_right"] = blade
 		RosterVisuals.orb(shears,Vector3(side*.09,0,.16),Vector3(.13,.08,.2),"b02d4e")
 	var needle: Node3D = Geometry.box(doll,Vector3(.02,.02,.55),Vector3(.35,1.35,-.6),Color("efdfd3"),false)
 	needle.name = "Needlepoint"
@@ -54,10 +55,15 @@ static func build(p: HeroPresentation) -> void:
 	for key: String in ["seam","hook"]:
 		var line := MeshInstance3D.new()
 		line.name = "CurtainSeam" if key == "seam" else "SewingHook"
+		line.mesh = BoxMesh.new()
+		(line.mesh as BoxMesh).size = Vector3.ONE
 		line.material_override = Geometry.material(Color("ff1942"),2)
 		line.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		p.add_child(line)
 		p.roster_parts[key] = line
+	p.roster_parts["doll_meshes"] = doll.find_children("*","MeshInstance3D",true,false)
+	p.roster_parts["body_meshes"] = p.body.find_children("*","MeshInstance3D",true,false)
+	p.roster_parts["mesh_cache_ready"] = false
 	p.roster_parts["joint_clock"] = 0.0
 	p.roster_parts["snap_left"] = 0.0
 	var joints := AudioStreamPlayer3D.new()
@@ -72,15 +78,19 @@ static func build(p: HeroPresentation) -> void:
 
 static func line(p: HeroPresentation, key: String, from: Vector3, to: Vector3, width: float = .025) -> void:
 	var mesh: MeshInstance3D = p.roster_parts[key]
-	var box := BoxMesh.new()
-	box.size = Vector3(width,.025,maxf(.01,from.distance_to(to)))
-	mesh.mesh = box
+	mesh.scale = Vector3(width,.025,maxf(.01,from.distance_to(to)))
 	mesh.global_position = (from+to)*.5
 	if from.distance_to(to) > .001: mesh.look_at(to,Vector3.UP if absf((to-from).normalized().y) < .99 else Vector3.RIGHT)
 
 static func animate(p: HeroPresentation, delta: float) -> void:
 	var a: HeroActor = p.actor
 	var k := a.kit as StitchKit
+	# Team badges are attached after the doll is built. Cache once after ready,
+	# so proximity concealment also fades those later attachments.
+	if not bool(p.roster_parts["mesh_cache_ready"]):
+		p.roster_parts["doll_meshes"] = (p.roster_parts["doll"] as Node3D).find_children("*","MeshInstance3D",true,false)
+		p.roster_parts["body_meshes"] = p.body.find_children("*","MeshInstance3D",true,false)
+		p.roster_parts["mesh_cache_ready"] = true
 	p.rifle.visible = false
 	p.umbrella.visible = false
 	var session: Node = a.get_tree().get_first_node_in_group("game_session")
@@ -92,14 +102,14 @@ static func animate(p: HeroPresentation, delta: float) -> void:
 	doll.position.y = .15 if k.concealed else 0.0
 	(p.roster_parts["shears"] as Node3D).visible = k.shears_mode and not k.concealed
 	(p.roster_parts["needle"] as Node3D).visible = not k.shears_mode and not k.concealed
-	for mesh: MeshInstance3D in doll.find_children("*","MeshInstance3D",true,false):
+	for mesh: MeshInstance3D in p.roster_parts["doll_meshes"]:
 		var mat := mesh.material_override as StandardMaterial3D
 		if mat != null:
 			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 			mat.albedo_color.a = .32 if proximity else .65 if k.concealed else 1.0
 			mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if k.concealed else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	# Team badges and auxiliary effects must not remain opaque in proximity stealth.
-	for mesh: MeshInstance3D in p.body.find_children("*","MeshInstance3D",true,false):
+	for mesh: MeshInstance3D in p.roster_parts["body_meshes"]:
 		if doll.is_ancestor_of(mesh): continue
 		var mat := mesh.material_override as StandardMaterial3D
 		if mat != null and mesh.visible:
@@ -118,10 +128,11 @@ static func animate(p: HeroPresentation, delta: float) -> void:
 	if seam.visible:
 		line(p,"seam",k.seam_origin+Vector3.UP*.08,k.seam_origin+k.seam_direction*k.seam_distance+Vector3.UP*.08,k.data().seam_width)
 	var hook: MeshInstance3D = p.roster_parts["hook"]
-	hook.visible = k.hook_flying or a.state == "stitch_reel"
-	if hook.visible: line(p,"hook",a.body_point(1.2),k.hook_position if k.hook_flying else k.reel_point+Vector3.UP*.3)
+	hook.visible = k.hook_flying or a.state in ["stitch_reel","stitch_hang"]
+	if hook.visible: line(p,"hook",a.body_point(1.2),k.hook_position)
 	if k.cue != "":
 		p.sound.play_tone(75 if k.cue == "curtain_snap" else 160 if k.cue == "shears_hit" else 1100,.12,.14)
+		if k.cue in ["shears_hit","shears_swing","lunge"]: p.roster_parts["snap_left"] = .18
 		if k.cue == "curtain_snap":
 			p.roster_parts["snap_left"] = .22
 			CombatEffect.pulse(a.get_parent(),a.body_point(1),Color("ff2856"),2)
@@ -129,5 +140,9 @@ static func animate(p: HeroPresentation, delta: float) -> void:
 	var snap: float = maxf(0,float(p.roster_parts["snap_left"])-delta)
 	p.roster_parts["snap_left"] = snap
 	var shears: Node3D = p.roster_parts["shears"]
-	shears.scale = Vector3.ONE*(3.5 if snap > 0 else 1.0)
-	if snap > 0: shears.visible = true
+	shears.scale = Vector3.ONE*(3.5 if snap > 0 and k.ultimate_active() else 1.25 if snap > 0 else 1.0)
+	if snap > 0 and not k.concealed: shears.visible = true
+	var aperture: float = .06 if snap > .08 else .5 if snap > 0 else .22
+	(p.roster_parts["blade_left"] as Node3D).rotation.y = -aperture
+	(p.roster_parts["blade_right"] as Node3D).rotation.y = aperture
+	shears.rotation.x = -.6 if snap > .08 else 0.0

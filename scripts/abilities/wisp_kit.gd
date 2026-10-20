@@ -5,6 +5,7 @@ var shells: int = 0
 var steps: int = 3
 var recharge: float = 0.0
 var step_left: float = 0.0
+var trail_left: float = 0.0
 var step_direction: Vector3
 var step_immunity_left: float = 0.0
 var secondary_cd: float = 0.0
@@ -190,7 +191,10 @@ func move_override(delta: float) -> bool:
 			var remainder: Vector3 = hit.get_remainder().slide(hit.get_normal())
 			hit = actor.move_ability_collide(remainder) if remainder.length() > .0001 else null
 		step_left -= distance
-		CombatEffect.line(actor.get_parent(),start+Vector3.UP,actor.body_point(1),Color("a35cff"),.09)
+		trail_left -= delta
+		if trail_left <= 0:
+			trail_left = .05
+			CombatEffect.line(actor.get_parent(),start+Vector3.UP,actor.body_point(1),Color("a35cff"),.09)
 		actor.velocity = step_direction*data().step_speed
 		if hit != null or actor.mobility_limited or step_left <= .00001:
 			if hit == null and not actor.mobility_limited: shells = mini(data().shell_limit,shells+1)
@@ -200,7 +204,8 @@ func move_override(delta: float) -> bool:
 			step_immunity_left = 0
 		return true
 	if actor.state == "wisp_phase":
-		actor.velocity = (actor.intent.move*Vector3(1,0,1)).limit_length(1)*data().phase_speed*actor.statuses.movement_scale()
+		var wish: Vector3 = actor.intent.flight_move if actor.intent.flight_move != Vector3.INF else actor.intent.move*Vector3(1,0,1)
+		actor.velocity = wish.limit_length(1)*data().phase_speed*actor.statuses.movement_scale()
 		actor.move_ability_slide(delta)
 		return true
 	if actor.state == "ready" and leap_active:

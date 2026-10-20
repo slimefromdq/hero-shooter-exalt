@@ -4,8 +4,8 @@ Seeker replaces Relay visibly while retaining the stable `relay` ID, tuning reso
 
 | Input | Ability | Tuning |
 | --- | --- | --- |
-| LMB / held LMB | Spirit Bolts | Infinite arrows; 60 body damage, 1.75× headshots, 0.8 s cadence, 90 m/s, 65 m reach. No reload. |
-| Hold/release RMB | Talon Volley | 0.2–1 s charge, five arrows, 40–100% of 22 damage each, 1.5 s recovery. One central arrow leads four fluid spiraling arrows by 0.6 m. |
+| LMB / held LMB | Spirit Bolts | Infinite arrows; 60 body damage, 1.75× headshots, 0.8 s cadence, 115 m/s, 65 m reach. No reload. |
+| Hold/release RMB | Talon Volley | 0.2–1 s charge, five arrows, 40–100% of 28 damage each, 1.5 s recovery. One central arrow leads four fluid spiraling arrows by 0.6 m. |
 | 1 | Guiding Spirit | Assign visible aimed ally within 65 m; without an aimed ally select self. 0.25 s transfer, 1 s reassignment cooldown. |
 | Q | Omen | Visible enemy within 65 m; six-second reveal and +20% of all Seeker damage against that enemy; 12 s cooldown. |
 | E | Guiding Wing | Main recipient receives 60 healing and +30% movement speed for 2 s; 8 s cooldown. Requires current sight and completed transfer. |

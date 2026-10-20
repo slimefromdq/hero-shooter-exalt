@@ -2,6 +2,7 @@ class_name RelayKit
 extends ExpansionKit
 ## Seeker keeps Relay's stable registration. Bird meshes never own healing authority.
 var recipient: HeroActor
+var companions_suspended: bool = false
 var recipient_life: int = -1
 var transfer_left: float = 0.0
 var transfer_cd: float = 0.0
@@ -284,7 +285,7 @@ func start_reload() -> void:
 	pass
 
 func sync_birds() -> void:
-	var count: int = 3 if ultimate_active() else 1
+	var count: int = 0 if companions_suspended else 3 if ultimate_active() else 1
 	while birds.size() > count:
 		var bird := birds.pop_back() as Node3D
 		if is_instance_valid(bird):
@@ -331,6 +332,7 @@ func cancel(clear_owned: bool = false) -> void:
 	volley_age = 0
 	if actor.state.begins_with("seeker_"): actor.state = "ready"
 	if clear_owned:
+		companions_suspended = true
 		recall()
 		omen_target = null
 		omen_left = 0
@@ -346,6 +348,7 @@ func cancel(clear_owned: bool = false) -> void:
 
 func refill() -> void:
 	super.refill()
+	companions_suspended = false
 	recall()
 	transfer_cd = 0
 	volley_cd = 0
