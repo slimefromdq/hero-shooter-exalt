@@ -8,7 +8,7 @@ func tick_common(delta: float) -> void:
 	mobility_cd = maxf(0,mobility_cd - delta)
 	deflect_cd = maxf(0,deflect_cd - delta)
 	bomb_cd = maxf(0,bomb_cd - delta)
-	if not ultimate_active(): ultimate_charge = minf(100,ultimate_charge + delta * .8)
+	if not ultimate_active(): gain_ultimate_charge(delta * .8)
 	if actor.infinite_resources:
 		ammo = actor.tuning.magazine
 		mobility_cd = 0

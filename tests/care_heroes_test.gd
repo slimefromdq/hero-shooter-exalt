@@ -96,11 +96,11 @@ func healing_tests() -> void:
 	k.ultimate_charge = 0
 	doctor.intent.secondary_held = true
 	k.tick(.5,doctor.intent)
-	near(friend.health,132.5,"right hold supplies 65 HP/s")
-	near(k.ultimate_charge,2.35,"healing charge counts actual healing plus passive")
+	near(friend.health,128.4375,"right hold supplies 56.875 HP/s")
+	near(k.ultimate_charge,1.504464,"healing charge counts actual healing plus passive")
 	check(k.patient == friend and k.beam_healing,"beam exposes connected patient")
 	friend.benefits.tick(.5)
-	near(friend.health,132.5,"aftercare does not add healing to active beam")
+	near(friend.health,128.4375,"aftercare does not add healing to active beam")
 	friend.health = 249
 	k.tick(.5,doctor.intent)
 	near(friend.health,250,"beam clamps at maximum health")
@@ -108,17 +108,17 @@ func healing_tests() -> void:
 	doctor.intent.secondary_held = false
 	k.tick(0,doctor.intent)
 	friend.benefits.tick(1)
-	near(friend.health,115,"disconnected patient retains aftercare")
+	near(friend.health,113.125,"disconnected patient retains aftercare")
 	friend.benefits.tick(1.5)
-	near(friend.health,130,"aftercare expires without excess final-frame healing")
+	near(friend.health,126.25,"aftercare expires without excess final-frame healing")
 	friend.health = 100
 	friend.benefits.grant("ward",doctor,3,15)
 	friend.benefits.grant("ward",second,3,15)
 	friend.benefits.tick(1)
-	near(friend.health,115,"two doctors cannot stack identical ongoing healing")
+	near(friend.health,113.125,"two doctors cannot stack identical ongoing healing")
 	friend.benefits.grant("aftercare",second,2,15)
 	friend.benefits.tick(1)
-	near(friend.health,145,"distinct ongoing healing abilities combine")
+	near(friend.health,139.375,"distinct ongoing healing abilities combine")
 	near(resolver.heal(doctor,enemy,100,"test"),0,"healing rejects enemies")
 	friend.alive = false
 	near(resolver.heal(doctor,friend,100,"test"),0,"healing rejects dead allies")
@@ -154,10 +154,10 @@ func healing_tests() -> void:
 	k.tick(0,doctor.intent)
 	check(friend.statuses.effects.is_empty(),"prescription clears wound, bleed and root")
 	near(friend.effective_max_health(),250,"cleanse restores the health ceiling")
-	near(friend.health,135,"cleanse heals after removing wound")
+	near(friend.health,130.625,"cleanse heals after removing wound")
 	near(friend.benefits.reduction(),.7,"prescription grants 70% damage reduction")
 	resolver.damage(enemy,friend,100,"rifle",resolver.new_cast(enemy))
-	near(friend.health,105,"prescription reduces incoming damage")
+	near(friend.health,100.625,"prescription reduces incoming damage")
 	friend.benefits.tick(1.1)
 	near(friend.benefits.reduction(),0,"prescription protection expires")
 	await reset()
@@ -189,7 +189,7 @@ func buff_tests() -> void:
 	friend.kit.ultimate_charge = 0
 	resolver.damage(friend,enemy,50,"rifle",resolver.new_cast(friend))
 	near(enemy.health,130,"new direct attack receives damage buff")
-	near(friend.kit.ultimate_charge,4.5,"bonus damage does not generate extra ultimate charge")
+	near(friend.kit.ultimate_charge,4.5 / 1.4,"bonus damage does not generate extra ultimate charge")
 	resolver.damage(friend,enemy,10,"bleed",resolver.new_cast(friend))
 	near(enemy.health,120,"bleed does not receive damage buff")
 	doctor.position = Vector3(60,.01,0)
@@ -463,11 +463,11 @@ func edge_tests() -> void:
 	doctor.spawn_protected = false
 	friend.benefits.grant("ward",doctor,.6,15)
 	friend.benefits.tick(2)
-	near(friend.health,109,"healing expiry is correct with a large timestep")
+	near(friend.health,107.875,"healing expiry is correct with a large timestep")
 	friend.health = 100
 	friend.benefits.grant("ward",doctor,.6,15)
 	for i: int in 120: friend.benefits.tick(1.0/60)
-	near(friend.health,109,"healing expiry is independent of timestep")
+	near(friend.health,107.875,"healing expiry is independent of timestep")
 	await reset()
 	var d := doctor.kit as DoctorKit
 	doctor.intent.ultimate = true

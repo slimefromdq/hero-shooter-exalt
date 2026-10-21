@@ -43,7 +43,7 @@ func run() -> void:
 	near(enemy.health,100,"direct victim takes 150 total rather than stacking splash")
 	near(hunter.health,hunter.tuning.max_health-90,"nearby enemy takes ninety area damage on player impact")
 	near(friend.health,friend.tuning.max_health,"blast preserves friendly-fire immunity")
-	near(marshal.kit.ultimate_charge,(150+90)*.09,"direct and splash damage earn normal ultimate credit exactly once")
+	near(marshal.kit.ultimate_charge,(150+90)*.09 / 1.4,"direct and splash damage earn normal ultimate credit exactly once")
 	projectile.impact(projectile.position)
 	near(hunter.health,hunter.tuning.max_health-90,"detonation cannot resolve twice")
 	for fps: int in [20,120]:

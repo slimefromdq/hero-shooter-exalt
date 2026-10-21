@@ -189,3 +189,9 @@ The follow-up renames Wisp to Rogue in presentation while retaining the internal
 ## Seeker rework · 2026-10-19
 
 Seeker replaces Relay visibly while retaining the `relay` ID. The battery/drone implementation and its former validation expectations are superseded by the [Seeker rework](SEEKER_REWORK.md). The new kit includes a procedural bow marksman and magical birds; no Blender asset or Git delivery is included.
+
+## 2026-10-21: Global sustain and ultimate pacing
+
+Support healing output is multiplied by 0.875 (12.5% less) at CombatResolver, covering Doctor, Seeker (relay), and Samson, including self healing, ongoing effects, and ultimate healing. Shields, overhealth, damage reduction, spawn recovery, and tank self healing retain their existing values.
+
+All heroes require 40% more passive time, damage, or healing to earn an ultimate. Earned charge is divided by 1.4 while the HUD and activation threshold remain 0-100. Healing charge is based on actual reduced healing. Training infinite resources still fills the meter. Passive-only charging now takes 175 seconds (previously 125). Human playtesting is still required to assess pacing and sustain.

@@ -42,7 +42,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 	action_hint_time = maxf(0.0, action_hint_time - delta)
 	boot_buffer = maxf(0.0, boot_buffer - delta)
 	deflect_cd = maxf(0.0, deflect_cd - delta)
-	ultimate_charge = minf(100.0, ultimate_charge + delta * 0.8)
+	gain_ultimate_charge(delta * 0.8)
 	if knives < t.knife_charges:
 		knife_timer -= delta
 		while knife_timer <= 0.0 and knives < t.knife_charges:

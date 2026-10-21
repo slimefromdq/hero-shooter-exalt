@@ -65,7 +65,7 @@ static func ultimate_detail(a: HeroActor) -> String:
 
 	if a.kit is StitchKit: return "26M PIERCE / MARK EXECUTE"
 	match a.tuning.hero_id:
-		"relay": return "10s / THREE BIRDS / 33.75 HP/S EACH / PIERCING"
+		"relay": return "10s / THREE BIRDS / %.2f HP/S EACH / PIERCING" % ((a.tuning as RelayTuning).heal_rate * (1.0 + (a.tuning as RelayTuning).murmuration_healing) * CombatResolver.SUPPORT_HEALING_MULTIPLIER)
 		"dynamo": return "%dM / %dM STORM / %d DPS" % [roundi((a.tuning as DynamoTuning).storm_range),roundi((a.tuning as DynamoTuning).storm_radius),roundi((a.tuning as DynamoTuning).storm_damage/(a.tuning as DynamoTuning).storm_interval)]
 		"wisp": return "%dM SUCTION / %d BLAST + MARKS" % [roundi((a.tuning as WispTuning).heist_radius),roundi((a.tuning as WispTuning).heist_damage)]
 		"huddle": return "5M WAVE / STEER TO PUSH"

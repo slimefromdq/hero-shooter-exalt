@@ -98,7 +98,7 @@ func relay_tests() -> void:
 	k.tick(.25,CombatIntent.new())
 	near(friend.health,50,"transfer has a healing gap")
 	k.tick(1,CombatIntent.new())
-	near(friend.health,75,"bird heals 25 HP/s")
+	near(friend.health,71.875,"bird heals 21.875 HP/s")
 	check(not k.assign(foes[0]) and k.recipient == friend,"invalid enemy assignment preserves recipient")
 	k.recall()
 	k.transfer_cd = 0
@@ -106,7 +106,7 @@ func relay_tests() -> void:
 	k.transfer_left = 0
 	relay.health = 100
 	k.tick(1,CombatIntent.new())
-	near(relay.health,125,"self bird heals at the same rate")
+	near(relay.health,121.875,"self bird heals at the same rate")
 	var request := CombatIntent.new()
 	request.ultimate = true
 	k.tick(0,request)
@@ -115,7 +115,7 @@ func relay_tests() -> void:
 	k.tick(0,CombatIntent.new())
 	check(k.ultimate_active() and k.ultimate_charge == 0 and k.birds.size() == 3,"ultimate splits into three birds")
 	k.tick(.5,CombatIntent.new())
-	near(relay.health,141.875,"ultimate increases healing by 35 percent")
+	near(relay.health,136.640625,"ultimate increases healing by 35 percent")
 	near(k.ultimate_charge,0,"ultimate healing and passive ticks cannot recharge itself")
 	k.tick(10,CombatIntent.new())
 	check(not k.ultimate_active() and k.extras.is_empty() and k.birds.size() == 1,"ultimate cleans up extra birds")

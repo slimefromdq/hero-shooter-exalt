@@ -11,6 +11,7 @@ signal confirmed_heal(source: HeroActor, target: HeroActor, amount: float)
 signal confirmed_block(attacker: HeroActor, defender: HeroActor)
 signal feedback_cleared(actor: HeroActor)
 signal elimination(killer: HeroActor, victim: HeroActor, assistants: Array[HeroActor], ability: String)
+const SUPPORT_HEALING_MULTIPLIER: float = 0.875
 const ASSIST_WINDOW: float = 8.0
 var combat_time: float = 0.0
 var contributions: Dictionary = {}
@@ -182,7 +183,7 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 	target.shields -= absorbed
 	var hp_damage: float = minf(target.health, maxf(0.0, amount - temporary - absorbed))
 	target.health = maxf(0.0, target.health - hp_damage)
-	if not source.kit.ultimate_active() and not ultimate_casts.has(cast_id): source.kit.ultimate_charge = minf(100.0, source.kit.ultimate_charge + minf(base,hp_damage + absorbed + temporary) * 0.09)
+	if not source.kit.ultimate_active() and not ultimate_casts.has(cast_id): source.kit.gain_ultimate_charge(minf(base,hp_damage + absorbed + temporary) * 0.09)
 	track_damage(source, target, hp_damage + absorbed + temporary, tag)
 	target.on_damage(hp_damage + absorbed + temporary, head)
 	if source.tuning is SlayerTuning and hp_damage + absorbed + temporary > 0.0:
@@ -235,10 +236,11 @@ func clear_round() -> void:
 func heal(source: HeroActor, target: HeroActor, amount: float, tag: String, award_charge: bool = true) -> float:
 	if not is_instance_valid(source) or not is_instance_valid(target) or not source.alive or not target.alive or source.team != target.team or amount <= 0: return 0.0
 	if attack_locked(source) or protected_room(target): return 0.0
+	if HeroRoster.role_for(source.tuning.hero_id) == "support": amount *= SUPPORT_HEALING_MULTIPLIER
 	var restored: float = minf(amount,maxf(0,target.effective_max_health() - target.health))
 	if restored <= 0: return 0.0
 	target.health += restored
-	if award_charge and not source.kit.ultimate_active(): source.kit.ultimate_charge = minf(100,source.kit.ultimate_charge + restored * .06)
+	if award_charge and not source.kit.ultimate_active(): source.kit.gain_ultimate_charge(restored * .06)
 	confirmed_heal.emit(source,target,restored)
 	# Beam ticks would otherwise crowd out useful combat history every frame.
 	if tag not in ["attending_care","aftercare","ward","regroup","guiding_spirit","murmuration"]: record("heal",source,tag,"target=%s applied=%.1f" % [target.actor_id,restored])

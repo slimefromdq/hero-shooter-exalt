@@ -8,7 +8,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 	shot_cd = maxf(0.0, shot_cd - delta)
 	deflect_cd = maxf(0.0, deflect_cd - delta)
 	bomb_cd = maxf(0.0, bomb_cd - delta)
-	ultimate_charge = minf(100.0, ultimate_charge + delta * 0.8)
+	gain_ultimate_charge(delta * 0.8)
 	if actor.infinite_resources:
 		ammo = t.magazine
 		deflect_cd = 0.0

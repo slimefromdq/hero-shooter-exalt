@@ -1,6 +1,8 @@
 class_name HeroKit
 extends Node
 ## Shared kit contract. Movement, close combat and damage stay on their existing owners.
+const ULTIMATE_COST_MULTIPLIER: float = 1.4
+
 var actor: HeroActor
 var ammo: int = 8
 var shot_cd: float = 0.0
@@ -17,6 +19,10 @@ var reload_total: float = 0.0
 ## Implementations share the same target selection and admission checks as their casts.
 func selection_previews() -> Array[Dictionary]:
 	return []
+
+## Earned charge is normalized to the visible 0-100 meter.
+func gain_ultimate_charge(base_amount: float) -> void:
+	ultimate_charge = minf(100.0, ultimate_charge + base_amount / ULTIMATE_COST_MULTIPLIER)
 
 func ultimate_active() -> bool:
 	return false

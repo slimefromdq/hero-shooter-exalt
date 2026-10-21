@@ -108,7 +108,7 @@ func healing_tests() -> void:
 	k.tick(.5,request)
 	near(h.health,140,"regroup restores 80 health per second")
 	near(k.regroup_cd,10,"first healing tick starts cooldown")
-	near(k.ultimate_charge,.8*.8,"self healing grants no additional charge")
+	near(k.ultimate_charge,.8*.8 / 1.4,"self healing grants no additional charge")
 	k.tick(2.5,request)
 	near(h.health,340,"channel caps at three seconds of healing")
 	check(h.state == "ready","channel completes")

@@ -60,7 +60,7 @@ func healing_cases() -> void:
 	k.tick_spirit(.25)
 	near(friend.health,10,"transfer delays healing")
 	k.tick_spirit(1)
-	near(friend.health,35,"passive healing has no resource cost")
+	near(friend.health,31.875,"passive healing has no resource cost")
 	k.fire()
 	check(k.shot_cd > 0 and k.recipient == friend and k.ammo == 1,"infinite arrows and passive bird coexist")
 	k.start_reload()
@@ -68,7 +68,7 @@ func healing_cases() -> void:
 	var wall := Geometry.box(world,Vector3(6,4,.5),Vector3(0,2,-4),Color.GRAY)
 	await step()
 	k.tick_spirit(4.9)
-	near(friend.health,157.5,"heals through first 4.9 seconds of occlusion")
+	near(friend.health,139.0625,"heals through first 4.9 seconds of occlusion")
 	check(k.recipient == friend,"grace retains assignment")
 	wall.queue_free()
 	await step()
@@ -78,7 +78,7 @@ func healing_cases() -> void:
 	await step()
 	friend.health = 10
 	k.tick_spirit(6)
-	near(friend.health,135,"large timestep heals exactly five seconds behind cover")
+	near(friend.health,119.375,"large timestep heals exactly five seconds behind cover")
 	check(k.recipient == null,"five seconds of continuous sight loss returns bird")
 	wall.queue_free()
 	await step()
@@ -100,7 +100,7 @@ func healing_cases() -> void:
 	k.transfer_left = 0
 	seeker.health = 40
 	check(k.guiding_wing(),"Wing accepts assigned self")
-	near(seeker.health,100,"Wing heals sixty")
+	near(seeker.health,92.5,"Wing heals 52.5")
 	near(seeker.benefits.speed_multiplier(),1.3,"Wing grants thirty percent speed")
 	check(not k.guiding_wing(),"Wing has real cooldown")
 	seeker.benefits.tick(2)
@@ -226,9 +226,9 @@ func ultimate_cases() -> void:
 	check(k.extras.size() == 2 and k.birds.size() == 3,"Murmuration creates two extra birds")
 	check(k.extras[0].target != friend and k.extras[1].target != friend and k.extras[0].target != k.extras[1].target,"three healing recipients are distinct")
 	k.tick_spirit(1)
-	near(friend.health,53.75,"main bird receives 35 percent healing boost")
-	near(second.health,63.75,"automatic bird heals second ally")
-	near(seeker.health,73.75,"automatic bird can heal Seeker")
+	near(friend.health,49.53125,"main bird receives 35 percent healing boost")
+	near(second.health,59.53125,"automatic bird heals second ally")
+	near(seeker.health,69.53125,"automatic bird can heal Seeker")
 	near(k.ultimate_charge,0,"ultimate healing cannot charge next ultimate")
 	k.transfer_cd = 0
 	k.assign(second)

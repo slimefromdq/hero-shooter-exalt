@@ -154,8 +154,8 @@ func run() -> void:
 	await setup_command()
 	friend.health = 100
 	friend.overhealth.grant(marshal,75,5)
-	near(resolver.heal(doctor,friend,25,"test"),25,"ordinary healing restores ordinary missing health")
-	near(friend.health,125,"healing restores HP")
+	near(resolver.heal(doctor,friend,25,"test"),21.875,"ordinary healing restores ordinary missing health")
+	near(friend.health,121.875,"healing restores HP")
 	near(friend.overhealth.value(),75,"healing cannot increase overhealth")
 	hurt(friend,50)
 	friend.health = friend.effective_max_health()
@@ -165,7 +165,7 @@ func run() -> void:
 	command()
 	enemy.kit.ultimate_charge = 0
 	hurt(marshal,50)
-	near(enemy.kit.ultimate_charge,4.5,"overhealth damage awards normal ultimate charge")
+	near(enemy.kit.ultimate_charge,4.5 / 1.4,"overhealth damage awards normal ultimate charge")
 	near(last_hit,50,"confirmed hit includes overhealth absorption")
 	check(resolver.contributions[marshal.get_instance_id()].has(enemy.get_instance_id()),"overhealth damage records attacker credit")
 	check(resolver.events.any(func(entry: Dictionary) -> bool: return entry.event == "damage" and entry.details.contains("overhealth=50.0")),"combat event reports absorption breakdown")

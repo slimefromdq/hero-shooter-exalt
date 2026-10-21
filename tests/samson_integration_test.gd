@@ -48,7 +48,7 @@ func run() -> void:
 	check(actor.tuning.hero_id == "samson" and k.charges == 2,"training selection creates playable Samson")
 	await press("hover")
 	await step(30)
-	check(k.charges == 1 and friend.health == 145 and friend.overhealth.value() > 0,"bound Q event rescues ally and displays overhealth")
+	check(k.charges == 1 and friend.health == 136.875 and friend.overhealth.value() > 0,"bound Q event rescues ally and displays overhealth")
 	await capture("intervene")
 	var enemy: HeroActor = training.spawn_bot(0,Vector3(0,.1,-5))
 	var look: Vector3 = (enemy.body_point(1.2)-controller.camera.global_position).normalized()
