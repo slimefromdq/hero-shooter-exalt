@@ -19,7 +19,7 @@ func _ready() -> void:
 	collision_layer = 0
 	collision_mask = 19
 	add_collision_exception_with(source)
-	cast_id = source.resolver.new_cast(source)
+	cast_id = source.resolver.classify(source.resolver.new_cast(source),CombatResolver.ImpactKind.ULTIMATE if kind == "axe" else CombatResolver.ImpactKind.ABILITY)
 	var collider := CollisionShape3D.new()
 	var shape := SphereShape3D.new()
 	shape.radius = (source.tuning as SlayerTuning).knife_radius if kind == "knife" else (source.tuning as SlayerTuning).axe_radius

@@ -1,0 +1,184 @@
+{
+  "date": "2026-10-20",
+  "timezone": "America/New_York",
+  "engine": "Godot 4.7.2 stable",
+  "implementation": "Movement, combat feel, release parries, shared close-combat triangle, and visual feedback",
+  "full_verifier": {
+    "command": "powershell -ExecutionPolicy Bypass -File .\\tools\\verify.ps1",
+    "exit_code": 0,
+    "godot_invocations": 63,
+    "pass_lines": 4765,
+    "script_errors": 0,
+    "failed_assertions": 0,
+    "log": "artifacts/feel-full-verification.log"
+  },
+  "final_focused": {
+    "headless_checks": 78,
+    "native_checks": 80,
+    "failures": 0,
+    "logs": [
+      "artifacts/feel-final-feel_update_test.log",
+      "artifacts/feel-native-final.log"
+    ],
+    "additional_checks": [
+      {
+        "suite": "seeker_test",
+        "checks": 104,
+        "failures": 0
+      },
+      {
+        "suite": "close_combat_test",
+        "checks": 31,
+        "failures": 0
+      },
+      {
+        "suite": "roster_expansion_test",
+        "checks": 262,
+        "failures": 0
+      },
+      {
+        "suite": "slayer_presentation_test",
+        "checks": 27,
+        "failures": 0
+      },
+      {
+        "suite": "wave_1_round_test",
+        "checks": 52,
+        "failures": 0
+      }
+    ],
+    "coverage": [
+      "30/60/120 Hz air acceleration and speed limits",
+      "native D plus matching mouse steering and ADS sensitivity",
+      "slide posture release and ceiling clearance",
+      "all-roster empty-magazine reload policy",
+      "camera-ray ADS and zero-intensity recoil",
+      "damage directions and undirected periodic/area damage",
+      "pellet head/shield feedback aggregation",
+      "release-parry timing, facing, action cancellation, exclusions and one-impact consumption",
+      "damage plus push/root negation",
+      "damage-free Red Thread and Omen negation",
+      "ordinary ability classification during support ultimates",
+      "melee push without stun and confirmed counter hits",
+      "throw reacquisition after swept startup approach, clashes, recovery, immunity and interruption cleanup",
+      "parry practice controller exercises the real Slayer knife action"
+    ]
+  },
+  "simulations": {
+    "city": {
+      "seed": 76,
+      "seconds": 600,
+      "checks": 17,
+      "failures": [],
+      "captures": [
+        2,
+        4
+      ],
+      "falls": [],
+      "persistent_stalls": [],
+      "log": "artifacts/feel-city-final-600.log",
+      "report": "artifacts/city-simulation-76-600s.json"
+    },
+    "museum": {
+      "seed": 76,
+      "natural_seconds": 60,
+      "staged_combat_seconds": 180,
+      "controlled_route_drill_seconds": 166,
+      "checks": 16,
+      "failures": [],
+      "falls": 0,
+      "log": "artifacts/feel-museum-final.log",
+      "report": "artifacts/museum/simulation-76-attack.json"
+    },
+    "short_city_runs": "60-second and 180-second runs did not satisfy both-team capture assertions; the extended 600-second run passed all 17 assertions."
+  },
+  "rendered_review": {
+    "captures": 73,
+    "heroes": [
+      "nimbus",
+      "slayer",
+      "marshal"
+    ],
+    "manifest": "artifacts/feel-captures/manifest.json",
+    "gallery": "artifacts/feel-captures",
+    "review": "All action frames reviewed in per-hero contact sheets, with representative movement, shield break, parry, melee counter, wall clang, and ADS frames reviewed at full size.",
+    "log": "artifacts/feel-capture-final.log",
+    "actions": [
+      "idle",
+      "takeoff",
+      "airborne",
+      "landing",
+      "momentum-slide",
+      "dash-slide",
+      "wall-kick",
+      "mantle-pull",
+      "mantle-slide",
+      "melee-windup",
+      "melee-impact",
+      "shield-block",
+      "throw-ready",
+      "shield-break",
+      "throw-lift",
+      "throw-slam",
+      "throw-recovery",
+      "parry",
+      "gun-hit-and-hurt",
+      "automatic-reload",
+      "wall-clang",
+      "counter-hit",
+      "throw-clash",
+      "normal-aim",
+      "zoomed-aim"
+    ]
+  },
+  "preserved_existing_validation_file": true,
+  "committed": false,
+  "pushed": false,
+  "limits": [
+    "Automated and rendered checks do not prove human movement/aim feel, motion comfort, sound mix quality, or competitive balance.",
+    "Audio synthesis, cue routing and finite playback were checked; the mix still needs human listening.",
+    "Museum natural match evidence is distinct from staged combat and the controlled full-route escort drill."
+  ],
+  "post_fetch_integration": {
+    "base": "97bd06e",
+    "source_air_strafing_preserved": true,
+    "upstream_angular_hover_fallback_and_wisp_resource_preserved": true,
+    "checks": [
+      {
+        "suite": "momentum_flow_test",
+        "checks": 105,
+        "failures": 0
+      },
+      {
+        "suite": "feel_update_test",
+        "checks": 78,
+        "failures": 0
+      },
+      {
+        "suite": "movement_overhaul_test",
+        "checks": 73,
+        "failures": 0
+      },
+      {
+        "suite": "movement_visual_test",
+        "checks": 58,
+        "failures": 0
+      },
+      {
+        "suite": "wisp_rework_test",
+        "checks": 209,
+        "failures": 0
+      },
+      {
+        "suite": "qol_test",
+        "checks": 112,
+        "failures": 0
+      },
+      {
+        "suite": "menu_flow_test",
+        "failures": 0
+      }
+    ],
+    "logs": "artifacts/feel-rebase-*.log"
+  }
+}

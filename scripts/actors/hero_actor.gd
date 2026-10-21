@@ -113,6 +113,7 @@ func _physics_process(delta: float) -> void:
 	kit.prepare_input(intent)
 	close.tick(delta, intent)
 	kit.tick(delta, intent)
+	if kit.ammo <= 0 and not kit is RelayKit and not infinite_resources: kit.start_reload()
 	motor.tick(delta, intent)
 	if mobility_limited:
 		motor.interrupt_mobility()

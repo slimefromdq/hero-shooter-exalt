@@ -126,7 +126,7 @@ func run() -> void:
 	check(absf(actor.velocity.y) < .01,"air melee suspends falling for a bounded window")
 	await step(20)
 	check(actor.velocity.y < 0,"gravity resumes after air melee suspension")
-	check(absf(actor.position.x-6) < .05,"air melee retains six-meter travel")
+	check(absf(actor.position.x-6.5) < .05,"air melee retains the approved 6.5-meter travel")
 	await reset(Vector3(0,20,10))
 	actor.intent.aim = Vector3.UP
 	actor.intent.melee = true
@@ -320,6 +320,7 @@ func run() -> void:
 	for friction: float in [3.6,4.0]:
 		await reset()
 		actor.tuning.slide_friction = friction
+		actor.motor.slide_source = "ground_dash"
 		actor.velocity = Vector3.FORWARD*10
 		actor.intent.slide = true
 		actor.motor.transition("slide")
@@ -327,7 +328,7 @@ func run() -> void:
 		while actor.motor.mode == "slide":
 			await step()
 		distances.append(start.distance_to(actor.position))
-	check(distances[1]/distances[0] > .87 and distances[1]/distances[0] < .93,"flat slide travels approximately ten percent less from equal entry speed")
+	check(distances[1]/distances[0] > .87 and distances[1]/distances[0] < .93,"dash slide retains its existing friction tuning")
 	actor.tuning.slide_friction = 4
 	print("MOVEMENT_OVERHAUL_RESULT ",checks," checks, ",failures," failures")
 	quit(1 if failures else 0)

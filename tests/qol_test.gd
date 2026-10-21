@@ -96,7 +96,7 @@ func movement() -> void:
 	a.kit.shot_cd = 0
 	a.kit.fire(false)
 	check(a.kit.ammo == 1,"ordinary shots consume ammo again")
-	check(a.tuning.melee_lunge_distance == 6 and a.tuning.melee_lunge_duration == .4,"longer shared melee tuning")
+	check(a.tuning.melee_lunge_distance == 6.5 and a.tuning.melee_lunge_duration == .4,"longer shared melee tuning")
 
 func reloads() -> void:
 	for hero: String in HeroRoster.IDS:

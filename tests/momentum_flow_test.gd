@@ -50,13 +50,15 @@ func run() -> void:
 		await physics_frame
 		var dt: float = 1.0/hz
 		var label: String = " at %d Hz" % hz
+		# Upstream angular steering remains the hover fallback; ordinary air
+		# uses the accepted projection-based strafing covered below.
+		actor.motor.mode = "hover"
 		for launch_speed: float in [6.0,18.0]:
-			reset(Vector3(0,60,20))
 			actor.velocity = Vector3.FORWARD * launch_speed
-			actor.intent.move = Vector3.RIGHT
-			tick(dt,hz/2)
+			for i: int in hz/2:
+				actor.velocity = actor.motor.steer_horizontal(actor.velocity,Vector3.RIGHT,6,false,false,dt)
 			var turned: float = absf(rad_to_deg(Vector3.FORWARD.signed_angle_to(actor.velocity * Vector3(1,0,1),Vector3.UP)))
-			check(absf(turned-22.5) < 1 and absf(horizontal()-launch_speed) < .001,"air turn rate and speed at %s m/s" % launch_speed+label)
+			check(absf(turned-22.5) < 1 and absf(horizontal()-launch_speed) < .001,"hover turn rate and speed at %s m/s" % launch_speed+label)
 		var velocity: Vector3 = Vector3.FORWARD * 18
 		for i: int in hz/2:
 			velocity = actor.motor.steer_horizontal(velocity,Vector3.RIGHT*.5,6,false,false,dt)
@@ -84,7 +86,7 @@ func run() -> void:
 		check(absf(horizontal()-18) < .001,"neutral air retains earned speed"+label)
 		actor.intent.move = Vector3.RIGHT
 		tick(dt,hz/2)
-		check(absf(horizontal()-18) < .001 and actor.velocity.x > 1,"air steering turns without adding speed"+label)
+		check(horizontal() > 18 and horizontal() < 18.2 and actor.velocity.x > 1,"projection-capped air steering adds controlled lateral speed"+label)
 		actor.intent.move = -(actor.velocity * Vector3(1,0,1)).normalized()
 		var prior: float = horizontal()
 		tick(dt)
@@ -202,10 +204,11 @@ func run() -> void:
 	actor.select_hero("stitch")
 	check(is_equal_approx((actor.tuning as StitchTuning).hook_release_up,9.5) and actor.tuning.wall_jump_up == 8,"Stitch hook lift remains independent of shared wall jump")
 	actor.select_hero("wisp")
+	actor.motor.mode = "hover"
 	var wisp_velocity: Vector3 = Vector3.FORWARD*18
 	for i: int in 30:
 		wisp_velocity = actor.motor.steer_horizontal(wisp_velocity,Vector3.RIGHT,actor.tuning.ground_speed,false,false,1.0/60)
-	check(absf(rad_to_deg(Vector3.FORWARD.angle_to(wisp_velocity))-36) < .01 and absf(wisp_velocity.length()-18) < .001,"Wisp retains stronger angular steering without speed gain")
+	check(absf(rad_to_deg(Vector3.FORWARD.angle_to(wisp_velocity))-36) < .01 and absf(wisp_velocity.length()-18) < .001,"Wisp retains its compatible angular hover steering tuning")
 	world.queue_free()
 	await process_frame
 	print("MOMENTUM FLOW: %d checks, %d failures" % [checks,failures])

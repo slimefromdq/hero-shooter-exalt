@@ -142,7 +142,7 @@ func show_settings() -> void:
 	var display: Node = get_node("/root/DisplaySettings")
 	var display_control: Button = button(display.button_text(),func() -> void: display.toggle_fullscreen())
 	display_control.name = "DisplayMode"
-	var settings: Array = [["Mouse sensitivity","sensitivity",.0005,.008,.0005],["Camera distance (m)","camera_distance",2,6,.1],["Normal FOV","normal_fov",70,105,1],["Aim FOV","aim_fov",45,75,1],["Master volume","master",0,1,.05],["Combat volume","combat",0,1,.05],["Feedback volume","feedback",0,1,.05]]
+	var settings: Array = [["Mouse sensitivity","sensitivity",.0005,.008,.0005],["Camera distance (m)","camera_distance",2,6,.1],["Normal FOV","normal_fov",70,105,1],["Aim FOV","aim_fov",30,75,1],["ADS sensitivity multiplier","ads_multiplier",.25,2,.05],["Combat camera intensity","combat_camera_effects",0,1,.05],["Master volume","master",0,1,.05],["Combat volume","combat",0,1,.05],["Feedback volume","feedback",0,1,.05]]
 	for setting: Array in settings:
 		var row := HBoxContainer.new()
 		content.add_child(row)

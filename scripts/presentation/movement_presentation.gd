@@ -7,6 +7,7 @@ var failure: String = ""
 var failure_left: float = 0
 var fov_pulses: Array[Vector2] = []
 var jump_left: float = 0
+var landing_left: float = 0
 var trail_clock: float = 0
 const ICONS := ["wall_jump","dash","slide","dash_slide"]
 const FAILURES := {
@@ -32,6 +33,7 @@ func is_local() -> bool:
 func confirm(kind: String, at: Vector3, direction: Vector3, normal: Vector3, strength: float) -> void:
 	if not actor.alive: return
 	if kind == "jump": jump_left = .16
+	if kind == "landing": landing_left = .22
 	if kind == "dash_slide":
 		failure = ""
 		failure_left = 0
@@ -76,6 +78,7 @@ func _process(delta: float) -> void:
 	hud_left = maxf(0,hud_left-delta)
 	failure_left = maxf(0,failure_left-delta)
 	jump_left = maxf(0,jump_left-delta)
+	landing_left = maxf(0,landing_left-delta)
 	trail_clock -= delta
 	if not actor.alive or trail_clock > 0: return
 	var direction: Vector3 = actor.velocity.normalized()
@@ -98,6 +101,7 @@ func clear() -> void:
 	failure = ""
 	failure_left = 0
 	jump_left = 0
+	landing_left = 0
 	trail_clock = 0
 	fov_pulses.clear()
 	for child: Node in get_children(): child.queue_free()

@@ -352,6 +352,8 @@ func _on_round_won(team: int) -> void:
 	for actor: HeroActor in actors:
 		if not is_instance_valid(actor): continue
 		actor.close.cancel()
+		actor.close.refill()
+		actor.presentation.clear_feedback()
 		actor.kit.cancel(true)
 		actor.motor.interrupt_mobility()
 		actor.statuses.clear()

@@ -19,7 +19,10 @@ var slide_queued: bool = false
 var posture_offset: float = 0.0
 @export var movement_camera_effects: float = 1.0
 @export var normal_fov: float = 82.0
-@export var aim_fov: float = 60.0
+@export var aim_fov: float = 42.0
+@export var ads_multiplier: float = 1.0
+@export var combat_camera_effects: float = 1.0
+var combat_impulse: Vector3 = Vector3.ZERO
 
 func _ready() -> void:
 	get_node("/root/GameSettings").apply_controller(self)
@@ -47,8 +50,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.is_action_pressed("dash"): dash_queued = true
 		if event.is_action_pressed("slide"): slide_queued = true
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		yaw -= event.relative.x * sensitivity
-		pitch = clampf(pitch - event.relative.y * sensitivity, -1.3, 1.15)
+		var aim_scale: float = tan(deg_to_rad(camera.fov)*.5)/tan(deg_to_rad(normal_fov)*.5)*ads_multiplier if actor.intent.aim_held else 1.0
+		yaw -= event.relative.x * sensitivity * aim_scale
+		pitch = clampf(pitch - event.relative.y * sensitivity * aim_scale, -1.3, 1.15)
 	if event is InputEventMouseButton and event.pressed and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
 		var session: Node = get_tree().get_first_node_in_group("game_session")
 		if session != null and not session.menu_open:
@@ -60,13 +64,15 @@ func _process(delta: float) -> void:
 	posture_offset = lerpf(posture_offset,actor.motor.posture_lowering(),minf(1.0,delta * 16.0))
 	rig.global_position = actor.global_position + Vector3.UP * (camera_height - posture_offset)
 	recoil = move_toward(recoil,0,delta * .22)
-	rig.rotation = Vector3(pitch + recoil, yaw, 0.0)
+	combat_impulse = combat_impulse.lerp(Vector3.ZERO,1-exp(-delta*20))
+	rig.rotation = Vector3(pitch + recoil*combat_camera_effects, yaw, 0.0)
+	camera.rotation = combat_impulse*combat_camera_effects
 	arm.position.x = shoulder_offset
 	var aiming: bool = actor.intent.aim_held or actor.state == "ultimate"
 	var march_fov: float = 0.0
 	if actor.state == "marshal_march": march_fov = 4.0*(actor.kit as MarshalKit).march_speed/(actor.tuning as MarshalTuning).march_speed
 	var movement_fov: float = actor.presentation.movement.camera_offset(delta,aiming or movement_camera_effects < .5)
-	camera.fov = lerpf(camera.fov, 34.0 if actor.state == "ultimate" else (aim_fov if aiming else normal_fov)+march_fov+movement_fov, minf(1.0, delta * 12.0))
+	camera.fov = lerpf(camera.fov, 34.0 if actor.state == "ultimate" else (aim_fov if aiming else normal_fov)+march_fov+movement_fov, minf(1.0, delta * 20.0))
 	var desired_distance: float = camera_distance * (0.8 if aiming else 1.0)
 	if actor.state == "marshal_shield" and actor.tuning is MarshalTuning:
 		desired_distance = (actor.tuning as MarshalTuning).shield_camera_distance
@@ -83,6 +89,7 @@ func gather_intent(_delta: float) -> CombatIntent:
 		slide_queued = false
 		return input
 	var axes: Vector2 = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	input.strafe = axes.x
 	var forward: Vector3 = -camera.global_basis.z
 	forward.y = 0.0
 	var right: Vector3 = camera.global_basis.x
@@ -119,6 +126,8 @@ func reset_controller() -> void:
 	posture_offset = 0.0
 	clear_action_queue()
 	recoil = 0.0
+	combat_impulse = Vector3.ZERO
+	camera.rotation = Vector3.ZERO
 	yaw = 0.0
 	pitch = -0.12
 

@@ -27,11 +27,46 @@ func _ready() -> void:
 	add_to_group("movement_effect")
 	var energy: StandardMaterial3D = material(Color("c7f6f5"),.8)
 	var dust: StandardMaterial3D = material(Color("dfd6be"),.28)
+	if kind in ["parry","parry_release"]: energy.albedo_color = Color("a9fff2")
+	elif kind in ["melee_hit","counter_hit","wall_clang","metal_hit","slam"]: energy.albedo_color = Color("ffe293")
+	elif kind == "shield_break": energy.albedo_color = Color("79caff")
 	var forward: Vector3 = direction.slide(normal).normalized()
 	if forward.is_zero_approx(): forward = normal.cross(Vector3.RIGHT).normalized()
 	if forward.is_zero_approx(): forward = normal.cross(Vector3.FORWARD).normalized()
 	var side: Vector3 = forward.cross(normal).normalized()
 	match kind:
+		"parry", "counter_hit", "melee_hit", "wall_clang", "metal_hit", "surface_hit", "shield_break", "throw_clash", "slam":
+			duration = .32 if kind != "slam" else .42
+			expanding = true
+			ring(normal,.25,energy)
+			for i: int in 8:
+				var radial: Vector3 = forward.rotated(normal,TAU*i/8)
+				stroke(radial*.1,radial*(.7 if i%2 == 0 else .4)+normal*.08,.06 if i%2 == 0 else .025,energy)
+			if kind == "shield_break":
+				for i: int in 6:
+					var shard := PrismMesh.new()
+					shard.size = Vector3(.16,.28,.04)
+					var radial: Vector3 = forward.rotated(normal,TAU*i/6)
+					var mesh: MeshInstance3D = Geometry.mesh(self,shard,radial*.35,energy)
+					mesh.quaternion = Quaternion(Vector3.FORWARD,normal)
+					mesh.rotate(normal,i*.7)
+		"parry_release", "throw_lift", "throw_caught", "melee_windup":
+			duration = .16
+			ring(direction,.3,energy)
+		"throw_landing":
+			duration = .25
+			expanding = true
+			ring(normal,.6,dust)
+		"melee_swing":
+			duration = .13
+			for i: int in 7:
+				var axis: Vector3 = direction.cross(Vector3.UP).normalized()
+				if axis.is_zero_approx(): axis = Vector3.RIGHT
+				var angle_a: float = lerpf(-.9,.9,i/7.0)
+				var angle_b: float = lerpf(-.9,.9,(i+1)/7.0)
+				var a: Vector3 = direction*cos(angle_a)+axis*sin(angle_a)
+				var b: Vector3 = direction*cos(angle_b)+axis*sin(angle_b)
+				stroke(a*.9,b*.9,.065,energy)
 		"jump", "landing", "wall_jump":
 			expanding = true
 			duration = .32
@@ -49,6 +84,11 @@ func _ready() -> void:
 		"slide_dust":
 			duration = .22
 			for sign_value: float in [-1,1]: stroke(side*.25*sign_value,-forward*.5+side*.4*sign_value+normal*.06,.045,dust)
+			for i: int in 3:
+				var wedge := PrismMesh.new()
+				wedge.size = Vector3(.12,.13,.3)
+				var mesh: MeshInstance3D = Geometry.mesh(self,wedge,-forward*(i*.16)+side*(i-1)*.16+normal*.06,dust)
+				mesh.quaternion = Quaternion(Vector3.UP,normal)
 		"slide", "dash_slide", "mantle_slide":
 			duration = .34
 			for i: int in 7:
@@ -84,6 +124,7 @@ func material(color: Color, alpha: float) -> StandardMaterial3D:
 	return result
 
 func stroke(from: Vector3, to: Vector3, width: float, mat: StandardMaterial3D) -> void:
+	if from.distance_squared_to(to) < .000001: return
 	var shape := BoxMesh.new()
 	shape.size = Vector3(width,width,from.distance_to(to))
 	var mesh: MeshInstance3D = Geometry.mesh(self,shape,(from+to)*.5,mat)

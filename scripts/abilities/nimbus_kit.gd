@@ -34,7 +34,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 	if input.bomb and bomb_cd <= 0.0 and actor.permits("bomb"):
 		var grenade := PocketBomb.new()
 		grenade.source = actor
-		grenade.cast_id = actor.resolver.new_cast(actor)
+		grenade.cast_id = actor.resolver.classify(actor.resolver.new_cast(actor),CombatResolver.ImpactKind.ABILITY)
 		actor.get_parent().add_child(grenade)
 		grenade.global_position = safe_muzzle()
 		grenade.velocity = actor.aim_direction * t.bomb_throw_speed + Vector3.UP * 3.8
@@ -69,13 +69,14 @@ func fire(ultimate: bool) -> void:
 	var shoulder: Vector3 = actor.body_point(1.36)
 	var blocked: Dictionary = actor.resolver.ray(shoulder, muzzle, [actor.get_rid()], 1)
 	var hit: Dictionary = blocked if not blocked.is_empty() else actor.resolver.weapon_ray(actor, muzzle, aim_point + (aim_point - muzzle).normalized() * 0.05, [actor.get_rid()])
+	actor.presentation.surface_impact(hit)
 	var endpoint: Vector3 = hit.get("position", aim_point)
 	cast_id = actor.resolver.new_cast(actor)
 	if not hit.is_empty() and hit.get("collider") is HeroActor:
 		var target: HeroActor = hit["collider"] as HeroActor
 		var head: bool = not ultimate and endpoint.y - target.global_position.y >= target.headshot_height()
 		var amount: float = t.ultimate_damage if ultimate else t.rifle_damage * (t.head_multiplier if head else 1.0)
-		actor.resolver.damage(actor, target, amount, "ultimate" if ultimate else "rifle", cast_id, head, ultimate)
+		actor.resolver.damage(actor, target, amount, "ultimate" if ultimate else "rifle", cast_id, head, ultimate,muzzle)
 	elif hit.get("collider") is CombatBarrier:
 		hit.collider.receive_damage(actor,t.ultimate_damage if ultimate else t.rifle_damage,cast_id)
 	elif hit.get("collider") is PocketBomb:

@@ -114,7 +114,7 @@ func start_lunge() -> void:
 	lunge_direction = (actor.aim_direction*Vector3(1,0,1)).normalized()
 	if lunge_direction.is_zero_approx(): lunge_direction = -actor.global_basis.z
 	lunge_left = data().opening_lunge
-	lunge_cast = actor.resolver.new_cast(actor)
+	lunge_cast = actor.resolver.classify(actor.resolver.new_cast(actor),CombatResolver.ImpactKind.ABILITY)
 	shot_cd = data().shears_interval
 	actor.state = "stitch_lunge"
 	cue = "lunge"
@@ -214,16 +214,18 @@ func aimed_enemy(reach: float) -> HeroActor:
 func attach_thread() -> void:
 	var target: HeroActor = aimed_enemy(data().thread_range)
 	if target == null: return
+	var thread_cast: int = actor.resolver.classify(actor.resolver.new_cast(actor),CombatResolver.ImpactKind.ABILITY)
+	bomb_cd = data().thread_cooldown
+	actor.resolver.record("cast",actor,"red_thread")
+	if actor.resolver.admit_impact(actor,target,thread_cast,actor.body_point(1)) != CombatResolver.Admission.ALLOWED: return
 	if is_instance_valid(thread): thread.retire()
 	thread = RedThread.new()
 	thread.source = actor
 	thread.target = target
 	thread.remaining = data().thread_duration
 	actor.get_parent().add_child(thread)
-	bomb_cd = data().thread_cooldown
 	cue = "thread_attach"
 	feedback(260)
-	actor.resolver.record("cast",actor,"red_thread")
 
 func movement_scale() -> float:
 	if concealed: return 1.0
@@ -335,7 +337,7 @@ func start_seam() -> void:
 	if not barrier.is_empty(): seam_distance = minf(seam_distance,from.distance_to(barrier.position))
 	seam_left = seam_distance
 	seam_hits.clear()
-	seam_cast = actor.resolver.new_cast(actor)
+	seam_cast = actor.resolver.classify(actor.resolver.new_cast(actor),CombatResolver.ImpactKind.ULTIMATE)
 	ultimate_charge = 0
 	cue = "curtain_windup"
 	actor.resolver.record("cast",actor,"curtain_call")

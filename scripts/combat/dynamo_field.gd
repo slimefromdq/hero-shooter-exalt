@@ -47,7 +47,9 @@ func pulse(is_storm: bool) -> void:
 	for other: HeroActor in get_tree().get_nodes_in_group("actors"):
 		if not other.alive or other.team == source.team or at.distance_to(other.body_point(.9)) > radius: continue
 		if source.resolver.attack_ray(source,at,other.body_point(.9),[],1).is_empty(): targets.append(other)
-	source.resolver.splash(source,at,radius,t.storm_damage if is_storm else t.stone_damage,"storm" if is_storm else "lodestone",source.resolver.new_cast(source))
+	var pulse_cast: int = source.resolver.classify(source.resolver.new_cast(source),CombatResolver.ImpactKind.AREA)
+	if is_storm: source.resolver.ultimate_casts[pulse_cast] = true
+	source.resolver.splash(source,at,radius,t.storm_damage if is_storm else t.stone_damage,"storm" if is_storm else "lodestone",pulse_cast)
 	for other: HeroActor in targets:
 		if not other.alive or other.invulnerable or other.state == "wisp_phase" or source.resolver.protected_room(other): continue
 		if is_storm:

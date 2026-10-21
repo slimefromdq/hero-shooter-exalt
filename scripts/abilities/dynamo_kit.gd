@@ -157,7 +157,7 @@ func arc(first: HeroActor) -> void:
 			nearest = distance
 			next = other
 		if next == null: break
-		actor.resolver.damage(actor,next,data().arc_first if index == 0 else data().arc_second,"lightning",actor.resolver.new_cast(actor),false,false,previous.body_point(1))
+		actor.resolver.damage(actor,next,data().arc_first if index == 0 else data().arc_second,"lightning",actor.resolver.classify(actor.resolver.new_cast(actor),CombatResolver.ImpactKind.ABILITY),false,false,previous.body_point(1))
 		CombatEffect.line(actor.get_parent(),previous.body_point(1),next.body_point(1),Color("b7e3ff"),.055)
 		visited.append(next)
 		previous = next

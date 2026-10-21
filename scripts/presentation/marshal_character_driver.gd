@@ -173,6 +173,7 @@ func update(delta: float) -> void:
 	var p := presentation
 	var a := p.actor
 	rig.reset_bone_poses()
+	if bones.has("Spine"): relative_rotation("Spine",MotionPose.torso(p))
 	for side: String in ["Left","Right"]:
 		var arm: Node3D = p.left_arm if side=="Left" else p.right_arm
 		var leg: Node3D = p.left_leg if side=="Left" else p.right_leg

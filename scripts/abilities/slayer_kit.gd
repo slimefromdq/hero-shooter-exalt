@@ -245,7 +245,7 @@ func start_boot() -> void:
 	boot_buffer = 0.0
 	boot_slow_time = 0.0
 	deflect_cd = t.boot_cooldown
-	cast_id = actor.resolver.new_cast(actor)
+	cast_id = actor.resolver.classify(actor.resolver.new_cast(actor),CombatResolver.ImpactKind.ABILITY)
 	actor.state = "slayer_boot_start"
 	actor.state_time = t.boot_startup
 	actor.resolver.record("cast",actor,"boot_rush")

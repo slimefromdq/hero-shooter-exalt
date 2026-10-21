@@ -76,7 +76,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 		march_effect_age = 0
 		actor.presentation.sound.play_tone(55,.18,.3)
 		if actor.controller is PlayerController: (actor.controller as PlayerController).add_recoil(.035)
-		cast_id = actor.resolver.new_cast(actor)
+		cast_id = actor.resolver.classify(actor.resolver.new_cast(actor),CombatResolver.ImpactKind.ABILITY)
 		mobility_cd = t.march_cooldown
 		actor.resolver.record("cast",actor,"forward_march")
 	elif input.bomb and bomb_cd <= 0 and actor.permits("bomb"):
@@ -85,7 +85,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 		breach_direction = actor.aim_direction
 		breach_index = 0
 		breach_age = 0
-		breach_cast = actor.resolver.new_cast(actor)
+		breach_cast = actor.resolver.classify(actor.resolver.new_cast(actor),CombatResolver.ImpactKind.ABILITY)
 		bomb_cd = t.breach_cooldown
 		orbital_points = MarshalOrbitalTargeting.plan(actor,breach_origin,breach_direction)
 		for entry: Dictionary in orbital_points:
@@ -103,7 +103,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 		actor.state = "marshal_verdict"
 		actor.state_time = t.verdict_windup
 		verdict_direction = Vector3(actor.aim_direction.x,0,actor.aim_direction.z).normalized()
-		cast_id = actor.resolver.new_cast(actor)
+		cast_id = actor.resolver.classify(actor.resolver.new_cast(actor),CombatResolver.ImpactKind.ULTIMATE)
 		verdict_warning = CombatEffect.cone_warning(actor.get_parent(),actor.global_position,verdict_direction,t.verdict_range,t.verdict_timeout)
 		actor.resolver.record("cast",actor,"marshals_verdict")
 	elif input.secondary_held and actor.permits("barrier") and barrier_hp > 0 and break_remaining <= 0:

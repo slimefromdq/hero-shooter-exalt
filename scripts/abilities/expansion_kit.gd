@@ -35,6 +35,7 @@ func aimed_ground(reach: float) -> Dictionary:
 func hitscan(direction: Vector3, reach: float, amount: float, tag: String, headshots: bool = true) -> Dictionary:
 	var from: Vector3 = safe_muzzle()
 	var hit: Dictionary = actor.resolver.attack_ray(actor,from,from+direction*reach,[actor.get_rid()])
+	actor.presentation.surface_impact(hit)
 	var endpoint: Vector3 = hit.get("position",from+direction*reach)
 	var target: HeroActor = hit.get("collider") as HeroActor
 	var id: int = actor.resolver.new_cast(actor)

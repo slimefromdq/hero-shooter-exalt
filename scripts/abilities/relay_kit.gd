@@ -79,11 +79,13 @@ func cast_omen() -> bool:
 	var target := hit.get("collider") as HeroActor
 	if not is_instance_valid(target) or not target.alive or target.team == actor.team or target.concealed() or target.damage_immune() or actor.resolver.protected_room(target): return false
 	if not actor.resolver.attack_ray(actor,actor.body_point(1.4),target.body_point(1.2),[],1).is_empty(): return false
+	var omen_cast: int = actor.resolver.classify(actor.resolver.new_cast(actor),CombatResolver.ImpactKind.ABILITY)
+	mobility_cd = data().omen_cooldown
+	actor.resolver.record("cast",actor,"omen","target="+target.actor_id)
+	if actor.resolver.admit_impact(actor,target,omen_cast,actor.body_point(1.4)) != CombatResolver.Admission.ALLOWED: return true
 	omen_target = target
 	omen_life = target.life_serial
 	omen_left = data().omen_duration
-	mobility_cd = data().omen_cooldown
-	actor.resolver.record("cast",actor,"omen","target="+target.actor_id)
 	feedback(610)
 	return true
 

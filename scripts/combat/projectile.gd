@@ -40,10 +40,10 @@ func _physics_process(delta: float) -> void:
 	var distance: float = minf(speed*delta,max_distance-traveled)
 	traveled += distance
 	var next: Vector3 = global_position + direction * distance
-	if needle_trail:
-		trail_clock += delta
-		if trail_clock >= .04:
-			trail_clock = 0
+	trail_clock += delta
+	if trail_clock >= .04:
+		trail_clock = 0
+		if get_tree().get_nodes_in_group("knife_trails").size() < 96:
 			CombatEffect.streak(get_parent(),global_position-direction*.4,global_position,.012,.07)
 	var hit: Dictionary = source.resolver.attack_ray(source, global_position, next, [source.get_rid()])
 	if hit.is_empty():

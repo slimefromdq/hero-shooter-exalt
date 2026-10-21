@@ -1,5 +1,6 @@
 class_name HunterSnare
 extends CharacterBody3D
+var parried_lives: Dictionary = {}
 
 var source: HeroActor
 var flying: bool = false
@@ -16,7 +17,7 @@ func _ready() -> void:
 	add_to_group("owned_attacks")
 	add_to_group("transient")
 	add_to_group("traps")
-	cast_id = source.resolver.new_cast(source)
+	cast_id = source.resolver.classify(source.resolver.new_cast(source),CombatResolver.ImpactKind.ABILITY)
 	health = (source.tuning as SlayerTuning).trap_health
 	# Shootable by combat traces, while character capsules can walk over it.
 	collision_layer = 16
@@ -91,6 +92,7 @@ func _physics_process(delta: float) -> void:
 	indicator.scale = Vector3.ONE * (.42 if not armed else t.trap_radius / 1.4)
 	if armed: visual.rotation.x = 0.0
 	for target: HeroActor in get_tree().get_nodes_in_group("actors"):
+		if int(parried_lives.get(target.get_instance_id(),-1)) == target.life_serial: continue
 		if not armed or not target.alive or target.team == source.team: continue
 		var offset: Vector3 = target.global_position + (Vector3.UP * .9 if flying else Vector3.ZERO) - global_position
 		if Vector2(offset.x,offset.z).length() <= t.trap_radius and absf(offset.y) < 1.15 and source.resolver.visible(global_position + Vector3.UP * .25,target,[get_rid()]):
@@ -100,6 +102,7 @@ func _physics_process(delta: float) -> void:
 func trigger(target: HeroActor) -> void:
 	var t := source.tuning as SlayerTuning
 	var result: String = source.resolver.damage(source,target,t.trap_damage,"snare",cast_id,false,false,global_position)
+	if result == "parried": parried_lives[target.get_instance_id()] = target.life_serial
 	if result != "hit":
 		return
 	if target.state not in ["captured", "throw_pair"]:

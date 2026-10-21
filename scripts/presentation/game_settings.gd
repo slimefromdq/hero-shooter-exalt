@@ -1,7 +1,7 @@
 extends Node
 signal changed
 const PATH := "user://game_settings.cfg"
-const DEFAULTS := {"sensitivity":.0025,"camera_distance":3.0,"normal_fov":82.0,"aim_fov":60.0,"movement_camera_effects":1.0,"master":1.0,"combat":1.0,"feedback":1.0,"bot_difficulty":1.0}
+const DEFAULTS := {"sensitivity":.0025,"camera_distance":3.0,"normal_fov":82.0,"aim_fov":42.0,"ads_multiplier":1.0,"combat_camera_effects":1.0,"movement_camera_effects":1.0,"master":1.0,"combat":1.0,"feedback":1.0,"bot_difficulty":1.0}
 var values: Dictionary = DEFAULTS.duplicate()
 
 func _ready() -> void:
@@ -11,11 +11,15 @@ func _ready() -> void:
 			AudioServer.add_bus()
 			AudioServer.set_bus_name(AudioServer.bus_count-1,name)
 	var config := ConfigFile.new()
-	if config.load(PATH) == OK and int(config.get_value("meta","version",0)) == 1:
-		for key: String in DEFAULTS:
-			var saved: Variant = config.get_value("settings",key,DEFAULTS[key])
-			if saved is float or saved is int: values[key] = clamp_value(key,float(saved))
+	if config.load(PATH) == OK: load_settings(config)
 	apply_audio()
+
+func load_settings(config: ConfigFile) -> void:
+	if int(config.get_value("meta","version",0)) not in [1,2]: return
+	for key: String in DEFAULTS:
+		var saved: Variant = config.get_value("settings",key,DEFAULTS[key])
+		if saved is float or saved is int: values[key] = clamp_value(key,float(saved))
+	if int(config.get_value("meta","version",0)) == 1 and is_equal_approx(float(values.aim_fov),60): values.aim_fov = 42.0
 
 func clamp_value(key: String, value: float) -> float:
 	match key:
@@ -23,7 +27,8 @@ func clamp_value(key: String, value: float) -> float:
 		"sensitivity": return clampf(value,.0005,.008)
 		"camera_distance": return clampf(value,2,6)
 		"normal_fov": return clampf(value,70,105)
-		"aim_fov": return clampf(value,45,75)
+		"aim_fov": return clampf(value,30,75)
+		"ads_multiplier": return clampf(value,.25,2)
 	return clampf(value,0,1)
 
 func set_setting(key: String, value: float) -> void:
@@ -31,7 +36,7 @@ func set_setting(key: String, value: float) -> void:
 	values[key] = clamp_value(key,value)
 	apply_audio()
 	var config := ConfigFile.new()
-	config.set_value("meta","version",1)
+	config.set_value("meta","version",2)
 	for field: String in values: config.set_value("settings",field,values[field])
 	var result: Error = config.save(PATH)
 	if result != OK: push_warning("Settings save failed: "+error_string(result))
@@ -49,4 +54,4 @@ func restore_defaults() -> void:
 	get_node("/root/DisplaySettings").set_fullscreen(true)
 
 func apply_controller(controller: Node) -> void:
-	for key: String in ["sensitivity","camera_distance","normal_fov","aim_fov","movement_camera_effects"]: controller.set(key,values[key])
+	for key: String in ["sensitivity","camera_distance","normal_fov","aim_fov","ads_multiplier","movement_camera_effects","combat_camera_effects"]: controller.set(key,values[key])

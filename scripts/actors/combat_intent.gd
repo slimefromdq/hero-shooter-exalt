@@ -2,6 +2,8 @@ class_name CombatIntent
 extends RefCounted
 
 var move: Vector3 = Vector3.ZERO
+## Signed local A/D axis; world-space wish remains authoritative for bots.
+var strafe: float = 0.0
 ## Optional world-space flight wish; INF means use legacy horizontal movement.
 var flight_move: Vector3 = Vector3.INF
 var aim: Vector3 = Vector3.FORWARD

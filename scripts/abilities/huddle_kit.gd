@@ -59,7 +59,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 			ultimate_charge = 0
 			actor.state = "huddle_wave"
 			wave_left = t.wave_duration
-			wave_cast = actor.resolver.new_cast(actor)
+			wave_cast = actor.resolver.classify(actor.resolver.new_cast(actor),CombatResolver.ImpactKind.ULTIMATE)
 			wave_hits.clear()
 			actor.presentation.sound.play_tone(135,.5,.22)
 		else: actor.state = "ready"
@@ -135,11 +135,12 @@ func cast_screen() -> void:
 	actor.resolver.record("cast",actor,"weve_got_you","target="+recipient.actor_id)
 
 func pulse() -> void:
-	var id: int = actor.resolver.new_cast(actor)
+	var id: int = actor.resolver.classify(actor.resolver.new_cast(actor),CombatResolver.ImpactKind.ABILITY)
 	var origin: Vector3 = actor.global_position+Vector3.UP
 	for other: HeroActor in actor.get_tree().get_nodes_in_group("actors"):
 		if not other.alive or other.team == actor.team or actor.global_position.distance_to(other.global_position) > data().pulse_radius: continue
 		if not actor.resolver.visible(origin,other,[actor.get_rid()]): continue
+		if actor.resolver.admit_impact(actor,other,id,origin) != CombatResolver.Admission.ALLOWED: continue
 		actor.resolver.damage(actor,other,data().pulse_damage,"wingbeat",id,false,false,origin)
 		var direction: Vector3 = other.global_position-actor.global_position
 		direction.y = 0

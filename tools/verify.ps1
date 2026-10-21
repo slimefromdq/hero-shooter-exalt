@@ -16,6 +16,8 @@ Push-Location -LiteralPath $taskRoot
 try {
     & $taskEngine --headless --path $taskRoot --editor --import --quit
     if ($LASTEXITCODE -ne 0) { throw 'Godot import failed.' }
+    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/feel_update_test.gd
+    if ($LASTEXITCODE -ne 0) { throw 'Movement and combat feel update failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/wave_1_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Wave 1 integration and tuning checks failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/wave_1_round_test.gd

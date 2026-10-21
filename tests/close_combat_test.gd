@@ -50,7 +50,7 @@ func run() -> void:
 	await reset(9)
 	await strike()
 	await step(28)
-	check(is_equal_approx(-a.global_position.z,6.0), "unobstructed melee advances 6 m through swept actor movement")
+	check(is_equal_approx(-a.global_position.z,6.5), "unobstructed melee advances 6.5 m through swept actor movement")
 	check(a.velocity.length() < .1, "lunge ends without a residual free speed boost")
 	await reset(7.0)
 	b.health = 50
@@ -111,7 +111,9 @@ func run() -> void:
 				checked_impact = true
 	check(max_lift > .9 and saw_flip, "victim is physically lifted while authored animation turns the body over Nimbus's hip")
 	check(not early_damage and checked_impact and b.health == 155, "throw deals its single 95 HP hit at the slam, not at capture or lift")
-	check(a.state == "ready" and b.state == "ready", "both actors regain control as the get-up animation completes")
+	check(a.state == "ready" and b.state == "throw_release", "thrower recovers while victim has brief post-throw stun")
+	await step(22)
+	check(b.state == "ready", "victim regains control after post-throw recovery")
 	check(a.global_position.distance_to(b.global_position) > 1.5 and b.global_position.y < .1, "victim lands on checked ground clear of the attacker's capsule")
 	check(a.get_collision_exceptions().is_empty() and b.get_collision_exceptions().is_empty(), "normal actor collisions are restored after the throw")
 	check(b.presentation.model.rotation.length() < .01, "victim pose returns to standing without a stuck animation")

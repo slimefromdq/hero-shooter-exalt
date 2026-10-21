@@ -93,12 +93,14 @@ func arrive() -> void:
 	actor.resolver.heal(actor,recipient,t.intervene_heal,"intervene")
 	recipient.overhealth.grant(actor,t.intervene_shield,t.intervene_shield_duration,"intervene","intervene")
 	actor.overhealth.grant(actor,t.intervene_self_shield,t.intervene_shield_duration,"intervene","intervene")
+	var peel_cast: int = actor.resolver.classify(actor.resolver.new_cast(actor),CombatResolver.ImpactKind.ABILITY)
 	for enemy: HeroActor in actor.get_tree().get_nodes_in_group("actors"):
 		if enemy.team == actor.team or not enemy.alive or enemy.global_position.distance_to(actor.global_position) > t.peel_radius: continue
 		if not actor.resolver.attack_ray(actor,actor.body_point(1),enemy.body_point(1),[],1).is_empty(): continue
 		var away: Vector3 = (enemy.global_position-actor.global_position)*Vector3(1,0,1)
 		if away.is_zero_approx(): away = -actor.global_basis.z
-		actor.resolver.knockback(actor,enemy,away.normalized()*t.peel_speed,"intervene")
+		if actor.resolver.admit_impact(actor,enemy,peel_cast,actor.body_point(1)) == CombatResolver.Admission.ALLOWED:
+			actor.resolver.knockback(actor,enemy,away.normalized()*t.peel_speed,"intervene")
 	CombatEffect.pulse(actor.get_parent(),actor.body_point(1),Color("64edc3"),t.peel_radius)
 	actor.resolver.record("arrival",actor,"motion_to_intervene")
 	gain_evidence()
@@ -174,7 +176,8 @@ func tick(delta: float, input: CombatIntent) -> void:
 			if channel_age >= data().cross_duration-.000001:
 				var target: HeroActor = defendant
 				gain_evidence()
-				if target.statuses.apply("stun",actor,data().cross_stun):
+				var cross_cast: int = actor.resolver.classify(actor.resolver.new_cast(actor),CombatResolver.ImpactKind.ABILITY)
+				if actor.resolver.admit_impact(actor,target,cross_cast,actor.body_point(1)) == CombatResolver.Admission.ALLOWED and target.statuses.apply("stun",actor,data().cross_stun):
 					target.statuses.apply("silence",actor,data().cross_stun+data().cross_silence)
 					CombatEffect.pulse(actor.get_parent(),target.body_point(1),Color("ffd178"),1.2)
 					actor.resolver.record("complete",actor,"cross_examination","target="+target.actor_id)

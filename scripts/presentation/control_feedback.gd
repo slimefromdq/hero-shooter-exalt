@@ -13,7 +13,7 @@ static func snapshot(actor: HeroActor) -> Array[Dictionary]:
 		if thread.target == actor and thread.valid(): result.append(entry("thread","RED THREAD","Pulled beyond 10m; break sight or cleanse",thread.remaining,Color("ff4968"),180))
 	var state: String = actor.state
 	if state in ["stagger","counterthrow","throw_release"]:
-		result.append(entry(state,"[!] STAGGER" if state == "stagger" else "[X] COUNTER BREAK","Actions locked / CONTROL RESISTANCE %d%%" % roundi(actor.close.stagger_scale*100) if state == "stagger" and actor.close.stagger_scale < 1 else "Actions locked",actor.state_time,Color("ffca78"),160 if state == "stagger" else 260))
+		result.append(entry(state,"[!] STAGGER" if state == "stagger" else "[!] THROW RECOVERY" if state == "throw_release" else "[X] COUNTER BREAK","Actions locked / CONTROL RESISTANCE %d%%" % roundi(actor.close.stagger_scale*100) if state == "stagger" and actor.close.stagger_scale < 1 else "Actions locked",actor.state_time,Color("ffca78"),160 if state == "stagger" else 260))
 	if state in ["captured","throw_pair"]:
 		var left: float = actor.tuning.throw_duration * (1-actor.close.pair_progress)
 		result.append(entry("throw","[<>] THROW CAPTURE","Paired action; controls locked",left,Color("ff99a9"),120))

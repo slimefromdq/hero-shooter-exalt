@@ -4,6 +4,32 @@ extends AudioStreamPlayer
 static var marshal_wave: AudioStreamWAV
 static var guard_wave: AudioStreamWAV
 static var slayer_waves: Dictionary = {}
+static var weapon_waves: Dictionary = {}
+
+static func weapon_report(hero: String) -> AudioStreamWAV:
+	if weapon_waves.has(hero): return weapon_waves[hero]
+	var bass: float = 90
+	if hero == "dynamo": bass = 125
+	elif hero == "wisp": bass = 180
+	elif hero in ["doctor","samson","stitch"]: bass = 145
+	elif hero == "marshal": bass = 55
+	var wave := AudioStreamWAV.new()
+	wave.format = AudioStreamWAV.FORMAT_16_BITS
+	wave.mix_rate = 22050
+	var frames: int = 5512
+	var bytes := PackedByteArray()
+	bytes.resize(frames*2)
+	var noise := RandomNumberGenerator.new()
+	noise.seed = hero.hash()
+	for i: int in frames:
+		var t: float = float(i)/22050
+		var punch: float = sin(TAU*bass*t*(1-t))*exp(-t*22)
+		var crack: float = noise.randf_range(-1,1)*exp(-t*75)
+		var body: float = sin(TAU*bass*.5*t)*exp(-t*16)
+		bytes.encode_s16(i*2,int(clampf(punch*.45+crack*.4+body*.2,-.95,.95)*32767))
+	wave.data = bytes
+	weapon_waves[hero] = wave
+	return wave
 const MAX_SLAYER_VOICES: int = 8
 @export var slayer_audio: SlayerAudioProfile = preload("res://resources/slayer_audio.tres")
 var slayer_voices: Array[Dictionary] = []
@@ -226,7 +252,7 @@ static func slayer_wave(cue: String) -> AudioStreamWAV:
 		slayer_waves[cue] = ability_wave(cue)
 		return slayer_waves[cue]
 	var seconds: float = .28 if cue == "shotgun" else (.45 if cue.begins_with("axe") else .16)
-	var hz: float = 85.0 if cue in ["shotgun","boot_hit","axe_hit"] else (460.0 if cue in ["shell","knife_hit","snare_hit"] else 210.0)
+	var hz: float = 650.0 if cue == "hit_body" else 900.0 if cue == "hit_shield" else 1100.0 if cue == "hit_head" else 1450.0 if cue == "hit_finish" else 125.0 if cue == "hurt_shield" else 72.0 if cue == "hurt_body" else 85.0 if cue in ["shotgun","boot_hit","axe_hit"] else (460.0 if cue in ["shell","knife_hit","snare_hit"] else 210.0)
 	var rate: int = 22050
 	var frames: int = int(seconds * rate)
 	var bytes := PackedByteArray()

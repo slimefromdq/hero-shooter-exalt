@@ -105,7 +105,7 @@ func run() -> void:
 	await boot_press()
 	if native_input: key_event(KEY_6,false)
 	player.intent.guard = false
-	check(player.state == "slayer_boot_start" and player.close.guard_cd > 1,"boot can intentionally leave guard instead of silently failing")
+	check(player.state == "slayer_boot_start" and player.close.guard_cd > .4,"boot can intentionally leave guard instead of silently failing")
 	await reset()
 	kit().ammo = 2
 	kit().start_reload()
@@ -265,7 +265,7 @@ func tuning_pass_tests() -> void:
 		check(player.state == "throw_pair" and target.state == "captured",hero + " captures a target just beyond the old throw reach")
 		await reset()
 		target = training.bots[0]
-		target.reset_actor(player.position + Vector3(0,0,-3.6))
+		target.reset_actor(player.position + Vector3(0,0,-4.0))
 		await step(3)
 		player.close.start_throw()
 		await step(20)

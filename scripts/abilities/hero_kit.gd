@@ -51,6 +51,7 @@ func free_slide_ammo() -> bool:
 	return actor.motor.mode == "slide" and actor.motor.grounded() and actor.intent.slide and ammo > 0 and not reloading
 
 func consume_ammo() -> void:
+	actor.presentation.shot_feedback()
 	if not actor.infinite_resources and not free_slide_ammo(): ammo -= 1
 
 func tick(_delta: float, _input: CombatIntent) -> void:

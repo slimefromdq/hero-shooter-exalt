@@ -164,7 +164,7 @@ func explosive_burst(direction: Vector3) -> Dictionary:
 	var hit: Dictionary = actor.resolver.attack_ray(actor,from,from+direction*t.burst_range,[actor.get_rid()])
 	var at: Vector3 = hit.get("position",from+direction*t.burst_range)
 	if not hit.is_empty(): at += Vector3(hit.normal)*.04
-	var id: int = actor.resolver.new_cast(actor)
+	var id: int = actor.resolver.classify(actor.resolver.new_cast(actor),CombatResolver.ImpactKind.ABILITY)
 	var result: Dictionary = WispBlast.resolve(actor,at,t.burst_radius,t.burst_full_radius,t.burst_damage,t.burst_minimum,id,"rogue_burst")
 	CombatEffect.line(actor.get_parent(),from,at,Color("c174ff"),.055)
 	CombatEffect.pulse(actor.get_parent(),at,Color("aa4cde"),t.burst_radius)

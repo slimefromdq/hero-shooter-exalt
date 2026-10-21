@@ -59,7 +59,7 @@ func run() -> void:
 	check(absf(controller.arm.get_hit_length() - controller.camera_distance) < .05,"camera restores close shoulder distance after wall clears")
 	actor.intent.aim_held = true
 	await step(60)
-	check(absf(controller.camera.fov - 60.0) < .05,"aiming uses 60 degree FOV")
+	check(absf(controller.camera.fov - 42.0) < .05,"aiming uses 42 degree FOV")
 	check(absf(controller.arm.spring_length - controller.camera_distance * .8) < .05,"aiming retains its collision-aware closer offset")
 	print("CAMERA FRAMING: %d checks, %d failures" % [checks,failures])
 	world.queue_free()

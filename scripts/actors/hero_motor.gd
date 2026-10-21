@@ -103,6 +103,11 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 		actor.velocity = Vector3(0,actor.velocity.y - t.gravity * delta,0)
 		actor.move_and_slide()
 		return
+	if actor.state == "throw_startup":
+		var charge: Vector3 = actor.close.throw_displacement(delta)
+		actor.velocity = Vector3(charge.x/delta,actor.velocity.y-t.gravity*delta,charge.z/delta)
+		actor.move_ability_slide(delta)
+		return
 	if actor.state in ["melee_windup", "melee_active"] or (actor.state == "melee_recovery" and actor.close.melee_age - delta < t.melee_lunge_delay + t.melee_lunge_duration):
 		var lunge: Vector3 = actor.close.lunge_displacement(delta)
 		actor.velocity.x = lunge.x / delta
@@ -173,7 +178,8 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			var normal: Vector3 = actor.get_floor_normal()
 			var tangent: Vector3 = slide_velocity.slide(normal)
 			tangent += (Vector3.DOWN * t.gravity).slide(normal) * delta
-			tangent = tangent.move_toward(Vector3.ZERO, t.slide_friction * delta)
+			var friction: float = t.slide_friction if slide_source in ["air_dash","ground_dash"] else t.momentum_slide_friction
+			tangent = tangent.move_toward(Vector3.ZERO, friction * delta)
 			# Steering bends existing momentum along the floor without adding
 			# speed. Opposing input cannot instantly reverse a committed slide.
 			var steer: Vector3 = wish.slide(normal)
@@ -314,6 +320,7 @@ func set_crouched(value: bool) -> void:
 	var capsule := body_collision.shape as CapsuleShape3D
 	capsule.height = clampf(actor.tuning.crouch_height,capsule.radius * 2,standing_capsule.height) if value else standing_capsule.height
 	body_collision.position.y = capsule.height * .5
+	if not value and mode == "crouch": mode = "ground" if grounded() else "air"
 
 func finish_mantle(delta: float) -> void:
 	# The checked landing supplies ground permission immediately. Resolve a
@@ -406,6 +413,13 @@ func steer_horizontal(current: Vector3, wish: Vector3, target_speed: float, on_f
 		return current.move_toward(wish * target_speed,t.braking * delta)
 	if wish.length_squared() < .01:
 		return current.move_toward(Vector3.ZERO,t.braking * delta) if on_floor else current
+	if not on_floor and mode not in ["hover","hover_ascent"]:
+		# Source-style projection cap: turning the wish vector opens room for
+		# acceleration without pulling existing perpendicular momentum away.
+		var direction: Vector3 = wish.normalized()
+		var add: float = minf(target_speed,t.air_wish_cap)*minf(1,wish.length())-current.dot(direction)
+		if add > 0: current += direction*minf(add,t.air_acceleration*delta)
+		return current.limit_length(t.speed_limit)
 	var speed: float = current.length()
 	var desired: Vector3 = wish.normalized()
 	var acceleration: float = t.acceleration if on_floor else t.air_steering

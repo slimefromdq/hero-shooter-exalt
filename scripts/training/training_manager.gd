@@ -2,7 +2,7 @@ class_name TrainingManager
 extends Node
 
 const PROFILES: Array[String] = ["Stationary", "Strafing", "Ranged", "Close attacker", "Sparring", "Guard trainer", "Slayer hunter", "Marshal", "Doctor", "Huddle", "Seeker", "Dynamo", "Rogue", "Tactical Sparring", "Samson support", "Stitch"]
-const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt", "Doctor rounds", "Marshal drill", "Huddle rescue", "Practice range", "Seeker murmuration", "Dynamo siege", "Rogue heist", "Tactical Sparring", "Samson intervention", "Stitch hunt"]
+const SCENARIOS: Array[String] = ["Live fire", "Rifle laboratory", "Tracking", "Close quarters", "Throw crossfire", "Traversal route", "Guard drill", "Slayer hunt", "Doctor rounds", "Marshal drill", "Huddle rescue", "Practice range", "Seeker murmuration", "Dynamo siege", "Rogue heist", "Tactical Sparring", "Samson intervention", "Stitch hunt", "Release parry practice"]
 var arena: Node3D
 var player: HeroActor
 var bots: Array[HeroActor] = []
@@ -208,6 +208,17 @@ func reset_scenario() -> void:
 	route_running = false
 	target_health_override = false
 	match scenario:
+		18:
+			var trainer: HeroActor = spawn_bot(0,Vector3(0,.1,3))
+			trainer.select_hero("slayer")
+			trainer.infinite_resources = true
+			trainer.controller.queue_free()
+			var parry_controller := ParryPracticeController.new()
+			parry_controller.actor = trainer
+			parry_controller.target = player
+			parry_controller.frozen = freeze_ai
+			trainer.controller = parry_controller
+			trainer.add_child(parry_controller)
 		16:
 			var patient: HeroActor = spawn_bot(0,Vector3(0,.1,3),false,player.team)
 			patient.actor_id = "Witness"
@@ -355,7 +366,7 @@ func on_event(entry: Dictionary) -> void:
 	if entry["event"] == "death" and entry["actor"] != player.actor_id:
 		eliminations += 1
 		show_notice("TARGET NEUTRALIZED  /  " + str(entry["actor"]).to_upper())
-	elif entry["event"] in ["counterthrow", "block", "deflect"]:
+	elif entry["event"] in ["counterthrow", "block", "deflect", "parry"]:
 		show_notice(str(entry["event"]).to_upper() + "  /  " + str(entry["actor"]).to_upper())
 
 func select_hero(id: String) -> void:

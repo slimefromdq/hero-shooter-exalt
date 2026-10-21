@@ -7,15 +7,15 @@ Shared movement now carries earned horizontal velocity between ordinary movement
 - Wheel up starts a dash. Buildup retains horizontal velocity. Burst entry uses the greater of dash speed and incoming horizontal speed, bounded by the existing shared 26 m/s cap; existing burst decay follows.
 - Hold Shift through a ground dash to slide on its grounded completion. The handoff copies actual surface-tangent velocity without a new impulse. Residual ground-dash speed also supports ordinary momentum-slide entry afterward.
 - Downward air-dash slides still require a fresh Shift press within 0.12 s before impact. Early held Shift and late presses cannot bypass the gate.
-- Camera-relative WASD bends ordinary airborne travel at `air_turn_degrees = 45` degrees/second (about 30 degrees during a normal jump); Wisp uses 72. A/D curves flight, opposite input brakes before reversal, and releasing input coasts. Analog input scales turning and braking. Turning preserves speed, while `air_steering` controls acceleration up to running speed and opposite-input braking. Active dashes, melee lunges, mantles and hero movement overrides retain their existing paths.
-- Neutral air movement has no horizontal drag. Air steering turns existing overspeed without increasing its magnitude; opposing input brakes. The combined velocity cap and collisions remain authoritative.
+- Ordinary airborne travel now uses the projection-based Source-style air strafing described in [the feel update](FEEL_UPDATE.md). A/D plus matching mouse steering can build speed up to the shared cap. The upstream angular fallback and `air_turn_degrees` resource compatibility remain available for hover; Wisp retains its 72-degree setting. Active dashes, melee lunges, mantles and hero movement overrides retain their existing paths.
+- Neutral air movement has no horizontal drag. Ordinary air strafing can build overspeed through projection-based acceleration; opposing input brakes. The combined velocity cap and collisions remain authoritative.
 - Aligned ground input reduces excess speed at `ground_overspeed_decay = 6` m/s² until the hero's allowed running speed. Ground release/reversal keeps normal 24 m/s² braking; reversal stops before accelerating backward.
 - Aim, guard, crouch, status and ability recovery movement restrictions deliberately brake. External enemy shoves remain separate from voluntary momentum, including during roots.
 - `dash_up_angle = 30` degrees caps the final requested upward air-dash launch direction, including backward movement and straight-up camera aim. Level/upward air dashes integrate ordinary gravity; downward dash trajectories remain fixed. Vertical speed after the burst is the integrated exit speed.
 - Shared wall-jump lift is 8 m/s; stronger incoming upward motion is retained within the combined speed cap. The existing camera-directed horizontal wall kick, clearance and rearm rules remain.
 - Ordinary jump, melee's committed lunge/stop, hero-specific vertical abilities, slide friction/steering, mantle timing and mantle-slide boosts retain their established rules. Stitch hook release now uses its separate `hook_release_up = 9.5` m/s setting.
 
-Air turn rate (0–180 degrees/second), ground excess-speed decay and upward dash angle are exposed in the training console. Hero resources inherit the shared defaults and keep their individual running speed and air-steering overrides.
+Hover air turn rate (0–180 degrees/second), ground excess-speed decay and upward dash angle are exposed in the training console. Hero resources inherit the shared defaults and keep their individual running speed and air-steering overrides.
 
 ## Route consequence
 
@@ -32,7 +32,9 @@ The old unassisted jump → head-on wall kick → mantle on the **4.5 m training
 
 The normal verification script includes the new momentum suite; `-Capture` additionally runs its native-input smoke. Human playtesting is still required to judge turning commitment, route difficulty, combat balance and movement feel.
 
-## Air-turn update validation
+## Earlier angular-steering validation
+
+These results describe the earlier angular-steering revision. Ordinary air now follows the accepted feel update; the angular assertions remain covered for the hover fallback. See `docs/validation/feel-update.json` for current delivery evidence.
 
 - Godot 4.6.3 headless: expanded momentum suite passes **105 checks**, including 22.5-degree turns over 0.5 seconds at running speed and 18 m/s across 30, 60 and 144 Hz, analog steering/braking, stop-before-reversal, heading clamping, zero turn rate, acceleration from rest and Wisp's 72-degree/s override.
 - Movement overhaul, movement visuals, training mantle slides, Stitch, Wisp, crouch, movement rules, Slayer abilities and both tactical bot suites pass.

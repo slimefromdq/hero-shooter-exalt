@@ -79,6 +79,9 @@ func draw_hud() -> void:
 	label_at(TrainingManager.SCENARIOS[training.scenario].to_upper(), Vector2(32, 154), 25, ink, true)
 	label_at("%02d TARGETS    /    %02d ELIMINATIONS" % [training.bots.size(), training.eliminations], Vector2(32, 178), 12, ink)
 	label_at("%d HITS    ·    %d DAMAGE" % [training.hits, int(training.damage_total)], Vector2(32, 199), 12, ink)
+	if training.scenario == 18:
+		label_at("HOLD SHIELD, THEN RELEASE JUST BEFORE THE KNIFE HITS",Vector2(32,238),13,ink,true)
+		label_at("0.12s RELEASE WINDOW / NO DAMAGE OR BLEED ON PARRY",Vector2(32,260),12,ink)
 	if training.scenario == 6:
 		label_at("ENTER THE RING  /  HOLD %s TO BLOCK" % TrainingInputs.key_label("guard"),Vector2(32,238),13,ink,true)
 		label_at("STRIKE RANGE %.1f m   ·   INTERVAL %.1f s" % [minf(training.guard_test_range,p.tuning.melee_range),training.guard_test_interval],Vector2(32,260),12,ink)
@@ -350,7 +353,7 @@ func build_advanced_menu() -> void:
 		["Counter window (s)", "counter_window", 0.24, 0.05, 0.4, 0.01],
 		["Throw outside damage multiplier", "throw_outside_multiplier", 0.1, 0.05, 1.0, 0.05],
 		["Guard bullet reduction (0 = none)", "bullet_guard_reduction", 0.0, 0.0, 0.8, 0.05],
-		["Air turn rate (degrees/sec)", "air_turn_degrees", 45.0, 0.0, 180.0, 5.0],
+		["Hover air turn rate (degrees/sec)", "air_turn_degrees", 45.0, 0.0, 180.0, 5.0],
 		["Ground excess-speed decay", "ground_overspeed_decay", 6.0, 0.0, 24.0, 0.5],
 		["Upward dash angle (degrees)", "dash_up_angle", 30.0, 0.0, 60.0, 5.0],
 		["Dash speed (m/s)", "dash_speed", 20.0, 12.0, 26.0, 1.0],
@@ -360,11 +363,13 @@ func build_advanced_menu() -> void:
 	for field: Array in fields:
 		spin(right, field[0], float(training.player.tuning.get(field[1])), field[3], field[4], field[5], change_tuning.bind(field[1]))
 	button(right, "Start timed traversal route", training.start_route)
-	button(right, "Movement preset · responsive", func() -> void: training.set_tuning("acceleration", 42); training.set_tuning("braking", 34); training.set_tuning("air_steering", 8.25); training.set_tuning("air_turn_degrees", 66))
-	button(right, "Movement preset · weighty (default)", func() -> void: training.set_tuning("acceleration", 30); training.set_tuning("braking", 24); training.set_tuning("air_steering", 5.625); training.set_tuning("air_turn_degrees", 45))
+	button(right, "Movement preset · responsive", func() -> void: training.set_tuning("acceleration", 42); training.set_tuning("braking", 34); training.set_tuning("air_acceleration", 42); training.set_tuning("air_steering", 8.25); training.set_tuning("air_turn_degrees", 66))
+	button(right, "Movement preset · weighty (default)", func() -> void: training.set_tuning("acceleration", 30); training.set_tuning("braking", 24); training.set_tuning("air_acceleration", 30); training.set_tuning("air_steering", 5.625); training.set_tuning("air_turn_degrees", 45))
 	var camera_controls := VBoxContainer.new()
 	right.add_child(camera_controls)
 	var camera_controller: PlayerController = training.player.controller as PlayerController
+	spin(camera_controls,"ADS sensitivity multiplier",camera_controller.ads_multiplier,.25,2,.05,func(value: float) -> void: get_node("/root/GameSettings").set_setting("ads_multiplier",value))
+	spin(camera_controls,"Combat camera intensity",camera_controller.combat_camera_effects,0,1,.05,func(value: float) -> void: get_node("/root/GameSettings").set_setting("combat_camera_effects",value))
 	check(camera_controls,"Movement camera effects",float(get_node("/root/GameSettings").values.get("movement_camera_effects",1)) >= .5,func(on: bool) -> void: get_node("/root/GameSettings").set_setting("movement_camera_effects",1.0 if on else 0.0))
 	spin(camera_controls, "Camera distance (m)", camera_controller.camera_distance, 2.0, 8.0, 0.1, func(value: float) -> void: camera_controller.camera_distance = value)
 	spin(camera_controls, "Camera shoulder offset (m)", camera_controller.shoulder_offset, -1.2, 1.2, 0.05, func(value: float) -> void: camera_controller.shoulder_offset = value)

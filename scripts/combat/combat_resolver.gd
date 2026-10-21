@@ -4,8 +4,12 @@ extends Node
 signal event_logged(entry: Dictionary)
 signal cast_started(source: HeroActor, id: int)
 signal confirmed_hit(source: HeroActor, target: HeroActor, amount: float, head: bool, executed: bool)
+signal impact_confirmed(source: HeroActor, target: HeroActor, amount: float, head: bool, executed: bool, origin: Vector3, shield_damage: float, cast_id: int, tag: String)
+enum ImpactKind { WEAPON, ABILITY, MELEE, THROW, PERIODIC, AREA, ULTIMATE }
+enum Admission { ALLOWED, REJECTED, PARRIED }
 signal confirmed_heal(source: HeroActor, target: HeroActor, amount: float)
 signal confirmed_block(attacker: HeroActor, defender: HeroActor)
+signal feedback_cleared(actor: HeroActor)
 signal elimination(killer: HeroActor, victim: HeroActor, assistants: Array[HeroActor], ability: String)
 const ASSIST_WINDOW: float = 8.0
 var combat_time: float = 0.0
@@ -16,6 +20,8 @@ var cast_serial: int = 0
 var resolved: Dictionary = {}
 var cast_powers: Dictionary = {}
 var ultimate_casts: Dictionary = {}
+var impact_kinds: Dictionary = {}
+var parried_impacts: Dictionary = {}
 
 func _ready() -> void:
 	add_to_group("combat_resolver")
@@ -53,9 +59,35 @@ func new_cast(source: HeroActor = null) -> int:
 	cast_started.emit(source,cast_serial)
 	cast_powers.erase(cast_serial - 16384)
 	ultimate_casts.erase(cast_serial - 16384)
+	impact_kinds.erase(cast_serial - 16384)
+	# Keep rejection history bounded without losing another victim's result.
+	if parried_impacts.size() > 4096: parried_impacts.clear()
 	cast_powers[cast_serial] = source.benefits.damage_multiplier() if is_instance_valid(source) and source.benefits != null else 1.0
 	if is_instance_valid(source) and is_instance_valid(source.kit) and source.kit.ultimate_active(): ultimate_casts[cast_serial] = true
 	return cast_serial
+
+func classify(id: int, kind: ImpactKind) -> int:
+	impact_kinds[id] = kind
+	return id
+
+func admit_impact(source: HeroActor, target: HeroActor, id: int, origin: Vector3, kind: ImpactKind = ImpactKind.ABILITY) -> Admission:
+	if not is_instance_valid(source) or not is_instance_valid(target) or not target.alive or source.team == target.team: return Admission.REJECTED
+	if attack_locked(source) or protected_room(target) or target.damage_immune() or spawn_door_blocks(origin,target.body_point(1)): return Admission.REJECTED
+	var key: String = "%d:%d:%d" % [id,target.get_instance_id(),target.life_serial]
+	if parried_impacts.has(key): return Admission.PARRIED
+	var actual: int = impact_kinds.get(id,kind)
+	# A support ultimate can remain active while an ordinary ability is cast.
+	# Explicit impact identity takes precedence over that charge-credit flag.
+	if not impact_kinds.has(id) and ultimate_casts.has(id): actual = ImpactKind.ULTIMATE
+	if actual == ImpactKind.ABILITY and target.close.parry_left > 0 and is_front(target,origin):
+		target.close.parry_left = 0
+		parried_impacts[key] = true
+		target.close.notice = "PARRY"
+		target.close.notice_left = .65
+		target.presentation.combat_feedback("parry")
+		record("parry",target,"parry","cast=%d" % id)
+		return Admission.PARRIED
+	return Admission.ALLOWED
 
 func cast_multiplier(id: int, _source: HeroActor) -> float:
 	return float(cast_powers.get(id,1.0))
@@ -104,6 +136,14 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 		return "immune"
 	var origin: Vector3 = source.body_point(1) if incoming_from == Vector3.INF else incoming_from
 	if spawn_door_blocks(origin,target.body_point(1)): return "immune"
+	var kind: ImpactKind = ImpactKind.WEAPON
+	if tag == "melee": kind = ImpactKind.MELEE
+	elif tag == "throw": kind = ImpactKind.THROW
+	elif tag == "bleed": kind = ImpactKind.PERIODIC
+	elif tag == "ultimate" or ultimate_casts.has(cast_id): kind = ImpactKind.ULTIMATE
+	var admission: Admission = admit_impact(source,target,cast_id,origin,kind)
+	if admission == Admission.PARRIED: return "parried"
+	if admission != Admission.ALLOWED: return "immune"
 	var key: String = "%d:%d" % [cast_id, target.get_instance_id()]
 	if resolved.has(key):
 		return "duplicate"
@@ -150,6 +190,8 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 	record("execution" if executed else "damage", source, tag,
 		"target=%s cast=%d base=%.1f applied=%.1f head=%s overhealth=%.1f shield=%.1f hp=%.1f" % [target.actor_id, cast_id, base, hp_damage + absorbed + temporary, head, temporary, absorbed, hp_damage])
 	confirmed_hit.emit(source, target, hp_damage + absorbed + temporary, head, executed)
+	var undirected: bool = tag == "bleed" or int(impact_kinds.get(cast_id,kind)) in [ImpactKind.AREA,ImpactKind.PERIODIC]
+	impact_confirmed.emit(source,target,hp_damage+absorbed+temporary,head,executed,Vector3.INF if undirected else origin,absorbed+temporary,cast_id,tag)
 	return "execution" if executed else "hit"
 
 func knockback(source: HeroActor, target: HeroActor, impulse: Vector3, tag: String) -> void:
@@ -179,6 +221,8 @@ func visible(from: Vector3, target: HeroActor, exclude: Array[RID] = []) -> bool
 
 func clear_round() -> void:
 	resolved.clear()
+	parried_impacts.clear()
+	impact_kinds.clear()
 	for actor: HeroActor in get_tree().get_nodes_in_group("actors"):
 		if actor.overhealth != null: actor.overhealth.clear()
 	contributions.clear()

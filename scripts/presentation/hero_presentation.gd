@@ -16,6 +16,9 @@ var nameplate: Label3D
 var health_bar: ActorHealthBar
 var debug_label: Label3D
 var fire_flash: float = 0.0
+var weapon_kick: float = 0.0
+var pose_clock: float = 0.0
+var melee_star: Node3D
 var walk_phase: float = 0.0
 var left_leg: Node3D
 var right_leg: Node3D
@@ -23,6 +26,7 @@ var left_arm: Node3D
 var right_arm: Node3D
 var animator: AnimationPlayer
 var sound: ProceduralSound
+var weapon_sound: ProceduralSound
 var impact_sound: ProceduralSound
 var block_sound: ProceduralSound
 var block_flash: float = 0.0
@@ -148,6 +152,9 @@ func _ready() -> void:
 	sound = ProceduralSound.new()
 	sound.spatial_owner = actor
 	add_child(sound)
+	weapon_sound = ProceduralSound.new()
+	weapon_sound.spatial_owner = actor
+	add_child(weapon_sound)
 	impact_sound = ProceduralSound.new()
 	impact_sound.spatial_owner = actor
 	add_child(impact_sound)
@@ -226,6 +233,15 @@ func _ready() -> void:
 		nameplate.position.y = 3.45
 		stagger_marks.position.y = 2.9
 		status_label.position.y = 2.85
+	melee_star = Node3D.new()
+	add_child(melee_star)
+	var star_material: StandardMaterial3D = Geometry.material(Color("ffe99a"),2)
+	star_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	for index: int in 4:
+		var ray_mesh := BoxMesh.new()
+		ray_mesh.size = Vector3(.055,.46 if index%2 == 0 else .3,.035)
+		Geometry.mesh(melee_star,ray_mesh,Vector3.ZERO,star_material).rotation.z = index*PI/4
+	melee_star.hide()
 
 func make_limb(caption: String, at: Vector3, upper: float, lower: float, radius: float, color: Color) -> Node3D:
 	var pivot := Node3D.new()
@@ -247,6 +263,12 @@ func make_limb(caption: String, at: Vector3, upper: float, lower: float, radius:
 	return pivot
 
 func _process(delta: float) -> void:
+	pose_clock += delta
+	melee_star.visible = actor.alive and actor.state in ["melee_windup","melee_active"]
+	if melee_star.visible:
+		melee_star.global_position = rifle.to_global(Vector3(0,.12,-.45))
+		melee_star.rotation.z = pose_clock*4
+		melee_star.scale = Vector3.ONE*(1+.12*sin(pose_clock*26))
 	fire_flash = maxf(0.0, fire_flash - delta)
 	block_flash = maxf(0.0, block_flash - delta)
 	walk_phase += Vector2(actor.velocity.x, actor.velocity.z).length() * delta * 1.8
@@ -397,6 +419,9 @@ func _process(delta: float) -> void:
 	var status_text: String = ControlFeedback.caption(actor)
 	if status_text != "": status_text += "\n"
 	status_text += CareHUD.status(actor,false)
+	if actor.close.grace > 0: status_text += "THROW IMMUNE %.1fs  " % actor.close.grace
+	if actor.controller is ParryPracticeController and (actor.controller as ParryPracticeController).action_timer < .5:
+		status_text += "KNIFE INCOMING"
 	for effect: String in actor.statuses.effects:
 		if effect in ["root","slow","stun","silence"]: continue
 		status_text += "%s %.1f  " % [effect.replace("max_health","MAX HP WOUND").to_upper(),actor.statuses.effects[effect].remaining]
@@ -485,6 +510,7 @@ func _process(delta: float) -> void:
 	if actor.motor.mode == "dash_windup":
 		model.rotation.x += .12
 		model.scale = Vector3(1.03,.94,1.03)
+	MotionPose.apply(self,delta)
 	if is_instance_valid(slayer_model): slayer_model.update(delta)
 	if is_instance_valid(marshal_model): marshal_model.update(delta)
 
@@ -503,15 +529,26 @@ func on_block(attacker: HeroActor, defender: HeroActor) -> void:
 	block_effect = BlockImpact.spawn(actor.get_parent(), actor.global_position + Vector3.UP * 1.3 + toward * .72, toward)
 
 func clear_feedback() -> void:
+	if is_instance_valid(actor) and is_instance_valid(actor.resolver):
+		actor.resolver.feedback_cleared.emit(actor)
+		if actor.controller is PlayerController:
+			var controller := actor.controller as PlayerController
+			controller.combat_impulse = Vector3.ZERO
+			controller.recoil = 0
+			if is_instance_valid(controller.camera): controller.camera.rotation = Vector3.ZERO
+	if is_instance_valid(melee_star): melee_star.hide()
 	if is_instance_valid(movement): movement.clear()
 	if is_instance_valid(marshal_combat): marshal_combat.clear()
 	if is_instance_valid(overhealth_visual): overhealth_visual.clear()
 	fire_flash = 0.0
+	weapon_kick = 0
+	pose_clock = 0
 	if is_instance_valid(slayer_model): slayer_model.reset_feedback()
 	if is_instance_valid(marshal_model): marshal_model.reset_feedback()
 	if is_instance_valid(slayer_shot): slayer_shot.clear()
 	if is_instance_valid(slayer_abilities): slayer_abilities.clear()
 	if is_instance_valid(sound): sound.stop_slayer_voices()
+	if is_instance_valid(weapon_sound): weapon_sound.stop()
 	boot_release = 0
 	cc_previous = ""
 	if is_instance_valid(control_sound): control_sound.stop()
@@ -532,3 +569,39 @@ func _exit_tree() -> void:
 func slam_impact(at: Vector3) -> void:
 	CombatEffect.pulse(actor.get_parent(), at + Vector3.UP * .1, Color("f8d3a0"), .9)
 	sound.play_tone(65, .18, .5)
+	combat_feedback("slam",at)
+
+func shot_feedback() -> void:
+	weapon_kick = 1.0
+	if not actor.kit is SlayerKit:
+		weapon_sound.stream = ProceduralSound.weapon_report(actor.tuning.hero_id)
+		weapon_sound.volume_db = -9+weapon_sound.distance_gain()
+		if DisplayServer.get_name() != "headless": weapon_sound.play()
+	if actor.controller is PlayerController and not actor.kit is SlayerKit:
+		(actor.controller as PlayerController).combat_impulse.x -= .009 if actor.kit is WispKit else .018
+
+func combat_feedback(kind: String, at: Vector3 = Vector3.INF) -> void:
+	var point: Vector3 = actor.body_point(1.2) if at == Vector3.INF else at
+	if kind == "shield_break": point = actor.body_point(1.3)+actor.aim_direction*.6
+	movement.spawn(kind,point,actor.aim_direction,actor.aim_direction if kind == "shield_break" else Vector3.UP)
+	var hz: float = 90 if kind in ["melee_hit","slam"] else 780 if kind == "parry" else 440
+	if kind == "wall_clang": impact_sound.play_guard_clang()
+	else: impact_sound.play_tone(hz,.12,.22)
+	if actor.controller is PlayerController:
+		var impulse := Vector3(-.025,0,.012)
+		if kind == "melee_swing": impulse = Vector3(.015,0,-.018)
+		elif kind == "throw_lift": impulse = Vector3(.025,0,.012)
+		elif kind == "throw_caught": impulse = Vector3(-.035,0,-.018)
+		elif kind == "throw_landing": impulse = Vector3(.05,0,-.02)
+		elif kind == "slam": impulse = Vector3(-.045,0,.018)
+		(actor.controller as PlayerController).combat_impulse += impulse
+
+func surface_impact(hit: Dictionary) -> void:
+	if hit.is_empty(): return
+	var collider: Object = hit.get("collider")
+	if collider is HeroActor: return
+	var metallic: bool = collider is CombatBarrier
+	if collider is Node:
+		metallic = metallic or str(collider.get_meta("surface_material","")) == "metal" or "metal" in str(collider.name).to_lower() or "steel" in str(collider.name).to_lower()
+	movement.spawn("metal_hit" if metallic else "surface_hit",hit.position,actor.aim_direction,hit.get("normal",Vector3.UP))
+	impact_sound.play_tone(920 if metallic else 140,.07,.1)

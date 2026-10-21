@@ -41,6 +41,7 @@ func weapon(amount: float, spread: float = 0.0, pellets: int = 1) -> void:
 		var aim: Vector3 = (direction + (right * cos(angle) + up * sin(angle)) * radius).normalized()
 		var hit: Dictionary = actor.resolver.attack_ray(actor,muzzle,muzzle + aim * 70,[actor.get_rid()])
 		var endpoint: Vector3 = hit.get("position",muzzle + aim * 70)
+		actor.presentation.surface_impact(hit)
 		var id: int = actor.resolver.new_cast(actor)
 		var damage: float = amount / pellets
 		var target: HeroActor = hit.get("collider") as HeroActor

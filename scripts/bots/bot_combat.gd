@@ -65,6 +65,9 @@ func evaluate(brain: BotBrain) -> void:
 	if seen and bool(enemy.get("channeling",false)) and distance < a.tuning.melee_range: offer("melee",.96,point)
 	if seen and distance < 3.5 and str(enemy.state) in ["melee_windup","melee_active"] and a.close.guard_meter > 30: offer("guard",.98,point,true)
 	if seen and a.close.incoming_throw() != null and brain.rng.randf() < brain.skill.consistency: offer("throw_action",.99,point)
+	if seen and a.close.incoming_throw() != null and a.permits("melee"): offer("melee",1.0,point)
+	var grab: HeroActor = a.close.select_throw_target() if a.permits("throw") and a.close.grace <= 0 else null
+	if seen and is_instance_valid(grab) and grab.state == "guard": offer("throw_action",.99,grab.body_point(1))
 	if seen and distance < a.tuning.melee_range and float(enemy.health) < a.tuning.melee_damage and a.permits("melee"): offer("melee",.87,point)
 	if a.kit is NimbusKit:
 		if seen and k.deflect_cd <= 0 and a.last_hit_age < .8: offer("deflect",.82,point)
@@ -253,6 +256,7 @@ func update_bomb(brain: BotBrain, input: CombatIntent, delta: float) -> bool:
 
 func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) -> void:
 	var a: HeroActor = brain.actor
+	if defend_projectile(brain,input): return
 	if a.kit is SamsonKit and a.state.begins_with("samson_"): return
 	if a.kit is WispKit:
 		RosterTactics.wisp_air_controls(a,input,brain.tactical_state in ["retreat","regroup"])
@@ -364,3 +368,45 @@ func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) ->
 		input.primary = dynamo.wall_valid
 		if not dynamo.wall_valid and dynamo.preview_age > 1.5: input.deflect = true
 	if not bool(choice.held): choice = {}
+
+func defend_projectile(brain: BotBrain, input: CombatIntent) -> bool:
+	var a: HeroActor = brain.actor
+	if a.close.parry_left > 0:
+		input.guard = false
+		input.primary = false
+		input.primary_held = false
+		input.secondary_held = false
+		input.secondary_pressed = false
+		input.reload = false
+		input.dash = false
+		input.jump = false
+		input.hover = false
+		input.deflect = false
+		input.bomb = false
+		input.ultimate = false
+		input.aim = a.aim_direction
+		intention = "parry window"
+		return true
+	if brain.level < 2 or a.close.guard_cd > 0 or a.state not in ["ready","guard"] or a.statuses.stunned(): return false
+	for projectile: Node in a.get_tree().get_nodes_in_group("owned_attacks"):
+		if not projectile is SlayerProjectile or not is_instance_valid(projectile.source) or projectile.kind != "knife" or projectile.source.team == a.team: continue
+		var offset: Vector3 = a.body_point(1.1)-projectile.global_position
+		var speed: float = projectile.velocity.length()
+		if speed < 1 or offset.length() > 12 or offset.normalized().dot(projectile.velocity.normalized()) < .97: continue
+		if not a.resolver.ray(a.body_point(1.1),projectile.global_position,[a.get_rid(),projectile.get_rid()],1).is_empty(): continue
+		input.primary = false
+		input.primary_held = false
+		input.secondary_held = false
+		input.secondary_pressed = false
+		input.reload = false
+		input.dash = false
+		input.jump = false
+		input.hover = false
+		input.deflect = false
+		input.bomb = false
+		input.ultimate = false
+		input.aim = (projectile.global_position-a.body_point(1.1)).normalized()
+		input.guard = not (a.state == "guard" and a.close.guard_age >= .05 and offset.length()/speed <= .10)
+		intention = "release parry" if not input.guard else "prepare parry"
+		return true
+	return false

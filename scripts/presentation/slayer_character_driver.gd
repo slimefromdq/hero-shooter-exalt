@@ -99,6 +99,7 @@ func update(delta: float) -> void:
  var p: HeroPresentation=presentation
  var a: HeroActor=p.actor
  rig.reset_bone_poses()
+ if bones.has("Spine"): bone_rotation("Spine",MotionPose.torso(p))
  # Source left/right labels face Blender +Y; this rig names limbs by Godot X.
  for side: String in ["Left","Right"]:
   var arm: Node3D=p.left_arm if side=="Left" else p.right_arm
