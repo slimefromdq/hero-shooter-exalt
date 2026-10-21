@@ -6,6 +6,7 @@ hero_id = "wisp"
 max_health = 225.0
 ground_speed = 6.5
 air_steering = 9.0
+air_turn_degrees = 72.0
 rifle_damage = 13.0
 shot_interval = 0.08333333
 magazine = 36
