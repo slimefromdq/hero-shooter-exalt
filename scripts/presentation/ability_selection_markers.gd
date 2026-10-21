@@ -20,7 +20,7 @@ func _process(_delta: float) -> void:
 	for marker: Label3D in markers: marker.hide()
 	if not display_available(): return
 	var grouped: Dictionary = {}
-	var previews: Array[Dictionary] = actor.kit.selection_previews()
+w	var previews: Array[Dictionary] = actor.kit.selection_previews()
 	var throw_target: HeroActor = actor.close.select_throw_target() if actor.permits("throw") and actor.close.grace <= 0 else null
 	if throw_target != null: previews.append({"target":throw_target,"action":"throw"})
 	for preview: Dictionary in previews:
