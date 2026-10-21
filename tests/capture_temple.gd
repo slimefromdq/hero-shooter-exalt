@@ -35,9 +35,11 @@ func run() -> void:
 	for index: int in 5:
 		var at: Vector3 = arena.definition.POINTS[index]
 		await photo("point-"+String.chr(65+index),at+Vector3(24,13,33),at+Vector3(0,3,0))
-	await photo("02-lower-gallery",Vector3(16,-6.2,130),Vector3(88,-6.2,130))
-	await photo("03-upper-gallery",Vector3(-20,22,48),Vector3(28,22,40))
-	await photo("04-skybridge",Vector3(63,13,36),Vector3(5,20,-2))
+	await photo("02-lower-gallery",Vector3(148,-2.2,24),Vector3(148,-2.2,-16))
+	await photo("03-upper-gallery",Vector3(-80,18,38),Vector3(-48,18,38))
+	await photo("04-skybridge",Vector3(116,19,18),Vector3(36,19,0))
+	await photo("08-through-hall",Vector3(52,10,78),Vector3(52,11,96))
+	await photo("09-wind-lift",Vector3(88,12,50),Vector3(76,9,46))
 	arena.match_controller.hud.visible = true
 	arena.match_controller.hud.overview_open = true
 	await photo("05-lower-atlas",Vector3(225,230,255),Vector3.ZERO)

@@ -1,6 +1,6 @@
 class_name TempleBuilder
 extends Node3D
-## Broad collision-authored terraces and separate screened circulation over real voids.
+## Shared floor cells eliminate duplicate coplanar route/court faces.
 var definition: TempleMapDefinition
 var architecture: MeridianArchitecture
 var navigation_region: NavigationRegion3D
@@ -11,6 +11,15 @@ var point_labels: Array[Label3D] = []
 var bake_started: int = 0
 var bake_milliseconds: int = 0
 var floor_triangles: Array[Vector3] = []
+var stair_triangles: Array[Vector3] = []
+var underside_triangles: Array[Vector3] = []
+var floor_cells: Dictionary = {}
+var floor_conflicts: Array[String] = []
+var pads: Array[TempleJumpPad] = []
+var pad_specs: Array[Dictionary] = []
+var walk_routes: Array[Dictionary] = []
+var furnished_bounds: Array[AABB] = []
+const CELL: float = 2.0
 
 func _ready() -> void:
 	architecture = MeridianArchitecture.new(self)
@@ -19,41 +28,298 @@ func _ready() -> void:
 	for entry: Array in [["stone","b5b4a1"],["dark_stone","5c7374"],["timber","493e43"],["tile","294c54"],["moss","5e8261"],["blossom","ecacc4"],["blossom_light","f6d7de"],["gold","cfb67c"],["water","8fcbd2"]]:
 		architecture.mat(entry[0],Color(entry[1]))
 	_environment()
-	for index: int in 5: _court(index)
 	routes = definition.connections()
-	# Additional exits and screened cross-connections are real, walkable geometry.
-	var branches: Array[Dictionary] = [
-		{"sector":0,"kind":"lower_exit","width":16.0,"points":[Vector3(76,-8,130),Vector3(52,8,100),Vector3(52,8,90)]},
-		{"sector":0,"kind":"upper_exit","width":16.0,"points":[Vector3(-20,20,48),Vector3(-20,20,80),Vector3(124,26,80),Vector3(124,8,128),Vector3(52,8,90)]},
-		{"sector":1,"kind":"lower_exit","width":16.0,"points":[Vector3(148,-4,24),Vector3(96,8,24),Vector3(64,16,24),Vector3(64,16,-24),Vector3(28,16,0)]},
-		{"sector":1,"kind":"upper_exit","width":16.0,"points":[Vector3(-72,32,8),Vector3(-96,24,-64),Vector3(-96,24,0),Vector3(-64,24,0),Vector3(-28,16,0)]},
-		{"sector":1,"kind":"crossover","width":16.0,"points":[Vector3(92,8,90),Vector3(112,8,90),Vector3(112,8,46),Vector3(84,8,46),Vector3(84,8,62)]},
-		{"sector":1,"kind":"crossover","width":16.0,"points":[Vector3(-8,20,56),Vector3(-20,20,48)]}
-	]
-	for sign_value: float in [1,-1]:
-		for entry: Dictionary in branches:
-			var copy: Dictionary = entry.duplicate(true)
-			copy.points = []
-			for at: Vector3 in entry.points: copy.points.append(TempleMapDefinition.mirror(at,sign_value))
-			if sign_value < 0: copy.sector = 3-entry.sector
-			routes.append(copy)
-	for entry: Dictionary in routes:
-		var apron: float = 10
-		if entry.kind == "main" and entry.sector in [1,2]: apron = 18
-		if entry.kind == "upper" and entry.sector in [0,3]: apron = 14
-		entry.points = _sample(entry.points,apron)
-	for entry: Dictionary in routes: _route(entry)
-	_spawn_aprons()
+	pad_specs = definition.jump_pads()
+	for i: int in 5: _plate(definition.POINTS[i],Vector2(72,64),"court_%d" % i)
+	for entry: Dictionary in routes: _build_route(entry)
+	for entry: Dictionary in definition.spawn_routes(): _build_route(entry)
+	for team: int in 2:
+		for stage: int in 3: _plate(definition.room_center(team,stage),Vector2(28,16),"spawn")
+	for bay: Dictionary in definition.rest_bays(): _plate(bay.center,bay.size,"garden_bay")
+	for gallery: Dictionary in definition.galleries(): _gallery(gallery)
+	for entry: Dictionary in pad_specs:
+		_plate(entry.destination,Vector2(8,8),entry.id+"_landing")
 	_finish_floors()
-	for entry: Dictionary in routes:
-		var path: Array[Vector3] = []
-		for at: Vector3 in entry.points: path.append(at)
-		_corridor_edges(path,entry.width,entry.kind != "main",entry.kind.begins_with("lower"))
+	for index: int in 5: _court(index)
+	_furnish_routes()
 	_spawns()
-	_recovery_shelves()
 	_scenery()
+	_build_pads()
 	architecture.flush()
 	_navigation()
+
+func solid(at: Vector3, size: Vector3, key: String = "stone", rotation: Vector3 = Vector3.ZERO) -> void:
+	architecture.box(size,at,key,true,rotation)
+	furnished_bounds.append(AABB(at-size/2,size))
+
+func _cell(x: int, z: int, heights: Vector4, source: String) -> void:
+	var key := Vector2i(x,z)
+	if not floor_cells.has(key): floor_cells[key] = []
+	for existing: Dictionary in floor_cells[key]:
+		var difference: Vector4 = existing.heights-heights
+		if difference.abs().length() < .02: return
+		var minimum: float = minf(minf(absf(difference.x),absf(difference.y)),minf(absf(difference.z),absf(difference.w)))
+		if minimum < 4.8 and source.ends_with("_veranda"): return # The authored ramp owns this doorway cutout.
+		if minimum < 4.8:
+			floor_conflicts.append("%s / %s at %s" % [existing.source,source,key])
+	floor_cells[key].append({"heights":heights,"source":source})
+
+func _plate(at: Vector3, size: Vector2, source: String) -> void:
+	for x: int in range(roundi((at.x-size.x/2)/CELL),roundi((at.x+size.x/2)/CELL)):
+		for z: int in range(roundi((at.z-size.y/2)/CELL),roundi((at.z+size.y/2)/CELL)):
+			_cell(x,z,Vector4.ONE*at.y,source)
+
+func authored_floor(at: Vector3) -> Vector3:
+	var key := Vector2i(floori(at.x/CELL),floori(at.z/CELL))
+	var nearest: float = INF
+	var result: Vector3 = at
+	for entry: Dictionary in floor_cells.get(key,[]):
+		var h: Vector4 = entry.heights
+		var u: float = (at.x-key.x*CELL)/CELL
+		var v: float = (at.z-key.y*CELL)/CELL
+		var height: float = lerpf(lerpf(h.x,h.y,u),lerpf(h.w,h.z,u),v)
+		if absf(height-at.y)<nearest:
+			nearest = absf(height-at.y)
+			result.y = height
+	return result
+
+func ramp_height(a: Vector3, b: Vector3, at: Vector3, width: float) -> float:
+	if a.y>b.y: return ramp_height(b,a,at,width) # Identical landings in both travel directions.
+	var distance: float = Vector2(b.x-a.x,b.z-a.z).length()
+	var along: float = Vector2(at.x-a.x,at.z-a.z).dot(Vector2(b.x-a.x,b.z-a.z).normalized())
+	var flights: int = maxi(1,ceili(absf(b.y-a.y)/4))
+	var apron: float = width/2
+	var total_run: float = distance-2*apron-(flights-1)*2
+	var regular_run: float = floorf(total_run/flights/2)*2
+	var progress: float = clampf(along-apron,0,distance-2*apron)
+	var climbed: float = 0
+	for flight: int in flights:
+		var run: float = regular_run if flight<flights-1 else total_run-regular_run*(flights-1)
+		climbed += clampf(progress,0,run)/run
+		progress -= run+2
+	return lerpf(a.y,b.y,climbed/flights)
+
+func _build_route(entry: Dictionary) -> void:
+	var authored: Array = entry.points.duplicate()
+	var sampled: Array[Vector3] = []
+	for i: int in range(1,authored.size()):
+		var a: Vector3 = authored[i-1]
+		var b: Vector3 = authored[i]
+		var half: float = entry.width/2
+		var low: Vector3 = a.min(b)
+		var high: Vector3 = a.max(b)
+		var sloped: bool = not is_equal_approx(a.y,b.y)
+		if is_equal_approx(a.x,b.x):
+			low.x -= half
+			high.x += half
+		else:
+			low.z -= half
+			high.z += half
+		_plate(a,Vector2(entry.width,entry.width),entry.id)
+		_plate(b,Vector2(entry.width,entry.width),entry.id)
+		for x: int in range(roundi(low.x/CELL),roundi(high.x/CELL)):
+			for z: int in range(roundi(low.z/CELL),roundi(high.z/CELL)):
+				var heights := Vector4.ONE*a.y
+				if sloped:
+					heights = Vector4(ramp_height(a,b,Vector3(x*CELL,0,z*CELL),entry.width),ramp_height(a,b,Vector3((x+1)*CELL,0,z*CELL),entry.width),ramp_height(a,b,Vector3((x+1)*CELL,0,(z+1)*CELL),entry.width),ramp_height(a,b,Vector3(x*CELL,0,(z+1)*CELL),entry.width))
+				_cell(x,z,heights,entry.id)
+		var steps: int = maxi(1,ceili(a.distance_to(b)/2))
+		for j: int in steps:
+			var at: Vector3 = a.lerp(b,float(j)/steps)
+			if sloped: at.y = ramp_height(a,b,at,entry.width)
+			sampled.append(at)
+		audit.append({"element":"stairs" if sloped else "passage","source":entry.id,"from":a,"to":b,"width":entry.width})
+	sampled.append(authored[-1])
+	entry["authored"] = authored
+	entry.points = sampled
+	walk_routes.append(entry)
+
+func _finish_floors() -> void:
+	for cell: Vector2i in floor_cells:
+		for entry: Dictionary in floor_cells[cell]:
+			var h: Vector4 = entry.heights
+			var a := Vector3(cell.x*CELL,h.x,cell.y*CELL)
+			var b := Vector3((cell.x+1)*CELL,h.y,cell.y*CELL)
+			var c := Vector3((cell.x+1)*CELL,h.z,(cell.y+1)*CELL)
+			var d := Vector3(cell.x*CELL,h.w,(cell.y+1)*CELL)
+			floor_triangles.append_array([a,b,c,a,c,d])
+	# Closed deck undersides prevent looking through an upper floor from a hall.
+	for index: int in range(0,floor_triangles.size(),3):
+		for offset: int in [0,2,1]: underside_triangles.append(floor_triangles[index+offset]-Vector3.UP*.35)
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for vertex: Vector3 in floor_triangles+underside_triangles: surface.add_vertex(vertex)
+	surface.generate_normals()
+	var instance := MeshInstance3D.new()
+	instance.mesh = surface.commit()
+	var paving := ShaderMaterial.new()
+	paving.shader = preload("res://shaders/temple_paving.gdshader")
+	instance.material_override = paving
+	add_child(instance)
+	var shape := ConcavePolygonShape3D.new()
+	shape.set_faces(PackedVector3Array(floor_triangles+underside_triangles+stair_triangles))
+	shape.backface_collision = true
+	var collision := CollisionShape3D.new()
+	collision.shape = shape
+	architecture.collision_body.add_child(collision)
+	# Closed skirts at exposed deck boundaries; no duplicate internal seams.
+	for cell: Vector2i in floor_cells:
+		for entry: Dictionary in floor_cells[cell]:
+			var h: Vector4 = entry.heights
+			var corners: Array[Vector3] = [Vector3(cell.x*CELL,h.x,cell.y*CELL),Vector3((cell.x+1)*CELL,h.y,cell.y*CELL),Vector3((cell.x+1)*CELL,h.z,(cell.y+1)*CELL),Vector3(cell.x*CELL,h.w,(cell.y+1)*CELL)]
+			var neighbors: Array[Vector2i] = [Vector2i(0,-1),Vector2i(1,0),Vector2i(0,1),Vector2i(-1,0)]
+			for side: int in 4:
+				var a: Vector3 = corners[side]
+				var b: Vector3 = corners[(side+1)%4]
+				var joined: bool = false
+				for other: Dictionary in floor_cells.get(cell+neighbors[side],[]):
+					var oh: Vector4 = other.heights
+					var pair: Vector2 = [Vector2(oh.w,oh.z),Vector2(oh.x,oh.w),Vector2(oh.y,oh.x),Vector2(oh.z,oh.y)][side]
+					if absf(pair.x-a.y)<.02 and absf(pair.y-b.y)<.02: joined = true
+				if not joined:
+					architecture.line(a-Vector3.UP*.22,b-Vector3.UP*.22,.45,"dark_stone")
+
+func _gallery(entry: Dictionary) -> void:
+	var at: Vector3 = entry.center
+	_plate(at,entry.size,entry.id)
+	var outward: float = signf(at.z-definition.POINTS[entry.point].z)
+	_plate(at+Vector3(0,-8,outward*6),Vector2(44,8),entry.id+"_veranda")
+	for x: float in [-14,14]: solid(at+Vector3(x,-7.4,outward*9.6),Vector3(14,1.2,.6),"dark_stone")
+	var hall_path: Array[Vector3] = []
+	for z: int in range(-8,9,2): hall_path.append(authored_floor(at+Vector3(0,-8,z)))
+	walk_routes.append({"id":entry.id+"_hall","kind":"hall","sector":-1,"width":8.0,"points":hall_path})
+	# Two broad stairs leave both ends, with a 2 m landing halfway up.
+	for side: float in [-1,1]:
+		var low: Vector3 = at+Vector3(side*38,-8,0)
+		var path: Array[Vector3] = []
+		for j: int in 25:
+			var distance: float = j
+			var height: float = clampf(distance-1,0,10)*.4+clampf(distance-13,0,10)*.4
+			var center: Vector3 = low+Vector3(-side*distance,height,0)
+			path.append(center)
+		furnished_bounds.append(AABB(low.min(path[-1])-Vector3(0,.3,4),Vector3(24,8.3,8)))
+		# Continuous, closed wedge collision; visual closed treads sit below it.
+		for j: int in 24:
+			var a: Vector3 = path[j]
+			var b: Vector3 = path[j+1]
+			var top: float = minf(a.y,b.y)
+			architecture.piece("box",Vector3(1,maxf(.1,top-low.y+.3),8),(a+b)/2-Vector3.UP*((a.y+b.y)/2-low.y+.3)/2,"stone")
+			var vertices := PackedVector3Array([a+Vector3(0,0,-4),a+Vector3(0,0,4),b+Vector3(0,0,-4),b+Vector3(0,0,4),Vector3(a.x,low.y-.3,a.z-4),Vector3(a.x,low.y-.3,a.z+4),Vector3(b.x,low.y-.3,b.z-4),Vector3(b.x,low.y-.3,b.z+4)])
+			var faces := PackedInt32Array([0,1,2,1,3,2,4,6,5,5,6,7,0,4,1,1,4,5,2,3,6,3,7,6,0,2,4,2,6,4,1,5,3,3,5,7])
+			# Geometry winding follows stair direction.
+			if side < 0:
+				for f: int in range(0,faces.size(),3):
+					var swap: int = faces[f+1]
+					faces[f+1] = faces[f+2]
+					faces[f+2] = swap
+			for face: int in faces: stair_triangles.append(vertices[face])
+		walk_routes.append({"id":entry.id+"_stairs_"+str(side),"kind":"gallery","sector":-1,"width":8.0,"points":path})
+		audit.append({"element":"stairs","source":entry.id,"from":path[0],"to":path[-1],"width":8.0})
+	# Through-hall beneath each gallery: broad openings on both long sides.
+	for x: float in [-12,12]:
+		for z: float in [-4,4]: solid(at+Vector3(x,-4,z),Vector3(1.2,8,1.2),"timber")
+	for x: float in [-13,13]: solid(at+Vector3(x,-4,0),Vector3(1,7.5,8),"timber")
+	for x: float in [-9,9]:
+		for z: float in [-5,5]: solid(at+Vector3(x,-4,z),Vector3(6,7.5,1),"timber")
+	for z: float in [-5,5]:
+		solid(at+Vector3(0,-.8,z),Vector3(12,1,1),"timber")
+		architecture.line(at+Vector3(-6,-1.4,z),at+Vector3(6,-1.4,z),.16,"gold")
+	# Open fighting gallery, with offset cover and short decorative awnings.
+	for x: float in [-10,10]:
+		solid(at+Vector3(x,.6,4 if at.z>definition.POINTS[entry.point].z else -4),Vector3(5,1.2,1),"dark_stone")
+		_roof(at+Vector3(x,5,0),Vector2(6,10))
+		for z: float in [-4,4]: solid(at+Vector3(x,2.5,z),Vector3(.5,5,.5),"timber")
+	audit.append({"element":"gallery","center":at,"point":entry.point,"movement":"two walkable stair exits and open through-hall","cover":"offset gallery shoulders"})
+
+func _court(index: int) -> void:
+	var at: Vector3 = definition.POINTS[index]
+	_rock_foundation(at,index)
+	for x: float in [-20,20]: architecture.line(at+Vector3(x,.04,-18),at+Vector3(x,.04,18),.15,"gold")
+	for z: float in [-18,18]: architecture.line(at+Vector3(-20,.04,z),at+Vector3(20,.04,z),.15,"gold")
+	# Four staggered garden/stone islands break open floor into fighting pockets.
+	for offset: Vector3 in [Vector3(-12,0,-10),Vector3(12,0,10),Vector3(-28,0,4),Vector3(28,0,-4),Vector3(-24,0,-14),Vector3(24,0,14)]:
+		var center: Vector3 = at+offset
+		if _reserved(center,4): continue
+		solid(center+Vector3.UP*.7,Vector3(6,1.4,4),"dark_stone")
+		architecture.piece("box",Vector3(5.6,.15,3.6),center+Vector3.UP*1.45,"moss")
+		if absf(offset.x)>20:
+			solid(center+Vector3(0,2.4,0),Vector3(1,4.8,4),"timber")
+			if not _reserved(center+Vector3.UP*7,2): _cherry(center+Vector3(0,1.4,0),index)
+	if index == 2:
+		# Skybell landmark suspended clear of both the ground routes and pad arcs.
+		architecture.cylinder(2.2,3.6,at+Vector3.UP*15,"gold",true)
+		architecture.cylinder(2.6,.4,at+Vector3.UP*13.2,"dark_stone",true)
+		for x: float in [-10,10]:
+			for z: float in [-26,26]: architecture.line(at+Vector3(x,14,z),at+Vector3(0,18,0),.22,"gold")
+		architecture.line(at+Vector3.UP*18,at+Vector3.UP*16.8,.3,"timber")
+	var label: Label3D = architecture.label(definition.TITLES[index],at+Vector3(0,12,0),70,Color("ffe3b0"))
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	point_labels.append(label)
+	audit.append({"element":"court","point":index,"center":at,"size":Vector2(72,64),"movement":"open center with two through-halls and paired galleries"})
+
+func _reserved(at: Vector3, margin: float) -> bool:
+	for pad: Dictionary in pad_specs:
+		for target: Vector3 in [pad.position,pad.destination]:
+			if absf(target.y-at.y)<5 and Vector2(target.x-at.x,target.z-at.z).length()<margin+5: return true
+	for route: Dictionary in walk_routes:
+		for point: Vector3 in route.points:
+			if absf(point.y-at.y)<4 and Vector2(point.x-at.x,point.z-at.z).length()<margin+route.width/2: return true
+	return false
+
+func _furnish_routes() -> void:
+	for entry: Dictionary in routes:
+		var accumulated: float = 0
+		for i: int in range(1,entry.points.size()):
+			var a: Vector3 = entry.points[i-1]
+			var at: Vector3 = entry.points[i]
+			accumulated += a.distance_to(at)
+			if accumulated < 16 or absf(a.y-at.y)>.02: continue
+			accumulated = 0
+			var inside: bool = false
+			for court: Vector3 in definition.POINTS:
+				if absf(at.x-court.x)<42 and absf(at.z-court.z)<38: inside = true
+			if inside: continue
+			var near_turn: bool = false
+			for turn: Vector3 in entry.authored:
+				if at.distance_to(turn)<12: near_turn = true
+			if near_turn: continue
+			var side: Vector3 = (at-a).normalized().cross(Vector3.UP)
+			for sign_value: float in [-1,1]:
+				var center: Vector3 = at+side*sign_value*(entry.width/2+2)
+				var clear: bool = true
+				var forward: Vector3 = (at-a).normalized()
+				for across: float in [-.6,.6]:
+					for along: float in [-3,3]:
+						if _reserved(center+side*across+forward*along,.6): clear = false
+				if not clear: continue
+				# Small supported rest bays stay outside the clear circulation width.
+				var rotation := Vector3(0,atan2((at-a).x,(at-a).z),0)
+				solid(center-Vector3.UP*.3,Vector3(4,.6,8),"stone",rotation)
+				solid(center+Vector3.UP*1.6,Vector3(1.2,3.2,6),"dark_stone",rotation)
+				architecture.piece("box",Vector3(1.4,.12,6.2),center+Vector3.UP*3.26,"moss",rotation)
+
+func _build_pads() -> void:
+	for entry: Dictionary in pad_specs:
+		var pad := TempleJumpPad.new()
+		pad.spec = entry
+		pad.position = entry.position
+		add_child(pad)
+		pads.append(pad)
+		var direction: Vector3 = (entry.destination-entry.position)*Vector3(1,0,1)
+		direction = direction.normalized()
+		architecture.piece("box",Vector3(4,.06,4),entry.position+Vector3.UP*.03,"gold")
+		architecture.line(entry.position+Vector3.UP*.1-direction,entry.position+Vector3.UP*.1+direction*1.5,.2,"cyan")
+		for side: float in [-1,1]: architecture.line(entry.position+Vector3.UP*.1+direction*1.5,entry.position+Vector3.UP*.1+direction*.5+direction.cross(Vector3.UP)*side*.7,.2,"cyan")
+		for x: float in [-4,4]: architecture.line(entry.destination+Vector3(x,.06,-4),entry.destination+Vector3(x,.06,4),.15,"gold")
+		for z: float in [-4,4]: architecture.line(entry.destination+Vector3(-4,.06,z),entry.destination+Vector3(4,.06,z),.15,"gold")
+		architecture.label("WIND LIFT",entry.position+Vector3.UP*2.8,28,Color("8fe5e7"))
+
+func _scenery() -> void:
+	for sign_value: float in [1,-1]:
+		for index: int in 9:
+			var at := Vector3(sign_value*(190+index%3*35),-20+index%4*12,sign_value*(index*48-190))
+			architecture.piece("cone",Vector3(100,130+index%3*30,100),at,"dark_stone")
+			architecture.piece("cone",Vector3(34,42,34),at+Vector3.UP*(58+index%3*15),"stone")
 
 func _environment() -> void:
 	var world := WorldEnvironment.new()
@@ -84,64 +350,19 @@ func _environment() -> void:
 	sun.directional_shadow_max_distance = 220
 	add_child(sun)
 
-func solid(at: Vector3, size: Vector3, key: String = "stone", rotation: Vector3 = Vector3.ZERO) -> void:
-	architecture.box(size,at,key,true,rotation)
-
-func _court(index: int) -> void:
-	var at: Vector3 = definition.POINTS[index]
-	solid(at-Vector3.UP*.8,Vector3(72,1.6,64))
-	# Substantial isolated mesas support courts; connecting spans cross actual void.
-	for x: float in [-30,30]:
-		for z: float in [-26,26]: architecture.cylinder(2,40,at+Vector3(x,-21,z),"dark_stone",true)
-	_rock_foundation(at,index)
-	for x: float in [-20,20]: architecture.line(at+Vector3(x,.04,-18),at+Vector3(x,.04,18),.18,"gold")
-	for z: float in [-18,18]: architecture.line(at+Vector3(-20,.04,z),at+Vector3(20,.04,z),.18,"gold")
-	var pavilion_offsets: Array[Vector3] = [Vector3(-24,0,24),Vector3(24,0,-24)]
-	if index in [1,3]: pavilion_offsets = [Vector3(-24,0,-24),Vector3(24,0,-24)]
-	if index == 2: pavilion_offsets = [Vector3(-24,0,24),Vector3(24,0,-24)]
-	if index >= 3:
-		for item: int in pavilion_offsets.size(): pavilion_offsets[item] = TempleMapDefinition.mirror(pavilion_offsets[item],-1)
-	for offset: Vector3 in pavilion_offsets:
-		# Large masses occlude exits; both sides have at least 16 m of open court.
-		_pavilion(at+offset,Vector2(9,12),8)
-	var cover_offsets: Array[Vector3] = [Vector3(-9,0,7),Vector3(9,0,-7)]
-	if index == 2: cover_offsets = [Vector3(-9,0,0),Vector3(9,0,0)]
-	for offset: Vector3 in cover_offsets:
-		var depth: float = 12 if index == 2 else 3
-		solid(at+offset+Vector3.UP*1.3,Vector3(5,2.6,depth),"dark_stone")
-		architecture.piece("box",Vector3(5.2,.16,depth+.2),at+offset+Vector3.UP*2.68,"moss")
-	var cherry_offsets: Array[Vector3] = [Vector3(-36,0,24),Vector3(36,0,-24)]
-	if index == 1: cherry_offsets = [Vector3(-24,0,-36),Vector3(24,0,-36)]
-	if index == 3: cherry_offsets = [Vector3(24,0,36),Vector3(-24,0,36)]
-	for offset: Vector3 in cherry_offsets:
-		solid(at+offset-Vector3.UP*.4,Vector3(12,.8,12),"stone")
-		_cherry(at+offset,index)
-	var label: Label3D = architecture.label(definition.TITLES[index],at+Vector3(0,6,0),70,Color("ffe3b0"))
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	point_labels.append(label)
-	# A temple portal frames each point, above clear movement rather than on it.
-	_portal(at+Vector3(0,0,25),28)
-	_portal(at+Vector3(0,0,-25),28)
-	audit.append({"element":"court","point":index,"center":at,"size":Vector2(72,64),"sightline":"offset solid pavilions split flank exits","movement":"broad loop around two low cover groups","cover":"solid pavilions and stone plinths"})
-
-func _pavilion(at: Vector3, footprint: Vector2, height: float) -> void:
-	solid(at+Vector3.UP*height/2,Vector3(footprint.x,height,footprint.y),"timber")
-	_roof(at+Vector3.UP*height,footprint+Vector2(3,3))
-	for y: float in [1,height-1]:
-		architecture.piece("box",Vector3(footprint.x+.1,.2,footprint.y+.1),at+Vector3.UP*y,"gold")
-	audit.append({"element":"pavilion","center":at,"sightline":"solid mass splits court sightlines","movement":"outer positions leave the objective and its approaches open","cover":"full-height stone and timber, with traversable roof"})
 
 func _roof(at: Vector3, footprint: Vector2) -> void:
 	# Colliding shallow slopes permit roof traversal; eave trim is cosmetic only.
 	for sign_value: float in [-1,1]:
 		var size := Vector3(footprint.x/2+.7,.4,footprint.y)
 		solid(at+Vector3(sign_value*footprint.x/4,1.2,0),size,"tile",Vector3(0,0,-sign_value*.17))
-	architecture.piece("box",Vector3(.5,.6,footprint.y+1),at+Vector3(0,2.4,0),"gold")
+	architecture.piece("box",Vector3(.5,.6,footprint.y+1),at+Vector3(0,1.42+sin(.17)*footprint.x/4,0),"gold")
 	# Tile ribs and stepped eaves are visual details outside the collision surface.
 	for z: float in range(-int(footprint.y/2),int(footprint.y/2)+1,2):
 		for side: float in [-1,1]:
 			architecture.piece("box",Vector3(footprint.x/2+.8,.08,.09),at+Vector3(side*footprint.x/4,1.43,z),"dark_stone",Vector3(0,0,-side*.17))
 	audit.append({"element":"roof","center":at,"sightline":"ridge and eaves define an exposed perch","movement":"shallow colliding slopes; tile ribs have no snagging collision","cover":"solid roof blocks shots from below"})
+
 
 func _rock_foundation(at: Vector3, seed_value: int) -> void:
 	var vertices := PackedVector3Array()
@@ -170,15 +391,6 @@ func _rock_foundation(at: Vector3, seed_value: int) -> void:
 	add_child(waterfall)
 	audit.append({"element":"rock_foundation","center":at,"sightline":"cliff silhouette makes the playable terrace edge legible","movement":"foundation stays below the court; bridges cross open voids","cover":"solid rock below, cosmetic waterfall outside circulation"})
 
-func _portal(at: Vector3, width: float, yaw: float = 0) -> void:
-	var basis := Basis(Vector3.UP,yaw)
-	for x: float in [-width/2-1,width/2+1]:
-		if not routes.is_empty() and _crossing_at(at+basis*Vector3(x,0,0),true): return
-	for x: float in [-width/2-1,width/2+1]: solid(at+basis*Vector3(x,5,0),Vector3(1.4,10,1.4),"timber",Vector3(0,yaw,0))
-	solid(at+Vector3.UP*9.5,Vector3(width+6,1,1.6),"timber",Vector3(0,yaw,0))
-	architecture.piece("box",Vector3(width+8,.5,2.5),at+Vector3.UP*10.3,"tile",Vector3(0,yaw,0))
-	architecture.piece("sphere",Vector3(2,2.5,2),at+Vector3.UP*7,"gold")
-	audit.append({"element":"portal","center":at,"sightline":"frames an entrance without screening its center","movement":"posts sit outside route clearance; ten-meter overhead opening","cover":"posts provide limited edge cover"})
 
 func _cherry(at: Vector3, seed_value: int) -> void:
 	architecture.cylinder(.65,7,at+Vector3.UP*3.5,"timber",true)
@@ -190,159 +402,6 @@ func _cherry(at: Vector3, seed_value: int) -> void:
 		architecture.piece("sphere",Vector3(5,2.8,4.5),at+offset,"blossom" if index%3 else "blossom_light")
 	audit.append({"element":"cherry","center":at,"sightline":"canopy remains overhead, never the sole concealment","movement":"trunk is outside the primary circulation; branches are cosmetic","cover":"solid trunk offers only narrow incidental cover"})
 
-func _route(entry: Dictionary) -> void:
-	var points: Array = entry.points
-	var width: float = entry.width
-	var main: bool = entry.kind == "main"
-	var sampled: Array[Vector3] = []
-	for at: Vector3 in points: sampled.append(at)
-	# An extra meter of paving under either wall supports diagonal landings.
-	entry["face_begin"] = floor_triangles.size()/3
-	_ribbon(sampled,width+2,"stone" if main else "dark_stone")
-	entry["face_end"] = floor_triangles.size()/3
-	# Broad turn chambers preserve turning radius; end chambers are open reveals.
-	for index: int in points.size():
-		var at: Vector3 = points[index]
-		# The continuous ribbon and flat aprons supply the turning chambers.
-		if main and index == points.size()/2:
-			# Bridge cover is recessed outside the 28 m clear deck.
-			var tangent: Vector3 = (points[index+1]-at)*Vector3(1,0,1)
-			var side: Vector3 = tangent.normalized().cross(Vector3.UP)
-			for sign_value: float in [-1,1]:
-				var cover: Vector3 = at+side*sign_value*(width/2+3)
-				if _crossing_at(cover,true): continue
-				solid(cover-Vector3.UP*.4,Vector3(8,.8,12),"stone")
-				solid(cover+Vector3.UP*1.8,Vector3(3,3.6,5),"dark_stone")
-			_portal(at,width,atan2(tangent.x,tangent.z))
-	audit.append({"element":entry.kind,"sector":entry.sector,"width":width,"points":points,"sightline":"solid sidewalls and bends screen transit; open endpoint reveals","movement":"continuous ramps, generous turning chambers, bidirectional retreat","cover":"sidewall shoulders; bridge bays outside clear deck"})
-
-func _ribbon(points: Array[Vector3], width: float, key: String) -> void:
-	var left: Array[Vector3] = []
-	var right: Array[Vector3] = []
-	for index: int in points.size():
-		var incoming: Vector3 = points[index]-points[maxi(0,index-1)]
-		var outgoing: Vector3 = points[mini(points.size()-1,index+1)]-points[index]
-		incoming.y = 0
-		outgoing.y = 0
-		if incoming.is_zero_approx(): incoming = outgoing
-		if outgoing.is_zero_approx(): outgoing = incoming
-		var normal: Vector3 = incoming.normalized().cross(Vector3.UP)
-		var bisector: Vector3 = (normal+outgoing.normalized().cross(Vector3.UP)).normalized()
-		var half: float = width/2
-		if absf(points[index].x) >= 147.9: half = maxf(half,12)
-		if absf(points[index].z) >= 129.9: half = maxf(half,14)
-		var miter: Vector3 = bisector*half/maxf(.65,bisector.dot(normal))
-		left.append(points[index]-miter)
-		right.append(points[index]+miter)
-	for index: int in range(1,points.size()):
-		for vertex: Vector3 in [left[index],right[index-1],left[index-1],left[index],right[index],right[index-1]]:
-			floor_triangles.append(vertex)
-
-func _inside_court(at: Vector3, margin: float = 0) -> bool:
-	for center: Vector3 in definition.POINTS:
-		if absf(at.x-center.x) < 36+margin and absf(at.z-center.z) < 32+margin: return true
-	return false
-
-func _corridor_edges(points: Array[Vector3], width: float, screened: bool, roofed: bool) -> void:
-	for index: int in range(1,points.size()):
-		var a: Vector3 = points[index-1]
-		var b: Vector3 = points[index]
-		var center: Vector3 = (a+b)/2
-		# Court arrivals reveal attackers. Never drag transit walls through courts.
-		if _inside_court(center,2): continue
-		var flat: Vector3 = (b-a)*Vector3(1,0,1)
-		var side: Vector3 = flat.normalized().cross(Vector3.UP)
-		var rotation: Vector3 = (Basis(Vector3.UP,atan2(flat.x,flat.z))*Basis(Vector3.RIGHT,-atan2(b.y-a.y,flat.length()))).get_euler()
-		var half: float = width/2
-		if absf(center.x) > 147: half = maxf(half,12)
-		if absf(center.z) > 129: half = maxf(half,14)
-		for sign_value: float in [-1,1]:
-			if screened:
-				var foot: Vector3 = center+side*sign_value*(half+.6)
-				if not _crossing_at(foot,true): solid(foot+Vector3.UP*3.5,Vector3(1.2,7,a.distance_to(b)+.2),"timber" if roofed else "dark_stone",rotation)
-			elif index%5 == 0:
-				var foot: Vector3 = center+side*sign_value*(half+.5)
-				if not _crossing_at(foot): solid(foot+Vector3.UP*.55,Vector3(1,1.1,3),"dark_stone",rotation)
-		if roofed and not _crossing_at(center+Vector3.UP*8,false,half+2): solid(center+Vector3.UP*8,Vector3(half*2+2,.5,a.distance_to(b)+.2),"timber",rotation)
-
-func _crossing_at(at: Vector3, wall: bool = false, margin: float = .2) -> bool:
-	for entry: Dictionary in routes:
-		var points: Array = entry.points
-		for index: int in range(1,points.size()):
-			var a: Vector3 = points[index-1]
-			var b: Vector3 = points[index]
-			if absf(at.x-a.x) > entry.width+4 or absf(at.z-a.z) > entry.width+4: continue
-			var flat := Vector2(b.x-a.x,b.z-a.z)
-			var fraction: float = clampf(Vector2(at.x-a.x,at.z-a.z).dot(flat)/maxf(.001,flat.length_squared()),0,1)
-			var nearest: Vector3 = a.lerp(b,fraction)
-			var difference: float = nearest.y-at.y
-			var intersects_height: bool = difference > -2.3 and difference < 9 if wall else absf(difference) < 3.5
-			if Vector2(at.x-nearest.x,at.z-nearest.z).length() < entry.width/2+margin and intersects_height: return true
-	return false
-
-func _span(a: Vector3, b: Vector3, width: float, key: String, screened: bool, roofed: bool, draw_floor: bool = true) -> void:
-	var flat: Vector3 = (b-a)*Vector3(1,0,1)
-	var length: float = flat.length()
-	if length < .1: return
-	var yaw: float = atan2(flat.x,flat.z)
-	var pitch: float = -atan2(b.y-a.y,length)
-	var basis := Basis(Vector3.UP,yaw)*Basis(Vector3.RIGHT,pitch)
-	var rotation: Vector3 = basis.get_euler()
-	if draw_floor: solid((a+b)/2-Vector3.UP*.25,Vector3(width,.5,a.distance_to(b)+.5),key,rotation)
-	var side: Vector3 = flat.normalized().cross(Vector3.UP)
-	if screened:
-		var height: float = 7 if roofed else 5
-		# Shorten walls at turns to leave broad chambers and cross-connections open.
-		for sign_value: float in [-1,1]:
-			var center: Vector3 = (a+b)/2+side*sign_value*(width/2+.6)+Vector3.UP*height/2
-			solid(center,Vector3(1.2,height,maxf(1,a.distance_to(b)-16)),"timber" if roofed else "dark_stone",rotation)
-		if roofed: solid((a+b)/2+Vector3.UP*8,Vector3(width+2,.6,a.distance_to(b)),"timber",rotation)
-
-func _sample(points: Array, apron: float = 10) -> Array[Vector3]:
-	var sampled: Array[Vector3] = []
-	for index: int in range(1,points.size()):
-		var steps: int = maxi(1,ceili(Vector3(points[index-1]).distance_to(points[index])/3))
-		var a: Vector3 = points[index-1]
-		var b: Vector3 = points[index]
-		var length: float = Vector2(b.x-a.x,b.z-a.z).length()
-		var stations: Array[float] = []
-		for step: int in steps: stations.append(float(step)/steps)
-		if length > apron*2:
-			stations.append(apron/length)
-			stations.append(1-apron/length)
-		stations.sort()
-		var previous: float = -1
-		for t: float in stations:
-			if t-previous < .00001: continue
-			previous = t
-			var at: Vector3 = a.lerp(b,t)
-			# Shared junctions have a full-width flat apron before each incline.
-			var rise_t: float = clampf((t*length-apron)/maxf(.1,length-apron*2),0,1)
-			at.y = lerpf(a.y,b.y,rise_t)
-			sampled.append(definition.surface_position(at))
-	sampled.append(definition.surface_position(points[-1]))
-	return sampled
-
-func _finish_floors() -> void:
-	# Every route is a continuous, mitered ribbon. Keep the authored elevations:
-	# separate storeys must never be collapsed into a shared height field.
-	var surface := SurfaceTool.new()
-	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var faces := PackedVector3Array(floor_triangles)
-	for vertex: Vector3 in faces: surface.add_vertex(vertex)
-	surface.generate_normals()
-	var instance := MeshInstance3D.new()
-	instance.mesh = surface.commit()
-	var paving := ShaderMaterial.new()
-	paving.shader = preload("res://shaders/temple_paving.gdshader")
-	instance.material_override = paving
-	add_child(instance)
-	var shape := ConcavePolygonShape3D.new()
-	shape.set_faces(faces)
-	shape.backface_collision = true
-	var collision := CollisionShape3D.new()
-	collision.shape = shape
-	architecture.collision_body.add_child(collision)
 
 func floor_position(at: Vector3) -> Vector3:
 	var closest: float = INF
@@ -365,22 +424,12 @@ func floor_position(at: Vector3) -> Vector3:
 			result.y = height
 	return result
 
-func _recovery_shelves() -> void:
-	for sign_value: float in [1,-1]:
-		for authored: Vector3 in [Vector3(2,-12,104),Vector3(54,0,24)]:
-			var at: Vector3 = TempleMapDefinition.mirror(authored,sign_value)
-			solid(at-Vector3.UP*.4,Vector3(14,.8,12),"moss")
-			var height: float = 11 if authored.y < 0 else 7
-			for side: float in [-1,1]:
-				solid(at+Vector3(side*6.5,height/2,0),Vector3(1,height,10),"dark_stone")
-			audit.append({"element":"recovery_shelf","center":at,"sightline":"exposed lower landing under bridge","movement":"alternating wall kicks and a mantle lip return to bridge","cover":"solid retaining walls"})
 
 func _spawns() -> void:
 	for team: int in 2:
 		var sign_value: float = 1 if team == 0 else -1
 		for stage: int in 3:
 			var center: Vector3 = definition.room_center(team,stage)
-			solid(center-Vector3.UP*.4,Vector3(26,.8,16))
 			solid(center+Vector3(0,3,sign_value*8),Vector3(26,6,1),"timber")
 			for x: float in [-13,13]: solid(center+Vector3(x,3,0),Vector3(1,6,16),"timber")
 			solid(center+Vector3(0,3,-sign_value*8),Vector3(2,6,1),"timber")
@@ -395,39 +444,11 @@ func _spawns() -> void:
 				add_child(door)
 				spawn_gates.append(door)
 
-func _spawn_aprons() -> void:
-	for team: int in 2:
-		var sign_value: float = 1 if team == 0 else -1
-		for stage: int in 3:
-			var center: Vector3 = definition.room_center(team,stage)
-			var end: Vector3 = [definition.POINTS[0]+Vector3(-28,0,8),definition.POINTS[1]+Vector3(28,0,-8),definition.POINTS[2]+Vector3(0,0,28)][stage]
-			end = TempleMapDefinition.mirror(end,sign_value)
-			var exit: Vector3 = center+Vector3(0,0,-sign_value*12)
-			_ribbon([center,exit,end],26,"stone")
-
-func _scenery() -> void:
-	# Scenery is deliberately outside the navigation source and never disguises voids.
-	for sign_value: float in [1,-1]:
-		for at: Vector3 in [Vector3(-128,-35,112),Vector3(120,-40,108),Vector3(156,-40,0),Vector3(-80,-38,28)]:
-			var center: Vector3 = TempleMapDefinition.mirror(at,sign_value)
-			architecture.piece("cone",Vector3(30,65,30),center,"dark_stone")
-			architecture.piece("box",Vector3(3,45,1),center+Vector3(5,-8,8),"water")
-		for index: int in 9:
-			var at := Vector3(sign_value*(180+index%3*35),-20+index%4*12,sign_value*(index*48-190))
-			architecture.piece("cone",Vector3(100,130+index%3*30,100),at,"dark_stone")
-			architecture.piece("cone",Vector3(34,42,34),at+Vector3.UP*(58+index%3*15),"stone")
-		# Optional wall-kick / mantle chain, away from the ordinary main route.
-		var origin: Vector3 = TempleMapDefinition.mirror(Vector3(-100,0,96),sign_value)
-		solid(origin+Vector3(0,-.4,4*sign_value),Vector3(20,.8,24),"stone")
-		_span(TempleMapDefinition.mirror(Vector3(-80,0,96),sign_value),origin,16,"stone",false,false)
-		for index: int in 4:
-			var at: Vector3 = origin+Vector3(sign_value*(index%2*5-2.5),0,sign_value*index*4)
-			solid(at+Vector3.UP*(.8+index),Vector3(3,1.6+index*2,3),"moss")
-			audit.append({"element":"mantle_shortcut","center":at,"sightline":"exposed between solid stepping plinths","movement":"2 m rise within mantle reach; ordinary bypass alongside","cover":"low stone blocks"})
 
 func update_gates(stages: Array[int], preparation: bool) -> void:
 	for door: MuseumSpawnDoor in spawn_gates:
 		door.configure(door.stage == stages[door.team],preparation)
+
 
 func _navigation() -> void:
 	navigation_region = NavigationRegion3D.new()
@@ -438,7 +459,7 @@ func _navigation() -> void:
 	nav.agent_radius = .8
 	nav.agent_height = 2
 	nav.agent_max_climb = .5
-	nav.agent_max_slope = 49
+	nav.agent_max_slope = 26
 	nav.region_min_size = 1
 	nav.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
 	nav.geometry_source_geometry_mode = NavigationMesh.SOURCE_GEOMETRY_GROUPS_WITH_CHILDREN
@@ -448,6 +469,7 @@ func _navigation() -> void:
 	add_child(navigation_region)
 	navigation_region.bake_finished.connect(func() -> void: bake_milliseconds = Time.get_ticks_msec()-bake_started)
 	call_deferred("_bake")
+
 
 func _bake() -> void:
 	await get_tree().physics_frame
@@ -477,8 +499,36 @@ func _bake() -> void:
 			top = bottom+cylinder.height
 			for index: int in 12: vertices.append(collision.position+Vector3(cos(index*TAU/12),0,sin(index*TAU/12))*(cylinder.radius+.7))
 		if not vertices.is_empty(): source.add_projected_obstruction(vertices,bottom-.1,top-bottom+.1,true)
+	_merge_static_collision()
 	NavigationServer3D.bake_from_source_geometry_data_async(nav,source,func() -> void:
 		if not is_instance_valid(navigation_region): return
 		navigation_region.navigation_mesh = null
 		navigation_region.navigation_mesh = nav
 		bake_milliseconds = Time.get_ticks_msec()-bake_started)
+
+
+
+func _merge_static_collision() -> void:
+	# Bake uses original primitives and obstruction metadata. Runtime queries use
+	# one BVH for box/triangle geometry instead of hundreds of compound shapes.
+	var triangles := PackedVector3Array()
+	for node: Node in architecture.collision_body.get_children():
+		var child := node as CollisionShape3D
+		if child == null: continue
+		var faces := PackedVector3Array()
+		if child.shape is BoxShape3D:
+			var mesh := BoxMesh.new()
+			mesh.size = child.shape.size
+			faces = mesh.get_faces()
+		elif child.shape is ConcavePolygonShape3D:
+			faces = child.shape.get_faces()
+		else: continue
+		for vertex: Vector3 in faces: triangles.append(child.transform*vertex)
+		architecture.collision_body.remove_child(child)
+		child.queue_free()
+	var shape := ConcavePolygonShape3D.new()
+	shape.set_faces(triangles)
+	shape.backface_collision = true
+	var collider := CollisionShape3D.new()
+	collider.shape = shape
+	architecture.collision_body.add_child(collider)

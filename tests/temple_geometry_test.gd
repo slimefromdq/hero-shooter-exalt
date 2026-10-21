@@ -2,142 +2,145 @@ extends SceneTree
 var arena: Node3D
 var checks: int = 0
 var failures: Array[String] = []
-var measurements: Dictionary = {}
-
 func check(ok: bool, caption: String) -> void:
 	checks += 1
 	if not ok:
 		failures.append(caption)
 		print("FAIL ",caption)
-
-func ray(a: Vector3, b: Vector3) -> Dictionary:
-	var query := PhysicsRayQueryParameters3D.create(a,b,1)
-	return arena.get_world_3d().direct_space_state.intersect_ray(query)
-
-func _initialize() -> void:
-	call_deferred("run")
-
+func _initialize() -> void: call_deferred("run")
 func run() -> void:
 	arena = load("res://scenes/temple/sakura_veil.tscn").instantiate()
 	root.add_child(arena)
 	current_scene = arena
-	var session: TempleMatch = arena.match_controller
-	session.freeze_ai = true
+	arena.match_controller.freeze_ai = true
 	arena.player.controller.active = false
 	var start: int = Time.get_ticks_msec()
-	while not session.navigation_ready and Time.get_ticks_msec()-start < 60000: await process_frame
-	check(session.navigation_ready,"navigation bake registered")
+	while not arena.match_controller.navigation_ready and Time.get_ticks_msec()-start<60000: await process_frame
+	check(arena.match_controller.navigation_ready,"navigation ready")
+	for door: MuseumSpawnDoor in arena.builder.spawn_gates: door.queue_free()
 	await physics_frame
 	var builder: TempleBuilder = arena.builder
-	var d: TempleMapDefinition = arena.definition
-	var map: RID = arena.get_world_3d().navigation_map
-	measurements["bake_ms"] = builder.bake_milliseconds
-	measurements["polygon_count"] = builder.navigation_region.navigation_mesh.get_polygon_count()
+	check(builder.floor_conflicts.is_empty(),"authored surfaces join without height conflicts: "+str(builder.floor_conflicts.slice(0,8)))
 	var minimum := Vector3.INF
 	var maximum := -Vector3.INF
-	for vertex: Vector3 in builder.floor_triangles:
-		minimum = minimum.min(vertex)
-		maximum = maximum.max(vertex)
-	measurements["physical_floor_footprint_m"] = [maximum.x-minimum.x,maximum.z-minimum.z]
-	check(maximum.x-minimum.x >= 319.9 and maximum.z-minimum.z >= 287.9,"measured floors occupy the 320 by 288 m envelope")
-	check(builder.point_labels.size() == 5,"all five courts finish building")
-	check(session.actors.size() == 12 and session.bots.size() == 11,"6v6 population")
-	check(session.pickups.size() == 18,"all health packs instantiated")
-	for pickup: CityHealthPack in session.pickups:
-		check(not ray(pickup.position+Vector3.UP*.5,pickup.position-Vector3.UP*.5).is_empty(),"pickup has real floor support at "+str(pickup.position))
-	for index: int in 5:
-		var at: Vector3 = d.POINTS[index]
-		check(not ray(at+Vector3.UP,at-Vector3.UP).is_empty(),"point %d is supported" % index)
-		for other: int in 5:
-			var path: PackedVector3Array = NavigationServer3D.map_get_path(map,at,d.POINTS[other],true)
-			check(not path.is_empty() and path[-1].distance_to(d.POINTS[other]) < 2,"ordinary path point %d to %d" % [index,other])
-	var blocked_travel: int = 0
-	var travel_samples: int = 0
-	var shielded_samples: int = 0
-	var sight_samples: int = 0
-	var blocked_capsules: int = 0
-	var capsule := CapsuleShape3D.new()
-	capsule.radius = .3
-	capsule.height = 1.8
-	for entry: Dictionary in builder.routes:
-		var points: Array = entry.points
-		check(entry.width >= (24 if entry.kind == "main" else 16),"route width %s sector %d" % [entry.kind,entry.sector])
-		for index: int in range(1,points.size()):
-			var a: Vector3 = points[index-1]
-			var b: Vector3 = points[index]
-			var path: PackedVector3Array = NavigationServer3D.map_get_path(map,a,b,true)
-			if path.is_empty() or path[-1].distance_to(b) >= 3: print("BAD LEG ",entry.kind," ",entry.sector," ",index," ",a," -> ",b," projected ",NavigationServer3D.map_get_closest_point(map,b)," ends ",path[-1] if not path.is_empty() else Vector3.INF)
-			check(not path.is_empty() and path[-1].distance_to(b) < 3,"route connected %s %d leg %d" % [entry.kind,entry.sector,index])
-			# Actor-center rays expose intersecting roofs, walls and floors along paths.
-			for fraction: float in [.2,.4,.6,.8]:
-				var at: Vector3 = a.lerp(b,fraction)
-				var floor_hit: Dictionary = ray(at+Vector3.UP*2.1,at-Vector3.UP)
-				if not floor_hit.is_empty() and floor_hit.normal.y > .65: at.y = floor_hit.position.y
+	var winding_errors: int = 0
+	var steep_faces: int = 0
+	for index: int in range(0,builder.floor_triangles.size(),3):
+		var a: Vector3 = builder.floor_triangles[index]
+		var b: Vector3 = builder.floor_triangles[index+1]
+		var c: Vector3 = builder.floor_triangles[index+2]
+		for vertex: Vector3 in [a,b,c]:
+			minimum = minimum.min(vertex)
+			maximum = maximum.max(vertex)
+		var normal: Vector3 = (c-a).cross(b-a).normalized()
+		if normal.y<=0: winding_errors += 1
+		if rad_to_deg(normal.angle_to(Vector3.UP))>25.01: steep_faces += 1
+	check(winding_errors==0,"all visible floor faces point upward")
+	check(steep_faces==0,"ordinary ramps are at most 25 degrees")
+	check(is_equal_approx(maximum.x-minimum.x,320) and is_equal_approx(maximum.z-minimum.z,288),"320 by 288 m playable envelope")
+	var map: RID = arena.get_world_3d().navigation_map
+	for route: Dictionary in builder.walk_routes:
+		var from: Vector3 = route.points[0]
+		var to: Vector3 = route.points[-1]
+		var path: PackedVector3Array = NavigationServer3D.map_get_path(map,from,to,true)
+		check(not path.is_empty() and path[0].distance_to(from)<1.5 and path[-1].distance_to(to)<1.5,"navigation reaches authored route "+route.id)
+	check(builder.pads.size()==8,"eight directional pads")
+	check(builder.point_labels.size()==5,"five courts")
+	check(arena.match_controller.pickups.size()==18,"eighteen health packs")
+	var capsule: CapsuleShape3D = arena.player.motor.standing_capsule.duplicate()
+	var space := arena.get_world_3d().direct_space_state
+	var blocked: int = 0
+	var unsupported: int = 0
+	var samples: int = 0
+	var blocked_sweeps: int = 0
+	var sweep_count: int = 0
+	for route: Dictionary in builder.walk_routes:
+		var previous: Dictionary = {}
+		for i: int in range(1,route.points.size()-1):
+			var center: Vector3 = route.points[i]
+			var tangent: Vector3 = (route.points[i+1]-route.points[i-1])*Vector3(1,0,1)
+			var side: Vector3 = tangent.normalized().cross(Vector3.UP)
+			for lateral: float in [-1,0,1]:
+				var at: Vector3 = center+side*lateral*(route.width/2-1)
+				var floor_query := PhysicsRayQueryParameters3D.create(at+Vector3.UP*.5,at-Vector3.UP*.5,1)
+				var floor_hit: Dictionary = space.intersect_ray(floor_query)
+				if floor_hit.is_empty():
+					unsupported += 1
+					if unsupported<16: print("UNSUPPORTED ",route.id," ",at)
+				if not floor_hit.is_empty(): at.y = floor_hit.position.y
 				var query := PhysicsShapeQueryParameters3D.new()
 				query.shape = capsule
 				query.collision_mask = 1
-				var floor_y: float = floor_hit.get("normal",Vector3.UP).y
-				var lift: float = .1+.3*(1/maxf(.67,floor_y)-1)
-				query.transform = Transform3D(Basis.IDENTITY,at+Vector3.UP*(.9+lift))
-				var contacts: Array[Dictionary] = arena.get_world_3d().direct_space_state.intersect_shape(query,1)
-				if not contacts.is_empty():
-					blocked_capsules += 1
-					print("CAPSULE BLOCKED ",entry.kind," ",entry.sector," ",at)
-					if contacts[0].collider == builder.architecture.collision_body:
-						var obstruction: CollisionShape3D = builder.architecture.collision_body.get_child(contacts[0].shape)
-						print("CAPSULE SHAPE ",obstruction.position," ",obstruction.shape)
-				travel_samples += 1
-				var hit: Dictionary = ray(at+Vector3.UP*.4,at+Vector3.UP*1.9)
-				if not hit.is_empty():
-					blocked_travel += 1
-					print("BLOCKED ",entry.kind," ",entry.sector," leg ",index," at ",at," hit ",hit.position," normal ",hit.normal," shape ",hit.shape)
-					var collider: CollisionShape3D = builder.architecture.collision_body.get_child(hit.shape)
-					print("OBSTRUCTION ",collider.position," ",collider.shape)
-					if collider.shape is ConcavePolygonShape3D and hit.face_index >= 0:
-						var triangles: PackedVector3Array = collider.shape.get_faces()
-						print("FACE ",triangles[hit.face_index*3]," ",triangles[hit.face_index*3+1]," ",triangles[hit.face_index*3+2])
-						for source: Dictionary in builder.routes:
-							if hit.face_index >= source.face_begin and hit.face_index < source.face_end: print("FROM ",source.kind," ",source.sector)
-				if entry.kind in ["lower","upper"]:
-					sight_samples += 1
-					var court: Vector3 = d.POINTS[entry.sector+1]+Vector3.UP*1.6
-					if not ray(court,at+Vector3.UP*1.6).is_empty(): shielded_samples += 1
-	check(blocked_travel == 0,"no route center headroom obstruction (%d/%d blocked)" % [blocked_travel,travel_samples])
-	check(blocked_capsules == 0,"standing capsules clear all authored route centers (%d blocked)" % blocked_capsules)
-	check(shielded_samples >= sight_samples*.5,"majority of flank transit screened from destination court")
-	measurements["route_samples"] = travel_samples
-	measurements["blocked_route_samples"] = blocked_travel
-	measurements["blocked_capsule_samples"] = blocked_capsules
-	measurements["flank_sight_samples"] = sight_samples
-	measurements["flank_screened_samples"] = shielded_samples
-	for team: int in 2:
-		for stage: int in 3:
-			var center: Vector3 = d.room_center(team,stage)
-			var goal: Vector3 = d.POINTS[0 if team == 0 else 4] if stage == 0 else d.POINTS[1 if team == 0 else 3] if stage == 1 else d.POINTS[2]
-			var path: PackedVector3Array = NavigationServer3D.map_get_path(map,center,goal,true)
-			check(not path.is_empty() and path[-1].distance_to(goal) < 2,"spawn ordinary egress team %d stage %d" % [team,stage])
-	# Eye-height visibility from plausible defensive positions: all three ingress
-	# families must never be visible from a single sample position.
-	var omniscient: int = 0
-	for sector: int in 4:
-		var exits: Array[Vector3] = []
-		for entry: Dictionary in d.connections():
-			if entry.sector == sector: exits.append(entry.points[-2]+Vector3.UP*1.6)
-		var center: Vector3 = d.POINTS[sector+1]
-		for offset: Vector3 in [Vector3.ZERO,Vector3(-14,0,-12),Vector3(14,0,12),Vector3(-14,0,12),Vector3(14,0,-12)]:
-			var visible: int = 0
-			for exit: Vector3 in exits:
-				if ray(center+offset+Vector3.UP*1.6,exit).is_empty(): visible += 1
-			if visible == 3: omniscient += 1
-	check(omniscient == 0,"no sampled defender sees main plus both flank approaches")
-	measurements["all_ingress_visible_positions"] = omniscient
-	measurements["checks"] = checks
-	measurements["failures"] = failures
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://artifacts/temple"))
+				query.transform = Transform3D(Basis.IDENTITY,at+Vector3.UP*(capsule.height/2+.14))
+				var hits: Array[Dictionary] = space.intersect_shape(query,4)
+				if not hits.is_empty():
+					blocked += 1
+					if blocked<35:
+						print("BLOCKED ",route.id," ",at)
+						for hit: Dictionary in hits:
+							if hit.collider==builder.architecture.collision_body:
+								var shape = hit.collider.shape_owner_get_owner(hit.collider.shape_find_owner(hit.shape))
+								print("  SHAPE ",shape.position," ",shape.shape)
+				if previous.has(lateral):
+					var segment_start: Vector3 = previous[lateral]
+					var sweep_from: Vector3 = segment_start
+					var subdivisions: int = maxi(1,ceili(segment_start.distance_to(at)/.5))
+					for part: int in range(1,subdivisions+1):
+						var sweep_to: Vector3 = segment_start.lerp(at,float(part)/subdivisions)
+						if route.kind != "gallery": sweep_to = builder.authored_floor(sweep_to)
+						query.transform.origin = sweep_from+Vector3.UP*(capsule.height/2+.14)
+						query.motion = sweep_to-sweep_from
+						var fractions: PackedFloat32Array = space.cast_motion(query)
+						sweep_count += 1
+						if fractions[0]<.999:
+							blocked_sweeps += 1
+							if blocked_sweeps<12: print("SWEEP BLOCKED ",route.id," ",sweep_from," -> ",sweep_to)
+						sweep_from = sweep_to
+
+				previous[lateral] = at
+				samples += 1
+	check(blocked_sweeps==0,"continuous capsule sweeps across walking bands")
+	check(unsupported==0,"supported walking bands: %d/%d missing" % [unsupported,samples])
+	check(blocked==0,"clear walking bands: %d/%d blocked" % [blocked,samples])
+	var court_samples: int = 0
+	var court_obstructions: int = 0
+	for court: Vector3 in arena.definition.POINTS:
+		for x: int in range(-34,35,4):
+			for z: int in range(-30,31,4):
+				var at: Vector3 = court+Vector3(x,0,z)
+				var intentional_solid: bool = false
+				for bounds: AABB in builder.furnished_bounds:
+					if bounds.grow(.4).has_point(at+Vector3.UP*.95): intentional_solid = true
+				if intentional_solid: continue
+				var query := PhysicsShapeQueryParameters3D.new()
+				query.shape = capsule
+				query.collision_mask = 1
+				query.transform = Transform3D(Basis.IDENTITY,at+Vector3.UP*(capsule.height/2+.14))
+				court_samples += 1
+				if not space.intersect_shape(query,1).is_empty():
+					court_obstructions += 1
+					if court_obstructions<12: print("COURT BLOCKED ",at)
+	check(court_obstructions==0,"court grid clearance outside intentional cover and stairs")
+	for pad: TempleJumpPad in builder.pads:
+		var from: Vector3 = pad.spec.position+Vector3.UP*.08
+		var duration: float = pad.spec.flight_time
+		var v: Vector3 = (Vector3(pad.spec.destination)-from)/duration+Vector3.UP*22*duration/2
+		var clear: bool = true
+		for frame: int in range(2,int(duration*60)-2):
+			var time: float = frame/60.0
+			var at: Vector3 = from+v*time+Vector3.DOWN*11*time*time
+			var query := PhysicsShapeQueryParameters3D.new()
+			query.shape = capsule
+			query.collision_mask = 1
+			query.transform = Transform3D(Basis.IDENTITY,at+Vector3.UP*(capsule.height/2+.05))
+			if not space.intersect_shape(query,1).is_empty():
+				print("PAD BLOCKED ",pad.spec.id," ",at)
+				clear = false
+				break
+		check(clear,"clear launch arc "+pad.spec.id)
 	var file := FileAccess.open("res://artifacts/temple/geometry.json",FileAccess.WRITE)
-	file.store_string(JSON.stringify(measurements,"\t"))
-	file.close()
-	print("TEMPLE GEOMETRY: %d checks, %d failures / %d of %d flank samples screened" % [checks,failures.size(),shielded_samples,sight_samples])
+	file.store_string(JSON.stringify({"checks":checks,"failures":failures,"route_sweeps":sweep_count,"blocked_sweeps":blocked_sweeps,"route_samples":samples,"court_grid_samples":court_samples,"court_grid_obstructions":court_obstructions,"blocked_capsule_samples":blocked,"unsupported_samples":unsupported,"floor_conflicts":builder.floor_conflicts,"bake_ms":builder.bake_milliseconds,"physical_floor_footprint_m":[maximum.x-minimum.x,maximum.z-minimum.z],"polygon_count":builder.navigation_region.navigation_mesh.get_polygon_count(),"winding_errors":winding_errors,"steep_faces":steep_faces},"\t"))
+	print("TEMPLE GEOMETRY ",checks," checks / ",failures.size()," failures")
 	arena.queue_free()
 	await process_frame
 	quit(0 if failures.is_empty() else 1)

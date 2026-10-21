@@ -5,7 +5,64 @@ var route_key: String = ""
 var assignment: String = "attack"
 var route_visits: Dictionary = {}
 
+var selected_pad: TempleJumpPad
+var pad_phase: String = ""
+var pad_timeout: float = 0
+var pad_retry: float = 0
+var pad_uses: int = 0
+var gallery_visits: int = 0
+
+func gather_intent(delta: float) -> CombatIntent:
+	pad_retry = maxf(0,pad_retry-delta)
+	if not actor.alive:
+		selected_pad = null
+		pad_phase = ""
+	if is_instance_valid(selected_pad) and active and not frozen and actor.alive and not match_controller.freeze_ai and not match_controller.exploration:
+		pad_timeout -= delta
+		if actor.motor.pad_flight_left>0 and pad_phase == "approach":
+			pad_phase = "flight"
+			pad_uses += 1
+			pad_timeout = selected_pad.spec.flight_time+2
+		if pad_phase == "flight":
+			var flight_intent := CombatIntent.new()
+			flight_intent.aim = remembered_aim
+			flight_intent.aim_origin = actor.body_point(1.45)
+			if is_instance_valid(target) and target.alive:
+				flight_intent.aim = (target.body_point(1.2)-flight_intent.aim_origin).normalized()
+				flight_intent.primary = sees_target
+				flight_intent.primary_held = sees_target
+			if (actor.motor.pad_flight_left<=0 and actor.motor.grounded()) or pad_timeout<=0:
+				selected_pad = null
+				pad_phase = ""
+				pad_retry = 12
+				invalidate_route()
+				gallery_visits += 1
+			return flight_intent
+		if pad_timeout<=0:
+			selected_pad = null
+			pad_phase = ""
+			pad_retry = 15
+			invalidate_route()
+	var intent: CombatIntent = super.gather_intent(delta)
+	if is_instance_valid(selected_pad) and pad_phase == "approach":
+		# Prevent combat steering/abilities from carrying a bot past the trigger.
+		navagent.target_position = selected_pad.global_position
+		var approach := CombatIntent.new()
+		approach.aim = intent.aim
+		approach.aim_origin = intent.aim_origin
+		approach.move = follow_path()
+		if actor.global_position.distance_to(selected_pad.global_position)<4:
+			approach.move = ((selected_pad.global_position-actor.global_position)*Vector3(1,0,1)).normalized()
+		approach.primary = intent.primary
+		approach.primary_held = intent.primary_held
+		return approach
+	return intent
+
 func load_route() -> void:
+	selected_pad = null
+	pad_phase = ""
+	pad_timeout = 0
+	pad_retry = 0
 	route.clear()
 	entered_hill = true
 	destination = actor.global_position
@@ -20,6 +77,19 @@ func invalidate_route() -> void:
 
 func decide() -> void:
 	super.decide()
+	if is_instance_valid(selected_pad):
+		destination = selected_pad.global_position
+		return
+	if slot >= 3 and pad_retry<=0 and actor.motor.grounded() and not seeking_health:
+		var goal_at: Vector3 = (match_controller as TempleMatch).temple_definition().POINTS[match_controller.goal_index(actor.team)]
+		for candidate: TempleJumpPad in match_controller.arena.builder.pads:
+			if actor.global_position.distance_to(candidate.global_position)>32: continue
+			if candidate.spec.destination.distance_to(goal_at)>candidate.global_position.distance_to(goal_at)+8: continue
+			selected_pad = candidate
+			pad_phase = "approach"
+			pad_timeout = 12
+			destination = candidate.global_position
+			return
 	if seeking_health or elapsed < detour_until: return
 	var session := match_controller as TempleMatch
 	var d: TempleMapDefinition = session.temple_definition()
@@ -69,4 +139,8 @@ func decide() -> void:
 		assignment = "defend" if session.objective.owners[goal] == actor.team else "contest"
 		var offset := Vector3((slot%3-1)*8,.1,(slot/3*2-1)*7)
 		destination = d.POINTS[goal]+offset
+		if slot == 4 and session.objective.owners[goal] == actor.team:
+			destination = d.POINTS[goal]+Vector3(0,8,26 if actor.team==0 else -26)
+			assignment = "gallery_defense"
+			if actor.global_position.distance_to(destination)<5: gallery_visits += 1
 	destination = NavigationServer3D.map_get_closest_point(navagent.get_navigation_map(),destination)

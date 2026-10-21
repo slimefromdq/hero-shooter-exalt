@@ -80,15 +80,30 @@ func draw_overview() -> void:
 		box(atlas_point(center)-Vector2(10,6),Vector2(20,12),mint if team == 0 else coral)
 	for actor: HeroActor in m.actors:
 		if actor.alive and (actor.team == m.player.team or m.debug_view): canvas.draw_circle(atlas_point(actor.position),5 if actor == m.player else 3,mint if actor.team == 0 else coral)
-	text("CONCEALED APPROACHES",Vector2(165,320),17,brass,true)
-	text("Lower: enclosed ravine galleries",Vector2(165,348),12,paper)
-	text("Upper: screened roof circuits",Vector2(165,370),12,paper)
-	text("Both have separated exits",Vector2(165,392),12,paper)
-	text("and intermediate crossovers.",Vector2(165,414),12,paper)
-	text("MOVEMENT",Vector2(1130,650),17,brass,true)
-	text("Main bridges: 28 m clear",Vector2(1130,678),12,paper)
-	text("Flanks: 16 m clear",Vector2(1130,700),12,paper)
-	text("Recovery shelves above -48 m",Vector2(1130,722),12,paper)
+	for gallery: Dictionary in m.temple_definition().galleries():
+		if not underground_view: continue
+		var at: Vector2 = atlas_point(gallery.center)
+		canvas.draw_rect(Rect2(at-Vector2(14,6)*1.65,Vector2(28,12)*1.65),Color("e5a9cb"),false,2)
+	for entry: Dictionary in m.arena.builder.audit:
+		if entry.element != "stairs": continue
+		canvas.draw_line(atlas_point(entry.from),atlas_point(entry.to),paper,3)
+	for pad: Dictionary in m.temple_definition().jump_pads():
+		var start: Vector2 = atlas_point(pad.position)
+		var end: Vector2 = atlas_point(pad.destination)
+		canvas.draw_circle(start,5,Color("68e5dc"))
+		canvas.draw_line(start,end,Color("68e5dc"),2)
+		var direction: Vector2 = (end-start).normalized()
+		canvas.draw_line(end,end-direction.rotated(.5)*9,Color("68e5dc"),2)
+		canvas.draw_line(end,end-direction.rotated(-.5)*9,Color("68e5dc"),2)
+	text("TEMPLE CONNECTIONS",Vector2(165,320),17,brass,true)
+	text("White: stairs and ramps",Vector2(165,348),12,paper)
+	text("Cyan arrows: directional wind lifts",Vector2(165,370),12,paper)
+	text("Pink: upper fighting galleries",Vector2(165,392),12,paper)
+	text("Every gallery also has stairs",Vector2(165,414),12,paper)
+	text("WIND LIFTS",Vector2(1130,650),17,brass,true)
+	text("Step on a marked pad to launch",Vector2(1130,678),12,paper)
+	text("Steer or use abilities in flight",Vector2(1130,700),12,paper)
+	text("Gold squares mark landing areas",Vector2(1130,722),12,paper)
 
 func draw_debug(_p: HeroActor) -> void:
 	var m := match_controller as TempleMatch

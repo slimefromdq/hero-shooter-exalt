@@ -31,6 +31,40 @@ var body_collision: CollisionShape3D
 var standing_capsule: CapsuleShape3D
 var standing_clearance_capsule: CapsuleShape3D
 var voluntary_airborne: bool = false
+var pad_speed_limit: float = 0.0
+var pad_flight_left: float = 0.0
+var pad_takeoff_left: float = 0.0
+
+func launch_from_pad(launch_velocity: Vector3, flight_time: float) -> bool:
+	if not actor.alive or actor.statuses.effects.has("root"): return false
+	if actor.state not in ["ready","guard","marshal_shield","huddle_regroup","samson_cross"]: return false
+	if traversal.active or mode in ["hover","hover_ascent"]: return false
+	if actor.kit is WispKit and (actor.kit as WispKit).leap_active: return false
+	mode = "air"
+	timer = 0
+	slide_velocity = Vector3.ZERO
+	mantle_slide_left = 0
+	mantle_slide_buffered = false
+	dash_slide = false
+	jump_buffer = 0
+	coyote = 0
+	voluntary_airborne = true
+	set_crouched(false)
+	actor.velocity = launch_velocity
+	pad_speed_limit = maxf(actor.tuning.speed_limit,maxf(launch_velocity.length(),(launch_velocity+Vector3.DOWN*actor.tuning.gravity*flight_time).length())+.5)
+	pad_flight_left = flight_time+1
+	pad_takeoff_left = .1
+	visual("jump",launch_velocity)
+	return true
+
+func clear_pad_flight() -> void:
+	pad_speed_limit = 0
+	pad_flight_left = 0
+	pad_takeoff_left = 0
+
+func movement_speed_limit() -> float:
+	return maxf(actor.tuning.speed_limit,pad_speed_limit)
+
 
 func _ready() -> void:
 	body_collision = actor.get_node("BodyCollision") as CollisionShape3D
@@ -46,6 +80,13 @@ func _ready() -> void:
 	traversal.actor = actor
 
 func tick(delta: float, input: CombatIntent) -> void:
+	if pad_flight_left > 0:
+		pad_flight_left -= delta
+		pad_takeoff_left = maxf(0,pad_takeoff_left-delta)
+		if pad_flight_left<=0 or not actor.alive or (pad_takeoff_left<=0 and grounded() and actor.velocity.y<=0) or actor.statuses.effects.has("root") or mode in ["hover","hover_ascent","mantle"] or actor.state not in ["ready","guard","marshal_shield","huddle_regroup","samson_cross"]:
+			clear_pad_flight()
+		elif actor.kit is WispKit and (actor.kit as WispKit).leap_active:
+			clear_pad_flight()
 	var supported_before: bool = grounded()
 	var incoming_y: float = actor.velocity.y
 	tick_motion(delta,input)
@@ -67,7 +108,7 @@ func tick(delta: float, input: CombatIntent) -> void:
 func tick_motion(delta: float, input: CombatIntent) -> void:
 	var t: HeroTuning = actor.tuning
 	slide_feedback.tick(delta,input)
-	var was_floor: bool = grounded()
+	var was_floor: bool = grounded() and pad_takeoff_left <= 0
 	if was_floor and actor.velocity.y <= 0: voluntary_airborne = false
 	update_posture(actor.concealed() or was_floor and input.slide and mode not in ["dash","dash_windup","mantle"] and actor.state not in ["captured","throw_pair","boot_attached","boot_captured","stagger","counterthrow","throw_release"])
 	slide_press_age += delta
@@ -118,7 +159,7 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			actor.velocity.y = actor.close.melee_fall_speed + lunge.y / delta
 		else:
 			actor.velocity.y -= t.gravity * delta
-		actor.velocity = actor.velocity.limit_length(t.speed_limit)
+		actor.velocity = actor.velocity.limit_length(movement_speed_limit())
 		actor.move_ability_slide(delta)
 		for index: int in actor.get_slide_collision_count():
 			var normal: Vector3 = actor.get_slide_collision(index).get_normal()
@@ -233,6 +274,7 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 	var mantle_request: bool = jump_buffer > 0.0 or (input.jump_held and (wish * Vector3(1,0,1)).length_squared() >= .1)
 	if mantle_request and can_traverse:
 		if traversal.try_mantle(wish):
+			clear_pad_flight()
 			jump_buffer = 0
 			coyote = 0
 			if traversal.advance(delta):
@@ -242,6 +284,7 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 	# require a fresh press (or its short buffer), avoiding automatic kick loops.
 	if jump_buffer > 0.0 and can_traverse:
 		if not was_floor and coyote <= 0 and traversal.try_wall_jump(wish):
+			clear_pad_flight()
 			jump_buffer = 0
 		elif coyote > 0 and mode not in ["hover", "hover_ascent"]:
 			voluntary_airborne = true
@@ -251,8 +294,9 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			transition("air")
 			visual("jump",actor.velocity)
 		elif not was_floor and input.jump and actor.kit is RelayKit and (actor.kit as RelayKit).spirit_jump(input):
+			clear_pad_flight()
 			jump_buffer = 0
-	actor.velocity = actor.velocity.limit_length(t.speed_limit)
+	actor.velocity = actor.velocity.limit_length(movement_speed_limit())
 	var before: Vector3 = actor.velocity
 	actor.floor_stop_on_slope = mode != "slide"
 	if mode in ["dash","dash_windup","slide","hover","hover_ascent"] or voluntary_airborne:
@@ -424,7 +468,7 @@ func steer_horizontal(current: Vector3, wish: Vector3, target_speed: float, on_f
 		# Earned dash/launch speed remains steerable above this gain ceiling.
 		var gain_ceiling: float = maxf(incoming_speed,t.air_strafe_speed_limit)
 		var gain_budget: float = maxf(minf(target_speed,t.air_strafe_speed_limit),incoming_speed+maxf(0,t.air_speed_gain_rate)*delta)
-		return current.limit_length(minf(t.speed_limit,minf(gain_ceiling,gain_budget)))
+		return current.limit_length(minf(movement_speed_limit(),minf(gain_ceiling,gain_budget)))
 	var speed: float = current.length()
 	var desired: Vector3 = wish.normalized()
 	var acceleration: float = t.acceleration if on_floor else t.air_steering
@@ -465,6 +509,7 @@ func grounded() -> bool:
 	return not support.is_empty() and support.normal.y >= cos(actor.floor_max_angle)
 
 func transition(next: String, duration: float = 0.0) -> void:
+	if next in ["dash_windup","dash","mantle","hover","hover_ascent","slide"]: clear_pad_flight()
 	if mode != next and is_instance_valid(actor.resolver):
 		actor.resolver.record("movement", actor, next)
 	var changed: bool = mode != next
@@ -484,6 +529,7 @@ func end_hover() -> void:
 		transition("air")
 
 func cancel() -> void:
+	clear_pad_flight()
 	if slide_feedback != null: slide_feedback.clear()
 	voluntary_airborne = false
 	set_crouched(false)
@@ -509,6 +555,7 @@ func cancel() -> void:
 	slide_velocity = Vector3.ZERO
 
 func interrupt_mobility() -> void:
+	clear_pad_flight()
 	slide_feedback.clear()
 	if is_instance_valid(actor.presentation.movement): actor.presentation.movement.clear()
 	mantle_slide_left = 0
