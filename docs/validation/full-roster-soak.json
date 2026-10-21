@@ -1,0 +1,1941 @@
+{
+  "tested_game_commit": "f7581efbfbf254588f1eb28615cf328075e07ba9",
+  "engine": "Godot 4.7.2 stable; 60 fixed simulation ticks per second",
+  "difficulty": "Normal (saved bot_difficulty=1)",
+  "total_simulated_seconds": 3120,
+  "live_scene_changes": 8,
+  "roster": "All 10 registered heroes represented in every 12-participant match; production stats, kits, AI, physics, navigation, damage and presentation processing remain active.",
+  "stall_method": "Independent one-second position samples. Flag eight consecutive seconds moving less than 0.65m while alive, ready/reloading, without root/slow/stun statuses, not intentionally holding, and over 2.5m from the expected goal. These rules identify route stalls; other states are outside this detector.",
+  "resource_method": "Sample engine memory, object, node, orphan, resource and transient counts every minute. Track old arena, actor, controller and non-pooled effect references across actual scene changes. Verify empty-tree counts and capture process stderr through shutdown.",
+  "result": "All three profiles passed: no runtime errors, shutdown leak diagnostics, eight-second route stalls, falls or recovery teleports. Every final teardown restored the 340-node baseline with zero orphan nodes, live actors, sessions, resolvers, attacks or transients.",
+  "rendered_review": [
+    "artifacts/soak-971-0-city-60.png",
+    "artifacts/soak-971-1-museum-60.png"
+  ],
+  "limits": "Seeded automated coverage does not establish balance, player-control feel, every possible path or every ability edge case. Escort-start drills are staged combat and are reported separately from natural rounds. Remaining cached resource/object counts above a cold baseline are reported; no leaked-node or engine-shutdown diagnostics were observed.",
+  "runs": [
+    {
+      "mode": "headless_natural",
+      "seed": 76,
+      "exit_code": 0,
+      "error_or_leak_diagnostics": 0,
+      "command": "powershell -ExecutionPolicy Bypass -File ./tools/verify_roster_soak.ps1 -Seconds 1200 -Seed 76",
+      "console_log": "artifacts/full-roster-soak-76.log",
+      "detailed_report": "artifacts/full-roster-soak-76.json",
+      "matches": [
+        {
+          "map": "city",
+          "scenario": "natural",
+          "seconds": 1200,
+          "participants": 12,
+          "distinct_heroes": 10,
+          "deaths": 213,
+          "completed_rounds": 4,
+          "round_results": [
+            {
+              "phase": "hill",
+              "second": 366,
+              "winner": 1
+            },
+            {
+              "phase": "hill",
+              "second": 616,
+              "winner": 1
+            },
+            {
+              "phase": "hill",
+              "second": 821,
+              "winner": 1
+            },
+            {
+              "phase": "hill",
+              "second": 1061,
+              "winner": 1
+            }
+          ],
+          "final_phase": "hill",
+          "final_payload_distance": 0,
+          "longest_sampled_stall_seconds": 4.0,
+          "stalls_at_least_8_seconds": 0,
+          "falls": 0,
+          "resource_ranges": {
+            "nodes": {
+              "max": 6796.0,
+              "min": 6201.0
+            },
+            "objects": {
+              "max": 13143.0,
+              "min": 12464.0
+            },
+            "orphans": {
+              "max": 0.0,
+              "min": 0.0
+            },
+            "resources": {
+              "max": 337.0,
+              "min": 337.0
+            },
+            "static_bytes": {
+              "max": 214772889.0,
+              "min": 199866214.0
+            },
+            "transients": {
+              "max": 27.0,
+              "min": 1.0
+            },
+            "owned_attacks": {
+              "max": 6.0,
+              "min": 0.0
+            }
+          },
+          "bots": [
+            {
+              "hero": "slayer",
+              "team": 0,
+              "active_seconds": 309.25,
+              "distance_m": 1579.85,
+              "damage": 2118.6,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 0,
+              "active_seconds": 973.82,
+              "distance_m": 4139.44,
+              "damage": 20294.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 0,
+              "active_seconds": 887.82,
+              "distance_m": 3799.48,
+              "damage": 6748.3,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "huddle",
+              "team": 0,
+              "active_seconds": 1061.82,
+              "distance_m": 5295.13,
+              "damage": 8345.5,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "relay",
+              "team": 0,
+              "active_seconds": 877.82,
+              "distance_m": 3923.66,
+              "damage": 9706.4,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "stitch",
+              "team": 0,
+              "active_seconds": 894.7,
+              "distance_m": 4767.85,
+              "damage": 5510.1,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "nimbus",
+              "team": 1,
+              "active_seconds": 1117.78,
+              "distance_m": 4348.35,
+              "damage": 14669.3,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "dynamo",
+              "team": 1,
+              "active_seconds": 1165.8,
+              "distance_m": 2604.9,
+              "damage": 33432.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "wisp",
+              "team": 1,
+              "active_seconds": 1173.78,
+              "distance_m": 4674.82,
+              "damage": 18298.6,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "samson",
+              "team": 1,
+              "active_seconds": 1125.73,
+              "distance_m": 4367.48,
+              "damage": 4723.3,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 1,
+              "active_seconds": 1077.78,
+              "distance_m": 3887.92,
+              "damage": 8901.5,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 1,
+              "active_seconds": 1173.82,
+              "distance_m": 3552.71,
+              "damage": 27445.7,
+              "recovery_teleports": 0
+            }
+          ]
+        },
+        {
+          "map": "museum",
+          "scenario": "natural",
+          "seconds": 1200,
+          "participants": 12,
+          "distinct_heroes": 10,
+          "deaths": 230,
+          "completed_rounds": 2,
+          "round_results": [
+            {
+              "phase": "finished",
+              "second": 595,
+              "winner": 0
+            },
+            {
+              "phase": "finished",
+              "second": 866,
+              "winner": 1
+            }
+          ],
+          "final_phase": "capture",
+          "final_payload_distance": 0.0,
+          "longest_sampled_stall_seconds": 3.0,
+          "stalls_at_least_8_seconds": 0,
+          "falls": 0,
+          "resource_ranges": {
+            "nodes": {
+              "max": 4114.0,
+              "min": 3509.0
+            },
+            "objects": {
+              "max": 9523.0,
+              "min": 8721.0
+            },
+            "orphans": {
+              "max": 0.0,
+              "min": 0.0
+            },
+            "resources": {
+              "max": 338.0,
+              "min": 338.0
+            },
+            "static_bytes": {
+              "max": 203692688.0,
+              "min": 189129751.0
+            },
+            "transients": {
+              "max": 33.0,
+              "min": 0.0
+            },
+            "owned_attacks": {
+              "max": 9.0,
+              "min": 0.0
+            }
+          },
+          "bots": [
+            {
+              "hero": "slayer",
+              "team": 0,
+              "active_seconds": 506.02,
+              "distance_m": 2135.01,
+              "damage": 8433.2,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 0,
+              "active_seconds": 947.03,
+              "distance_m": 3266.47,
+              "damage": 17439.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 0,
+              "active_seconds": 868.13,
+              "distance_m": 3487.01,
+              "damage": 5319.6,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "huddle",
+              "team": 0,
+              "active_seconds": 911.33,
+              "distance_m": 3573.99,
+              "damage": 13281.5,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "relay",
+              "team": 0,
+              "active_seconds": 895.32,
+              "distance_m": 3138.39,
+              "damage": 9546.9,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "stitch",
+              "team": 0,
+              "active_seconds": 876.13,
+              "distance_m": 3862.18,
+              "damage": 8827.7,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "nimbus",
+              "team": 1,
+              "active_seconds": 1134.15,
+              "distance_m": 3120.2,
+              "damage": 9450.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "dynamo",
+              "team": 1,
+              "active_seconds": 1137.75,
+              "distance_m": 2374.38,
+              "damage": 24011.9,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "wisp",
+              "team": 1,
+              "active_seconds": 1069.43,
+              "distance_m": 3685.69,
+              "damage": 19020.9,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "samson",
+              "team": 1,
+              "active_seconds": 1012.4,
+              "distance_m": 3828.65,
+              "damage": 6208.7,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 1,
+              "active_seconds": 1022.1,
+              "distance_m": 3247.05,
+              "damage": 10525.9,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 1,
+              "active_seconds": 1134.15,
+              "distance_m": 3290.81,
+              "damage": 25558.8,
+              "recovery_teleports": 0
+            }
+          ]
+        },
+        {
+          "map": "city",
+          "scenario": "natural",
+          "seconds": 60,
+          "participants": 12,
+          "distinct_heroes": 10,
+          "deaths": 10,
+          "completed_rounds": 0,
+          "round_results": [],
+          "final_phase": "hill",
+          "final_payload_distance": 0,
+          "longest_sampled_stall_seconds": 2.0,
+          "stalls_at_least_8_seconds": 0,
+          "falls": 0,
+          "resource_ranges": {
+            "nodes": {
+              "max": 6755.0,
+              "min": 6755.0
+            },
+            "objects": {
+              "max": 12991.0,
+              "min": 12991.0
+            },
+            "orphans": {
+              "max": 0.0,
+              "min": 0.0
+            },
+            "resources": {
+              "max": 339.0,
+              "min": 339.0
+            },
+            "static_bytes": {
+              "max": 208731777.0,
+              "min": 208731777.0
+            },
+            "transients": {
+              "max": 4.0,
+              "min": 4.0
+            },
+            "owned_attacks": {
+              "max": 0.0,
+              "min": 0.0
+            }
+          },
+          "bots": [
+            {
+              "hero": "slayer",
+              "team": 0,
+              "active_seconds": 51.98,
+              "distance_m": 274.82,
+              "damage": 288.3,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 0,
+              "active_seconds": 52.0,
+              "distance_m": 221.93,
+              "damage": 526.5,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 0,
+              "active_seconds": 52.0,
+              "distance_m": 226.38,
+              "damage": 120.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "huddle",
+              "team": 0,
+              "active_seconds": 60.0,
+              "distance_m": 305.32,
+              "damage": 387.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "relay",
+              "team": 0,
+              "active_seconds": 44.0,
+              "distance_m": 179.92,
+              "damage": 661.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "stitch",
+              "team": 0,
+              "active_seconds": 44.0,
+              "distance_m": 214.88,
+              "damage": 392.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "nimbus",
+              "team": 1,
+              "active_seconds": 52.0,
+              "distance_m": 238.89,
+              "damage": 918.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "dynamo",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 161.77,
+              "damage": 1838.9,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "wisp",
+              "team": 1,
+              "active_seconds": 54.72,
+              "distance_m": 234.46,
+              "damage": 1305.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "samson",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 178.19,
+              "damage": 226.8,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 1,
+              "active_seconds": 52.0,
+              "distance_m": 191.56,
+              "damage": 421.4,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 181.83,
+              "damage": 1384.6,
+              "recovery_teleports": 0
+            }
+          ]
+        },
+        {
+          "map": "museum",
+          "scenario": "natural",
+          "seconds": 60,
+          "participants": 12,
+          "distinct_heroes": 10,
+          "deaths": 5,
+          "completed_rounds": 0,
+          "round_results": [],
+          "final_phase": "capture",
+          "final_payload_distance": 0.0,
+          "longest_sampled_stall_seconds": 3.0,
+          "stalls_at_least_8_seconds": 0,
+          "falls": 0,
+          "resource_ranges": {
+            "nodes": {
+              "max": 4046.0,
+              "min": 4046.0
+            },
+            "objects": {
+              "max": 9276.0,
+              "min": 9276.0
+            },
+            "orphans": {
+              "max": 0.0,
+              "min": 0.0
+            },
+            "resources": {
+              "max": 338.0,
+              "min": 338.0
+            },
+            "static_bytes": {
+              "max": 191501776.0,
+              "min": 191501776.0
+            },
+            "transients": {
+              "max": 4.0,
+              "min": 4.0
+            },
+            "owned_attacks": {
+              "max": 1.0,
+              "min": 1.0
+            }
+          },
+          "bots": [
+            {
+              "hero": "slayer",
+              "team": 0,
+              "active_seconds": 51.98,
+              "distance_m": 176.31,
+              "damage": 102.6,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 0,
+              "active_seconds": 21.98,
+              "distance_m": 100.44,
+              "damage": 340.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 0,
+              "active_seconds": 21.98,
+              "distance_m": 118.74,
+              "damage": 48.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "huddle",
+              "team": 0,
+              "active_seconds": 21.98,
+              "distance_m": 86.99,
+              "damage": 271.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "relay",
+              "team": 0,
+              "active_seconds": 26.68,
+              "distance_m": 68.93,
+              "damage": 237.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "stitch",
+              "team": 0,
+              "active_seconds": 29.98,
+              "distance_m": 91.64,
+              "damage": 196.8,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "nimbus",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 184.6,
+              "damage": 178.3,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "dynamo",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 133.6,
+              "damage": 809.5,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "wisp",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 169.06,
+              "damage": 568.5,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "samson",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 186.84,
+              "damage": 88.8,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 159.13,
+              "damage": 168.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 185.33,
+              "damage": 601.9,
+              "recovery_teleports": 0
+            }
+          ]
+        }
+      ],
+      "scene_transitions": [
+        {
+          "actors": 12,
+          "counts": {
+            "nodes": 6224,
+            "objects": 12268,
+            "orphans": 0,
+            "owned_attacks": 0,
+            "resources": 334,
+            "static_bytes": 193816244,
+            "transients": 0
+          },
+          "destination": "city",
+          "old_references": 0,
+          "pass": 0,
+          "resolvers": 1,
+          "retained_old_nodes": 0,
+          "sessions": 1
+        },
+        {
+          "actors": 12,
+          "counts": {
+            "nodes": 3509,
+            "objects": 8666,
+            "orphans": 0,
+            "owned_attacks": 0,
+            "resources": 334,
+            "static_bytes": 185434852,
+            "transients": 0
+          },
+          "destination": "museum",
+          "old_references": 50,
+          "pass": 1,
+          "resolvers": 1,
+          "retained_old_nodes": 0,
+          "sessions": 1
+        },
+        {
+          "actors": 12,
+          "counts": {
+            "nodes": 6224,
+            "objects": 12358,
+            "orphans": 0,
+            "owned_attacks": 0,
+            "resources": 336,
+            "static_bytes": 202418322,
+            "transients": 0
+          },
+          "destination": "city",
+          "old_references": 29,
+          "pass": 2,
+          "resolvers": 1,
+          "retained_old_nodes": 0,
+          "sessions": 1
+        },
+        {
+          "actors": 12,
+          "counts": {
+            "nodes": 3509,
+            "objects": 8654,
+            "orphans": 0,
+            "owned_attacks": 0,
+            "resources": 335,
+            "static_bytes": 186163440,
+            "transients": 0
+          },
+          "destination": "museum",
+          "old_references": 29,
+          "pass": 3,
+          "resolvers": 1,
+          "retained_old_nodes": 0,
+          "sessions": 1
+        },
+        {
+          "actors": 0,
+          "counts": {
+            "nodes": 340,
+            "objects": 2407,
+            "orphans": 0,
+            "owned_attacks": 0,
+            "resources": 170,
+            "static_bytes": 118742308,
+            "transients": 0
+          },
+          "destination": "empty_tree",
+          "resolvers": 0,
+          "retained_old_nodes": 0,
+          "sessions": 0
+        }
+      ],
+      "original_empty_tree_counts": {
+        "nodes": 340,
+        "objects": 2207,
+        "orphans": 0,
+        "owned_attacks": 0,
+        "resources": 163,
+        "static_bytes": 71336822,
+        "transients": 0
+      }
+    },
+    {
+      "mode": "rendered_natural",
+      "seed": 971,
+      "exit_code": 0,
+      "error_or_leak_diagnostics": 0,
+      "command": "powershell -ExecutionPolicy Bypass -File ./tools/verify_roster_soak.ps1 -Seconds 60 -Seed 971 -Rendered",
+      "console_log": "artifacts/full-roster-soak-rendered-971.log",
+      "detailed_report": "artifacts/full-roster-soak-971.json",
+      "matches": [
+        {
+          "map": "city",
+          "scenario": "natural",
+          "seconds": 60,
+          "participants": 12,
+          "distinct_heroes": 10,
+          "deaths": 14,
+          "completed_rounds": 0,
+          "round_results": [],
+          "final_phase": "hill",
+          "final_payload_distance": 0,
+          "longest_sampled_stall_seconds": 2.0,
+          "stalls_at_least_8_seconds": 0,
+          "falls": 0,
+          "resource_ranges": {
+            "nodes": {
+              "max": 6214.0,
+              "min": 6214.0
+            },
+            "objects": {
+              "max": 12429.0,
+              "min": 12429.0
+            },
+            "orphans": {
+              "max": 0.0,
+              "min": 0.0
+            },
+            "resources": {
+              "max": 337.0,
+              "min": 337.0
+            },
+            "static_bytes": {
+              "max": 278067985.0,
+              "min": 278067985.0
+            },
+            "transients": {
+              "max": 6.0,
+              "min": 6.0
+            },
+            "owned_attacks": {
+              "max": 1.0,
+              "min": 1.0
+            }
+          },
+          "bots": [
+            {
+              "hero": "slayer",
+              "team": 0,
+              "active_seconds": 60.0,
+              "distance_m": 282.05,
+              "damage": 580.5,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 0,
+              "active_seconds": 44.0,
+              "distance_m": 184.45,
+              "damage": 326.4,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 0,
+              "active_seconds": 41.88,
+              "distance_m": 195.23,
+              "damage": 492.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "huddle",
+              "team": 0,
+              "active_seconds": 52.0,
+              "distance_m": 258.54,
+              "damage": 402.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "relay",
+              "team": 0,
+              "active_seconds": 37.48,
+              "distance_m": 186.84,
+              "damage": 337.7,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "stitch",
+              "team": 0,
+              "active_seconds": 44.0,
+              "distance_m": 216.62,
+              "damage": 414.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "nimbus",
+              "team": 1,
+              "active_seconds": 52.0,
+              "distance_m": 213.89,
+              "damage": 1187.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "dynamo",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 174.43,
+              "damage": 503.5,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "wisp",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 257.83,
+              "damage": 1270.7,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "samson",
+              "team": 1,
+              "active_seconds": 52.0,
+              "distance_m": 196.24,
+              "damage": 72.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 1,
+              "active_seconds": 52.0,
+              "distance_m": 222.4,
+              "damage": 228.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 220.33,
+              "damage": 1652.5,
+              "recovery_teleports": 0
+            }
+          ]
+        },
+        {
+          "map": "museum",
+          "scenario": "natural",
+          "seconds": 60,
+          "participants": 12,
+          "distinct_heroes": 10,
+          "deaths": 6,
+          "completed_rounds": 0,
+          "round_results": [],
+          "final_phase": "capture",
+          "final_payload_distance": 0.0,
+          "longest_sampled_stall_seconds": 2.0,
+          "stalls_at_least_8_seconds": 0,
+          "falls": 0,
+          "resource_ranges": {
+            "nodes": {
+              "max": 3610.0,
+              "min": 3610.0
+            },
+            "objects": {
+              "max": 9007.0,
+              "min": 9007.0
+            },
+            "orphans": {
+              "max": 0.0,
+              "min": 0.0
+            },
+            "resources": {
+              "max": 338.0,
+              "min": 338.0
+            },
+            "static_bytes": {
+              "max": 224095447.0,
+              "min": 224095447.0
+            },
+            "transients": {
+              "max": 6.0,
+              "min": 6.0
+            },
+            "owned_attacks": {
+              "max": 3.0,
+              "min": 3.0
+            }
+          },
+          "bots": [
+            {
+              "hero": "slayer",
+              "team": 0,
+              "active_seconds": 51.98,
+              "distance_m": 166.45,
+              "damage": 377.6,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 0,
+              "active_seconds": 27.72,
+              "distance_m": 112.87,
+              "damage": 150.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 0,
+              "active_seconds": 21.98,
+              "distance_m": 97.16,
+              "damage": 0.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "huddle",
+              "team": 0,
+              "active_seconds": 23.87,
+              "distance_m": 82.79,
+              "damage": 467.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "relay",
+              "team": 0,
+              "active_seconds": 29.98,
+              "distance_m": 76.06,
+              "damage": 295.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "stitch",
+              "team": 0,
+              "active_seconds": 29.07,
+              "distance_m": 73.43,
+              "damage": 410.4,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "nimbus",
+              "team": 1,
+              "active_seconds": 57.13,
+              "distance_m": 216.45,
+              "damage": 315.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "dynamo",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 139.83,
+              "damage": 1760.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "wisp",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 177.97,
+              "damage": 359.8,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "samson",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 195.2,
+              "damage": 283.9,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 149.94,
+              "damage": 0.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 192.16,
+              "damage": 867.7,
+              "recovery_teleports": 0
+            }
+          ]
+        },
+        {
+          "map": "city",
+          "scenario": "natural",
+          "seconds": 60,
+          "participants": 12,
+          "distinct_heroes": 10,
+          "deaths": 12,
+          "completed_rounds": 0,
+          "round_results": [],
+          "final_phase": "hill",
+          "final_payload_distance": 0,
+          "longest_sampled_stall_seconds": 2.0,
+          "stalls_at_least_8_seconds": 0,
+          "falls": 0,
+          "resource_ranges": {
+            "nodes": {
+              "max": 6748.0,
+              "min": 6748.0
+            },
+            "objects": {
+              "max": 12989.0,
+              "min": 12989.0
+            },
+            "orphans": {
+              "max": 0.0,
+              "min": 0.0
+            },
+            "resources": {
+              "max": 339.0,
+              "min": 339.0
+            },
+            "static_bytes": {
+              "max": 287699592.0,
+              "min": 287699592.0
+            },
+            "transients": {
+              "max": 0.0,
+              "min": 0.0
+            },
+            "owned_attacks": {
+              "max": 0.0,
+              "min": 0.0
+            }
+          },
+          "bots": [
+            {
+              "hero": "slayer",
+              "team": 0,
+              "active_seconds": 51.98,
+              "distance_m": 287.31,
+              "damage": 319.5,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 0,
+              "active_seconds": 52.0,
+              "distance_m": 225.82,
+              "damage": 1012.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 0,
+              "active_seconds": 44.0,
+              "distance_m": 197.66,
+              "damage": 168.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "huddle",
+              "team": 0,
+              "active_seconds": 60.0,
+              "distance_m": 306.39,
+              "damage": 763.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "relay",
+              "team": 0,
+              "active_seconds": 52.0,
+              "distance_m": 218.49,
+              "damage": 1550.9,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "stitch",
+              "team": 0,
+              "active_seconds": 52.0,
+              "distance_m": 269.44,
+              "damage": 176.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "nimbus",
+              "team": 1,
+              "active_seconds": 53.78,
+              "distance_m": 230.68,
+              "damage": 803.1,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "dynamo",
+              "team": 1,
+              "active_seconds": 52.0,
+              "distance_m": 122.32,
+              "damage": 533.3,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "wisp",
+              "team": 1,
+              "active_seconds": 52.0,
+              "distance_m": 272.15,
+              "damage": 1440.4,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "samson",
+              "team": 1,
+              "active_seconds": 52.0,
+              "distance_m": 227.44,
+              "damage": 229.2,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 1,
+              "active_seconds": 52.0,
+              "distance_m": 204.06,
+              "damage": 312.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 1,
+              "active_seconds": 52.0,
+              "distance_m": 188.27,
+              "damage": 1434.6,
+              "recovery_teleports": 0
+            }
+          ]
+        },
+        {
+          "map": "museum",
+          "scenario": "natural",
+          "seconds": 60,
+          "participants": 12,
+          "distinct_heroes": 10,
+          "deaths": 5,
+          "completed_rounds": 0,
+          "round_results": [],
+          "final_phase": "capture",
+          "final_payload_distance": 0.0,
+          "longest_sampled_stall_seconds": 2.0,
+          "stalls_at_least_8_seconds": 0,
+          "falls": 0,
+          "resource_ranges": {
+            "nodes": {
+              "max": 3600.0,
+              "min": 3600.0
+            },
+            "objects": {
+              "max": 9019.0,
+              "min": 9019.0
+            },
+            "orphans": {
+              "max": 0.0,
+              "min": 0.0
+            },
+            "resources": {
+              "max": 338.0,
+              "min": 338.0
+            },
+            "static_bytes": {
+              "max": 224607921.0,
+              "min": 224607921.0
+            },
+            "transients": {
+              "max": 35.0,
+              "min": 35.0
+            },
+            "owned_attacks": {
+              "max": 0.0,
+              "min": 0.0
+            }
+          },
+          "bots": [
+            {
+              "hero": "slayer",
+              "team": 0,
+              "active_seconds": 60.0,
+              "distance_m": 194.2,
+              "damage": 852.7,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 0,
+              "active_seconds": 29.72,
+              "distance_m": 116.11,
+              "damage": 420.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 0,
+              "active_seconds": 29.98,
+              "distance_m": 134.42,
+              "damage": 72.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "huddle",
+              "team": 0,
+              "active_seconds": 29.98,
+              "distance_m": 108.07,
+              "damage": 320.7,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "relay",
+              "team": 0,
+              "active_seconds": 29.98,
+              "distance_m": 121.39,
+              "damage": 341.6,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "stitch",
+              "team": 0,
+              "active_seconds": 25.55,
+              "distance_m": 76.81,
+              "damage": 400.2,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "nimbus",
+              "team": 1,
+              "active_seconds": 56.82,
+              "distance_m": 188.97,
+              "damage": 866.9,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "dynamo",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 123.08,
+              "damage": 1245.8,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "wisp",
+              "team": 1,
+              "active_seconds": 53.08,
+              "distance_m": 156.92,
+              "damage": 155.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "samson",
+              "team": 1,
+              "active_seconds": 56.9,
+              "distance_m": 183.83,
+              "damage": 52.8,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 151.39,
+              "damage": 48.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 1,
+              "active_seconds": 60.0,
+              "distance_m": 157.46,
+              "damage": 637.1,
+              "recovery_teleports": 0
+            }
+          ]
+        }
+      ],
+      "scene_transitions": [
+        {
+          "actors": 12,
+          "counts": {
+            "nodes": 6224,
+            "objects": 12233,
+            "orphans": 0,
+            "owned_attacks": 0,
+            "resources": 333,
+            "static_bytes": 251056626,
+            "transients": 0
+          },
+          "destination": "city",
+          "old_references": 0,
+          "pass": 0,
+          "resolvers": 1,
+          "retained_old_nodes": 0,
+          "sessions": 1
+        },
+        {
+          "actors": 12,
+          "counts": {
+            "nodes": 3509,
+            "objects": 8628,
+            "orphans": 0,
+            "owned_attacks": 0,
+            "resources": 335,
+            "static_bytes": 210392185,
+            "transients": 0
+          },
+          "destination": "museum",
+          "old_references": 32,
+          "pass": 1,
+          "resolvers": 1,
+          "retained_old_nodes": 0,
+          "sessions": 1
+        },
+        {
+          "actors": 12,
+          "counts": {
+            "nodes": 6224,
+            "objects": 12335,
+            "orphans": 0,
+            "owned_attacks": 0,
+            "resources": 336,
+            "static_bytes": 273503974,
+            "transients": 0
+          },
+          "destination": "city",
+          "old_references": 34,
+          "pass": 2,
+          "resolvers": 1,
+          "retained_old_nodes": 0,
+          "sessions": 1
+        },
+        {
+          "actors": 12,
+          "counts": {
+            "nodes": 3509,
+            "objects": 8623,
+            "orphans": 0,
+            "owned_attacks": 0,
+            "resources": 335,
+            "static_bytes": 211647483,
+            "transients": 0
+          },
+          "destination": "museum",
+          "old_references": 25,
+          "pass": 3,
+          "resolvers": 1,
+          "retained_old_nodes": 0,
+          "sessions": 1
+        },
+        {
+          "actors": 0,
+          "counts": {
+            "nodes": 340,
+            "objects": 2404,
+            "orphans": 0,
+            "owned_attacks": 0,
+            "resources": 170,
+            "static_bytes": 176854652,
+            "transients": 0
+          },
+          "destination": "empty_tree",
+          "resolvers": 0,
+          "retained_old_nodes": 0,
+          "sessions": 0
+        }
+      ],
+      "original_empty_tree_counts": {
+        "nodes": 340,
+        "objects": 2215,
+        "orphans": 0,
+        "owned_attacks": 0,
+        "resources": 163,
+        "static_bytes": 109286240,
+        "transients": 0
+      }
+    },
+    {
+      "mode": "headless_staged_escort",
+      "seed": 1776,
+      "exit_code": 0,
+      "error_or_leak_diagnostics": 0,
+      "command": "Godot --headless --path . --fixed-fps 60 --script res://tests/full_roster_escort_soak.gd -- --seconds=120 --seed=1776",
+      "console_log": "artifacts/full-roster-escort-soak-1776.log",
+      "detailed_report": "artifacts/full-roster-soak-1776.json",
+      "matches": [
+        {
+          "map": "museum",
+          "scenario": "staged_escort_leg_1",
+          "seconds": 120,
+          "participants": 12,
+          "distinct_heroes": 10,
+          "deaths": 25,
+          "completed_rounds": 0,
+          "round_results": [],
+          "final_phase": "escort",
+          "final_payload_distance": 113.868332167469,
+          "longest_sampled_stall_seconds": 3.0,
+          "stalls_at_least_8_seconds": 0,
+          "falls": 0,
+          "resource_ranges": {
+            "nodes": {
+              "max": 4145.0,
+              "min": 3535.0
+            },
+            "objects": {
+              "max": 9513.0,
+              "min": 8807.0
+            },
+            "orphans": {
+              "max": 0.0,
+              "min": 0.0
+            },
+            "resources": {
+              "max": 335.0,
+              "min": 335.0
+            },
+            "static_bytes": {
+              "max": 172134831.0,
+              "min": 168626795.0
+            },
+            "transients": {
+              "max": 18.0,
+              "min": 13.0
+            },
+            "owned_attacks": {
+              "max": 1.0,
+              "min": 0.0
+            }
+          },
+          "bots": [
+            {
+              "hero": "slayer",
+              "team": 0,
+              "active_seconds": 111.98,
+              "distance_m": 475.66,
+              "damage": 2727.7,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 0,
+              "active_seconds": 120.0,
+              "distance_m": 445.54,
+              "damage": 2994.7,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 0,
+              "active_seconds": 112.0,
+              "distance_m": 400.97,
+              "damage": 546.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "huddle",
+              "team": 0,
+              "active_seconds": 112.0,
+              "distance_m": 431.33,
+              "damage": 1937.2,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "relay",
+              "team": 0,
+              "active_seconds": 112.0,
+              "distance_m": 433.24,
+              "damage": 1325.5,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "stitch",
+              "team": 0,
+              "active_seconds": 104.0,
+              "distance_m": 396.44,
+              "damage": 1071.4,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "nimbus",
+              "team": 1,
+              "active_seconds": 95.97,
+              "distance_m": 363.26,
+              "damage": 1676.5,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "dynamo",
+              "team": 1,
+              "active_seconds": 98.65,
+              "distance_m": 314.49,
+              "damage": 1247.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "wisp",
+              "team": 1,
+              "active_seconds": 112.0,
+              "distance_m": 476.76,
+              "damage": 1942.3,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "samson",
+              "team": 1,
+              "active_seconds": 79.95,
+              "distance_m": 403.59,
+              "damage": 426.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 1,
+              "active_seconds": 79.98,
+              "distance_m": 375.18,
+              "damage": 734.4,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 1,
+              "active_seconds": 104.0,
+              "distance_m": 406.27,
+              "damage": 2767.8,
+              "recovery_teleports": 0
+            }
+          ]
+        },
+        {
+          "map": "museum",
+          "scenario": "staged_escort_leg_2",
+          "seconds": 120,
+          "participants": 12,
+          "distinct_heroes": 10,
+          "deaths": 20,
+          "completed_rounds": 0,
+          "round_results": [],
+          "final_phase": "escort",
+          "final_payload_distance": 79.7249999602649,
+          "longest_sampled_stall_seconds": 3.0,
+          "stalls_at_least_8_seconds": 0,
+          "falls": 0,
+          "resource_ranges": {
+            "nodes": {
+              "max": 3580.0,
+              "min": 3509.0
+            },
+            "objects": {
+              "max": 8838.0,
+              "min": 8702.0
+            },
+            "orphans": {
+              "max": 0.0,
+              "min": 0.0
+            },
+            "resources": {
+              "max": 335.0,
+              "min": 335.0
+            },
+            "static_bytes": {
+              "max": 167123594.0,
+              "min": 166790803.0
+            },
+            "transients": {
+              "max": 19.0,
+              "min": 0.0
+            },
+            "owned_attacks": {
+              "max": 3.0,
+              "min": 0.0
+            }
+          },
+          "bots": [
+            {
+              "hero": "slayer",
+              "team": 0,
+              "active_seconds": 90.23,
+              "distance_m": 375.53,
+              "damage": 1233.2,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 0,
+              "active_seconds": 96.0,
+              "distance_m": 354.58,
+              "damage": 822.9,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 0,
+              "active_seconds": 120.0,
+              "distance_m": 143.95,
+              "damage": 0.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "huddle",
+              "team": 0,
+              "active_seconds": 96.0,
+              "distance_m": 435.35,
+              "damage": 287.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "relay",
+              "team": 0,
+              "active_seconds": 88.0,
+              "distance_m": 361.72,
+              "damage": 430.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "stitch",
+              "team": 0,
+              "active_seconds": 93.13,
+              "distance_m": 435.17,
+              "damage": 376.2,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "nimbus",
+              "team": 1,
+              "active_seconds": 120.0,
+              "distance_m": 386.69,
+              "damage": 1053.9,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "dynamo",
+              "team": 1,
+              "active_seconds": 120.0,
+              "distance_m": 193.92,
+              "damage": 2862.7,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "wisp",
+              "team": 1,
+              "active_seconds": 120.0,
+              "distance_m": 373.98,
+              "damage": 1314.3,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "samson",
+              "team": 1,
+              "active_seconds": 120.0,
+              "distance_m": 375.46,
+              "damage": 198.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 1,
+              "active_seconds": 104.27,
+              "distance_m": 299.68,
+              "damage": 792.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 1,
+              "active_seconds": 120.0,
+              "distance_m": 295.11,
+              "damage": 1889.8,
+              "recovery_teleports": 0
+            }
+          ]
+        },
+        {
+          "map": "museum",
+          "scenario": "staged_escort_leg_3",
+          "seconds": 120,
+          "participants": 12,
+          "distinct_heroes": 10,
+          "deaths": 28,
+          "completed_rounds": 1,
+          "round_results": [
+            {
+              "phase": "finished",
+              "second": 87,
+              "winner": 0
+            }
+          ],
+          "final_phase": "capture",
+          "final_payload_distance": 0.0,
+          "longest_sampled_stall_seconds": 2.0,
+          "stalls_at_least_8_seconds": 0,
+          "falls": 0,
+          "resource_ranges": {
+            "nodes": {
+              "max": 4192.0,
+              "min": 3533.0
+            },
+            "objects": {
+              "max": 9625.0,
+              "min": 8771.0
+            },
+            "orphans": {
+              "max": 0.0,
+              "min": 0.0
+            },
+            "resources": {
+              "max": 335.0,
+              "min": 335.0
+            },
+            "static_bytes": {
+              "max": 173972035.0,
+              "min": 169052200.0
+            },
+            "transients": {
+              "max": 18.0,
+              "min": 12.0
+            },
+            "owned_attacks": {
+              "max": 6.0,
+              "min": 4.0
+            }
+          },
+          "bots": [
+            {
+              "hero": "slayer",
+              "team": 0,
+              "active_seconds": 68.37,
+              "distance_m": 321.25,
+              "damage": 1387.6,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 0,
+              "active_seconds": 81.68,
+              "distance_m": 377.81,
+              "damage": 2408.6,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 0,
+              "active_seconds": 73.13,
+              "distance_m": 316.65,
+              "damage": 783.1,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "huddle",
+              "team": 0,
+              "active_seconds": 81.68,
+              "distance_m": 389.28,
+              "damage": 2190.6,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "relay",
+              "team": 0,
+              "active_seconds": 73.68,
+              "distance_m": 328.39,
+              "damage": 1563.1,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "stitch",
+              "team": 0,
+              "active_seconds": 81.68,
+              "distance_m": 374.92,
+              "damage": 701.4,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "nimbus",
+              "team": 1,
+              "active_seconds": 95.68,
+              "distance_m": 403.23,
+              "damage": 1120.1,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "dynamo",
+              "team": 1,
+              "active_seconds": 103.7,
+              "distance_m": 340.58,
+              "damage": 1279.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "wisp",
+              "team": 1,
+              "active_seconds": 103.68,
+              "distance_m": 460.2,
+              "damage": 1286.9,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "samson",
+              "team": 1,
+              "active_seconds": 92.47,
+              "distance_m": 429.41,
+              "damage": 422.4,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "doctor",
+              "team": 1,
+              "active_seconds": 89.27,
+              "distance_m": 353.24,
+              "damage": 454.0,
+              "recovery_teleports": 0
+            },
+            {
+              "hero": "marshal",
+              "team": 1,
+              "active_seconds": 103.68,
+              "distance_m": 390.53,
+              "damage": 2966.7,
+              "recovery_teleports": 0
+            }
+          ]
+        }
+      ],
+      "scene_transitions": [
+        {
+          "actors": 12,
+          "counts": {
+            "nodes": 3509,
+            "objects": 8558,
+            "orphans": 0,
+            "owned_attacks": 0,
+            "resources": 331,
+            "static_bytes": 159393489,
+            "transients": 0
+          },
+          "destination": "museum",
+          "old_references": 0,
+          "pass": 4,
+          "resolvers": 1,
+          "retained_old_nodes": 0,
+          "sessions": 1
+        },
+        {
+          "actors": 12,
+          "counts": {
+            "nodes": 3509,
+            "objects": 8625,
+            "orphans": 0,
+            "owned_attacks": 0,
+            "resources": 331,
+            "static_bytes": 162303617,
+            "transients": 0
+          },
+          "destination": "museum",
+          "old_references": 38,
+          "pass": 5,
+          "resolvers": 1,
+          "retained_old_nodes": 0,
+          "sessions": 1
+        },
+        {
+          "actors": 12,
+          "counts": {
+            "nodes": 3509,
+            "objects": 8613,
+            "orphans": 0,
+            "owned_attacks": 0,
+            "resources": 332,
+            "static_bytes": 162356077,
+            "transients": 0
+          },
+          "destination": "museum",
+          "old_references": 25,
+          "pass": 6,
+          "resolvers": 1,
+          "retained_old_nodes": 0,
+          "sessions": 1
+        },
+        {
+          "actors": 0,
+          "counts": {
+            "nodes": 340,
+            "objects": 2373,
+            "orphans": 0,
+            "owned_attacks": 0,
+            "resources": 167,
+            "static_bytes": 94794901,
+            "transients": 0
+          },
+          "destination": "empty_tree",
+          "resolvers": 0,
+          "retained_old_nodes": 0,
+          "sessions": 0
+        }
+      ],
+      "original_empty_tree_counts": {
+        "nodes": 340,
+        "objects": 2208,
+        "orphans": 0,
+        "owned_attacks": 0,
+        "resources": 164,
+        "static_bytes": 71368300,
+        "transients": 0
+      }
+    }
+  ]
+}
