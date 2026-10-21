@@ -180,5 +180,70 @@
       }
     ],
     "logs": "artifacts/feel-rebase-*.log"
+  },
+  "movement_followup": {
+    "air_strafe_gain_ceiling_mps": 12,
+    "air_speed_gain_above_running_mps_per_second": 0.75,
+    "momentum_slide_friction": 2.75,
+    "dash_slide_friction": 4,
+    "steering_acceleration_unchanged": 30,
+    "earned_launch_momentum_preserved": true,
+    "headless_suites": [
+      {
+        "suite": "feel_update_test",
+        "checks": 88,
+        "failures": 0
+      },
+      {
+        "suite": "momentum_flow_test",
+        "checks": 105,
+        "failures": 0
+      },
+      {
+        "suite": "movement_overhaul_test",
+        "checks": 73,
+        "failures": 0
+      },
+      {
+        "suite": "movement_visual_test",
+        "checks": 58,
+        "failures": 0
+      },
+      {
+        "suite": "ability_selection_test",
+        "checks": 39,
+        "failures": 0
+      },
+      {
+        "suite": "crouch_test",
+        "checks": 109,
+        "failures": 0
+      },
+      {
+        "suite": "traversal_flow_test",
+        "checks": 25,
+        "failures": 0
+      },
+      {
+        "suite": "bot_tactics_test",
+        "checks": 86,
+        "failures": 0
+      },
+      {
+        "suite": "bot_integration_test",
+        "checks": 19,
+        "failures": 0
+      },
+      {
+        "suite": "wisp_rework_test",
+        "checks": 209,
+        "failures": 0
+      }
+    ],
+    "native_checks": 90,
+    "native_failures": 0,
+    "sandbox_rendered_startup": "120 frames, clean exit, no script errors",
+    "logs": "artifacts/movement-tuning-*.log",
+    "reported_parser_error": "Screenshot reports an unexpected w at ability_selection_markers.gd line 23. The saved file has no such character, the working tree was clean at inspection, editor import and rendered sandbox launch passed. Remove the stray character in the unsaved Godot editor buffer."
   }
 }

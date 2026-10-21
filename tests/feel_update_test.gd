@@ -62,6 +62,7 @@ func run() -> void:
 func movement() -> void:
 	a.motor.mode = "air"
 	var initial := Vector3(0,0,-10)
+	check(a.motor.steer_horizontal(Vector3.ZERO,Vector3.RIGHT,6,false,false,.1).x > 1.9,"starting air movement still responds immediately below running speed")
 	check(a.motor.steer_horizontal(initial,Vector3.ZERO,6,false,false,.1) == initial,"neutral airborne momentum preserved")
 	var speeds: Array[float] = []
 	for hz: int in [30,60,120]:
@@ -71,7 +72,17 @@ func movement() -> void:
 			v = a.motor.steer_horizontal(v,wish,6,false,false,1.0/hz)
 		speeds.append(v.length())
 	check(speeds[1] > 10.3,"turning opens projection headroom and builds speed")
-	check(absf(speeds[0]-speeds[2]) < 1.4,"air acceleration remains bounded across 30/60/120 Hz")
+	check(absf(speeds[0]-speeds[2]) < .02,"air speed gain is consistent across 30/60/120 Hz")
+	for speed: float in speeds:
+		check(speed <= 10.751,"one second of air strafing cannot gain more than 0.75 m/s")
+	for start_speed: float in [6,11.9,12,20]:
+		var velocity: Vector3 = Vector3.FORWARD*start_speed
+		for i: int in 1200:
+			var wish: Vector3 = velocity.normalized().rotated(Vector3.UP,-1.42)
+			velocity = a.motor.steer_horizontal(velocity,wish,6,false,false,1.0/60)
+		check(velocity.length() <= maxf(12,start_speed)+.002,"sustained turning cannot farm speed beyond ceiling from %.1f m/s" % start_speed)
+		if start_speed >= 12:
+			check(absf(velocity.length()-start_speed) < .002,"air steering preserves earned launch speed without increasing it")
 	var aligned: Vector3 = a.motor.steer_horizontal(initial,Vector3.FORWARD,6,false,false,.1)
 	check(aligned == initial,"wish already above projection cap cannot accelerate")
 	var cap: Vector3 = a.motor.steer_horizontal(Vector3(25.99,0,0),Vector3.FORWARD,6,false,false,1)

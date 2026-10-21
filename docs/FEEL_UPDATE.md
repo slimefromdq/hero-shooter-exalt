@@ -4,9 +4,9 @@ This update uses the existing shared motor, close combat, combat resolver, rig d
 
 ## Movement
 
-Hold A/D in the air and steer the mouse in the same direction. Air acceleration adds velocity along the current wish direction only while its projected speed is below 2 m/s, at up to 30 m/s². Perpendicular momentum remains intact. The shared 26 m/s speed limit still applies. Neutral air has no horizontal drag; jumps still require a fresh press. Ability movement overrides retain their own rules.
+Hold A/D in the air and steer the mouse in the same direction. Air acceleration adds velocity along the current wish direction only while its projected speed is below 2 m/s, at up to 30 m/s². Perpendicular momentum remains intact. Above running speed, air strafing can add at most 0.75 m/s per second, up to a 12 m/s gain ceiling. Faster earned dash/launch momentum stays steerable without gaining more speed. Low-speed air input remains responsive. The shared 26 m/s safety limit still applies. Neutral air has no horizontal drag; jumps still require a fresh press. Ability movement overrides retain their own rules.
 
-Ordinary ramp, wall-kick, fast landing, and mantle slides use 2 m/s² friction. Dash slides retain 4 m/s² and their existing entry gates. Slide release retries standing whenever overhead clearance returns. Capsule, camera lowering, and motor posture follow the same state.
+Ordinary ramp, wall-kick, fast landing, and mantle slides use 2.75 m/s² friction. Dash slides retain 4 m/s² and their existing entry gates. Slide release retries standing whenever overhead clearance returns. Capsule, camera lowering, and motor posture follow the same state.
 
 The additive motion pose runs after authored action animation and before skeleton solving. It supplies breathing, lean, torso movement, airborne legs, landing compression, and distinct slide poses. Visual scale stays within 6%; collision capsules are unaffected. Movement bursts and dust wedges use finite unshaded geometry and no gameplay RNG.
 

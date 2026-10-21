@@ -417,9 +417,14 @@ func steer_horizontal(current: Vector3, wish: Vector3, target_speed: float, on_f
 		# Source-style projection cap: turning the wish vector opens room for
 		# acceleration without pulling existing perpendicular momentum away.
 		var direction: Vector3 = wish.normalized()
+		var incoming_speed: float = current.length()
 		var add: float = minf(target_speed,t.air_wish_cap)*minf(1,wish.length())-current.dot(direction)
 		if add > 0: current += direction*minf(add,t.air_acceleration*delta)
-		return current.limit_length(t.speed_limit)
+		# Keep the responsive turn, but make speed gain gradual and bounded.
+		# Earned dash/launch speed remains steerable above this gain ceiling.
+		var gain_ceiling: float = maxf(incoming_speed,t.air_strafe_speed_limit)
+		var gain_budget: float = maxf(minf(target_speed,t.air_strafe_speed_limit),incoming_speed+maxf(0,t.air_speed_gain_rate)*delta)
+		return current.limit_length(minf(t.speed_limit,minf(gain_ceiling,gain_budget)))
 	var speed: float = current.length()
 	var desired: Vector3 = wish.normalized()
 	var acceleration: float = t.acceleration if on_floor else t.air_steering

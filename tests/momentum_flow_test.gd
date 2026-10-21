@@ -86,7 +86,7 @@ func run() -> void:
 		check(absf(horizontal()-18) < .001,"neutral air retains earned speed"+label)
 		actor.intent.move = Vector3.RIGHT
 		tick(dt,hz/2)
-		check(horizontal() > 18 and horizontal() < 18.2 and actor.velocity.x > 1,"projection-capped air steering adds controlled lateral speed"+label)
+		check(absf(horizontal()-18) < .001 and actor.velocity.x > 1,"air steering redirects earned overspeed without adding more"+label)
 		actor.intent.move = -(actor.velocity * Vector3(1,0,1)).normalized()
 		var prior: float = horizontal()
 		tick(dt)
