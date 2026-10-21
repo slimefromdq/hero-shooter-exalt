@@ -1,0 +1,103 @@
+{
+  "date": "2026-10-21",
+  "engine": "Godot 4.7.2",
+  "rules_checks": 71,
+  "menu_checks": 12,
+  "geometry": {
+    "all_ingress_visible_positions": 0,
+    "bake_ms": 1606,
+    "blocked_capsule_samples": 0,
+    "blocked_route_samples": 0,
+    "checks": 1897,
+    "failures": [],
+    "flank_screened_samples": 3320,
+    "flank_sight_samples": 3680,
+    "physical_floor_footprint_m": [
+      320.0,
+      288.0
+    ],
+    "polygon_count": 3377,
+    "route_samples": 7240
+  },
+  "traversal": {
+    "checks": 7,
+    "failures": [],
+    "walks": [
+      {
+        "arrived": true,
+        "end": "(50.69505, 7.994081, 62.56964)",
+        "index": 33,
+        "next": "(52.0, 8.5, 62.0)",
+        "path_size": 34,
+        "route": "main 0",
+        "seconds": 20.5333333333333,
+        "target": "(52.0, 8.5, 62.0)"
+      },
+      {
+        "arrived": true,
+        "end": "(-0.000686, 16.00093, 1.47894)",
+        "index": 86,
+        "next": "(0.0, 16.0, 0.0)",
+        "path_size": 88,
+        "route": "main 1",
+        "seconds": 38.7166666666667,
+        "target": "(0.0, 16.5, 0.0)"
+      },
+      {
+        "arrived": true,
+        "end": "(76.90019, 8.000941, 71.12518)",
+        "index": 82,
+        "next": "(76.0, 8.0, 70.0)",
+        "path_size": 84,
+        "route": "lower circuit",
+        "seconds": 36.0333333333333,
+        "target": "(76.0, 8.5, 70.0)"
+      },
+      {
+        "arrived": true,
+        "end": "(75.99997, 8.000941, 71.42705)",
+        "index": 140,
+        "next": "(76.0, 8.0, 70.0)",
+        "path_size": 142,
+        "route": "upper circuit",
+        "seconds": 65.0,
+        "target": "(76.0, 8.5, 70.0)"
+      }
+    ]
+  },
+  "integration": {
+    "bots_moved": 11,
+    "checks": 13,
+    "failures": [],
+    "longest_stuck_seconds": 2.13333333333333,
+    "lower_assignments": 6,
+    "owners": [
+      0,
+      0,
+      1,
+      1,
+      1
+    ],
+    "simulation_seconds": 180.0,
+    "upper_assignments": 6,
+    "walks": []
+  },
+  "regressions": [
+    "city_rules_test",
+    "museum_rules_test",
+    "museum_menu_test",
+    "menu_flow_test",
+    "momentum_flow_test",
+    "movement_overhaul_test",
+    "traversal_flow_test",
+    "mantle_exit_test",
+    "bot_integration_test"
+  ],
+  "limitations": [
+    "Sightline checks sample authored route centers and twenty defensive positions; they are not exhaustive visibility proofs.",
+    "Traversal checks cover the two unique main paths, outer lower and upper circuits, dash, wall kick, and mantle; they do not exhaust every hero shortcut.",
+    "Live simulation is one deterministic three-minute match containing both teams; longer matches and human balance testing remain necessary.",
+    "Presentation profile contains native still-view snapshots, not a sustained combat performance benchmark.",
+    "Procedural art remains a prototype and needs further visual polish."
+  ]
+}

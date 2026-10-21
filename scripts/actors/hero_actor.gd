@@ -123,9 +123,10 @@ func _physics_process(delta: float) -> void:
 	if mobility_limited:
 		motor.interrupt_mobility()
 		if state != "ready": kit.cancel()
-	var session: Node = get_tree().get_first_node_in_group("museum_match")
-	if session != null: session.enforce_spawn_exclusion(self,before_motion)
-	if global_position.y < -8.0:
+	var session: Node = get_tree().get_first_node_in_group("game_session")
+	if session != null and session.has_method("enforce_spawn_exclusion"): session.enforce_spawn_exclusion(self,before_motion)
+	var fall_height: float = session.fall_kill_height() if session != null and session.has_method("fall_kill_height") else -8.0
+	if global_position.y < fall_height:
 		if training_prevent_death and get_tree().get_first_node_in_group("training") != null:
 			var practice: Node = get_tree().get_first_node_in_group("training")
 			practice.recover_player()

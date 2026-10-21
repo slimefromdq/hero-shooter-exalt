@@ -58,6 +58,7 @@ try {
         & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script "res://tests/$taskMuseumTest.gd"
         if ($LASTEXITCODE -ne 0) { throw "Museum check failed: $taskMuseumTest" }
     }
+    & (Join-Path $PSScriptRoot 'verify_temple.ps1') -Capture:$Capture
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/wisp_rework_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Wisp phantom thief rework failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/roster_expansion_test.gd

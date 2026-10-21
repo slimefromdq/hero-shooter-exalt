@@ -116,8 +116,8 @@ func draw_hud() -> void:
 		centered("EARNED ULTIMATE CHARGE RETAINED",Vector2(800,473),11,muted)
 	if m.winner >= 0:
 		panel(Vector2(555,320),Vector2(490,158))
-		centered("VICTORY" if m.winner == p.team else "DEFEAT",Vector2(800,378),42,mint if m.winner == p.team else coral,true)
-		centered("CAPTURE + ESCORT  /  MERIDIAN MUSEUM" if m.is_in_group("museum_match") else "FIRST TO 100  /  MERIDIAN GARDENS",Vector2(800,414),12,brass)
+		centered("STALEMATE" if m.winner == 2 else ("VICTORY" if m.winner == p.team else "DEFEAT"),Vector2(800,378),42,mint if m.winner == p.team else coral,true)
+		centered("FIVE CONTROL POINTS / SAKURA VEIL" if m.is_in_group("temple_match") else ("CAPTURE + ESCORT  /  MERIDIAN MUSEUM" if m.is_in_group("museum_match") else "FIRST TO 100  /  MERIDIAN GARDENS"),Vector2(800,414),12,brass)
 		centered("F5  PLAY AGAIN     ·     TAB  MATCH CONSOLE",Vector2(800,450),12,paper)
 	ControlFeedback.draw(canvas,p,bold,Vector2(32,280))
 	if overview_open:
@@ -129,7 +129,7 @@ func draw_combat_feed(p: HeroActor) -> void:
 	var feedback: MatchFeedback = match_controller.feedback
 	if feedback == null: return
 	panel(Vector2(28,201),Vector2(500,48))
-	text("[+] CYAN: LANTERN / YOUR TEAM     [!] RED: CROWN / ENEMY",Vector2(32,217),11,paper,true)
+	text("[+] CYAN: ROOT     [!] RED: CLOUD" if match_controller.is_in_group("temple_match") else "[+] CYAN: LANTERN / YOUR TEAM     [!] RED: CROWN / ENEMY",Vector2(32,217),11,paper,true)
 	text("%d KILLS   %d ASSISTS   /   %d STREAK" % [feedback.kills,feedback.assists,int(feedback.streaks.get(p.get_instance_id(),0))],Vector2(32,239),11,mint,true)
 	for index: int in feedback.feed.size():
 		var entry: Dictionary = feedback.feed[feedback.feed.size() - 1 - index]
