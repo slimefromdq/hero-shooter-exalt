@@ -45,9 +45,13 @@ func run() -> void:
 	await step()
 	aim(doctor,friend)
 	var r := doctor.kit as RelayKit
+	var seeker_previews: Array[Dictionary] = doctor.kit.selection_previews()
+	check(seeker_previews.is_typed() and seeker_previews.size() == 1,"Seeker returns typed previews for HUD assignment with an eligible ally")
 	check(offered(doctor,"bomb",friend),"Seeker offers assignable ally")
 	check(not r.selection_previews().is_empty(),"Seeker assignment requires no resource")
 	check(r.assign(friend) and r.selection_previews().is_empty(),"assigned recipient and transfer cooldown remove Relay prompt")
+	seeker_previews = doctor.kit.selection_previews()
+	check(seeker_previews.is_typed() and seeker_previews.is_empty(),"Seeker returns typed empty previews when assignment is unavailable")
 	r.transfer_cd = 0
 	check(r.selection_previews().is_empty(),"current recipient remains excluded after cooldown")
 	r.recall()

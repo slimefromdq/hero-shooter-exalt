@@ -44,8 +44,10 @@ func aimed_ally() -> HeroActor:
 	return AllyTargeting.aimed(actor,data().assign_range)
 
 func selection_previews() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
 	var target := aimed_ally()
-	return [{"target":target,"action":"bomb"}] if can_assign(target) else []
+	if can_assign(target): result.append({"target":target,"action":"bomb"})
+	return result
 
 func assign(target: HeroActor) -> bool:
 	if not can_assign(target): return false
