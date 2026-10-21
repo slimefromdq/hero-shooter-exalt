@@ -1,0 +1,38 @@
+{
+  "scope": "City audit shutdown resource cleanup",
+  "cause": "Late runtime loading of CityHUD retained its script dependency graph and presentation resources at process shutdown in Godot 4.7.2.",
+  "fix": "Preload the HUD dependency in CityMatch. Preserve existing actor, scene, navigation and presentation cleanup.",
+  "baseline_geometry_audit": {
+    "objectdb_instances": 199,
+    "resources_in_use": 136,
+    "leaked_material_rids": 22,
+    "leaked_shader_rids": 7,
+    "leaked_mesh_rids": 8,
+    "log": "artifacts/city-leak-before-verbose.log"
+  },
+  "regression_check": {
+    "change": "City verifier captures stdout and stderr through process exit and rejects engine errors and shutdown leaks even when Godot exits zero.",
+    "original_code_reintroduced": "Runner correctly failed with exit 1",
+    "log": "artifacts/city-leak-regression-detection.log"
+  },
+  "focused_verification": {
+    "geometry_checks": 2516,
+    "winding_checks": 4420,
+    "geometry_or_winding_failures": 0,
+    "verbose_shutdown_diagnostics": 0,
+    "rendered_city_startup_frames": 150,
+    "rendered_startup_errors": 0
+  },
+  "full_verifier": {
+    "command": "powershell -ExecutionPolicy Bypass -File ./tools/verify.ps1",
+    "exit_code": 0,
+    "godot_invocations": 63,
+    "pass_lines": 4820,
+    "failure_lines": 0,
+    "engine_errors_or_shutdown_leaks": 0,
+    "city_audit_logs": 9,
+    "city_audit_errors_or_shutdown_leaks": 0,
+    "log": "artifacts/city-leaks-full-verifier.log",
+    "city_logs": "artifacts/city-audits/*.log"
+  }
+}

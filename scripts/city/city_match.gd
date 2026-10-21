@@ -45,7 +45,9 @@ func _ready() -> void:
 	_build_pickups()
 	_build_spawn_gates()
 	_spawn_teams()
-	var hud_script: Script = load("res://scripts/city/city_hud.gd")
+	# Register the HUD's cyclic script dependencies with the session at compile
+	# time. Late loading retains that graph and its cached meshes at shutdown.
+	var hud_script: Script = preload("res://scripts/city/city_hud.gd")
 	if hud_script != null:
 		hud = hud_script.new()
 		hud.match_controller = self

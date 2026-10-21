@@ -114,24 +114,10 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Training integration tests failed.' }
     & $taskEngine --headless --path $taskRoot --script res://tests/city_rules_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'City capture, health pickup or protection checks failed.' }
-    & $taskEngine --headless --path $taskRoot --script res://tests/city_integration_test.gd
-    if ($LASTEXITCODE -ne 0) { throw 'City navigation, respawn or reset checks failed.' }
-    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_traversal_test.gd
-    if ($LASTEXITCODE -ne 0) { throw 'City physical stair, subway or camera traversal failed.' }
-    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_transition_test.gd
-    if ($LASTEXITCODE -ne 0) { throw 'City/training scene transitions or cleanup failed.' }
-    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_railing_test.gd
-    if ($LASTEXITCODE -ne 0) { throw 'City sloped railing or landing clearance failed.' }
-    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_stair_openings_test.gd
-    if ($LASTEXITCODE -ne 0) { throw 'Street paving overhangs an underground stair opening.' }
-    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_route_audit.gd
-    if ($LASTEXITCODE -ne 0) { throw 'Full-city stair width, traversal or route joins failed.' }
-    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_geometry_audit.gd
-    if ($LASTEXITCODE -ne 0) { throw 'Rendered city structural surfaces do not match collision.' }
-    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_arcade_test.gd
-    if ($LASTEXITCODE -ne 0) { throw 'Shopping arcade, cover or repaired roof traversal failed.' }
-    & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/city_navigation_regression.gd
-    if ($LASTEXITCODE -ne 0) { throw 'City navigation recovery or healing route failed.' }
+    & (Join-Path $PSScriptRoot 'verify_city_audit.ps1') -Test city_integration_test -Realtime
+    foreach ($taskCityTest in @('city_traversal_test', 'city_transition_test', 'city_railing_test', 'city_stair_openings_test', 'city_route_audit', 'city_geometry_audit', 'city_arcade_test', 'city_navigation_regression')) {
+        & (Join-Path $PSScriptRoot 'verify_city_audit.ps1') -Test $taskCityTest
+    }
     if ($Capture) {
         & $taskEngine --path $taskRoot --fixed-fps 60 --script res://tests/momentum_input_test.gd --windowed --resolution 1440x900 --audio-driver Dummy
         if ($LASTEXITCODE -ne 0) { throw 'Momentum native inputs and rendered handoffs failed.' }
