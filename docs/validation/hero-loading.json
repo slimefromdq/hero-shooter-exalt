@@ -46,5 +46,6 @@
     "log": "artifacts/roster-loading-full-verifier.log"
   },
   "result": "No additional hero loading bug reproduced. Added roster-wide regression coverage.",
-  "limits": "Startup smoke and targeted marker checks do not prove all ability behavior or human gameplay feel."
+  "limits": "Startup smoke and targeted marker checks do not prove all ability behavior or human gameplay feel.",
+  "shutdown_cleanup_followup": "City shutdown leaks resolved; clean full verifier recorded in city-shutdown-cleanup.json."
 }
