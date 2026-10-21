@@ -101,7 +101,7 @@ func sweep(motion: Vector3) -> bool:
 				add_collision_exception_with(target)
 				motion = hit.get_remainder()
 				continue
-			var result: String = source.resolver.damage(source,target,damage_amount,"cannon",cast_id,false,false,previous)
+			var result: String = source.resolver.damage(source,target,damage_amount,"cannon",cast_id,false,false,previous,hit.get_position())
 			if result == "deflect" and reflections < 2:
 				reflections += 1
 				for ignored: PhysicsBody3D in get_collision_exceptions(): remove_collision_exception_with(ignored)

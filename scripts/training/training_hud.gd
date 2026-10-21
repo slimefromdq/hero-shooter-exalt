@@ -115,8 +115,6 @@ func draw_hud() -> void:
 			canvas.draw_arc(center, 220, -PI / 2, -PI / 2 + TAU * minf(1, p.kit.ultimate_age / p.tuning.ultimate_preparation), 100, mint, 3, true)
 			label_at("FINAL NOTICE  /  " + ("ACQUIRED" if p.kit.ultimate_age >= p.tuning.ultimate_preparation else "PREPARING"), Vector2(592, 690), 14, mint, true)
 		if hit_timer > 0.0:
-			for d: Vector2 in [Vector2(-1,-1), Vector2(1,-1), Vector2(-1,1), Vector2(1,1)]:
-				canvas.draw_line(center + d * 17, center + d * 25, coral if hit_head else mint, 3, true)
 			CombatHUD.hit(canvas,bold,hit_text,center,hit_head,hit_timer)
 	# Health / magazine / ability rail.
 	CombatHUD.vitals(canvas,p,font,bold,Vector2(32,816))
@@ -162,6 +160,8 @@ func draw_hud() -> void:
 		label_at("HOLD SPACE + MOVE into a ledge: MANTLE   /   PRESS SPACE in air by a wall: WALL KICK   /   %s: UMBRELLA VAULT" % TrainingInputs.key_label("hover"),Vector2(32,288),11,ink)
 	if training.debug_view:
 		draw_debug(p)
+	if is_instance_valid(training.workshop):
+		label_at(training.workshop.status(),Vector2(400,310),13,paper,true)
 	draw_statuses(p)
 	ControlFeedback.draw(canvas,p,bold,Vector2(32,320))
 	if is_instance_valid(training.practice_range) and training.practice_range.prompt != "": label_at(training.practice_range.prompt,Vector2(490,610),19,mint,true)
@@ -170,8 +170,6 @@ func draw_hud() -> void:
 		label_at("%d KILLS / %d STREAK" % [training.feedback.kills,training.feedback.streaks.get(p.get_instance_id(),0)],Vector2(32,285),15,paper,true)
 		if training.feedback.banner_time > 0:
 			label_at(training.feedback.banner.replace("\n"," / "),Vector2(400,210),18,paper,true)
-	if p.last_hit_age < 0.3:
-		canvas.draw_rect(Rect2(3, 3, 1434, 894), Color(0.95, 0.3, 0.22, (0.3 - p.last_hit_age) * 2), false, 6)
 	if not p.alive:
 		rect(Vector2(0, 0), Vector2(1440, 900), Color(0.08, 0.16, 0.2, 0.55))
 		label_at("AGENT DOWN", Vector2(552, 405), 46, paper, true)
@@ -268,6 +266,7 @@ func build_advanced_menu() -> void:
 	menu_label(root, "Session paused · defaults are experiments · TAB / ESC returns to the field", 14)
 	display_button = button(root, display_settings.button_text(), display_settings.toggle_fullscreen)
 	display_settings.display_mode_changed.connect(refresh_display_button)
+	training.workshop.build_controls(root,self)
 	var columns := HBoxContainer.new()
 	columns.add_theme_constant_override("separation", 42)
 	root.add_child(columns)
@@ -429,9 +428,13 @@ func check(parent: Node, caption: String, checked: bool, callback: Callable) -> 
 	check_controls[caption] = result
 
 func sync_menu() -> void:
+	training.workshop.refresh_dummies()
 	scenario_control.select(training.scenario)
 	var fields: Dictionary = {"Freeze bot intent": training.freeze_ai,
 		"Infinite resources  [CHEAT]": training.infinite,
+		"No cooldowns": training.no_cooldowns,
+		"Prevent death (1 HP)": training.prevent_death,
+		"Infinite ammunition": training.infinite_ammo,
 		"Player invulnerability  [CHEAT]": training.god_mode,
 		"Hitboxes & actor state  [F3]": training.debug_view,
 		"Target invulnerability": training.target_invulnerable}

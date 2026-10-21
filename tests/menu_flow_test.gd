@@ -30,7 +30,7 @@ func run() -> void:
 	menu.choose("doctor")
 	await wait_scene("res://scenes/training/combat_sandbox.tscn")
 	var training: TrainingManager = current_scene.training
-	check(training.player.kit is DoctorKit and training.bots.size() == 15,"startup selection launches chosen hero into full training")
+	check(training.player.kit is DoctorKit and training.bots.size() == 16,"startup selection launches chosen hero into full training")
 	training.toggle_menu()
 	var paused_menu: GameMenu = training.hud.menu.get_child(1)
 	paused_menu.show_settings()
@@ -42,7 +42,7 @@ func run() -> void:
 	paused_menu.show_heroes()
 	paused_menu.choose("slayer")
 	await settle()
-	check(not paused and training.player.kit is SlayerKit and training.bots.size() == 15,"training hero selection resets range and resumes")
+	check(not paused and training.player.kit is SlayerKit and training.bots.size() == 16,"training hero selection resets range and resumes")
 	training.enter_city()
 	await wait_scene("res://scenes/city/meridian_gardens.tscn")
 	var city: CityMatch = current_scene.match_controller

@@ -17,6 +17,9 @@ var shields: float = 0.0
 var invulnerable: bool = false
 var spawn_protected: bool = false
 var infinite_resources: bool = false
+var training_no_cooldowns: bool = false
+var training_infinite_ammo: bool = false
+var training_prevent_death: bool = false
 var alive: bool = true
 var life_serial: int = 0
 var state: String = "ready"
@@ -102,6 +105,8 @@ func _physics_process(delta: float) -> void:
 		if Vector2(aim_direction.x, aim_direction.z).length() > 0.01:
 			rotation.y = atan2(-aim_direction.x, -aim_direction.z)
 	state_time = maxf(0.0, state_time - delta)
+	if training_no_cooldowns and get_tree().get_first_node_in_group("training") != null:
+		TrainingResources.restore(self)
 	kit.tick_reload(delta)
 	if boot_pair != null and boot_pair.attacker == self: boot_pair.tick(delta)
 	if state in ["stagger", "counterthrow", "throw_release"] and state_time <= 0.0:
@@ -121,7 +126,10 @@ func _physics_process(delta: float) -> void:
 	var session: Node = get_tree().get_first_node_in_group("museum_match")
 	if session != null: session.enforce_spawn_exclusion(self,before_motion)
 	if global_position.y < -8.0:
-		die()
+		if training_prevent_death and get_tree().get_first_node_in_group("training") != null:
+			var practice: Node = get_tree().get_first_node_in_group("training")
+			practice.recover_player()
+		else: die()
 
 # One authority boundary: controllers request actions; only components resolve them.
 func permits(action: String) -> bool:

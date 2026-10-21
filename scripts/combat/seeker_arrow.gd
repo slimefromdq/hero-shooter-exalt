@@ -102,7 +102,7 @@ func sweep(motion: Vector3) -> bool:
 		var target := hit.get("collider") as HeroActor
 		if is_instance_valid(target):
 			var head: bool = at.y-target.global_position.y >= target.headshot_height()
-			var result := source.resolver.damage(source,target,damage_amount*(source.tuning.head_multiplier if head else 1.0),"projectile",cast_id,head,false,global_position)
+			var result := source.resolver.damage(source,target,damage_amount*(source.tuning.head_multiplier if head else 1.0),"projectile",cast_id,head,false,global_position,at)
 			if result == "deflect":
 				if reflections >= 2:
 					queue_free()

@@ -85,6 +85,8 @@ func show_home() -> void:
 		button("TRAINING  /  PRACTICE RANGE",func() -> void: mode = "training"; show_heroes())
 	else:
 		button("RESUME",session.toggle_menu)
+		if session is TrainingManager:
+			build_training_shortcuts()
 		button("CHANGE HERO",show_heroes)
 		if session is MuseumMatch: button("MUSEUM LIGHTING",show_museum_lighting)
 		button("RESTART MATCH" if session is CityMatch else "RESTART EXERCISE",session.restart_match if session is CityMatch else session.reset_scenario)
@@ -241,3 +243,23 @@ func add_bot_difficulty_selector(parent: Node) -> OptionButton:
 	selector.item_selected.connect(func(index: int) -> void: settings_store.set_setting("bot_difficulty",index))
 	parent.add_child(selector)
 	return selector
+
+func build_training_shortcuts() -> void:
+	var training := session as TrainingManager
+	var toggles := HBoxContainer.new()
+	content.add_child(toggles)
+	for setting: Array in [["No cooldowns","no_cooldowns"],["Prevent death (1 HP)","prevent_death"],["Infinite ammunition","infinite_ammo"]]:
+		var toggle := CheckButton.new()
+		toggle.text = setting[0]
+		toggle.button_pressed = training.get(setting[1])
+		toggles.add_child(toggle)
+		var field: String = setting[1]
+		toggle.toggled.connect(func(on: bool) -> void: training.set(field,on))
+	var row := HBoxContainer.new()
+	content.add_child(row)
+	button("SPAWN HERO / ABILITY LAB",func() -> void: visible = false; advanced.visible = true,row)
+	button("600 HP TANK",func() -> void: training.spawn_tank_dummy(); session.toggle_menu(),row)
+	var drills := HBoxContainer.new()
+	content.add_child(drills)
+	button("PERFECT SHIELD PARRY",training.workshop.start_parry,drills)
+	button("EXTENDED PARKOUR",training.workshop.start_parkour,drills)

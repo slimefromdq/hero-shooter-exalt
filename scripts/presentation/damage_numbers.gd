@@ -12,6 +12,9 @@ var pending_hit: int = -1
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var feedback := CombatFeedback.new()
+	feedback.viewer = viewer
+	add_child(feedback)
 	viewer.resolver.impact_confirmed.connect(on_impact)
 	viewer.resolver.confirmed_heal.connect(on_heal)
 	viewer.resolver.event_logged.connect(on_event)
@@ -95,15 +98,6 @@ func _draw() -> void:
 	if camera == null or font == null: return
 	var scale_factor: float = minf(size.x / 1440.0,size.y / 900.0)
 	var center: Vector2 = size*.5
-	for hit: Dictionary in incoming:
-		var alpha: float = clampf((.8-hit.age)*2,0,1)
-		if hit.origin == Vector3.INF:
-			draw_arc(center,115*scale_factor,0,TAU,40,Color(1,.35,.2,alpha*.4),3)
-			continue
-		var direction: Vector3 = camera.global_basis.inverse()*(hit.origin-viewer.body_point(1))
-		var angle: float = atan2(direction.x,-direction.z)-PI*.5
-		draw_arc(center,125*scale_factor,angle-.20,angle+.20,12,Color(1,.24,.14,alpha),6*scale_factor,true)
-		draw_line(center+Vector2.from_angle(angle)*112*scale_factor,center+Vector2.from_angle(angle)*102*scale_factor,Color(1,.7,.35,alpha),3,true)
 	if viewer.alive:
 		var caption: String = viewer.close.notice if viewer.close.notice_left > 0 else ""
 		if caption != "": draw_string_outline(font,center+Vector2(-65,80),caption,HORIZONTAL_ALIGNMENT_LEFT,-1,24,5,Color.BLACK)

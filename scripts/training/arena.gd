@@ -44,7 +44,9 @@ func build_environment() -> void:
 	Geometry.box(self, Vector3(56, 1, 62), Vector3(0, -0.5, 0), Color("aeb5a5"))
 	Geometry.box(self, Vector3(18, 0.018, 49), Vector3(0, 0.01, -3), Color("8c9b93"), false)
 	for x: float in [-28.0, 28.0]:
-		Geometry.box(self, Vector3(1, 5, 62), Vector3(x, 2.0, 0), Color("384e57"))
+		for z: float in [-23.0,23.0]:
+			Geometry.box(self,Vector3(1,5,16),Vector3(x,2,z),Color("384e57"))
+	Geometry.box(self,Vector3(48,1,42),Vector3(-51,-.5,0),Color("879d96"))
 	# Open gateway to four permanent practice stations north of the old range.
 	for x: float in [-17.0,17.0]: Geometry.box(self,Vector3(22,8,1),Vector3(x,3.5,-31),Color("293f4a"))
 	Geometry.box(self,Vector3(56,1,36),Vector3(0,-.5,-49),Color("879d96"))
@@ -91,6 +93,8 @@ func ensure_tactical_navigation() -> void:
 	mesh.agent_height = 2.0
 	mesh.agent_max_climb = .5
 	mesh.agent_max_slope = 48
+	# Keep tactical baking bounded to the combat arena; parkour is player traversal.
+	mesh.filter_baking_aabb = AABB(Vector3(-29,-2,-68),Vector3(58,14,100))
 	mesh.cell_size = .25
 	mesh.cell_height = .25
 	mesh.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS

@@ -58,7 +58,7 @@ func free_slide_ammo() -> bool:
 
 func consume_ammo() -> void:
 	actor.presentation.shot_feedback()
-	if not actor.infinite_resources and not free_slide_ammo(): ammo -= 1
+	if not actor.infinite_resources and not actor.training_infinite_ammo and not free_slide_ammo(): ammo -= 1
 
 func tick(_delta: float, _input: CombatIntent) -> void:
 	pass

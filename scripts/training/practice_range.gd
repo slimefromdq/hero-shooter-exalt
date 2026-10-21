@@ -42,6 +42,9 @@ func _ready() -> void:
 			add_button(at+Vector3(0,0,2),"250 HP / "+station.to_upper(),set_health.bind(station,250.0))
 			add_button(at+Vector3(0,0,4),"25 HP / "+station.to_upper(),set_health.bind(station,25.0))
 			if station == "shooting": add_button(at+Vector3(0,0,6),"TOGGLE FIRING",toggle_firing)
+	var tank := training.spawn_tank_dummy(true,Vector3(0,.1,-47))
+	if tank != null:
+		Geometry.text3d(self,"TANK DUMMY / 600 HP",Vector3(0,3.5,-47),28,Color("ffc7bc"))
 	add_button(Vector3(0,.7,-34),"RESET KILL FEEDBACK",training.feedback.reset)
 
 func add_button(at: Vector3, caption: String, action: Callable) -> void:

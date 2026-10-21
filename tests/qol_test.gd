@@ -220,7 +220,7 @@ func menus_and_range() -> void:
 	await step(4)
 	var training: TrainingManager = arena.training
 	training.freeze_ai = true
-	check(training.scenario == 11 and training.bots.size() == 15,"practice range is default with fifteen built-ins")
+	check(training.scenario == 11 and training.bots.size() == 16,"practice range is default with sixteen built-ins including the tank dummy")
 	var range_node: PracticeRange = training.practice_range
 	check(range_node.groups.aoe.size() == 6 and range_node.groups.allies.size() == 3,"six AoE targets and three allies")
 	check(not range_node.firing,"shooters begin disabled")
@@ -233,7 +233,7 @@ func menus_and_range() -> void:
 		training.player.resolver.damage(training.player,dummy,100,"bomb",training.player.resolver.new_cast(training.player))
 	check(training.feedback.kills == 6 and training.feedback.banner.contains("SEXTUPLE"),"real dummy kills produce sextuple feedback")
 	for index: int in 8: training.spawn_bot(0,Vector3(index*2,.01,20))
-	check(training.bots.size() == 23 and training.spawn_bot(0) == null,"manual target cap is independent of built-ins")
+	check(training.bots.size() == 24 and training.spawn_bot(0) == null,"manual target cap is independent of built-ins")
 	await step(215)
 	check(range_node.groups.aoe.all(func(dummy: HeroActor) -> bool: return dummy.alive),"dummy respawn restores all targets")
 	var ally: HeroActor = range_node.groups.allies[0]

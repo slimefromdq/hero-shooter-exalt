@@ -118,7 +118,7 @@ func sweep_motion(requested: Vector3) -> bool:
 				hit_targets[id] = true
 				var tag: String = "knife" if kind == "knife" else "axe"
 				var had_shields: bool = target.shields > 0.0
-				var result: String = source.resolver.damage(source,target,t.knife_damage if kind == "knife" else t.axe_damage,tag,cast_id,false,false,previous)
+				var result: String = source.resolver.damage(source,target,t.knife_damage if kind == "knife" else t.axe_damage,tag,cast_id,false,false,previous,hit.get_position())
 				if result == "deflect":
 					# Knives and the axe are blocked by Nimbus's frontal deflect.
 					impact(hit.get_position(),hit.get_normal(),"deflect")

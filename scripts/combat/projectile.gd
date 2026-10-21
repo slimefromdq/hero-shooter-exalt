@@ -56,7 +56,7 @@ func _physics_process(delta: float) -> void:
 		return
 	if target != null:
 		var head: bool = headshots and hit.position.y-target.global_position.y >= target.headshot_height()
-		var result: String = source.resolver.damage(source, target, damage_amount*(head_multiplier if head else 1.0), "projectile", cast_id, head, false, global_position)
+		var result: String = source.resolver.damage(source, target, damage_amount*(head_multiplier if head else 1.0), "projectile", cast_id, head, false, global_position,hit.position)
 		if result == "hit" and confirmed_impact.is_valid(): confirmed_impact.call(source,target)
 		if result == "deflect":
 			var event_key: String = "%d:%d" % [target.get_instance_id(), target.kit.cast_id]

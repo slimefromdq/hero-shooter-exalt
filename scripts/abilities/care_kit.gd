@@ -47,7 +47,7 @@ func weapon(amount: float, spread: float = 0.0, pellets: int = 1) -> void:
 		var target: HeroActor = hit.get("collider") as HeroActor
 		if target != null:
 			var head: bool = endpoint.y - target.global_position.y >= target.headshot_height()
-			actor.resolver.damage(actor,target,damage * (actor.tuning.head_multiplier if head else 1.0),"cannon" if pellets > 1 else "sidearm",id,head,false,muzzle)
+			actor.resolver.damage(actor,target,damage * (actor.tuning.head_multiplier if head else 1.0),"cannon" if pellets > 1 else "sidearm",id,head,false,muzzle,endpoint)
 		elif hit.get("collider") is CombatBarrier or hit.get("collider") is HunterSnare or hit.get("collider") is CombatStructure:
 			hit.collider.receive_damage(actor,damage,id)
 		CombatEffect.line(actor.get_parent(),muzzle,endpoint,Color("f5cc88") if pellets > 1 else Color("b5f2e3"))

@@ -75,6 +75,10 @@ See [movement and combat feel](docs/FEEL_UPDATE.md) for release parries, the new
 
 Movement now has distinct takeoff/contact bursts, short dash trails, ground slide streaks, mantle hand glints and aimed melee arcs. Wall jumps, dashes, ordinary slides and dash slides briefly confirm beside the crosshair; jumps, mantles and melee use world effects only. Attempted dash slides explain early/late crouch, released crouch, insufficient momentum, obstructions and expired dashes. No warning appears for ordinary dashes without a slide attempt. **Movement camera effects** in settings or the training camera controls toggles the short FOV accents; aiming/scoped views suppress them. Movement cues follow the actual completed transition.
 
+## Combat feedback and expanded training
+
+Hits now show red health sparks or blue shield sparks, a damage-scaled reticle X, red headshot glow, and a brief red kill skull. Stronger directional hurt arrows and a low-health red border work in every arena. Training adds quick cooldown/death/ammo toggles, a 600 HP tank dummy, all-hero dummy and AI controls, a real-cast ability lab, close-combat modes, perfect-parry counters, and a separate six-checkpoint parkour course. See [controls and validation](docs/COMBAT_TRAINING.md).
+
 ## Guard practice
 
 Press **Tab → Start guard drill**, walk inside the coral ring, face the stationary bot and hold **6**. The bot starts strikes within **2.4 m**, repeating at a **1.6 s** interval after its normal reaction/startup. A successful block produces a metallic clang, shield flash, expanding rings and sparks. The attacker snaps backward, spreads its arms, buckles its knees and shows rotating daze markers during the existing 0.55 s stagger. It uses the shared melee and stagger rules but stays planted. Change **Strike trigger range** and **Strike interval** under **Stationary guard drill** in the training console. The same bot is available as the **Guard trainer** spawn profile. Starting the dedicated drill clears AI freeze.

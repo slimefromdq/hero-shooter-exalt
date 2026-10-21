@@ -119,8 +119,6 @@ func draw_hud() -> void:
 		centered("VICTORY" if m.winner == p.team else "DEFEAT",Vector2(800,378),42,mint if m.winner == p.team else coral,true)
 		centered("CAPTURE + ESCORT  /  MERIDIAN MUSEUM" if m.is_in_group("museum_match") else "FIRST TO 100  /  MERIDIAN GARDENS",Vector2(800,414),12,brass)
 		centered("F5  PLAY AGAIN     ·     TAB  MATCH CONSOLE",Vector2(800,450),12,paper)
-	if p.last_hit_age < .25:
-		canvas.draw_rect(Rect2(4,4,1592,892),Color(1,.28,.16,(.25 - p.last_hit_age) * 2),false,5)
 	ControlFeedback.draw(canvas,p,bold,Vector2(32,280))
 	if overview_open:
 		draw_overview()
@@ -243,8 +241,6 @@ func draw_crosshair(p: HeroActor) -> void:
 	if p.alive and not match_controller.menu_open: MovementHUD.draw(canvas,p,bold,center)
 	draw_reticle_resources(p,center)
 	if hit_timer > 0:
-		for direction: Vector2 in [Vector2(-1,-1),Vector2(1,-1),Vector2(-1,1),Vector2(1,1)]:
-			canvas.draw_line(center + direction * 17,center + direction * 24,coral if hit_head else mint,2.5,true)
 		CombatHUD.hit(canvas,bold,hit_text,center,hit_head,hit_timer)
 	if p.state == "ultimate":
 		canvas.draw_arc(center,180,-PI/2,-PI/2 + TAU * minf(1,p.kit.ultimate_age / p.tuning.ultimate_preparation),72,mint,2,true)

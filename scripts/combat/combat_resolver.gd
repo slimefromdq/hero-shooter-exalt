@@ -5,6 +5,8 @@ signal event_logged(entry: Dictionary)
 signal cast_started(source: HeroActor, id: int)
 signal confirmed_hit(source: HeroActor, target: HeroActor, amount: float, head: bool, executed: bool)
 signal impact_confirmed(source: HeroActor, target: HeroActor, amount: float, head: bool, executed: bool, origin: Vector3, shield_damage: float, cast_id: int, tag: String)
+## Contact detail is separate to preserve existing impact listeners.
+signal impact_located(target: HeroActor, amount: float, head: bool, shield_damage: float, cast_id: int, tag: String, contact: Vector3)
 enum ImpactKind { WEAPON, ABILITY, MELEE, THROW, PERIODIC, AREA, ULTIMATE }
 enum Admission { ALLOWED, REJECTED, PARRIED }
 signal confirmed_heal(source: HeroActor, target: HeroActor, amount: float)
@@ -26,6 +28,9 @@ var parried_impacts: Dictionary = {}
 
 func _ready() -> void:
 	add_to_group("combat_resolver")
+	var impacts := HitImpactPresenter.new()
+	impacts.resolver = self
+	add_child(impacts)
 
 func _physics_process(delta: float) -> void:
 	combat_time += delta
@@ -127,7 +132,7 @@ func spawn_door_blocks(from: Vector3, toward: Vector3) -> bool:
 	return false
 
 func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast_id: int,
-		head: bool = false, execute: bool = false, incoming_from: Vector3 = Vector3.INF) -> String:
+		head: bool = false, execute: bool = false, incoming_from: Vector3 = Vector3.INF, contact: Vector3 = Vector3.INF) -> String:
 	if not is_instance_valid(source) or not is_instance_valid(target) or not target.alive:
 		return "invalid"
 	if source.team == target.team or target.damage_immune():
@@ -181,7 +186,9 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 	var temporary: float = target.overhealth.absorb(amount)
 	var absorbed: float = minf(target.shields, maxf(0,amount-temporary))
 	target.shields -= absorbed
-	var hp_damage: float = minf(target.health, maxf(0.0, amount - temporary - absorbed))
+	var floor_hp: float = 1.0 if target.training_prevent_death and get_tree().get_first_node_in_group("training") != null else 0.0
+	if floor_hp > 0: executed = false
+	var hp_damage: float = minf(maxf(0,target.health-floor_hp), maxf(0.0, amount - temporary - absorbed))
 	target.health = maxf(0.0, target.health - hp_damage)
 	if not source.kit.ultimate_active() and not ultimate_casts.has(cast_id): source.kit.gain_ultimate_charge(minf(base,hp_damage + absorbed + temporary) * 0.09)
 	track_damage(source, target, hp_damage + absorbed + temporary, tag)
@@ -193,6 +200,7 @@ func damage(source: HeroActor, target: HeroActor, base: float, tag: String, cast
 	confirmed_hit.emit(source, target, hp_damage + absorbed + temporary, head, executed)
 	var undirected: bool = tag == "bleed" or int(impact_kinds.get(cast_id,kind)) in [ImpactKind.AREA,ImpactKind.PERIODIC]
 	impact_confirmed.emit(source,target,hp_damage+absorbed+temporary,head,executed,Vector3.INF if undirected else origin,absorbed+temporary,cast_id,tag)
+	impact_located.emit(target,hp_damage+absorbed+temporary,head,absorbed+temporary,cast_id,tag,contact)
 	return "execution" if executed else "hit"
 
 func knockback(source: HeroActor, target: HeroActor, impulse: Vector3, tag: String) -> void:
@@ -226,6 +234,7 @@ func clear_round() -> void:
 	impact_kinds.clear()
 	for actor: HeroActor in get_tree().get_nodes_in_group("actors"):
 		if actor.overhealth != null: actor.overhealth.clear()
+		feedback_cleared.emit(actor)
 	contributions.clear()
 	combat_time = 0.0
 

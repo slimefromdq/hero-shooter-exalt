@@ -12,6 +12,10 @@ var debug_view: bool = false
 var freeze_ai: bool = false
 var infinite: bool = false
 var god_mode: bool = false
+var no_cooldowns: bool = false
+var prevent_death: bool = false
+var infinite_ammo: bool = false
+var workshop: TrainingWorkshop
 var target_invulnerable: bool = false
 var target_shields: float = 0.0
 var target_health_override: bool = false
@@ -51,6 +55,9 @@ func _ready() -> void:
 	feedback.player = player
 	add_child(feedback)
 	player.resolver.elimination.connect(feedback.on_elimination)
+	workshop = TrainingWorkshop.new()
+	workshop.training = self
+	add_child(workshop)
 	hud = TrainingHUD.new()
 	hud.training = self
 	add_child(hud)
@@ -68,6 +75,10 @@ func _process(delta: float) -> void:
 		return
 	elapsed += delta
 	notice_time = maxf(0.0, notice_time - delta)
+	player.training_infinite_ammo = infinite_ammo
+	player.training_no_cooldowns = no_cooldowns
+	player.training_prevent_death = prevent_death
+	if infinite_ammo: player.kit.ammo = player.tuning.magazine
 	player.infinite_resources = infinite
 	player.invulnerable = god_mode
 	for bot: HeroActor in bots:
@@ -125,6 +136,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		debug_view = not debug_view
 
 func toggle_menu() -> void:
+	# Apply paused-menu changes before the first resumed physics tick.
+	player.training_no_cooldowns = no_cooldowns
+	player.training_prevent_death = prevent_death
+	player.training_infinite_ammo = infinite_ammo
 	if player.controller is PlayerController: (player.controller as PlayerController).clear_action_queue()
 	menu_open = not menu_open
 	get_tree().paused = menu_open
@@ -137,7 +152,7 @@ func show_notice(message: String) -> void:
 	notice = message
 	notice_time = 3.0
 
-func spawn_bot(profile: int, at: Vector3 = Vector3.INF, built_in: bool = false, team_id: int = 1) -> HeroActor:
+func spawn_bot(profile: int, at: Vector3 = Vector3.INF, built_in: bool = false, team_id: int = 1, hero_id: String = "") -> HeroActor:
 	var manual_count: int = 0
 	for existing: HeroActor in bots:
 		if not existing.get_meta("built_in",false): manual_count += 1
@@ -148,11 +163,11 @@ func spawn_bot(profile: int, at: Vector3 = Vector3.INF, built_in: bool = false, 
 	var bot := preload("res://scenes/actors/hero_actor.tscn").instantiate() as HeroActor
 	bot.set_meta("built_in",built_in)
 	bot.team = team_id
-	bot.tuning = HeroRoster.tuning_for({6:"slayer",7:"marshal",8:"doctor",9:"huddle",10:"relay",11:"dynamo",12:"wisp",14:"samson",15:"stitch"}.get(profile,"nimbus"))
+	bot.tuning = HeroRoster.tuning_for(hero_id if not hero_id.is_empty() else {6:"slayer",7:"marshal",8:"doctor",9:"huddle",10:"relay",11:"dynamo",12:"wisp",14:"samson",15:"stitch"}.get(profile,"nimbus"))
 	bot.actor_id = "%s_%02d" % [PROFILES[profile].to_lower().replace(" ", "_"), spawn_serial]
 	bot.position = Vector3(-4 + bots.size() * 3, 0.1, -7 - bots.size() * 2) if at == Vector3.INF else at
 	arena.add_child(bot)
-	if profile < 10 or target_health_override: bot.tuning.max_health = bot_max_health
+	if hero_id.is_empty() and (profile < 10 or target_health_override): bot.tuning.max_health = bot_max_health
 	bot.health = bot.tuning.max_health
 	bot.shields = target_shields
 	bot.invulnerable = target_invulnerable
@@ -189,6 +204,7 @@ func despawn_bots() -> void:
 	death_timers.clear()
 
 func reset_scenario() -> void:
+	if is_instance_valid(workshop): workshop.stop_all()
 	if is_instance_valid(practice_range): practice_range.queue_free()
 	if is_instance_valid(hud): hud.hit_timer = 0.0
 	despawn_bots()
@@ -196,6 +212,10 @@ func reset_scenario() -> void:
 	player.tuning.max_health = player_max_health
 	player.reset_actor(Vector3(0, 0.1, 11))
 	player.invulnerable = god_mode
+	player.training_infinite_ammo = infinite_ammo
+	player.training_no_cooldowns = no_cooldowns
+	player.training_prevent_death = prevent_death
+	if infinite_ammo: player.kit.ammo = player.tuning.magazine
 	player.infinite_resources = infinite
 	player.resolver.clear_round()
 	feedback.reset()
@@ -294,6 +314,7 @@ func reset_scenario() -> void:
 			for i: int in 3:
 				var attacker: HeroActor = spawn_bot(2,Vector3(-3+i*3,.1,-5))
 				attacker.controller.target = friend
+	workshop.refresh_dummies()
 	show_notice("EXERCISE %02d  /  %s" % [scenario + 1, SCENARIOS[scenario].to_upper()])
 
 func refill_all() -> void:
@@ -423,3 +444,72 @@ func start_stitch_drill() -> void:
 	reset_scenario()
 	show_notice("Needles mark / shears consume / E hide then LMB lunge / Q surface hang, Q or Space release / 1 pull / 2 pierce")
 	if menu_open: toggle_menu()
+
+func recover_player() -> void:
+	if is_instance_valid(workshop) and is_instance_valid(workshop.parkour) and workshop.parkour.running:
+		workshop.parkour.recover()
+	else:
+		player.reset_actor(Vector3(0,.1,11))
+		player.health = 1
+
+func spawn_hero(hero: String, behavior: String = "Stationary", allied: bool = false, at: Vector3 = Vector3.INF, built_in: bool = false) -> HeroActor:
+	var bot := spawn_bot(0,find_spawn_point() if at == Vector3.INF else at,built_in,player.team if allied else 1-player.team,hero)
+	if bot == null: return null
+	bot.actor_id = "%s_%02d" % [HeroRoster.display_name(hero),spawn_serial]
+	bot.set_meta("hero_dummy",true)
+	set_behavior(bot,behavior)
+	return bot
+
+func spawn_tank_dummy(built_in: bool = false, at: Vector3 = Vector3.INF) -> HeroActor:
+	var bot := spawn_hero("marshal","Stationary",false,at,built_in)
+	if bot == null: return null
+	bot.tuning.max_health = 600
+	bot.health = 600
+	bot.actor_id = "Tank dummy / 600 HP"
+	return bot
+
+func set_behavior(bot: HeroActor, behavior: String) -> void:
+	if not is_instance_valid(bot): return
+	if bot.alive and bot.has_meta("behavior"):
+		bot.close.cancel()
+		bot.kit.cancel()
+		bot.motor.cancel()
+		bot.state = "ready"
+	if is_instance_valid(bot.controller):
+		bot.remove_child(bot.controller)
+		bot.controller.queue_free()
+	var controller: BotController
+	if behavior == "Full kit":
+		arena.ensure_tactical_navigation()
+		controller = TrainingTacticalController.new()
+	elif behavior in ["Melee only","Throw only","Shield defense","Mixed close combat"]:
+		controller = ClosePracticeController.new()
+		controller.mode = behavior
+	else:
+		controller = BotController.new()
+		controller.profile = BotController.Profile.STRAFE if behavior == "Strafing" else BotController.Profile.STATIONARY
+	controller.actor = bot
+	controller.target = player
+	controller.frozen = freeze_ai
+	bot.controller = controller
+	bot.add_child(controller)
+	bot.set_meta("behavior",behavior)
+	apply_bot_settings()
+
+func find_spawn_point() -> Vector3:
+	var shape := CapsuleShape3D.new()
+	shape.radius = .5
+	shape.height = 2
+	for index: int in 16:
+		var angle: float = index*TAU/8
+		var offset := Vector3(cos(angle),0,sin(angle))*(5.0 if index < 8 else 9.0)
+		var near: Vector3 = player.global_position+offset
+		var floor_hit: Dictionary = player.resolver.ray(near+Vector3.UP*4,near-Vector3.UP*6,[],1)
+		if floor_hit.is_empty() or floor_hit.normal.y < .8: continue
+		var point: Vector3 = floor_hit.position+Vector3.UP*.1
+		var query := PhysicsShapeQueryParameters3D.new()
+		query.shape = shape
+		query.transform = Transform3D(Basis.IDENTITY,point+Vector3.UP)
+		query.collision_mask = 3
+		if player.get_world_3d().direct_space_state.intersect_shape(query,1).is_empty(): return point
+	return Vector3(0,.1,6)

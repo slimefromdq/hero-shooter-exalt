@@ -76,7 +76,7 @@ func fire(ultimate: bool) -> void:
 		var target: HeroActor = hit["collider"] as HeroActor
 		var head: bool = not ultimate and endpoint.y - target.global_position.y >= target.headshot_height()
 		var amount: float = t.ultimate_damage if ultimate else t.rifle_damage * (t.head_multiplier if head else 1.0)
-		actor.resolver.damage(actor, target, amount, "ultimate" if ultimate else "rifle", cast_id, head, ultimate,muzzle)
+		actor.resolver.damage(actor, target, amount, "ultimate" if ultimate else "rifle", cast_id, head, ultimate,muzzle,endpoint)
 	elif hit.get("collider") is CombatBarrier:
 		hit.collider.receive_damage(actor,t.ultimate_damage if ultimate else t.rifle_damage,cast_id)
 	elif hit.get("collider") is PocketBomb:

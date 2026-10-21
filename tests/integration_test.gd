@@ -37,7 +37,7 @@ func run() -> void:
 	player.controller.active = false
 	player.controller = null # Feed deterministic intent through the same actor pipeline.
 	await step(3)
-	check(training.bots.size() == 15 and player.alive, "training launches into the persistent practice range")
+	check(training.bots.size() == 16 and player.alive, "training launches into the persistent practice range")
 	check(not training.infinite and not training.god_mode and not training.freeze_ai, "ordinary rules are the launch defaults")
 	var camera_wall: Node3D = Geometry.box(arena, Vector3(5,5,0.35), player.global_position + Vector3(0,2.5,1.5), Color.GRAY)
 	await step(4)

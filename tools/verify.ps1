@@ -20,6 +20,11 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Global healing and ultimate balance failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/feel_update_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Movement and combat feel update failed.' }
+    foreach ($taskTrainingTest in @('combat_feedback_test', 'training_expansion_test', 'ability_lab_test', 'parkour_course_test')) {
+        & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script "res://tests/$taskTrainingTest.gd"
+        if ($LASTEXITCODE -ne 0) { throw "Combat feedback / training validation failed: $taskTrainingTest" }
+    }
+
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/wave_1_test.gd
     if ($LASTEXITCODE -ne 0) { throw 'Wave 1 integration and tuning checks failed.' }
     & $taskEngine --headless --path $taskRoot --fixed-fps 60 --script res://tests/wave_1_round_test.gd

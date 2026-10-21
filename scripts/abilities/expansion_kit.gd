@@ -41,7 +41,7 @@ func hitscan(direction: Vector3, reach: float, amount: float, tag: String, heads
 	var id: int = actor.resolver.new_cast(actor)
 	if target != null:
 		var head: bool = headshots and endpoint.y-target.global_position.y >= target.headshot_height()
-		hit["result"] = actor.resolver.damage(actor,target,amount*(actor.tuning.head_multiplier if head else 1.0),tag,id,head,false,from)
+		hit["result"] = actor.resolver.damage(actor,target,amount*(actor.tuning.head_multiplier if head else 1.0),tag,id,head,false,from,endpoint)
 	else: actor.resolver.hit_object(hit.get("collider"),actor,amount,id)
 	CombatEffect.line(actor.get_parent(),from,endpoint,Color("d7b3ff") if actor.tuning.hero_id == "wisp" else Color("ffcf78"))
 	return hit

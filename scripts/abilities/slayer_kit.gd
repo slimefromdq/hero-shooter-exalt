@@ -175,7 +175,7 @@ func fire(_ultimate: bool = false) -> void:
 			if target != null:
 				var head: bool = endpoint.y - target.global_position.y >= target.headshot_height()
 				var before: float = target.health + target.shields
-				var result: String = actor.resolver.damage(actor,target,amount * (t.head_multiplier if head else 1.0),"shotgun",pellet_cast,head,false,muzzle)
+				var result: String = actor.resolver.damage(actor,target,amount * (t.head_multiplier if head else 1.0),"shotgun",pellet_cast,head,false,muzzle,endpoint)
 				last_shot_damage += before - target.health - target.shields
 				if result == "hit":
 					confirmed = before > target.health + target.shields
