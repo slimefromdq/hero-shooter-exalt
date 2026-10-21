@@ -115,6 +115,11 @@ func run() -> void:
 	for id: String in ["nimbus","slayer","marshal","dynamo","wisp"]:
 		doctor.select_hero(id)
 		check(doctor.kit.selection_previews().is_empty(),id+" has no artificial lock-on prompts")
+	for id: String in HeroRoster.IDS:
+		doctor.select_hero(id)
+		doctor.aim_direction = Vector3.BACK
+		var previews: Array[Dictionary] = doctor.kit.selection_previews()
+		check(previews.is_typed() and previews.is_empty(),id+" returns typed empty previews for the HUD without a target")
 	doctor.select_hero("samson")
 	await step()
 	aim(doctor,enemy)
@@ -163,6 +168,33 @@ func run() -> void:
 		check(markers.markers[0].text.contains("RMB") and markers.markers[0].text.contains("Q") and markers.markers[0].text.contains("1") and markers.markers[0].text.contains("2"),"ally marker lists every usable selection binding")
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://artifacts/ability-selection-ally.png")
+		# Exercise the actual local HUD consumer after every roster switch, with and
+		# without a selected ally. A valid return signature alone does not guarantee
+		# that a conditional array expression has the correct runtime element type.
+		for id: String in HeroRoster.IDS:
+			doctor.select_hero(id)
+			await step()
+			aim(doctor,friend)
+			player.camera.global_position = Vector3(6,4,4)
+			player.camera.look_at(friend.body_point(1.5))
+			markers = doctor.presentation.selections
+			var previews: Array[Dictionary] = doctor.kit.selection_previews()
+			check(previews.is_typed(),id+" returns typed previews with an ally in view")
+			markers._process(0)
+			var visible: int = 0
+			for marker: Label3D in markers.markers:
+				if marker.visible: visible += 1
+			check(visible == (1 if id in ["doctor","huddle","relay","samson"] else 0),id+" renders the expected local ally marker after switching")
+			doctor.aim_direction = Vector3.BACK
+			markers._process(0)
+			var hidden: bool = true
+			for marker: Label3D in markers.markers:
+				hidden = hidden and not marker.visible
+			check(hidden,id+" hides local markers when the target leaves aim")
+		doctor.select_hero("doctor")
+		aim(doctor,friend)
+		markers = doctor.presentation.selections
+		markers._process(0)
 		doctor.alive = false
 		markers._process(0)
 		check(not markers.markers[0].visible,"owner death hides marker immediately")

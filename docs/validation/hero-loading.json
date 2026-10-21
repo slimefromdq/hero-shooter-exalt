@@ -1,0 +1,50 @@
+{
+  "scope": "All registered hero startup and ability-selection loading paths",
+  "heroes": [
+    "nimbus",
+    "slayer",
+    "marshal",
+    "doctor",
+    "huddle",
+    "relay",
+    "dynamo",
+    "wisp",
+    "samson",
+    "stitch"
+  ],
+  "rendered_startup": {
+    "scenes": [
+      "City via main-menu direct entry",
+      "Training sandbox",
+      "Museum"
+    ],
+    "launches": 30,
+    "frames_per_launch": 150,
+    "exit_codes": "All zero",
+    "script_or_engine_errors": 0,
+    "logs": "artifacts/hero-load-{city,training,museum}-{hero}.log"
+  },
+  "selection_regression": {
+    "headless_checks": 51,
+    "rendered_checks": 90,
+    "failures": 0,
+    "coverage": [
+      "Typed HUD assignment with no target for every hero",
+      "Rendered hero switching across every hero",
+      "Expected ally markers for Doctor, Huddle, Seeker, Samson",
+      "Marker removal when target leaves aim"
+    ]
+  },
+  "full_verifier": {
+    "command": "powershell -ExecutionPolicy Bypass -File ./tools/verify.ps1",
+    "exit_code": 0,
+    "godot_invocations": 63,
+    "pass_lines": 4820,
+    "failure_lines": 0,
+    "script_errors": 0,
+    "caveat": "City audit shutdowns report RID/resource/ObjectDB/allocator leaks; verifier exits zero. These are separate from the clean rendered hero startup checks.",
+    "log": "artifacts/roster-loading-full-verifier.log"
+  },
+  "result": "No additional hero loading bug reproduced. Added roster-wide regression coverage.",
+  "limits": "Startup smoke and targeted marker checks do not prove all ability behavior or human gameplay feel."
+}
