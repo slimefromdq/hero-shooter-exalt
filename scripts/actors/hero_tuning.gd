@@ -8,6 +8,7 @@ extends Resource
 @export var braking: float = 24.0
 @export var ground_overspeed_decay: float = 6.0
 @export var air_steering: float = 5.625
+@export_range(0,180) var air_turn_degrees: float = 45.0
 @export var gravity: float = 22.0
 @export var jump_impulse: float = 8.0
 @export var mantle_reach: float = 1.15

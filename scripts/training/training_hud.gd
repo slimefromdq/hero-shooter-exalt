@@ -350,6 +350,7 @@ func build_advanced_menu() -> void:
 		["Counter window (s)", "counter_window", 0.24, 0.05, 0.4, 0.01],
 		["Throw outside damage multiplier", "throw_outside_multiplier", 0.1, 0.05, 1.0, 0.05],
 		["Guard bullet reduction (0 = none)", "bullet_guard_reduction", 0.0, 0.0, 0.8, 0.05],
+		["Air turn rate (degrees/sec)", "air_turn_degrees", 45.0, 0.0, 180.0, 5.0],
 		["Ground excess-speed decay", "ground_overspeed_decay", 6.0, 0.0, 24.0, 0.5],
 		["Upward dash angle (degrees)", "dash_up_angle", 30.0, 0.0, 60.0, 5.0],
 		["Dash speed (m/s)", "dash_speed", 20.0, 12.0, 26.0, 1.0],
@@ -359,8 +360,8 @@ func build_advanced_menu() -> void:
 	for field: Array in fields:
 		spin(right, field[0], float(training.player.tuning.get(field[1])), field[3], field[4], field[5], change_tuning.bind(field[1]))
 	button(right, "Start timed traversal route", training.start_route)
-	button(right, "Movement preset · responsive", func() -> void: training.set_tuning("acceleration", 42); training.set_tuning("braking", 34); training.set_tuning("air_steering", 8.25))
-	button(right, "Movement preset · weighty (default)", func() -> void: training.set_tuning("acceleration", 30); training.set_tuning("braking", 24); training.set_tuning("air_steering", 5.625))
+	button(right, "Movement preset · responsive", func() -> void: training.set_tuning("acceleration", 42); training.set_tuning("braking", 34); training.set_tuning("air_steering", 8.25); training.set_tuning("air_turn_degrees", 66))
+	button(right, "Movement preset · weighty (default)", func() -> void: training.set_tuning("acceleration", 30); training.set_tuning("braking", 24); training.set_tuning("air_steering", 5.625); training.set_tuning("air_turn_degrees", 45))
 	var camera_controls := VBoxContainer.new()
 	right.add_child(camera_controls)
 	var camera_controller: PlayerController = training.player.controller as PlayerController

@@ -409,6 +409,19 @@ func steer_horizontal(current: Vector3, wish: Vector3, target_speed: float, on_f
 	var speed: float = current.length()
 	var desired: Vector3 = wish.normalized()
 	var acceleration: float = t.acceleration if on_floor else t.air_steering
+	if not on_floor:
+		var strength: float = minf(1,wish.length())
+		var step: float = maxf(0,t.air_steering) * strength * delta
+		if speed <= .001:
+			return current.move_toward(desired * target_speed * strength,step)
+		# Opposing input brakes before a later tick can launch backward.
+		if current.dot(desired) < 0:
+			return current.move_toward(Vector3.ZERO,step)
+		# Angular control stays useful at speed without creating strafe boosts.
+		var air_angle: float = current.signed_angle_to(desired,Vector3.UP)
+		var max_turn: float = deg_to_rad(maxf(0,t.air_turn_degrees)) * strength * delta
+		var air_speed: float = maxf(speed,minf(target_speed * strength,speed + step))
+		return current.rotated(Vector3.UP,clampf(air_angle,-max_turn,max_turn)).normalized() * air_speed
 	if speed > .001 and current.dot(desired) < 0:
 		return current.move_toward(Vector3.ZERO,(t.braking if on_floor else acceleration) * delta)
 	var desired_speed: float = target_speed * minf(1,wish.length())

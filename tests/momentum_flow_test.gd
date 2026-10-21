@@ -50,6 +50,34 @@ func run() -> void:
 		await physics_frame
 		var dt: float = 1.0/hz
 		var label: String = " at %d Hz" % hz
+		for launch_speed: float in [6.0,18.0]:
+			reset(Vector3(0,60,20))
+			actor.velocity = Vector3.FORWARD * launch_speed
+			actor.intent.move = Vector3.RIGHT
+			tick(dt,hz/2)
+			var turned: float = absf(rad_to_deg(Vector3.FORWARD.signed_angle_to(actor.velocity * Vector3(1,0,1),Vector3.UP)))
+			check(absf(turned-22.5) < 1 and absf(horizontal()-launch_speed) < .001,"air turn rate and speed at %s m/s" % launch_speed+label)
+		var velocity: Vector3 = Vector3.FORWARD * 18
+		for i: int in hz/2:
+			velocity = actor.motor.steer_horizontal(velocity,Vector3.RIGHT*.5,6,false,false,dt)
+		check(absf(rad_to_deg(Vector3.FORWARD.angle_to(velocity))-11.25) < .01 and absf(velocity.length()-18) < .001,"analog input scales turning without speed loss"+label)
+		var stopped: Vector3 = actor.motor.steer_horizontal(Vector3.FORWARD*.01,Vector3.BACK,6,false,false,dt)
+		check(stopped.is_zero_approx(),"opposite input stops before reversing"+label)
+		check(actor.motor.steer_horizontal(stopped,Vector3.BACK,6,false,false,dt).z > 0,"input accelerates backward after stopping"+label)
+		var full_brake: Vector3 = actor.motor.steer_horizontal(Vector3.FORWARD*18,Vector3.BACK,6,false,false,dt)
+		var half_brake: Vector3 = actor.motor.steer_horizontal(Vector3.FORWARD*18,Vector3.BACK*.5,6,false,false,dt)
+		check(absf((18-half_brake.length())*2-(18-full_brake.length())) < .001,"analog input scales braking"+label)
+		var near_heading: Vector3 = Vector3.FORWARD.rotated(Vector3.UP,deg_to_rad(.01))
+		velocity = actor.motor.steer_horizontal(Vector3.FORWARD*18,near_heading,6,false,false,dt)
+		check(velocity.normalized().distance_to(near_heading) < .00001,"turn clamps at requested heading"+label)
+		actor.tuning.air_turn_degrees = 0
+		velocity = actor.motor.steer_horizontal(Vector3.FORWARD*18,Vector3.RIGHT,6,false,false,dt)
+		check(velocity.distance_to(Vector3.FORWARD*18) < .001,"zero turn rate preserves heading"+label)
+		actor.tuning.air_turn_degrees = 45
+		velocity = Vector3.ZERO
+		for i: int in hz*2:
+			velocity = actor.motor.steer_horizontal(velocity,Vector3.RIGHT,6,false,false,dt)
+		check(absf(velocity.length()-6) < .001 and velocity.x > 0,"air acceleration from rest stops at running speed"+label)
 		reset(Vector3(0,60,20))
 		actor.velocity = Vector3(0,11,-18)
 		tick(dt,hz/2)
@@ -173,6 +201,11 @@ func run() -> void:
 	wall.queue_free()
 	actor.select_hero("stitch")
 	check(is_equal_approx((actor.tuning as StitchTuning).hook_release_up,9.5) and actor.tuning.wall_jump_up == 8,"Stitch hook lift remains independent of shared wall jump")
+	actor.select_hero("wisp")
+	var wisp_velocity: Vector3 = Vector3.FORWARD*18
+	for i: int in 30:
+		wisp_velocity = actor.motor.steer_horizontal(wisp_velocity,Vector3.RIGHT,actor.tuning.ground_speed,false,false,1.0/60)
+	check(absf(rad_to_deg(Vector3.FORWARD.angle_to(wisp_velocity))-36) < .01 and absf(wisp_velocity.length()-18) < .001,"Wisp retains stronger angular steering without speed gain")
 	world.queue_free()
 	await process_frame
 	print("MOMENTUM FLOW: %d checks, %d failures" % [checks,failures])
