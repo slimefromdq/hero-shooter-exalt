@@ -1,0 +1,57 @@
+{
+ "label": "final",
+ "seconds": 180,
+ "maps": {
+  "city": {
+   "combat_idle_ratio": 0.155,
+   "combat_share": 0.584,
+   "mean_speed": 4.595,
+   "tech_per_bot_minute": 9.415,
+   "jumps_per_bot_minute": 5.595,
+   "outnumbered_ratio": 0.113,
+   "deaths_alone_ratio": 0.077,
+   "damage_per_bot_minute": 563.85,
+   "stuck_events": 11.5,
+   "objective_share": 0.263,
+   "deaths": 14.5,
+   "seeds": [
+    76,
+    971
+   ]
+  },
+  "museum": {
+   "combat_idle_ratio": 0.196,
+   "combat_share": 0.627,
+   "mean_speed": 4.09,
+   "tech_per_bot_minute": 11.17,
+   "jumps_per_bot_minute": 7.605,
+   "outnumbered_ratio": 0.081,
+   "deaths_alone_ratio": 0.042,
+   "damage_per_bot_minute": 678.9,
+   "stuck_events": 29,
+   "objective_share": 0.54,
+   "deaths": 16.5,
+   "seeds": [
+    76,
+    971
+   ]
+  },
+  "temple": {
+   "combat_idle_ratio": 0.201,
+   "combat_share": 0.275,
+   "mean_speed": 4.87,
+   "tech_per_bot_minute": 10.71,
+   "jumps_per_bot_minute": 8.505,
+   "outnumbered_ratio": 0.028,
+   "deaths_alone_ratio": 0.612,
+   "damage_per_bot_minute": 167.05,
+   "stuck_events": 28,
+   "objective_share": 0.13,
+   "deaths": 9,
+   "seeds": [
+    76,
+    971
+   ]
+  }
+ }
+}
