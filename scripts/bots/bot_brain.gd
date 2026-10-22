@@ -25,11 +25,16 @@ var follow_up: int = 0
 var danger: float = 0.0
 var level: int = -1
 var rng := RandomNumberGenerator.new()
+## Flank-check glance: a brief look away from the travel/attention direction.
+var glance_at: float = 0.0
+var glance_until: float = -1.0
+var glance_direction: Vector3 = Vector3.ZERO
 
 func setup(owner: HeroActor, shared: TeamDirector, seed_value: int) -> void:
 	actor = owner
 	director = shared
 	rng.seed = seed_value
+	perception.rng = rng
 	hero_profile = BotHeroProfile.for_hero(actor.tuning.hero_id)
 	class_profile = load("res://resources/bots/classes/%s.tres" % HeroRoster.role_for(actor.tuning.hero_id)) as BotClassProfile
 	set_difficulty(int(actor.get_node("/root/GameSettings").values.get("bot_difficulty",1)))
@@ -40,6 +45,7 @@ func set_difficulty(value: int) -> void:
 	if level == value: return
 	level = clampi(value,0,3)
 	skill = BotSkillProfile.for_level(level)
+	perception.skill = skill
 	acquired_at = actor.resolver.combat_time
 	combat.cancel("difficulty changed")
 	combat.aim_speed = 0
@@ -143,6 +149,8 @@ func select_target() -> void:
 		for other: Dictionary in perception.observations.values():
 			if now-float(other.seen) < 1 and other.position.distance_to(entry.position) < 10: retaliation += 1
 		var score: float = range_value*.3+vulnerability*(.25+hero_profile.vulnerable_bias)+(.3 if visible else 0.0)-float(retaliation)*.045
+		# Stale or merely heard enemies are worth less than ones in view.
+		if not visible: score -= clampf((now-float(entry.seen))/BotPerception.MEMORY_SECONDS,0,1)*.25+(.08 if str(entry.get("source","sight")) != "sight" else 0.0)
 		if actor.kit is StitchKit:
 			score += .25 / maxf(1,retaliation) + int(entry.get("marks",0))*.06
 		var damage_rate: float = actor.tuning.rifle_damage/maxf(.1,actor.tuning.shot_interval)
@@ -167,7 +175,27 @@ func select_target() -> void:
 		combat.cancel("target changed")
 	threat = perception.observations.get(target_id,{})
 
+## Direction to look when nothing is in the crosshair. Combines sound/hit attention
+## with occasional flank checks, so a bot's view cone actually sweeps like a player's.
+func look_direction(origin: Vector3, fallback: Vector3) -> Vector3:
+	var point: Vector3 = perception.attention_point(actor,now,target_id)
+	var base: Vector3 = fallback if point == Vector3.INF else point-origin
+	var under_fire: bool = not perception.hit_from.is_empty() and now-float(perception.hit_from.time) < 1.2
+	if skill.glance_interval > 0 and not under_fire and not visible_target():
+		if glance_at <= 0: glance_at = now+rng.randf_range(.5,1.5)*skill.glance_interval
+		if now >= glance_at and glance_until < now:
+			var flat: Vector3 = (base*Vector3(1,0,1)).normalized()
+			if not flat.is_zero_approx():
+				var swing: float = deg_to_rad(rng.randf_range(65,125))*(1.0 if rng.randf() < .5 else -1.0)
+				glance_direction = flat.rotated(Vector3.UP,swing)
+				glance_until = now+.35+absf(swing)/deg_to_rad(maxf(skill.turn_speed,1))
+			glance_at = now+rng.randf_range(.6,1.4)*skill.glance_interval
+		if now < glance_until: return glance_direction
+	return base
+
 func reset() -> void:
+	glance_until = -1
+	glance_at = 0
 	perception.reset()
 	target_id = 0
 	threat = {}

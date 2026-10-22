@@ -291,7 +291,7 @@ func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) ->
 			return
 	if update_bomb(brain,input,delta): return
 	var acquired: bool = brain.ready_to_attack() and not bool(brain.threat.get("damage_immune",false))
-	var desired: Vector3 = input.move if input.move.length() > .1 else aim
+	var desired: Vector3 = brain.look_direction(input.aim_origin,input.move if input.move.length() > .1 else aim)
 	if acquired and brain.tactical_state not in ["retreat","regroup"]:
 		var point: Vector3 = brain.threat.position+Vector3.UP*1.1
 		var lead: float = 0.0

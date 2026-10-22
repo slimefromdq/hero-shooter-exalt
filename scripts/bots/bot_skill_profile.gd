@@ -12,6 +12,15 @@ const NAMES: Array[String] = ["Beginner", "Normal", "Hard", "Expert"]
 @export var tactical_interval: float = .2
 @export var path_interval: float = .5
 @export var perception_budget: int = 6
+@export_category("Human senses")
+## Half-angle of the focused view cone and of the motion-only peripheral band.
+@export var cone_degrees: float = 50.0
+@export var peripheral_degrees: float = 100.0
+## Seconds a moving/firing enemy must stay in peripheral vision before it registers.
+@export var peripheral_delay: float = .35
+@export var hearing_scale: float = .85
+## Mean seconds between flank/"check six" glances while not engaged; 0 disables.
+@export var glance_interval: float = 5.0
 
 static func for_level(level: int) -> BotSkillProfile:
 	return load("res://resources/bots/skills/%s.tres" % NAMES[clampi(level,0,3)].to_lower()) as BotSkillProfile
