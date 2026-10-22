@@ -23,7 +23,10 @@ func destination(brain: BotBrain, fallback: Vector3, map: RID, route_pending: bo
 		return fallback
 	# While still travelling an authored route, only a nearby visible fight diverts the bot.
 	var gathering: bool = brain.tactical_state == "regroup" and brain.team_order in ["group_up","fall_back"]
-	if route_pending and not brain.visible_target() and not gathering:
+	# Travelling an authored route, only a fight in reach (or one met at the waypoint)
+	# diverts the bot; spotting someone far across the map does not stop it walking.
+	var fight_in_reach: bool = brain.visible_target() and (a.global_position.distance_to(Vector3(brain.threat.position)) <= brain.hero_profile.maximum_range+4.0 or a.global_position.distance_to(fallback) < 8.0)
+	if route_pending and not fight_in_reach and not gathering:
 		selected_position = fallback
 		return fallback
 	if brain.perception.incoming_thread:
