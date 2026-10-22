@@ -247,4 +247,5 @@ func active_objective_caption() -> String:
 
 func bot_objective_context(team: int) -> Dictionary:
 	return {"position":active_objective_position(),"radius":6.0 if phase == "escort" else 9.0,
-		"phase":phase+str(checkpoint_index),"urgency":1.0 if overtime or occupancy[1-team] > 0 else .6,"secured":occupancy[team] > 0 and occupancy[1-team] == 0}
+		"phase":phase+str(checkpoint_index),"urgency":1.0 if overtime or occupancy[1-team] > 0 else .6,"secured":occupancy[team] > 0 and occupancy[1-team] == 0,
+		"desperate":overtime or (team == 0 and time_remaining < 30.0)}

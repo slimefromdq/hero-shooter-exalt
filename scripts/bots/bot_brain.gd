@@ -25,23 +25,46 @@ var follow_up: int = 0
 var danger: float = 0.0
 var level: int = -1
 var rng := RandomNumberGenerator.new()
+## Flank-check glance: a brief look away from the travel/attention direction.
+## Current team order from the director ("push","hold","cleanup","group_up","fall_back").
+var team_order: String = "push"
+## Personality traits (filled by BotPersonality); empty means neutral.
+var personality: Dictionary = {}
+## Mood: confidence (-1..1) from recent kills/deaths; tilt (0..cap) from repeated deaths
+## to the same enemy (the nemesis), which makes a bot reckless and revenge-minded.
+var confidence: float = 0.0
+var tilt: float = 0.0
+var nemesis_id: int = 0
+var mood_time: float = 0.0
+var announced_ult: bool = false
+var last_heal_call: float = -99.0
+var reaction_key: String = ""
+var reaction_value: float = .38
+var glance_at: float = 0.0
+var glance_until: float = -1.0
+var glance_direction: Vector3 = Vector3.ZERO
 
 func setup(owner: HeroActor, shared: TeamDirector, seed_value: int) -> void:
 	actor = owner
 	director = shared
 	rng.seed = seed_value
+	perception.rng = rng
+	personality = BotPersonality.roll(rng)
 	hero_profile = BotHeroProfile.for_hero(actor.tuning.hero_id)
 	class_profile = load("res://resources/bots/classes/%s.tres" % HeroRoster.role_for(actor.tuning.hero_id)) as BotClassProfile
 	set_difficulty(int(actor.get_node("/root/GameSettings").values.get("bot_difficulty",1)))
 	combat.aim = actor.aim_direction
 	diagnostics.setup(actor)
+	diagnostics.elimination_listener = on_elimination
 
 func set_difficulty(value: int) -> void:
 	if level == value: return
 	level = clampi(value,0,3)
 	skill = BotSkillProfile.for_level(level)
+	perception.skill = skill
 	acquired_at = actor.resolver.combat_time
 	combat.cancel("difficulty changed")
+	reaction_key = ""
 	combat.aim_speed = 0
 
 func target_actor() -> HeroActor:
@@ -54,7 +77,16 @@ func visible_target() -> bool:
 	return target_id in perception.visible_ids and not threat.is_empty() and now-float(threat.seen) <= .25
 
 func ready_to_attack() -> bool:
-	return visible_target() and now-maxf(acquired_at,float(threat.first_seen)) >= skill.acquisition_delay
+	return visible_target() and now-maxf(acquired_at,float(threat.first_seen)) >= reaction_time()
+
+## Each new sighting gets its own human reaction time: log-normal around the skill
+## mean, bounded so tests and play stay predictable.
+func reaction_time() -> float:
+	var key: String = "%d:%.3f" % [target_id,float(threat.get("first_seen",0.0))]
+	if key != reaction_key:
+		reaction_key = key
+		reaction_value = skill.acquisition_delay*clampf(exp(rng.randfn(0.0,skill.reaction_variance)),.7,1.5)
+	return reaction_value
 
 func decide(actors: Array, objective: Dictionary) -> void:
 	now = actor.resolver.combat_time
@@ -67,9 +99,10 @@ func decide(actors: Array, objective: Dictionary) -> void:
 	context = objective
 	perception.sense(actor,actors,now,skill.perception_budget)
 	if is_instance_valid(director):
-		director.report(actor,perception.observations,perception.visible_ids,now)
+		director.report(actor,perception.observations,perception.visible_ids,now,actors,objective)
 		perception.merge_shared(director.reports,now)
 		team_intention = director.assignment(actor)
+		team_order = director.order
 	allies.clear()
 	follow_up = 0
 	patient = null
@@ -87,6 +120,7 @@ func decide(actors: Array, objective: Dictionary) -> void:
 			if now-float(observation.seen) < 1 and other.global_position.distance_to(observation.position) < 10: exposure += 1
 		var recoverable: float = -.5 if exposure > follow_up+1 and missing > .85 else 0.0
 		var score: float = missing+pressure-distance/120.0+recoverable
+		if is_instance_valid(director) and director.help_requested(other): score += .45
 		if score > patient_score:
 			patient = other
 			patient_score = score
@@ -112,14 +146,14 @@ func decide(actors: Array, objective: Dictionary) -> void:
 		"retreat":danger*.85+(.35 if health < class_profile.retreat_health else 0.0),
 		"regroup":.7 if nearby_enemies > follow_up+2 else .1,
 		"investigate":.55 if not visible_target() and not threat.is_empty() else 0.0}
-	if team_intention in scores: scores[team_intention] = float(scores[team_intention])+.12*skill.coordination
+	if team_intention in scores: scores[team_intention] = float(scores[team_intention])+.12*skill.coordination*(1.0+float(personality.get("teamplay",0.0)))
+	apply_personality()
+	apply_team_order()
 	if threat.is_empty():
 		for action: String in ["pressure","flank","commit","protect","investigate"]: scores[action] = 0.0
 	if class_profile.role != "support": scores.support = float(scores.support)*.35
 	for action: String in scores: scores[action] = clampf(float(scores[action]),0,1)
-	var best: String = tactical_state
-	for action: String in scores:
-		if float(scores[action]) > float(scores.get(best,0.0)): best = action
+	var best: String = pick_goal()
 	var emergency: bool = health < class_profile.retreat_health and danger > .5 and nearby_enemies > 0
 	if emergency: best = "retreat"
 	var invalid: bool = threat.is_empty() and tactical_state in ["commit","pressure","investigate","protect","flank"]
@@ -129,6 +163,144 @@ func decide(actors: Array, objective: Dictionary) -> void:
 			committed_until = now+.6
 			diagnostics.decision(now,best,scores)
 	combat.evaluate(self)
+	callouts()
+
+## Traits and mood bias goals: bold bots push and commit, cautious ones peel off sooner,
+## patient ones hold angles, tilted ones get reckless.
+func apply_personality() -> void:
+	var dt: float = clampf(now-mood_time,0,2)
+	mood_time = now
+	confidence *= exp(-dt/45.0)
+	tilt = maxf(0.0,tilt-.015*dt)
+	var bold: float = float(personality.get("aggression",0.0))+confidence*.3+tilt*.25
+	var careful: float = float(personality.get("caution",0.0))-confidence*.2-tilt*.3
+	scores.pressure = float(scores.pressure)+bold*.3
+	scores.commit = float(scores.commit)+maxf(0,bold)*.3 if float(scores.commit) > 0 else 0.0
+	scores.retreat = float(scores.retreat)+careful*.25
+	scores.hold = float(scores.hold)+float(personality.get("patience",0.0))*.2
+	scores.flank = float(scores.flank)+float(personality.get("flank",0.0))*.25
+	var weights: BotTuning = tuning()
+	scores.pressure = float(scores.pressure)+weights.aggression_bias
+	if float(scores.commit) > 0: scores.commit = float(scores.commit)+weights.aggression_bias
+	scores.retreat = float(scores.retreat)+weights.retreat_bias
+	for action: String in scores: scores[action] = clampf(float(scores[action]),0,1)
+
+## Humans don't always take the single best option: near-equal goals are chosen by a
+## softmax whose temperature falls with skill and rises with tilt.
+func pick_goal() -> String:
+	var best: String = tactical_state
+	for action: String in scores:
+		if float(scores[action]) > float(scores.get(best,0.0)): best = action
+	var temperature: float = skill.decision_noise+tilt*.04
+	if temperature <= .001: return best
+	var top: float = float(scores[best])
+	var weights: Dictionary = {}
+	var total: float = 0.0
+	for action: String in scores:
+		var value: float = float(scores[action])
+		if value < top-.2 or value <= .05: continue
+		weights[action] = exp((value-top)/temperature)
+		total += float(weights[action])
+	var roll: float = rng.randf()*total
+	for action: String in weights:
+		roll -= float(weights[action])
+		if roll <= 0: return action
+	return best
+
+func on_elimination(killer: HeroActor, victim: HeroActor, assistants: Array[HeroActor]) -> void:
+	if not is_instance_valid(victim): return
+	var hero: String = victim.tuning.hero_id.capitalize()
+	if killer == actor and victim.team != actor.team:
+		confidence = minf(1.0,confidence+.25)
+		if victim.get_instance_id() == nemesis_id: tilt = maxf(0,tilt-.3)
+		if is_instance_valid(director) and rng.randf() < float(personality.get("chattiness",.4)):
+			director.say(actor,"kill",["Got the %s." % hero,"%s down!" % hero,"Picked the %s." % hero][rng.randi_range(0,2)],now)
+	elif actor in assistants:
+		confidence = minf(1.0,confidence+.1)
+	elif victim == actor and is_instance_valid(killer) and killer.team != actor.team:
+		confidence = maxf(-1.0,confidence-.3)
+		var prone: float = float(personality.get("tilt_prone",.4))
+		var repeat: bool = killer.get_instance_id() == nemesis_id
+		nemesis_id = killer.get_instance_id()
+		tilt = minf(skill.tilt_cap,tilt+(.35 if repeat else .12)*prone)
+		if repeat and is_instance_valid(director) and rng.randf() < prone:
+			director.say(actor,"death","That %s again..." % killer.tuning.hero_id.capitalize(),now)
+
+## Personal callouts; the director rate-limits them.
+func callouts() -> void:
+	if not is_instance_valid(director): return
+	var chat: float = float(personality.get("chattiness",.4))
+	if actor.kit.ultimate_charge >= 100.0:
+		if not announced_ult and chat > .2: director.say(actor,"ult","Ult ready.",now)
+		announced_ult = true
+	else: announced_ult = false
+	if actor.health < actor.effective_max_health()*.35 and now-last_heal_call > 10.0 and chat > .15:
+		for ally: HeroActor in allies:
+			if HeroRoster.role_for(ally.tuning.hero_id) == "support":
+				last_heal_call = now
+				director.say(actor,"heal","Need healing!",now)
+				director.help_requests[actor.get_instance_id()] = now
+				break
+	# An enemy spotted behind the team's line is worth shouting about.
+	var objective: Vector3 = context.get("position",Vector3.INF)
+	if objective != Vector3.INF and director.gather_point != Vector3.INF and chat > .1:
+		for id: int in perception.visible_ids:
+			var entry: Dictionary = perception.observations.get(id,{})
+			if entry.is_empty() or now-float(entry.first_seen) > .3: continue
+			var back: Vector3 = (director.gather_point-objective)*Vector3(1,0,1)
+			if back.normalized().dot(((Vector3(entry.position)-objective)*Vector3(1,0,1)).normalized()) > .3 and Vector3(entry.position).distance_to(objective) > float(context.get("radius",7.0))+6:
+				director.say(actor,"spot","%s flanking behind us!" % str(entry.hero).capitalize(),now)
+				break
+
+## Team orders shift goal utilities; individual danger still overrides them.
+func apply_team_order() -> void:
+	var weight: float = .5+.5*skill.coordination
+	var seen: bool = visible_target()
+	match team_order:
+		"group_up":
+			if not seen and gather_distance() > 6: scores.regroup = maxf(float(scores.regroup),.85*weight)
+			scores.contest = float(scores.contest)*.6
+		"fall_back":
+			if seen and danger > .3: scores.retreat = float(scores.retreat)+.25*weight
+			elif not seen: scores.regroup = maxf(float(scores.regroup),.8*weight)
+			scores.commit = float(scores.commit)*.5
+		"push":
+			scores.regroup = float(scores.regroup)*.5
+			scores.contest = float(scores.contest)+.08*weight
+		"cleanup":
+			scores.commit = float(scores.commit)+.2*weight
+			scores.pressure = float(scores.pressure)+.1*weight
+			scores.investigate = float(scores.investigate)+.15*weight
+			scores.regroup = float(scores.regroup)*.4
+		"hold":
+			scores.hold = float(scores.hold)+.1*weight
+	for action: String in scores: scores[action] = clampf(float(scores[action]),0,1)
+
+func gather_distance() -> float:
+	if not is_instance_valid(director) or director.gather_point == Vector3.INF: return 0.0
+	return actor.global_position.distance_to(director.gather_point)
+
+## Whether to detour for a health pack now. Replaces a flat 40% rule: injured bots
+## without a healer nearby or out of combat go earlier; a last defender on a hot
+## objective stays.
+func wants_health() -> bool:
+	var fraction: float = actor.health/actor.effective_max_health()
+	var threshold: float = .4
+	var healer: bool = false
+	for ally: HeroActor in allies:
+		if HeroRoster.role_for(ally.tuning.hero_id) == "support" and ally.global_position.distance_to(actor.global_position) < 20: healer = true
+	if not healer: threshold += .15
+	if not visible_target(): threshold += .1
+	var on_point: bool = actor.global_position.distance_to(context.get("position",Vector3.INF)) < float(context.get("radius",7.0))+2
+	if on_point and float(context.get("urgency",.5)) >= .9 and follow_up == 0 and nearby_enemies > 0: threshold -= .2
+	threshold += float(personality.get("caution",0.0))*.1
+	return fraction < threshold
+
+func tuning() -> BotTuning:
+	return director.tuning if is_instance_valid(director) and director.tuning != null else BotTuning.standard()
+
+func ult_gate() -> float:
+	return director.ult_gate(actor,now) if is_instance_valid(director) else 1.0
 
 func select_target() -> void:
 	var selected: int = 0
@@ -143,6 +315,8 @@ func select_target() -> void:
 		for other: Dictionary in perception.observations.values():
 			if now-float(other.seen) < 1 and other.position.distance_to(entry.position) < 10: retaliation += 1
 		var score: float = range_value*.3+vulnerability*(.25+hero_profile.vulnerable_bias)+(.3 if visible else 0.0)-float(retaliation)*.045
+		# Stale or merely heard enemies are worth less than ones in view.
+		if not visible: score -= clampf((now-float(entry.seen))/BotPerception.MEMORY_SECONDS,0,1)*.25+(.08 if str(entry.get("source","sight")) != "sight" else 0.0)
 		if actor.kit is StitchKit:
 			score += .25 / maxf(1,retaliation) + int(entry.get("marks",0))*.06
 		var damage_rate: float = actor.tuning.rifle_damage/maxf(.1,actor.tuning.shot_interval)
@@ -157,6 +331,8 @@ func select_target() -> void:
 		if int(entry.get("tether_source",0)) == actor.get_instance_id(): score += .25
 		if bool(entry.get("pursuing",false)) and actor.health < actor.effective_max_health()*.5: score += .15
 		if id == target_id: score += .12
+		if id == nemesis_id: score += .3*tilt
+		if is_instance_valid(director) and id == director.focus_id: score += .22*skill.coordination
 		if is_instance_valid(director): score -= maxf(0,director.pressure_on(id,actor.get_instance_id())-2)*.15
 		if score > best:
 			selected = id
@@ -167,7 +343,39 @@ func select_target() -> void:
 		combat.cancel("target changed")
 	threat = perception.observations.get(target_id,{})
 
+## Direction to look when nothing is in the crosshair. Combines sound/hit attention
+## with occasional flank checks, so a bot's view cone actually sweeps like a player's.
+func look_direction(origin: Vector3, fallback: Vector3) -> Vector3:
+	var point: Vector3 = perception.attention_point(actor,now,target_id)
+	var base: Vector3 = fallback if point == Vector3.INF else point-origin
+	var under_fire: bool = not perception.hit_from.is_empty() and now-float(perception.hit_from.time) < 1.2
+	if skill.glance_interval > 0 and not under_fire and not visible_target():
+		if glance_at <= 0: glance_at = now+rng.randf_range(.5,1.5)*skill.glance_interval
+		if now >= glance_at and glance_until < now:
+			var flat: Vector3 = (base*Vector3(1,0,1)).normalized()
+			if not flat.is_zero_approx():
+				var swing: float = deg_to_rad(rng.randf_range(65,125))*(1.0 if rng.randf() < .5 else -1.0)
+				glance_direction = flat.rotated(Vector3.UP,swing)
+				# Experienced players check where the enemy was last called out.
+				if is_instance_valid(director) and rng.randf() < .35+.4*skill.coordination:
+					for spot: Vector3 in director.recent_threats(now):
+						var toward: Vector3 = (spot+Vector3.UP*1.2-origin)
+						if toward.length() > 3 and flat.angle_to((toward*Vector3(1,0,1)).normalized()) > deg_to_rad(skill.cone_degrees):
+							glance_direction = toward.normalized()
+							swing = flat.angle_to((toward*Vector3(1,0,1)).normalized())
+							break
+				glance_until = now+.35+absf(swing)/deg_to_rad(maxf(skill.turn_speed,1))
+			glance_at = now+rng.randf_range(.6,1.4)*skill.glance_interval
+		if now < glance_until: return glance_direction
+	return base
+
 func reset() -> void:
+	team_order = "push"
+	announced_ult = false
+	combat.motor.reset()
+	reaction_key = ""
+	glance_until = -1
+	glance_at = 0
 	perception.reset()
 	target_id = 0
 	threat = {}

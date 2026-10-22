@@ -9,6 +9,9 @@ var ability_scores: Dictionary = {}
 var aim_error: Vector2 = Vector2.ZERO
 var error_goal: Vector2 = Vector2.ZERO
 var next_error: float = 0.0
+var motor := BotAim.new()
+## Team ultimate economy multiplier for the current evaluation (see TeamDirector.ult_gate).
+var ult_multiplier: float = 1.0
 var pending_bomb: bool = false
 var bomb: PocketBomb
 var bomb_life: int = -1
@@ -32,6 +35,7 @@ func cancel(reason: String) -> void:
 	bomb_value = 0
 
 func offer(action: String, score: float, point: Vector3 = Vector3.INF, held: bool = false) -> void:
+	if action == "ultimate": score *= ult_multiplier
 	ability_scores[action] = clampf(score,0,1)
 	if score < .5 or score <= float(choice.get("score",0)): return
 	choice = {"action":action,"score":score,"point":point,"held":held}
@@ -39,6 +43,7 @@ func offer(action: String, score: float, point: Vector3 = Vector3.INF, held: boo
 func evaluate(brain: BotBrain) -> void:
 	var a: HeroActor = brain.actor
 	var k: HeroKit = a.kit
+	ult_multiplier = brain.ult_gate()
 	choice = {}
 	ability_scores.clear()
 	if k is SamsonKit:
@@ -183,21 +188,36 @@ func evaluate(brain: BotBrain) -> void:
 
 func track_aim(desired: Vector3, brain: BotBrain, delta: float, precise: bool = false) -> Vector3:
 	if desired.is_zero_approx(): return aim
-	var now: float = brain.actor.resolver.combat_time
+	var a: HeroActor = brain.actor
+	var now: float = a.resolver.combat_time
 	if now >= next_error:
 		next_error = now+.3
 		error_goal = Vector2(brain.rng.randf_range(-1,1),brain.rng.randf_range(-1,1))
 	aim_error = aim_error.move_toward(error_goal,delta*3)
-	var distance: float = brain.actor.global_position.distance_to(brain.threat.get("position",brain.actor.global_position))
-	var penalty: float = (1+distance/50.0)*(1.4 if not brain.actor.motor.grounded() else 1.0)
-	var error: float = deg_to_rad(brain.skill.error_degrees)*penalty*(.3 if precise else 1.0)
-	var wanted: Vector3 = desired.normalized().rotated(Vector3.UP,aim_error.x*error)
+	var scale: float = pressure(brain)
+	var distance: float = a.global_position.distance_to(brain.threat.get("position",a.global_position))
+	var error: float = deg_to_rad(brain.skill.error_degrees)*(1+distance/50.0)*scale*(.3 if precise else 1.0)
+	var perceived: Vector3 = motor.pursue(desired,brain.skill,now,precise)
+	var wanted: Vector3 = perceived.rotated(Vector3.UP,aim_error.x*error)
 	var right: Vector3 = wanted.cross(Vector3.UP).normalized()
 	if not right.is_zero_approx(): wanted = wanted.rotated(right,aim_error.y*error)
-	var angle: float = aim.angle_to(wanted)
-	aim_speed = move_toward(aim_speed,deg_to_rad(brain.skill.turn_speed),deg_to_rad(brain.skill.tracking_acceleration)*delta)
-	if angle > .00001: aim = aim.slerp(wanted,minf(1,aim_speed*delta/angle)).normalized()
+	var result: Array = motor.turn(aim,wanted,aim_speed,brain,delta,precise,scale)
+	aim = result[0]
+	aim_speed = result[1]
 	return aim
+
+## Aim quality multiplier from the bot's situation: taking hits, being airborne or
+## moving fast, and panic at low health all make a person aim worse.
+func pressure(brain: BotBrain) -> float:
+	var a: HeroActor = brain.actor
+	var value: float = 1.0
+	if not a.motor.grounded(): value *= 1.4
+	if a.last_hit_age < .6: value *= 1.35
+	var speed: float = Vector2(a.velocity.x,a.velocity.z).length()
+	if speed > a.tuning.ground_speed*1.15: value *= 1.25
+	elif speed < .5: value *= .85
+	if a.health < a.effective_max_health()*.3: value *= 1.2
+	return value
 
 func update_bomb(brain: BotBrain, input: CombatIntent, delta: float) -> bool:
 	var a: HeroActor = brain.actor
@@ -291,7 +311,7 @@ func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) ->
 			return
 	if update_bomb(brain,input,delta): return
 	var acquired: bool = brain.ready_to_attack() and not bool(brain.threat.get("damage_immune",false))
-	var desired: Vector3 = input.move if input.move.length() > .1 else aim
+	var desired: Vector3 = brain.look_direction(input.aim_origin,input.move if input.move.length() > .1 else aim)
 	if acquired and brain.tactical_state not in ["retreat","regroup"]:
 		var point: Vector3 = brain.threat.position+Vector3.UP*1.1
 		var lead: float = 0.0
@@ -310,7 +330,7 @@ func execute(brain: BotBrain, input: CombatIntent, delta: float, fresh: bool) ->
 	var action_point: Vector3 = choice.get("point",Vector3.INF)
 	if action_point != Vector3.INF: desired = action_point-input.aim_origin
 	input.aim = track_aim(desired,brain,delta)
-	var aligned: bool = desired.normalized().dot(input.aim) >= cos(deg_to_rad(5))
+	var aligned: bool = desired.normalized().dot(input.aim) >= cos(deg_to_rad(brain.skill.fire_tolerance))
 	if acquired and aligned and brain.tactical_state not in ["retreat","regroup"]:
 		input.primary = a.kit.shot_cd <= 0
 		input.primary_held = a.kit is CareKit

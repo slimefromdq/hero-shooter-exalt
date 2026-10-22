@@ -11,6 +11,8 @@ var pad_timeout: float = 0
 var pad_retry: float = 0
 var pad_uses: int = 0
 var gallery_visits: int = 0
+var was_flanker: bool = false
+var legacy_pads: bool = true
 
 func gather_intent(delta: float) -> CombatIntent:
 	pad_retry = maxf(0,pad_retry-delta)
@@ -80,11 +82,23 @@ func decide() -> void:
 	if is_instance_valid(selected_pad):
 		destination = selected_pad.global_position
 		return
-	if slot >= 3 and pad_retry<=0 and actor.motor.grounded() and not seeking_health:
+	var flanker: bool = brain.team_intention == "flank"
+	# Becoming a flanker mid-route re-plans onto a flank route (flankers are assigned
+	# by the director after the first decisions, not fixed by slot at spawn).
+	if flanker and not was_flanker and route_key.contains("main") and not route.is_empty():
+		route.clear()
+		route_key = ""
+	was_flanker = flanker
+	# Authored routes go waypoint to waypoint, so a pad shortcut is chosen here against
+	# the goal. Flankers and mobile heroes take any pad heading the right way; everyone
+	# else takes one when it lands at least 20 m closer to the goal. Pads are also
+	# navigation links (TraversalLinks.register_pads) for long off-route trips.
+	if legacy_pads and pad_retry<=0 and actor.motor.grounded() and not seeking_health:
 		var goal_at: Vector3 = (match_controller as TempleMatch).temple_definition().POINTS[match_controller.goal_index(actor.team)]
 		for candidate: TempleJumpPad in match_controller.arena.builder.pads:
 			if actor.global_position.distance_to(candidate.global_position)>32: continue
 			if candidate.spec.destination.distance_to(goal_at)>candidate.global_position.distance_to(goal_at)+8: continue
+			if not (flanker or brain.hero_profile.mobility >= .6) and candidate.spec.destination.distance_to(goal_at) > actor.global_position.distance_to(goal_at)-20: continue
 			selected_pad = candidate
 			pad_phase = "approach"
 			pad_timeout = 12
@@ -108,7 +122,14 @@ func decide() -> void:
 			nearest = index
 	if route.is_empty() and nearest != goal:
 		var sector: int = nearest if nearest < goal else nearest-1
-		var kind: String = "upper" if slot == 4 else ("lower" if slot == 5 else "main")
+		var kind: String = "main"
+		if flanker:
+			# Prefer the route that suits the hero's range, then alternate so both flanks see use.
+			var preferred: String = "upper" if brain.hero_profile.maximum_range >= 18 else "lower"
+			var other: String = "lower" if preferred == "upper" else "upper"
+			kind = other if int(route_visits.get(preferred,0)) > int(route_visits.get(other,0)) else preferred
+			# With two flankers, the second takes the opposite flank to the first.
+			if is_instance_valid(brain.director) and brain.director.flankers.keys().find(actor.get_instance_id()) == 1: kind = "lower" if kind == "upper" else "upper"
 		if session.objective.overtime: kind = "main"
 		route_key = "%d_%s_%d" % [sector,kind,goal]
 		for entry: Dictionary in session.arena.builder.routes:
@@ -126,7 +147,7 @@ func decide() -> void:
 			break
 	if not route.is_empty():
 		entered_hill = false
-		assignment = "flank_"+route_key if slot >= 4 else "attack"
+		assignment = "flank_"+route_key if not route_key.contains("main") else "attack"
 		if actor.global_position.distance_to(route[route_index]) < 3:
 			route_index += 1
 			if route_index >= route.size():
@@ -139,7 +160,7 @@ func decide() -> void:
 		assignment = "defend" if session.objective.owners[goal] == actor.team else "contest"
 		var offset := Vector3((slot%3-1)*8,.1,(slot/3*2-1)*7)
 		destination = d.POINTS[goal]+offset
-		if slot == 4 and session.objective.owners[goal] == actor.team:
+		if flanker and brain.hero_profile.maximum_range >= 18 and session.objective.owners[goal] == actor.team:
 			destination = d.POINTS[goal]+Vector3(0,8,26 if actor.team==0 else -26)
 			assignment = "gallery_defense"
 			if actor.global_position.distance_to(destination)<5: gallery_visits += 1

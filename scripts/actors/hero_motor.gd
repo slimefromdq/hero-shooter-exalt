@@ -217,6 +217,8 @@ func tick_motion(delta: float, input: CombatIntent) -> void:
 			transition("air")
 		else:
 			var normal: Vector3 = actor.get_floor_normal()
+			# A floor contact can report a zero normal for one tick; treat it as flat ground.
+			if normal.is_zero_approx(): normal = Vector3.UP
 			var tangent: Vector3 = slide_velocity.slide(normal)
 			tangent += (Vector3.DOWN * t.gravity).slide(normal) * delta
 			var friction: float = t.slide_friction if slide_source in ["air_dash","ground_dash"] else t.momentum_slide_friction

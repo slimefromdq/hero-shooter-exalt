@@ -385,4 +385,5 @@ func _on_combat_event(entry: Dictionary) -> void:
 
 func bot_objective_context(team: int) -> Dictionary:
 	return {"position":definition.hill_center,"radius":7.0,"phase":"active" if hill.unlocked else "preparation",
-		"urgency":1.0 if hill.owner_team != team or hill.contested else .45,"secured":hill.owner_team == team and not hill.contested}
+		"urgency":1.0 if hill.owner_team != team or hill.contested else .45,"secured":hill.owner_team == team and not hill.contested,
+		"desperate":hill.scores[1-team] >= definition.score_to_win*.8}

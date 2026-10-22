@@ -14,16 +14,42 @@ var hit_casts: Dictionary = {}
 var origins: Dictionary = {}
 var recent_casts: Dictionary = {}
 var last_bomb_attempts: int = 0
+# Human-likeness counters (overhaul baseline): movement tech, combat stillness and isolation.
+var alive_seconds: float = 0.0
+var combat_seconds: float = 0.0
+var combat_idle_seconds: float = 0.0
+var travel: float = 0.0
+var movement_events: Dictionary = {}
+var engagements: int = 0
+var outnumbered_engagements: int = 0
+var deaths_alone: int = 0
+var last_allies_near: int = 0
+var was_engaged: bool = false
+var last_position: Vector3 = Vector3.INF
+## Brain mood hook; called with (killer, victim, assistants) on every elimination.
+var elimination_listener: Callable
 
 func setup(owner: HeroActor) -> void:
 	actor = owner
 	actor.resolver.event_logged.connect(on_event)
 	actor.resolver.cast_started.connect(on_cast_started)
+	actor.movement_confirmed.connect(on_movement)
+	actor.resolver.elimination.connect(on_elimination)
+
+func on_elimination(killer: HeroActor, victim: HeroActor, assistants: Array[HeroActor], _ability: String) -> void:
+	if elimination_listener.is_valid(): elimination_listener.call(killer,victim,assistants)
+
+func on_movement(kind: String, _at: Vector3, _direction: Vector3, _normal: Vector3, _strength: float) -> void:
+	if kind == "landing": return
+	movement_events[kind] = int(movement_events.get(kind,0))+1
 
 func detach() -> void:
 	if not is_instance_valid(actor) or not is_instance_valid(actor.resolver): return
 	if actor.resolver.event_logged.is_connected(on_event): actor.resolver.event_logged.disconnect(on_event)
 	if actor.resolver.cast_started.is_connected(on_cast_started): actor.resolver.cast_started.disconnect(on_cast_started)
+	if actor.movement_confirmed.is_connected(on_movement): actor.movement_confirmed.disconnect(on_movement)
+	if actor.resolver.elimination.is_connected(on_elimination): actor.resolver.elimination.disconnect(on_elimination)
+	elimination_listener = Callable()
 
 func on_cast_started(source: HeroActor, id: int) -> void:
 	if source != actor: return
@@ -53,7 +79,9 @@ func on_event(entry: Dictionary) -> void:
 	if not is_instance_valid(actor) or entry.actor != actor.actor_id: return
 	var ability: String = canonical(str(entry.ability))
 	var key: String = cast_key(ability,int(entry.tick),actor.life_serial)
-	if entry.event == "death": deaths += 1
+	if entry.event == "death":
+		deaths += 1
+		if last_allies_near == 0: deaths_alone += 1
 	if entry.event == "detonate" and "trigger=shot" in str(entry.details):
 		early_detonations += 1
 		last_bomb_attempts = bomb_attempts
@@ -89,6 +117,33 @@ func decision(now: float, state: String, utilities: Dictionary) -> void:
 func tick(delta: float, brain: BotBrain, input: CombatIntent) -> void:
 	if input.move.length() < .1 and not brain.movement.intentional_hold and input.primary == false and input.primary_held == false and input.secondary_held == false: idle_seconds += delta
 	if actor.global_position.distance_to(brain.context.get("position",Vector3.INF)) < float(brain.context.get("radius",7)): objective_seconds += delta
+	if not actor.alive:
+		last_position = Vector3.INF
+		was_engaged = false
+		return
+	alive_seconds += delta
+	last_allies_near = brain.follow_up
+	if last_position != Vector3.INF: travel += minf(actor.global_position.distance_to(last_position),2.0)
+	last_position = actor.global_position
+	var engaged: bool = brain.visible_target()
+	if engaged:
+		combat_seconds += delta
+		if Vector2(actor.velocity.x,actor.velocity.z).length() < 1.0: combat_idle_seconds += delta
+		if not was_engaged:
+			engagements += 1
+			if brain.nearby_enemies >= brain.follow_up+3: outnumbered_engagements += 1
+	was_engaged = engaged
+
+func human_metrics() -> Dictionary:
+	var minutes: float = maxf(alive_seconds/60.0,.001)
+	var tech: int = 0
+	for kind: String in movement_events:
+		if kind != "jump": tech += int(movement_events[kind])
+	return {"alive_seconds":snappedf(alive_seconds,.1),"combat_seconds":snappedf(combat_seconds,.1),
+		"combat_idle_ratio":snappedf(combat_idle_seconds/maxf(combat_seconds,.001),.001),
+		"mean_speed":snappedf(travel/maxf(alive_seconds,.001),.01),"movement_events":movement_events.duplicate(),
+		"tech_per_minute":snappedf(tech/minutes,.01),"jumps_per_minute":snappedf(int(movement_events.get("jump",0))/minutes,.01),
+		"engagements":engagements,"outnumbered_engagements":outnumbered_engagements,"deaths_alone":deaths_alone}
 
 func summary() -> Dictionary:
 	var rates: Dictionary = {}
@@ -98,7 +153,7 @@ func summary() -> Dictionary:
 		rates[ability].casts += 1
 		if hit_casts.has(key): rates[ability].hits += 1
 	return {"damage":damage,"deaths":deaths,"idle_seconds":idle_seconds,"objective_seconds":objective_seconds,
-		"ability_casts":rates,"bomb_shot_attempts":bomb_attempts,"early_detonations":early_detonations}
+		"ability_casts":rates,"bomb_shot_attempts":bomb_attempts,"early_detonations":early_detonations,"human":human_metrics()}
 
 static func export_tree(tree: SceneTree, path: String = "user://bot_metrics.json") -> Error:
 	var bots: Array[Dictionary] = []

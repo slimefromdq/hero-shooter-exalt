@@ -8,64 +8,46 @@ var query_count: int = 0
 var intentional_hold: bool = false
 var traversal_check_at: float = 0.0
 var mantle_until: float = 0.0
+var last_query: Dictionary = {}
+var last_candidates: Array = []
+var locomotion := BotLocomotion.new()
 
 func destination(brain: BotBrain, fallback: Vector3, map: RID, route_pending: bool) -> Vector3:
 	var a: HeroActor = brain.actor
-	intentional_hold = false
 	if brain.now < position_timer: return selected_position
+	intentional_hold = false
 	position_timer = brain.now+.4
-	selected_position = fallback
-	if not map.is_valid() or NavigationServer3D.map_get_iteration_id(map) == 0: return fallback
-	var state: String = brain.tactical_state
-	var goal: Vector3 = fallback
-	if state in ["retreat","regroup"]:
-		var away: Vector3 = a.global_position-Vector3(brain.threat.get("position",a.global_position-a.aim_direction))
-		goal = a.global_position+away.normalized()*7
-		if not brain.allies.is_empty(): goal = brain.allies[0].global_position+away.normalized()*3
-	elif state == "support" and is_instance_valid(brain.patient):
-		var back: Vector3 = a.global_position-brain.patient.global_position
-		goal = brain.patient.global_position+back.normalized()*7
-	elif state == "investigate" and not brain.threat.is_empty():
-		if Vector3(brain.threat.position).distance_to(brain.context.position) < 18: goal = brain.threat.position
-	elif not brain.threat.is_empty() and brain.visible_target() and (not route_pending or a.global_position.distance_to(fallback) < 8):
-		var enemy: Vector3 = brain.threat.position
-		var away: Vector3 = (a.global_position-enemy)*Vector3(1,0,1)
-		var distance: float = away.length()
-		var desired: float = (brain.hero_profile.minimum_range+brain.hero_profile.maximum_range)*.5
-		if state == "commit": desired = brain.hero_profile.minimum_range
-		if state == "protect" and is_instance_valid(brain.patient): goal = brain.patient.global_position+(enemy-brain.patient.global_position).normalized()*3
-		elif distance < brain.hero_profile.minimum_range or distance > brain.hero_profile.maximum_range or state in ["flank","commit"]:
-			goal = enemy+away.normalized().rotated(Vector3.UP,.45*side if state == "flank" else 0.0)*desired
-		else:
-			goal = a.global_position
-			intentional_hold = true
-		if goal.distance_to(brain.context.position) > 19 and state not in ["retreat","support"]: goal = fallback
+	if selected_position == Vector3.ZERO: selected_position = fallback
+	if not map.is_valid() or NavigationServer3D.map_get_iteration_id(map) == 0:
+		selected_position = fallback
+		return fallback
+	# While still travelling an authored route, only a nearby visible fight diverts the bot.
+	var gathering: bool = brain.tactical_state == "regroup" and brain.team_order in ["group_up","fall_back"]
+	# Travelling an authored route, only a fight in reach (or one met at the waypoint)
+	# diverts the bot; spotting someone far across the map does not stop it walking.
+	var fight_in_reach: bool = brain.visible_target() and (a.global_position.distance_to(Vector3(brain.threat.position)) <= brain.hero_profile.maximum_range+4.0 or a.global_position.distance_to(fallback) < 8.0)
+	if route_pending and not fight_in_reach and not gathering:
+		selected_position = fallback
+		return fallback
 	if brain.perception.incoming_thread:
-		goal = a.global_position
-	# Small bounded cover/angle sample; authored routes remain the strategic fallback.
-	var best_score: float = -INF
-	var best: Vector3 = fallback
-	for offset: Vector3 in [Vector3.ZERO,Vector3(2,0,0),Vector3(-2,0,0),Vector3(0,0,2),Vector3(0,0,-2)]:
-		var wanted: Vector3 = goal+offset
-		var point: Vector3 = NavigationServer3D.map_get_closest_point(map,wanted)
-		query_count += 1
-		if point.distance_to(wanted) > 1.5: continue
-		var session: Node = a.get_tree().get_first_node_in_group("city_match")
-		if session != null and session.definition.spawn_bounds(1-a.team).has_point(point): continue
-		var score: float = -point.distance_to(goal)*.2
-		if is_instance_valid(brain.director) and brain.director.reserved(point,a.get_instance_id()): score -= 1.2
-		if not brain.threat.is_empty():
-			var threat_at: Vector3 = brain.perception.thread_anchor if brain.perception.incoming_thread else Vector3(brain.threat.position)
-			var blocked: bool = not a.resolver.attack_ray(a,point+Vector3.UP*1.45,threat_at+Vector3.UP,[a.get_rid()],1).is_empty()
-			query_count += 1
-			score += (1.2 if blocked else -.7) if brain.perception.incoming_thread else (.8 if blocked else -.3) if state in ["retreat","regroup","support"] else (.3 if not blocked else -.3)
-		if score > best_score:
-			best_score = score
-			best = point
+		selected_position = a.global_position
+		intentional_hold = true
+		return selected_position
+	var query: Dictionary = TacticalQuery.plan(brain,fallback)
+	if query.mode == "travel":
+		selected_position = fallback
+		return fallback
+	var result: Dictionary = TacticalQuery.select(brain,query,map,self)
+	last_query = query
+	last_candidates = result.candidates
+	var best: Vector3 = result.point
+	if best == Vector3.INF: best = fallback
 	if best.distance_to(a.global_position) > 2:
 		var path: PackedVector3Array = NavigationServer3D.map_get_path(map,a.global_position,best,true)
 		query_count += 1
 		if path.is_empty() or path[-1].distance_to(best) > 1.5: best = fallback
+	elif brain.visible_target():
+		intentional_hold = true
 	selected_position = best
 	if is_instance_valid(brain.director): brain.director.reserve(a,best,brain.now)
 	return best
@@ -105,26 +87,8 @@ func apply(brain: BotBrain, input: CombatIntent, recovering: bool) -> void:
 	if a.state == "huddle_wave":
 		if not brain.threat.is_empty(): input.move = (brain.threat.position-a.global_position)*Vector3(1,0,1)
 		return
-	if brain.visible_target() and brain.tactical_state not in ["retreat","regroup","support"] and input.move.length() < .2:
-		if brain.now >= strafe_until:
-			strafe_until = brain.now+brain.rng.randf_range(.65,1.6)
-			side = -1 if brain.rng.randf() < .5 else 1
-		var toward: Vector3 = (brain.threat.position-a.global_position)*Vector3(1,0,1)
-		var strafe: Vector3 = toward.normalized().cross(Vector3.UP)*side
-		if safe_travel(a,strafe,1.1): input.move = strafe*.6
-		intentional_hold = true
-	# Reactions require an acquired, locally seen attack tell.
-	if brain.ready_to_attack() and str(brain.threat.state) in ["melee_windup","ultimate","slayer_axe"] and brain.now > strafe_until-.3:
-		if safe_travel(a,input.move,3):
-			input.jump = a.motor.grounded() and brain.level >= 2
+	locomotion.apply(brain,self,input)
 	if input.move.length() > .5 and a.state == "ready":
-		if brain.tactical_state == "retreat" and brain.hero_profile.mobility > .5 and a.motor.can_dash() and safe_travel(a,input.move,a.tuning.dash_speed*a.tuning.dash_duration):
-			input.dash = input.aim.dot(input.move.normalized()) > cos(deg_to_rad(8))
-			input.primary = false
-			input.primary_held = false
-		elif brain.level >= 2 and a.velocity.length() >= a.tuning.slide_entry_speed and brain.tactical_state in ["retreat","flank"] and safe_travel(a,input.move,2):
-			input.slide = true
-			input.slide_pressed = not a.intent.slide
 		# Shared traversal probes determine whether a held mantle or wall kick is legal.
 		if brain.level >= 2 and not a.motor.grounded() and a.velocity.y > 0: input.jump_held = true
 		if brain.level >= 2 and brain.now >= traversal_check_at:
@@ -144,6 +108,10 @@ func apply(brain: BotBrain, input: CombatIntent, recovering: bool) -> void:
 		if brain.now < mantle_until: input.jump_held = true
 
 func reset() -> void:
+	locomotion.reset()
+	selected_position = Vector3.ZERO
+	last_query = {}
+	last_candidates = []
 	position_timer = -1
 	strafe_until = 0
 	intentional_hold = false

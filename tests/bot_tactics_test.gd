@@ -54,6 +54,9 @@ func reset(id: String = "nimbus") -> void:
 	brain = BotBrain.new()
 	brain.setup(a,director,76)
 	brain.skill = brain.skill.duplicate() as BotSkillProfile
+	# Deterministic class/hero preference checks: neutral personality, no indecision.
+	brain.personality = {}
+	brain.skill.decision_noise = 0.0
 	await step(2)
 
 func decide(acquire: bool = true, actors: Array = []) -> void:
@@ -110,9 +113,9 @@ func perception_and_decisions() -> void:
 	var shared := BotPerception.new()
 	shared.merge_shared(director.reports,resolver.combat_time)
 	check(float(shared.observations[b.get_instance_id()].seen) == float(report.seen),"radio preserves original observation timestamp")
-	resolver.combat_time += 4.1
+	resolver.combat_time += BotPerception.MEMORY_SECONDS+.1
 	brain.decide([a,b,friend],objective)
-	check(brain.threat.is_empty() and brain.target_id == 0,"four-second memory expires behind cover")
+	check(brain.threat.is_empty() and brain.target_id == 0,"eight-second memory expires behind cover")
 	wall.queue_free()
 	await reset()
 	b.select_hero("marshal")

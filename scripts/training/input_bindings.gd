@@ -10,7 +10,7 @@ static func keyboard_bindings() -> Dictionary:
 		"deflect": KEY_E, "bomb": KEY_1, "ultimate": KEY_2,
 		"training_menu": KEY_TAB, "pause": KEY_ESCAPE,
 		"reset_scenario": KEY_F5, "refill": KEY_F6, "debug_view": KEY_F3,
-		"city_map": KEY_M, "city_map_layer": KEY_B
+		"city_map": KEY_M, "city_map_layer": KEY_B, "team_ping": KEY_V
 	}
 
 static func install() -> void:

@@ -185,4 +185,4 @@ func goal_index(team: int) -> int:
 
 func bot_objective_context(team: int) -> Dictionary:
 	var index: int = goal_index(team)
-	return {"position":temple_definition().POINTS[index],"radius":18.0,"phase":"temple_%d_%d" % [round_serial,index],"urgency":1.0 if objective.overtime or occupancy[index][1-team] > 0 else .7,"secured":objective.owners[index] == team and occupancy[index][1-team] == 0}
+	return {"position":temple_definition().POINTS[index],"radius":18.0,"phase":"temple_%d_%d" % [round_serial,index],"urgency":1.0 if objective.overtime or occupancy[index][1-team] > 0 else .7,"secured":objective.owners[index] == team and occupancy[index][1-team] == 0,"desperate":objective.overtime}

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BotTuning" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/bots/bot_tuning.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+objective_weight = 1.0
+danger_weight = 1.0
+los_weight = 1.0
+cover_weight = 1.0
+aggression_bias = 0.0
+retreat_bias = 0.0
+regroup_margin = 2.0
+push_fraction = 0.65
+weave = 0.55
+strafe_tempo = 1.0
+dodge_eagerness = 1.0
