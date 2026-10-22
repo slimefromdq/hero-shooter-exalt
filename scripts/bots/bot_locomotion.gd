@@ -21,7 +21,11 @@ var next_travel_roll: float = 0.0
 var next_flair_hop: float = 0.0
 var tracked_attacks: Dictionary = {}
 var noticed_tell: Dictionary = {}
-var counters: Dictionary = {"dodges":0,"missed_dodges":0,"dash_escape":0,"dash_engage":0,"dash_cover":0,"dash_rotate":0,"jump_strafes":0,"crouch_jiggles":0,"counter_strafes":0,"slides":0,"flair_hops":0}
+## Air dash-slide in progress: jump, dash down near the apex, press crouch just before
+## touchdown (fresh press inside the motor's dash_slide_window) and ride the slide.
+var air_slide: Dictionary = {}
+const AIR_DASH_PITCH: float = 35.0
+var counters: Dictionary = {"air_dash_slides":0,"air_dash_slide_misses":0,"dodges":0,"missed_dodges":0,"dash_escape":0,"dash_engage":0,"dash_cover":0,"dash_rotate":0,"jump_strafes":0,"crouch_jiggles":0,"counter_strafes":0,"slides":0,"flair_hops":0}
 
 func reset() -> void:
 	strafe_until = 0
@@ -33,6 +37,7 @@ func reset() -> void:
 	next_scan = 0
 	tracked_attacks.clear()
 	noticed_tell.clear()
+	air_slide = {}
 
 ## Mobility charges the bot keeps for emergencies (escape reserve from the hero profile).
 func spare_dashes(brain: BotBrain) -> int:
@@ -46,6 +51,11 @@ func apply(brain: BotBrain, movement: BotMovement, input: CombatIntent) -> void:
 	var engaged: bool = brain.visible_target() and state not in ["retreat","regroup"]
 	var grounded: bool = a.motor.grounded()
 	var ready: bool = a.state == "ready"
+	if not air_slide.is_empty():
+		if engaged and str(air_slide.phase) in ["jump","rise"]: air_slide = {}
+		else:
+			drive_air_slide(brain,input,now)
+			return
 	# 1. Reactive dodges.
 	if ready and now >= dodge_ready_at:
 		var incoming: Vector3 = incoming_threat(brain,now)
@@ -113,6 +123,12 @@ func apply(brain: BotBrain, movement: BotMovement, input: CombatIntent) -> void:
 			next_travel_roll = now+1.0
 			if a.motor.dash_charges >= a.tuning.dash_capacity and movement.selected_position.distance_to(a.global_position) > 18 and brain.rng.randf() < .12+brain.hero_profile.mobility*.25:
 				reason = "dash_rotate"
+		# Skilled players turn a rotation dash into an air dash-slide for extra speed.
+		if reason == "dash_rotate" and brain.level >= 1 and brain.rng.randf() < .45+float(brain.personality.get("flair",.3))*.4 and a.permits("jump") and movement.safe_travel(a,input.move,dash_length+3.0):
+			begin_air_slide(input.move,now)
+			counters.dash_rotate += 1
+			reason = ""
+			drive_air_slide(brain,input,now)
 		if reason != "" and movement.safe_travel(a,input.move,dash_length):
 			input.dash = true
 			counters[reason] += 1
@@ -130,6 +146,71 @@ func apply(brain: BotBrain, movement: BotMovement, input: CombatIntent) -> void:
 			if movement.safe_travel(a,input.move,2.5) and a.permits("jump"):
 				input.jump = true
 				counters.flair_hops += 1
+
+func begin_air_slide(direction: Vector3, now: float) -> void:
+	air_slide = {"phase":"jump","direction":(direction*Vector3(1,0,1)).normalized(),"started":now,"phase_at":now,"pressed":false}
+
+## Drives the air dash-slide with ordinary inputs; the motor decides whether it lands.
+func drive_air_slide(brain: BotBrain, input: CombatIntent, now: float) -> void:
+	var a: HeroActor = brain.actor
+	var direction: Vector3 = air_slide.direction
+	var grounded: bool = a.motor.grounded()
+	var mode: String = a.motor.mode
+	input.move = direction
+	input.primary = false
+	input.primary_held = false
+	if now-float(air_slide.started) > 2.5:
+		counters.air_dash_slide_misses += 1
+		air_slide = {}
+		return
+	match str(air_slide.phase):
+		"jump":
+			if grounded and a.state == "ready":
+				input.jump = true
+				air_slide.phase = "rise"
+				air_slide.phase_at = now
+		"rise":
+			input.jump_held = true
+			var height: float = height_above_ground(a)
+			if not grounded and a.motor.can_dash() and (a.velocity.y < 1.5 and height > .9 or now-float(air_slide.phase_at) > .45):
+				input.dash = true
+				input.aim = dash_aim(direction)
+				air_slide.phase = "dash"
+				air_slide.phase_at = now
+			elif grounded and now-float(air_slide.phase_at) > .3:
+				air_slide = {}
+		"dash":
+			# Hold the downward aim through the windup: the motor locks direction at its end.
+			input.aim = dash_aim(direction)
+			var height: float = height_above_ground(a)
+			var falling: float = maxf(.5,-a.velocity.y)
+			var impact: float = height/falling if mode == "dash" else INF
+			if not bool(air_slide.pressed) and (impact <= .08 or (mode == "dash" and height < .55)):
+				input.slide = true
+				input.slide_pressed = not a.intent.slide
+				air_slide.pressed = true
+			elif bool(air_slide.pressed):
+				input.slide = true
+			if mode == "slide":
+				air_slide.phase = "slide"
+				air_slide.phase_at = now
+				counters.air_dash_slides += 1
+			elif grounded and mode not in ["dash","dash_windup"] and now-float(air_slide.phase_at) > .25:
+				counters.air_dash_slide_misses += 1
+				air_slide = {}
+		"slide":
+			input.slide = true
+			var speed: float = Vector2(a.velocity.x,a.velocity.z).length()
+			if mode != "slide" or now-float(air_slide.phase_at) > .8 or speed < a.tuning.ground_speed:
+				air_slide = {}
+
+static func dash_aim(direction: Vector3) -> Vector3:
+	var pitch: float = deg_to_rad(AIR_DASH_PITCH)
+	return (direction*cos(pitch)+Vector3.DOWN*sin(pitch)).normalized()
+
+static func height_above_ground(a: HeroActor) -> float:
+	var hit: Dictionary = a.resolver.ray(a.global_position+Vector3.UP*.1,a.global_position-Vector3.UP*6,[a.get_rid()],1)
+	return 6.0 if hit.is_empty() else a.global_position.y-Vector3(hit.position).y
 
 ## Direction an attack is coming from that the bot can perceive, or ZERO.
 func incoming_threat(brain: BotBrain, now: float) -> Vector3:

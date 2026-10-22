@@ -99,8 +99,12 @@ static func plan(brain: BotBrain, fallback: Vector3) -> Dictionary:
 static func select(brain: BotBrain, query: Dictionary, map: RID, movement: BotMovement) -> Dictionary:
 	var a: HeroActor = brain.actor
 	var rng: RandomNumberGenerator = brain.rng
-	var points: Array[Vector3] = [a.global_position,movement.selected_position]
 	var center: Vector3 = query.center
+	# Staying put (or keeping the last pick) is only an option inside the sampled area;
+	# otherwise "regroup" could mean standing still in spawn.
+	var points: Array[Vector3] = []
+	for keep: Vector3 in [a.global_position,movement.selected_position]:
+		if Vector2(keep.x-center.x,keep.z-center.z).length() <= float(query.outer)+3.0: points.append(keep)
 	for index: int in CANDIDATES:
 		var angle: float = rng.randf_range(-float(query.arc),float(query.arc))
 		var base: Vector3 = query.bearing if not Vector3(query.bearing).is_zero_approx() else Vector3.FORWARD.rotated(Vector3.UP,rng.randf()*TAU)

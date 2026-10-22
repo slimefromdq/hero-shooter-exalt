@@ -191,6 +191,27 @@ func run() -> void:
 	check(not leapt,"bots do not dash off a ledge")
 	edge.queue_free()
 	await step(1)
+	# Air dash-slide: jump, dash down near the apex, fresh crouch just before touchdown.
+	await fresh(2,91)
+	b.global_position = Vector3(0,.01,200)
+	brain.perception.reset()
+	var loco: BotLocomotion = brain.movement.locomotion
+	loco.begin_air_slide(Vector3.FORWARD,resolver.combat_time)
+	var air_slid: bool = false
+	var top_speed: float = 0.0
+	var dash_seen: bool = false
+	for i: int in 150:
+		var input: CombatIntent = tick_apply("contest",Vector3.FORWARD)
+		if input.dash: dash_seen = true
+		a.intent = input
+		a._physics_process(DT)
+		if a.motor.mode == "slide" and a.motor.slide_source == "air_dash":
+			air_slid = true
+			top_speed = maxf(top_speed,Vector2(a.velocity.x,a.velocity.z).length())
+		if loco.air_slide.is_empty() and i > 10: break
+	check(dash_seen,"bot air-dashes from a jump")
+	check(air_slid and loco.counters.air_dash_slides == 1,"bot lands the air dash into a slide with a last-moment crouch")
+	check(top_speed > a.tuning.ground_speed+3.0,"the air dash-slide carries far more than running speed (%.1f m/s)" % top_speed)
 	# Consistency: Beginners miss dodges more often than Experts.
 	var success: Array[int] = [0,0]
 	for pair: int in 2:
