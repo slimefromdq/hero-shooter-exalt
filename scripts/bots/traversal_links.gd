@@ -12,7 +12,11 @@ const MIN_RISE: float = .6
 const DEDUPE_CELL: float = 3.0
 const FAILURES_TO_DISABLE: int = 3
 ## Bump when candidate or validation rules change; invalidates on-disk caches.
-const VERSION: int = 1
+const VERSION: int = 3
+## Highest ledge a wall kick plus upward air dash plus mantle is tried for.
+const WALL_CLIMB_MAX: float = 5.8
+## Navigation layer bit for links that spend a dash charge.
+const DASH_LAYER: int = 1 << 9
 ## Per-frame work budget for the asynchronous bake (microseconds).
 const FRAME_BUDGET_USEC: int = 4000
 const CACHE_DIR: String = "user://bot_links"
@@ -123,8 +127,8 @@ static func bake(region: NavigationRegion3D, t: HeroTuning) -> Dictionary:
 	capsule.radius = .45
 	capsule.height = 1.8
 	var seen: Dictionary = {}
-	var counts: Dictionary = {"drop":0,"hop_drop":0,"mantle":0,"gap":0}
-	var rejected: Dictionary = {"drop":0,"hop_drop":0,"mantle":0,"gap":0}
+	var counts: Dictionary = {"drop":0,"hop_drop":0,"mantle":0,"gap":0,"wall_climb":0}
+	var rejected: Dictionary = {"drop":0,"hop_drop":0,"mantle":0,"gap":0,"wall_climb":0}
 	var stand_in: HeroActor = make_probe(region)
 	var entries: Array = []
 	var clock: Dictionary = {"start":Time.get_ticks_usec()}
@@ -185,13 +189,15 @@ static func probe(space: PhysicsDirectSpaceState3D, p: Vector3, n: Vector3, radi
 		var wall: Dictionary = ray(space,p+Vector3.UP*.5,p+Vector3.UP*.5+n*(radius+1.3))
 		if wall.is_empty() or absf(Vector3(wall.normal).y) > .2: return result
 		var over: Vector3 = Vector3(wall.position)-Vector3(wall.normal)*.6
-		var top: Dictionary = ray(space,Vector3(over.x,p.y+max_rise+.1,over.z),Vector3(over.x,p.y+.3,over.z))
+		var top: Dictionary = ray(space,Vector3(over.x,p.y+WALL_CLIMB_MAX+.1,over.z),Vector3(over.x,p.y+.3,over.z))
 		if top.is_empty() or Vector3(top.normal).y < .85: return result
 		var rise: float = Vector3(top.position).y-p.y
-		if rise < MIN_RISE or rise > max_rise: return result
+		if rise < MIN_RISE or rise > WALL_CLIMB_MAX: return result
+		# The face must be a real wall all the way up for a kick to find it.
+		if rise > max_rise and ray(space,p+Vector3.UP*1.4,p+Vector3.UP*1.4+n*(radius+1.3)).is_empty(): return result
 		var landing: Vector3 = Vector3(top.position)-Vector3(wall.normal)*.35
 		if not standing_clear(space,landing,capsule): return result
-		result.append({"type":"mantle","start":p,"end":landing})
+		result.append({"type":"mantle" if rise <= max_rise else "wall_climb","start":p,"end":landing})
 		return result
 	var low_blocked: bool = not ray(space,p+Vector3.UP*.35,p+Vector3.UP*.35+n*(radius+1.0)).is_empty()
 	var high_blocked: bool = not ray(space,p+Vector3.UP*1.7,p+Vector3.UP*1.7+n*(radius+1.0)).is_empty()
@@ -210,12 +216,12 @@ static func probe(space: PhysicsDirectSpaceState3D, p: Vector3, n: Vector3, radi
 			if not standing_clear(space,g,capsule): break
 			result.append({"type":"hop_drop" if low_blocked else "drop","start":p,"end":g+n*.4})
 			# The same ledge is a mantle from below when a wall face is reachable.
-			if drop <= max_rise and not low_blocked:
+			if drop <= WALL_CLIMB_MAX and not low_blocked:
 				var face: Dictionary = ray(space,g+Vector3.UP*.5,g+Vector3.UP*.5-n*(distance+.4))
 				if not face.is_empty() and absf(Vector3(face.normal).y) < .2:
 					var base: Vector3 = Vector3(face.position)+Vector3(face.normal)*(radius+.15)
 					base.y = g.y
-					result.append({"type":"mantle","start":base,"end":p})
+					result.append({"type":"mantle" if drop <= max_rise else "wall_climb","start":base,"end":p})
 			break
 		if absf(drop) < .6 and not first_gap and distance <= max_gap and not low_blocked:
 			if standing_clear(space,g,capsule): result.append({"type":"gap","start":p,"end":g+n*.5})
@@ -286,11 +292,49 @@ static func drive(state: Dictionary, a: HeroActor, intent: CombatIntent, now: fl
 			if grounded and now >= float(state.retry_at) and a.state == "ready":
 				intent.jump = true
 				state.retry_at = now+.9
+		"wall_climb":
+			# Jump at the wall, kick off it near the apex, air-dash forward and up back
+			# over the lip, then hold jump into the ledge so the motor mantles.
+			var into: Vector3 = intent.move if not intent.move.is_zero_approx() else Vector3(state.get("into",Vector3.FORWARD))
+			if not state.has("into"): state.into = into
+			into = state.into
+			intent.move = into
+			intent.aim = into
+			intent.jump_held = true
+			var phase: String = str(state.get("phase","approach"))
+			match phase:
+				"approach":
+					if not a.motor.can_dash():
+						if now-float(state.started) > 1.5: return "aborted"
+					elif grounded and a.state == "ready":
+						var wall_ahead: bool = not a.resolver.ray(a.body_point(1.0),a.body_point(1.0)+into*.6,[a.get_rid()],1).is_empty()
+						if wall_ahead or now-float(state.started) > 1.0:
+							intent.jump = true
+							state.phase = "rise"
+				"rise":
+					if not grounded and a.velocity.y < 2.0:
+						intent.jump = true
+						intent.jump_held = false
+						state.phase = "kicked"
+					elif grounded and now-float(state.started) > 1.6: return "failed"
+				"kicked":
+					intent.jump_held = false
+					if a.motor.can_dash():
+						intent.dash = true
+						var pitch: float = deg_to_rad(a.tuning.dash_up_angle)
+						intent.aim = (into*cos(pitch)+Vector3.UP*sin(pitch)).normalized()
+						state.phase = "dash"
+					elif grounded or a.velocity.y < 0: return "aborted"
+				"dash":
+					var pitch: float = deg_to_rad(a.tuning.dash_up_angle)
+					intent.aim = (into*cos(pitch)+Vector3.UP*sin(pitch)).normalized()
+					if grounded and a.motor.mode not in ["dash","dash_windup"] and a.state != "mantle" and absf(a.global_position.y-exit.y) > 1.3: return "failed"
 	var arrived: bool = flat.length() < 1.2 and absf(a.global_position.y-exit.y) < 1.3 and grounded and a.state != "mantle"
 	if str(state.type) in ["drop","hop_drop"] and grounded and a.global_position.y < exit.y+.6 and flat.length() < 2.5 and now-float(state.started) > .2: arrived = true
 	if arrived: return "done"
 	if a.state == "mantle": state.mantled = true
 	if str(state.type) == "mantle" and not bool(state.get("mantled",false)) and now-float(state.started) > 2.0: return "failed"
+	if str(state.type) == "wall_climb" and now-float(state.started) > 3.0: return "failed"
 	if now-float(state.started) > 3.5: return "failed"
 	return "running"
 
@@ -312,8 +356,10 @@ static func register(map: RID, start: Vector3, end: Vector3, type: String, layer
 	NavigationServer3D.link_set_bidirectional(rid,false)
 	NavigationServer3D.link_set_start_position(rid,start)
 	NavigationServer3D.link_set_end_position(rid,end)
-	NavigationServer3D.link_set_navigation_layers(rid,layers)
-	NavigationServer3D.link_set_enter_cost(rid,{"drop":.5,"hop_drop":1.5,"mantle":2.5,"gap":2.0}.get(type,2.0))
+	# Wall climbs need a dash charge; they live on their own layer so a bot only plans
+	# through them while it has one (see CityBotController path updates).
+	NavigationServer3D.link_set_navigation_layers(rid,DASH_LAYER if type == "wall_climb" else layers)
+	NavigationServer3D.link_set_enter_cost(rid,{"drop":.5,"hop_drop":1.5,"mantle":2.5,"gap":2.0,"wall_climb":5.0}.get(type,2.0))
 	NavigationServer3D.link_set_travel_cost(rid,1.0)
 	registry[rid] = {"type":type,"start":start,"end":end,"failures":0,"failed_total":0,"uses":0}
 	return rid

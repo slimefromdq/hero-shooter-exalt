@@ -86,7 +86,7 @@ func run() -> void:
 	check(TraversalLinks.ready_for(map),"asynchronous bake finishes")
 	check(links_between(ground,top_of(low,low_size),"mantle") > 0,"2.0 m ledge gets a mantle link")
 	check(links_between(ground,top_of(mid,mid_size),"mantle") > 0,"3.2 m ledge gets a jump-and-mantle link")
-	check(links_between(ground,top_of(tall,tall_size)) == 0,"4.5 m wall gets no link (needs a wall kick and dash)")
+	check(links_between(ground,top_of(tall,tall_size),"wall_climb") > 0 and links_between(ground,top_of(tall,tall_size),"mantle") == 0,"4.5 m wall gets a wall-kick climb, not a plain mantle")
 	check(links_between(top_of(low,low_size),ground,"drop") > 0,"plateau edges get drop links")
 	await step(2)
 	var path: PackedVector3Array = NavigationServer3D.map_get_path(map,Vector3(-20,0,8),low+Vector3(0,1,0),true)
@@ -119,6 +119,30 @@ func run() -> void:
 		check(result == "done" and body.global_position.y > mid.y+mid_size.y/2-.3,"slowest hero climbs the 3.2 m ledge with ordinary inputs")
 	else:
 		check(false,"slowest hero climbs the 3.2 m ledge with ordinary inputs")
+	var climb: Dictionary = {}
+	for rid: RID in TraversalLinks.registry:
+		var entry: Dictionary = TraversalLinks.registry[rid]
+		if entry.type == "wall_climb" and top_of(tall,tall_size).has_point(entry.end): climb = entry
+	var climbed: bool = false
+	if not climb.is_empty():
+		body.reset_actor(Vector3(climb.start)+Vector3.UP*.05)
+		var climb_state: Dictionary = {"type":"wall_climb","exit":climb.end,"started":0.0,"jumped":false,"retry_at":0.0}
+		var climb_time: float = 0.0
+		var events: Dictionary = {"wall_jump":0}
+		body.movement_confirmed.connect(func(kind: String, _a: Vector3, _d: Vector3, _n: Vector3, _s: float) -> void:
+			if kind == "wall_jump": events.wall_jump += 1)
+		for tick: int in 300:
+			var intent := CombatIntent.new()
+			intent.aim_origin = body.body_point(1.45)
+			var outcome: String = TraversalLinks.drive(climb_state,body,intent,climb_time)
+			if outcome != "running":
+				climbed = outcome == "done"
+				break
+			body.intent = intent
+			body._physics_process(1.0/60.0)
+			climb_time += 1.0/60.0
+		check(int(events.wall_jump) > 0,"the climb uses a real wall kick")
+	check(climbed and body.global_position.y > tall.y+tall_size.y/2-.3,"slowest hero reaches the 4.5 m roof: jump, wall kick, air dash, mantle")
 	if not TraversalLinks.registry.is_empty():
 		var rid_any: RID = TraversalLinks.registry.keys()[0]
 		for i: int in TraversalLinks.FAILURES_TO_DISABLE: TraversalLinks.record(rid_any,false)

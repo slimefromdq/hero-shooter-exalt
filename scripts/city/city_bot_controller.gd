@@ -105,6 +105,8 @@ func gather_intent(delta: float) -> CombatIntent:
 			destination = brain.movement.destination(brain,destination,navagent.get_navigation_map(),not entered_hill)
 	if path_timer <= 0 and link.is_empty():
 		path_timer += brain.skill.path_interval
+		var layers: int = 1 | (TraversalLinks.DASH_LAYER if actor.motor.dash_charges > 0 else 0)
+		if navagent.navigation_layers != layers and navagent.navigation_layers != 0: navagent.navigation_layers = layers
 		navagent.target_position = destination
 		path_update_count += 1
 	elif path_timer <= 0:
@@ -122,9 +124,10 @@ func gather_intent(delta: float) -> CombatIntent:
 	if move.length_squared() > .01: move = avoid_wall((move+separation*.7).limit_length(1))
 	intent.move = move
 	var stunt: bool = not link.is_empty() and actor.alive
-	if stunt: link_move(intent,delta)
-	else: obstacle_hop(intent,delta)
+	if not stunt: obstacle_hop(intent,delta)
 	brain.combat.execute(brain,intent,delta,decision_fresh)
+	# Stunts run after combat so their aim (dash and kick direction) is not overwritten.
+	if stunt: link_move(intent,delta)
 	brain.movement.apply(brain,intent,recovering or seeking_health or stunt)
 	remembered_aim = intent.aim
 	brain.diagnostics.tick(delta,brain,intent)
@@ -152,6 +155,10 @@ func link_move(intent: CombatIntent, _delta: float) -> void:
 	if result == "done":
 		TraversalLinks.record(link.rid,true)
 		link_uses += 1
+		link = {}
+		path_timer = 0
+	elif result == "aborted":
+		# Not the link's fault (e.g. no dash charge yet): walk the long way this time.
 		link = {}
 		path_timer = 0
 	elif result == "failed":
