@@ -200,6 +200,14 @@ func look_direction(origin: Vector3, fallback: Vector3) -> Vector3:
 			if not flat.is_zero_approx():
 				var swing: float = deg_to_rad(rng.randf_range(65,125))*(1.0 if rng.randf() < .5 else -1.0)
 				glance_direction = flat.rotated(Vector3.UP,swing)
+				# Experienced players check where the enemy was last called out.
+				if is_instance_valid(director) and rng.randf() < .35+.4*skill.coordination:
+					for spot: Vector3 in director.recent_threats(now):
+						var toward: Vector3 = (spot+Vector3.UP*1.2-origin)
+						if toward.length() > 3 and flat.angle_to((toward*Vector3(1,0,1)).normalized()) > deg_to_rad(skill.cone_degrees):
+							glance_direction = toward.normalized()
+							swing = flat.angle_to((toward*Vector3(1,0,1)).normalized())
+							break
 				glance_until = now+.35+absf(swing)/deg_to_rad(maxf(skill.turn_speed,1))
 			glance_at = now+rng.randf_range(.6,1.4)*skill.glance_interval
 		if now < glance_until: return glance_direction

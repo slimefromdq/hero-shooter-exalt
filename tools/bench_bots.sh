@@ -12,7 +12,7 @@ pids=()
 for map in city museum temple; do
   for s in "${seeds[@]}"; do
     "$G" --headless --path . --fixed-fps 60 --script res://tests/bot_behavior_benchmark.gd -- \
-      --map=$map --seconds=$seconds --seed=$s --out=res://artifacts/bench/$label/$map-$s.json \
+      --map=$map --seconds=$seconds --seed=$s --difficulty=${BOT_DIFFICULTY:-1} --out=res://artifacts/bench/$label/$map-$s.json \
       > "artifacts/bench/$label/$map-$s.log" 2>&1 &
     pids+=($!)
   done
