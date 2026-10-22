@@ -14,7 +14,8 @@ if [ $# -gt 0 ] && [ "$1" != "--full" ]; then suites=("$@"); fi
 status=0
 for t in "${suites[@]}"; do
   [ -f "tests/$t.gd" ] || continue
-  timeout 1500 "$G" --headless --path . --fixed-fps 60 --script "res://tests/$t.gd" > ".tools/logs/$t.log" 2>&1
+  limit=1500; [[ "$t" == *soak* ]] && limit=6000
+  timeout $limit "$G" --headless --path . --fixed-fps 60 --script "res://tests/$t.gd" > ".tools/logs/$t.log" 2>&1
   code=$?
   pass=$(grep -c '^PASS' ".tools/logs/$t.log"); fail=$(grep -c '^FAIL' ".tools/logs/$t.log")
   errs=$(grep -c 'SCRIPT ERROR\|Parse Error' ".tools/logs/$t.log")
