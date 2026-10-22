@@ -239,6 +239,34 @@ func run() -> void:
 	check(int(hop_loco.counters.bhops) >= 6,"bot chains bunny hops on a long rotation (%d hops)" % int(hop_loco.counters.bhops))
 	check(peak > a.tuning.ground_speed+2.5,"air strafing builds speed well past running speed (%.1f m/s vs %.1f)" % [peak,a.tuning.ground_speed])
 	check(not fell and absf(a.global_position.x-200) < 10,"hopping stays on course and on the ground strip")
+	# Slope slide: on a downhill along the route, crouch to slide and gain speed.
+	await fresh(2,93)
+	var ramp: Node3D = Geometry.box(world,Vector3(10,1,60),Vector3(-200,0,0),Color.GRAY)
+	ramp.rotation.x = deg_to_rad(-15)
+	b.global_position = Vector3(0,.01,400)
+	await step(2)
+	var top_z: float = 20.0
+	a.global_position = Vector3(-200,tan(deg_to_rad(15))*top_z+.6,top_z)
+	a.velocity = Vector3.ZERO
+	for i: int in 10:
+		a.intent = CombatIntent.new()
+		a.intent.aim = Vector3.FORWARD
+		a._physics_process(DT)
+	brain.perception.reset()
+	var slope_loco: BotLocomotion = brain.movement.locomotion
+	var slid_down: bool = false
+	var slope_peak: float = 0.0
+	for i: int in 150:
+		# A short hop down the hill (no long-rotation tricks), so the slope decides.
+		brain.movement.selected_position = a.global_position+Vector3.FORWARD*12
+		var input: CombatIntent = tick_apply("contest",Vector3.FORWARD)
+		a.intent = input
+		a._physics_process(DT)
+		if a.motor.mode == "slide" and a.motor.slide_source != "air_dash": slid_down = true
+		slope_peak = maxf(slope_peak,a.velocity.length())
+		if a.global_position.z < -20: break
+	check(slid_down and int(slope_loco.counters.slope_slides) >= 1,"bot slides down a slope that runs along its route")
+	check(slope_peak > a.tuning.ground_speed+1.5,"the slope slide is faster than running (%.1f m/s)" % slope_peak)
 	# Consistency: Beginners miss dodges more often than Experts.
 	var success: Array[int] = [0,0]
 	for pair: int in 2:

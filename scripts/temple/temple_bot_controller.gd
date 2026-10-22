@@ -12,6 +12,7 @@ var pad_retry: float = 0
 var pad_uses: int = 0
 var gallery_visits: int = 0
 var was_flanker: bool = false
+var legacy_pads: bool = true
 
 func gather_intent(delta: float) -> CombatIntent:
 	pad_retry = maxf(0,pad_retry-delta)
@@ -88,11 +89,16 @@ func decide() -> void:
 		route.clear()
 		route_key = ""
 	was_flanker = flanker
-	if (flanker or brain.hero_profile.mobility >= .6) and pad_retry<=0 and actor.motor.grounded() and not seeking_health:
+	# Authored routes go waypoint to waypoint, so a pad shortcut is chosen here against
+	# the goal. Flankers and mobile heroes take any pad heading the right way; everyone
+	# else takes one when it lands at least 20 m closer to the goal. Pads are also
+	# navigation links (TraversalLinks.register_pads) for long off-route trips.
+	if legacy_pads and pad_retry<=0 and actor.motor.grounded() and not seeking_health:
 		var goal_at: Vector3 = (match_controller as TempleMatch).temple_definition().POINTS[match_controller.goal_index(actor.team)]
 		for candidate: TempleJumpPad in match_controller.arena.builder.pads:
 			if actor.global_position.distance_to(candidate.global_position)>32: continue
 			if candidate.spec.destination.distance_to(goal_at)>candidate.global_position.distance_to(goal_at)+8: continue
+			if not (flanker or brain.hero_profile.mobility >= .6) and candidate.spec.destination.distance_to(goal_at) > actor.global_position.distance_to(goal_at)-20: continue
 			selected_pad = candidate
 			pad_phase = "approach"
 			pad_timeout = 12

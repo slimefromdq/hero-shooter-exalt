@@ -29,7 +29,8 @@ var air_slide: Dictionary = {}
 var bhop: Dictionary = {}
 var next_bhop_roll: float = 0.0
 const AIR_DASH_PITCH: float = 35.0
-var counters: Dictionary = {"bhop_chains":0,"bhops":0,"bhop_peak_speed":0.0,"air_dash_slides":0,"air_dash_slide_misses":0,"dodges":0,"missed_dodges":0,"dash_escape":0,"dash_engage":0,"dash_cover":0,"dash_rotate":0,"jump_strafes":0,"crouch_jiggles":0,"counter_strafes":0,"slides":0,"flair_hops":0}
+var slope_sliding: bool = false
+var counters: Dictionary = {"slope_slides":0,"bhop_chains":0,"bhops":0,"bhop_peak_speed":0.0,"air_dash_slides":0,"air_dash_slide_misses":0,"dodges":0,"missed_dodges":0,"dash_escape":0,"dash_engage":0,"dash_cover":0,"dash_rotate":0,"jump_strafes":0,"crouch_jiggles":0,"counter_strafes":0,"slides":0,"flair_hops":0}
 
 func reset() -> void:
 	strafe_until = 0
@@ -43,6 +44,7 @@ func reset() -> void:
 	noticed_tell.clear()
 	air_slide = {}
 	bhop = {}
+	slope_sliding = false
 
 ## Mobility charges the bot keeps for emergencies (escape reserve from the hero profile).
 func spare_dashes(brain: BotBrain) -> int:
@@ -116,7 +118,10 @@ func apply(brain: BotBrain, movement: BotMovement, input: CombatIntent) -> void:
 		if now < stop_until: input.move = Vector3.ZERO
 		if now < crouch_until and grounded: input.slide = true
 		movement.intentional_hold = true
-	# 3. Purposeful dashes.
+	# 3. Slide down slopes along the route: gravity outpaces slide friction.
+	slope_slide(brain,movement,input)
+	if slope_sliding: return
+	# 3b. Purposeful dashes.
 	if ready and grounded and a.motor.can_dash() and input.move.length() > .5 and not input.dash:
 		var reason: String = ""
 		var distance: float = a.global_position.distance_to(Vector3(brain.threat.get("position",a.global_position)))
@@ -135,8 +140,8 @@ func apply(brain: BotBrain, movement: BotMovement, input: CombatIntent) -> void:
 		if reason == "dash_rotate" and brain.level >= 1 and brain.rng.randf() < .45+float(brain.personality.get("flair",.3))*.4 and a.permits("jump") and movement.safe_travel(a,input.move,dash_length+3.0):
 			begin_air_slide(input.move,now)
 			counters.dash_rotate += 1
-			reason = ""
 			drive_air_slide(brain,input,now)
+			return
 		if reason != "" and movement.safe_travel(a,input.move,dash_length):
 			input.dash = true
 			counters[reason] += 1
@@ -223,6 +228,34 @@ func drive_air_slide(brain: BotBrain, input: CombatIntent, now: float) -> void:
 				air_slide = {}
 				begin_bhop(brain,now)
 				input.jump = true
+
+## Holds crouch on a downhill (at least the motor's slide_slope, plus margin) when the
+## route runs down it; releases when the slope ends, the route turns or the slide dies.
+func slope_slide(brain: BotBrain, movement: BotMovement, input: CombatIntent) -> void:
+	var a: HeroActor = brain.actor
+	var mode: String = a.motor.mode
+	var heading: Vector3 = (input.move*Vector3(1,0,1)).normalized()
+	if slope_sliding:
+		var along: Vector3 = (a.velocity*Vector3(1,0,1)).normalized()
+		var keep: bool = mode == "slide" and not heading.is_zero_approx() and along.dot(heading) > .55 and movement.safe_travel(a,along,2.5)
+		if keep:
+			input.slide = true
+			return
+		slope_sliding = false
+		return
+	if brain.level < 1 or a.state != "ready" or heading.is_zero_approx() or not a.motor.grounded() or mode in ["slide","dash","dash_windup"]: return
+	var normal: Vector3 = a.get_floor_normal()
+	if normal.is_zero_approx(): return
+	var angle: float = rad_to_deg(acos(clampf(normal.y,-1,1)))
+	if angle < a.tuning.slide_slope+1.0 or angle > 40: return
+	var downhill: Vector3 = (Vector3.DOWN.slide(normal)*Vector3(1,0,1)).normalized()
+	if downhill.dot(heading) < .75 or not movement.safe_travel(a,heading,3.0): return
+	# Run into it first, like a player: a slide from a standstill is slow to get going.
+	if Vector2(a.velocity.x,a.velocity.z).length() < a.tuning.slide_entry_speed*.9: return
+	input.slide = true
+	input.slide_pressed = not a.intent.slide
+	slope_sliding = true
+	counters.slope_slides += 1
 
 func begin_bhop(brain: BotBrain, now: float) -> void:
 	bhop = {"started":now,"side":1.0 if brain.rng.randf() < .5 else -1.0,"hops":0,"airborne":false}

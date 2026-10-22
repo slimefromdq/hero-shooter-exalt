@@ -89,11 +89,13 @@ static func build(region: NavigationRegion3D, t: HeroTuning) -> void:
 		for entry: Dictionary in cached:
 			register(map,vec(entry.start),vec(entry.end),str(entry.type),region.navigation_layers)
 			counts_cached[entry.type] = int(counts_cached.get(entry.type,0))+1
+		counts_cached["pad"] = register_pads(region)
 		built[map] = {"links":cached.size(),"by_type":counts_cached,"cached":true,"milliseconds":0}
 		building.erase(map)
 		return
 	var report: Dictionary = await bake(region,t)
 	if not is_instance_valid(region) or not building.has(map): return
+	report.by_type["pad"] = register_pads(region)
 	built[map] = report
 	building.erase(map)
 	save_cache(cache,report.entries)
@@ -273,6 +275,15 @@ static func drive(state: Dictionary, a: HeroActor, intent: CombatIntent, now: fl
 	var flat: Vector3 = (exit-a.global_position)*Vector3(1,0,1)
 	var grounded: bool = a.motor.grounded()
 	intent.move = flat.normalized() if flat.length() > .2 else Vector3.ZERO
+	if str(state.type) == "pad":
+		# Step onto the pad; once launched, steer the flight toward the landing.
+		if a.motor.pad_flight_left > 0: state.flying = true
+		if not bool(state.get("flying",false)):
+			var to_pad: Vector3 = (Vector3(state.get("entry",a.global_position))-a.global_position)*Vector3(1,0,1)
+			intent.move = to_pad.normalized() if to_pad.length() > .15 else Vector3.ZERO
+			return "failed" if now-float(state.started) > 4.0 else "running"
+		if grounded and a.motor.pad_flight_left <= 0 and flat.length() < 6.0: return "done"
+		return "failed" if now-float(state.started) > 9.0 else "running"
 	match str(state.type):
 		"hop_drop":
 			if grounded and not bool(state.jumped):
@@ -338,6 +349,26 @@ static func drive(state: Dictionary, a: HeroActor, intent: CombatIntent, now: fl
 	if now-float(state.started) > 3.5: return "failed"
 	return "running"
 
+## Jump pads (any node in "temple_jump_pads" or "jump_pads" with a spec destination)
+## become links from the pad to its landing, so path planning uses them as shortcuts.
+static func register_pads(region: NavigationRegion3D) -> int:
+	var map: RID = region.get_navigation_map()
+	var count: int = 0
+	var pads: Array[Node] = region.get_tree().get_nodes_in_group("temple_jump_pads")
+	pads.append_array(region.get_tree().get_nodes_in_group("jump_pads"))
+	for node: Node in pads:
+		var pad := node as Node3D
+		if pad == null or not "spec" in pad: continue
+		var spec: Dictionary = pad.get("spec")
+		if not spec.has("destination"): continue
+		var start: Vector3 = NavigationServer3D.map_get_closest_point(map,pad.global_position)
+		var end: Vector3 = NavigationServer3D.map_get_closest_point(map,Vector3(spec.destination))
+		if start.distance_to(pad.global_position) > 2.5 or end.distance_to(Vector3(spec.destination)) > 3.0: continue
+		var rid: RID = register(map,start,end,"pad",region.navigation_layers)
+		registry[rid]["pad"] = weakref(pad)
+		count += 1
+	return count
+
 static func ray(space: PhysicsDirectSpaceState3D, from: Vector3, to: Vector3) -> Dictionary:
 	var query := PhysicsRayQueryParameters3D.create(from,to,1)
 	return space.intersect_ray(query)
@@ -359,7 +390,7 @@ static func register(map: RID, start: Vector3, end: Vector3, type: String, layer
 	# Wall climbs need a dash charge; they live on their own layer so a bot only plans
 	# through them while it has one (see CityBotController path updates).
 	NavigationServer3D.link_set_navigation_layers(rid,DASH_LAYER if type == "wall_climb" else layers)
-	NavigationServer3D.link_set_enter_cost(rid,{"drop":.5,"hop_drop":1.5,"mantle":2.5,"gap":2.0,"wall_climb":5.0}.get(type,2.0))
+	NavigationServer3D.link_set_enter_cost(rid,{"drop":.5,"hop_drop":1.5,"mantle":2.5,"gap":2.0,"wall_climb":5.0,"pad":2.0}.get(type,2.0))
 	NavigationServer3D.link_set_travel_cost(rid,1.0)
 	registry[rid] = {"type":type,"start":start,"end":end,"failures":0,"failed_total":0,"uses":0}
 	return rid
