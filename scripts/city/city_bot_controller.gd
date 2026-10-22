@@ -40,6 +40,13 @@ var care_request: CombatIntent
 var rng := RandomNumberGenerator.new()
 var brain: BotBrain
 var decision_fresh: bool = false
+## Active traversal link stunt: {"rid","type","entry","exit","started","jumped","retry_at"}.
+var link: Dictionary = {}
+var links_ready: bool = false
+var link_uses: int = 0
+var link_failures: int = 0
+var hop_timer: float = 0.0
+var hops: int = 0
 
 func _ready() -> void:
 	rng.seed = 8407 + slot * 103 + actor.team * 1009
@@ -58,6 +65,7 @@ func _ready() -> void:
 	navagent.height = 1.9
 	navagent.max_speed = actor.tuning.ground_speed
 	navagent.avoidance_enabled = false
+	navagent.link_reached.connect(_on_link_reached)
 	actor.add_child(navagent)
 	load_route()
 	brain = BotBrain.new()
@@ -80,6 +88,10 @@ func gather_intent(delta: float) -> CombatIntent:
 	intent.aim_origin = actor.body_point(1.45)
 	if not active or frozen or not actor.alive or not is_instance_valid(match_controller): return intent
 	if match_controller.freeze_ai or match_controller.exploration or match_controller.winner >= 0 or not match_controller.navigation_ready: return intent
+	if not links_ready:
+		links_ready = true
+		var region: NavigationRegion3D = match_controller.arena.get("navigation_region") as NavigationRegion3D
+		if is_instance_valid(region): TraversalLinks.ensure(region,actor.tuning)
 	elapsed += delta
 	think_timer -= delta
 	path_timer -= delta
@@ -90,10 +102,12 @@ func gather_intent(delta: float) -> CombatIntent:
 		# Adapters finish authored route/phase selection before tactical positioning.
 		if not seeking_health and elapsed >= detour_until:
 			destination = brain.movement.destination(brain,destination,navagent.get_navigation_map(),not entered_hill)
-	if path_timer <= 0:
+	if path_timer <= 0 and link.is_empty():
 		path_timer += brain.skill.path_interval
 		navagent.target_position = destination
 		path_update_count += 1
+	elif path_timer <= 0:
+		path_timer = .05
 	var move: Vector3 = follow_path()
 	var recovering: bool = elapsed < detour_until and navagent.navigation_layers != 0
 	if recovering:
@@ -106,16 +120,62 @@ func gather_intent(delta: float) -> CombatIntent:
 		move = Vector3.ZERO
 	if move.length_squared() > .01: move = avoid_wall((move+separation*.7).limit_length(1))
 	intent.move = move
+	var stunt: bool = not link.is_empty() and actor.alive
+	if stunt: link_move(intent,delta)
+	else: obstacle_hop(intent,delta)
 	brain.combat.execute(brain,intent,delta,decision_fresh)
-	brain.movement.apply(brain,intent,recovering or seeking_health)
+	brain.movement.apply(brain,intent,recovering or seeking_health or stunt)
 	remembered_aim = intent.aim
 	brain.diagnostics.tick(delta,brain,intent)
-	if brain.movement.intentional_hold and actor.global_position.distance_to(destination) < 3:
+	if stunt:
+		stuck_time = 0
+		sample_position = actor.global_position
+		previous_position = actor.global_position
+	elif brain.movement.intentional_hold and actor.global_position.distance_to(destination) < 3:
 		stuck_time = 0
 		sample_position = actor.global_position
 		previous_position = actor.global_position
 	else: watch_progress(delta,intent.move)
 	return intent
+
+func _on_link_reached(details: Dictionary) -> void:
+	var rid: RID = details.get("rid",RID())
+	var data: Dictionary = TraversalLinks.meta(rid)
+	if data.is_empty() or not actor.alive: return
+	link = {"rid":rid,"type":str(data.type),"entry":details.get("link_entry_position",data.start),"exit":details.get("link_exit_position",data.end),
+		"started":elapsed,"jumped":false,"retry_at":elapsed}
+
+## Performs the active link with ordinary inputs; the motor decides whether it works.
+func link_move(intent: CombatIntent, _delta: float) -> void:
+	var result: String = TraversalLinks.drive(link,actor,intent,elapsed)
+	if result == "done":
+		TraversalLinks.record(link.rid,true)
+		link_uses += 1
+		link = {}
+		path_timer = 0
+	elif result == "failed":
+		if OS.has_environment("BOT_TRACE_LINKS"): print("LINKFAIL %s %s at=%s entry=%s exit=%s state=%s" % [actor.actor_id,link.type,str(actor.global_position.snapped(Vector3.ONE*.1)),str(Vector3(link.entry).snapped(Vector3.ONE*.1)),str(Vector3(link.exit).snapped(Vector3.ONE*.1)),actor.state])
+		TraversalLinks.record(link.rid,false)
+		link_failures += 1
+		link = {}
+		path_timer = 0
+
+## A person hops a low lip they keep bumping into instead of grinding against it.
+func obstacle_hop(intent: CombatIntent, delta: float) -> void:
+	var speed: float = Vector2(actor.velocity.x,actor.velocity.z).length()
+	if intent.move.length() < .5 or not actor.motor.grounded() or actor.state != "ready" or speed > 1.8:
+		hop_timer = minf(0.0,hop_timer+delta) if hop_timer < 0 else 0.0
+		return
+	hop_timer += delta
+	if hop_timer < .3: return
+	var forward: Vector3 = (intent.move*Vector3(1,0,1)).normalized()
+	var knee: Dictionary = actor.resolver.ray(actor.global_position+Vector3.UP*.3,actor.global_position+Vector3.UP*.3+forward*.9,[actor.get_rid()],1)
+	var head: Dictionary = actor.resolver.ray(actor.global_position+Vector3.UP*1.6,actor.global_position+Vector3.UP*1.6+forward*1.1,[actor.get_rid()],1)
+	if not knee.is_empty() and head.is_empty() and absf(Vector3(knee.normal).y) < .5:
+		intent.jump = true
+		intent.jump_held = true
+		hops += 1
+		hop_timer = -.6
 
 func objective_context() -> Dictionary:
 	return match_controller.bot_objective_context(actor.team)
@@ -249,6 +309,8 @@ func reset_controller() -> void:
 	seeking_health = false
 	detour_until = 0
 	recovery_jump = false
+	link = {}
+	hop_timer = 0
 	stuck_time = 0
 	movement_sample = 0
 	previous_position = actor.global_position

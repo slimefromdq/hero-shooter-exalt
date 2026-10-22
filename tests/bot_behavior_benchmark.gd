@@ -8,6 +8,7 @@ var duration: int = 300
 var bench_seed: int = 76
 var out_path: String = ""
 var difficulty: int = -1
+var trace_stuck: bool = false
 var session: CityMatch
 
 func _initialize() -> void:
@@ -17,6 +18,7 @@ func _initialize() -> void:
 		if argument.begins_with("--seed="): bench_seed = int(argument.get_slice("=",1))
 		if argument.begins_with("--out="): out_path = argument.get_slice("=",1)
 		if argument.begins_with("--difficulty="): difficulty = int(argument.get_slice("=",1))
+		if argument == "--trace-stuck": trace_stuck = true
 	call_deferred("run")
 
 func frames(count: int) -> void:
@@ -57,8 +59,16 @@ func run() -> void:
 	if session is TempleMatch: skip_temple_preparation()
 	var rounds: int = 0
 	var wall_start: int = Time.get_ticks_msec()
+	var stuck_seen: Dictionary = {}
 	for second: int in duration:
 		await frames(60)
+		if trace_stuck:
+			for actor: HeroActor in session.actors:
+				var controller: CityBotController = actor.controller as CityBotController
+				if controller.stuck_events > int(stuck_seen.get(actor.actor_id,0)):
+					stuck_seen[actor.actor_id] = controller.stuck_events
+					print("STUCK t=%d %s %s at=%s goal=%s state=%s tactical=%s" % [second,actor.actor_id,actor.tuning.hero_id,
+						str(actor.global_position.snapped(Vector3.ONE*.1)),str(controller.destination.snapped(Vector3.ONE*.1)),actor.state,controller.brain.tactical_state])
 		var finished: bool = session.winner >= 0
 		if session is TempleMatch and (session as TempleMatch).objective.finished: finished = true
 		if finished:
@@ -106,6 +116,13 @@ func summarise(rounds: int, wall_ms: int) -> Dictionary:
 		totals.stuck_events += controller.stuck_events
 		totals.objective += debug.objective_seconds
 		kills_by_team[1-actor.team] += debug.deaths
+	var hops: int = 0
+	var link_uses: int = 0
+	var link_failures: int = 0
+	for actor: HeroActor in session.actors:
+		hops += (actor.controller as CityBotController).hops
+		link_uses += (actor.controller as CityBotController).link_uses
+		link_failures += (actor.controller as CityBotController).link_failures
 	var minutes: float = maxf(float(totals.alive)/60.0,.001)
 	var aggregate: Dictionary = {"map":map_name,"seed":bench_seed,"seconds":duration,"rounds":rounds,"wall_ms":wall_ms,
 		"combat_idle_ratio":snappedf(float(totals.combat_idle)/maxf(float(totals.combat),.001),.001),
@@ -115,5 +132,6 @@ func summarise(rounds: int, wall_ms: int) -> Dictionary:
 		"engagements":totals.engagements,"outnumbered_ratio":snappedf(float(totals.outnumbered)/maxf(float(totals.engagements),1),.001),
 		"deaths":totals.deaths,"deaths_alone_ratio":snappedf(float(totals.deaths_alone)/maxf(float(totals.deaths),1),.001),
 		"damage_per_bot_minute":snappedf(float(totals.damage)/minutes,.1),"stuck_events":totals.stuck_events,
-		"objective_share":snappedf(float(totals.objective)/maxf(float(totals.alive),.001),.001),"kills_by_team":kills_by_team}
+		"objective_share":snappedf(float(totals.objective)/maxf(float(totals.alive),.001),.001),"kills_by_team":kills_by_team,
+		"hops":hops,"link_uses":link_uses,"link_failures":link_failures,"links":TraversalLinks.report_for(session.arena.get_world_3d().navigation_map),"link_stats":TraversalLinks.stats()}
 	return {"aggregate":aggregate,"bots":bots}
