@@ -24,8 +24,12 @@ var noticed_tell: Dictionary = {}
 ## Air dash-slide in progress: jump, dash down near the apex, press crouch just before
 ## touchdown (fresh press inside the motor's dash_slide_window) and ride the slide.
 var air_slide: Dictionary = {}
+## Bunny hop with Source-style air strafing on long rotations:
+## {"started","side","hops","peak"}. Empty when not hopping.
+var bhop: Dictionary = {}
+var next_bhop_roll: float = 0.0
 const AIR_DASH_PITCH: float = 35.0
-var counters: Dictionary = {"air_dash_slides":0,"air_dash_slide_misses":0,"dodges":0,"missed_dodges":0,"dash_escape":0,"dash_engage":0,"dash_cover":0,"dash_rotate":0,"jump_strafes":0,"crouch_jiggles":0,"counter_strafes":0,"slides":0,"flair_hops":0}
+var counters: Dictionary = {"bhop_chains":0,"bhops":0,"bhop_peak_speed":0.0,"air_dash_slides":0,"air_dash_slide_misses":0,"dodges":0,"missed_dodges":0,"dash_escape":0,"dash_engage":0,"dash_cover":0,"dash_rotate":0,"jump_strafes":0,"crouch_jiggles":0,"counter_strafes":0,"slides":0,"flair_hops":0}
 
 func reset() -> void:
 	strafe_until = 0
@@ -38,6 +42,7 @@ func reset() -> void:
 	tracked_attacks.clear()
 	noticed_tell.clear()
 	air_slide = {}
+	bhop = {}
 
 ## Mobility charges the bot keeps for emergencies (escape reserve from the hero profile).
 func spare_dashes(brain: BotBrain) -> int:
@@ -56,6 +61,9 @@ func apply(brain: BotBrain, movement: BotMovement, input: CombatIntent) -> void:
 		else:
 			drive_air_slide(brain,input,now)
 			return
+	if not bhop.is_empty():
+		if engaged or state in ["support","hold","retreat"]: bhop = {}
+		elif drive_bhop(brain,movement,input,now): return
 	# 1. Reactive dodges.
 	if ready and now >= dodge_ready_at:
 		var incoming: Vector3 = incoming_threat(brain,now)
@@ -138,7 +146,14 @@ func apply(brain: BotBrain, movement: BotMovement, input: CombatIntent) -> void:
 	if now < slide_until and input.move.length() > .5:
 		input.slide = true
 		input.slide_pressed = not a.intent.slide
-	# 4. Liveliness while travelling: the occasional hop, like a bored player.
+	# 4. Long rotations: bunny hop and air strafe instead of jogging.
+	if not engaged and ready and grounded and bhop.is_empty() and air_slide.is_empty() and input.move.length() > .5 and state not in ["support","hold","retreat"] and now >= next_bhop_roll:
+		next_bhop_roll = now+1.0
+		if brain.level >= 1 and movement.selected_position.distance_to(a.global_position) > 20 and brain.rng.randf() < .2+brain.level*.12+float(brain.personality.get("flair",.3))*.3 and movement.safe_travel(a,input.move,6.0) and a.permits("jump"):
+			begin_bhop(brain,now)
+			drive_bhop(brain,movement,input,now)
+			return
+	# 5. Liveliness while travelling: the occasional hop, like a bored player.
 	if not engaged and ready and grounded and input.move.length() > .5 and state not in ["support","hold"]:
 		if next_flair_hop <= 0: next_flair_hop = now+brain.rng.randf_range(6,16)/maxf(.3,brain.hero_profile.mobility+float(brain.personality.get("flair",.3)))
 		if now >= next_flair_hop:
@@ -203,6 +218,59 @@ func drive_air_slide(brain: BotBrain, input: CombatIntent, now: float) -> void:
 			var speed: float = Vector2(a.velocity.x,a.velocity.z).length()
 			if mode != "slide" or now-float(air_slide.phase_at) > .8 or speed < a.tuning.ground_speed:
 				air_slide = {}
+			elif now-float(air_slide.phase_at) > .3 and brain.level >= 2 and a.permits("jump"):
+				# Slide-hop: jump out of the slide and keep the speed with a bunny hop.
+				air_slide = {}
+				begin_bhop(brain,now)
+				input.jump = true
+
+func begin_bhop(brain: BotBrain, now: float) -> void:
+	bhop = {"started":now,"side":1.0 if brain.rng.randf() < .5 else -1.0,"hops":0,"airborne":false}
+	counters.bhop_chains += 1
+
+## One tick of bunny hopping. The motor gains air speed (0.75 m/s per second, up to
+## 12 m/s) only when the wish points past the air_wish_cap projection angle, so the bot
+## angles its input just beyond that on the side it wants to turn toward, zigzagging
+## when the route is straight ahead, and re-jumps inside the jump buffer before landing.
+## Returns false when the hop chain ends (the bot then moves normally this tick).
+func drive_bhop(brain: BotBrain, movement: BotMovement, input: CombatIntent, now: float) -> bool:
+	var a: HeroActor = brain.actor
+	var t: HeroTuning = a.tuning
+	var heading: Vector3 = (input.move*Vector3(1,0,1)).normalized()
+	var flat: Vector3 = a.velocity*Vector3(1,0,1)
+	var speed: float = flat.length()
+	var grounded: bool = a.motor.grounded()
+	var remaining: float = movement.selected_position.distance_to(a.global_position)
+	var done: bool = heading.is_zero_approx() or remaining < 8.0 or now-float(bhop.started) > 14.0 or a.state != "ready"
+	if not done and speed > 1.0 and not movement.safe_travel(a,flat.normalized(),clampf(speed*.35,1.5,4.0)): done = true
+	if done:
+		bhop = {}
+		return false
+	counters.bhop_peak_speed = maxf(float(counters.bhop_peak_speed),speed)
+	if grounded:
+		# Landing frame (or the first hop): jump again before ground friction bites.
+		if a.permits("jump"):
+			input.jump = true
+			bhop.hops = int(bhop.hops)+1
+			counters.bhops += 1
+			bhop.side = -float(bhop.side)
+		input.move = heading
+		return true
+	# Airborne: strafe past the projection angle toward the route.
+	if speed < 1.0:
+		input.move = heading
+	else:
+		var along: Vector3 = flat/speed
+		var turn: float = along.signed_angle_to(heading,Vector3.UP)
+		var side: float = signf(turn) if absf(turn) > deg_to_rad(12) else float(bhop.side)
+		var gain_angle: float = acos(clampf(t.air_wish_cap/speed,-1,1))+deg_to_rad(4)
+		input.move = along.rotated(Vector3.UP,side*minf(gain_angle,deg_to_rad(88)))
+	# Re-jump inside the buffer window just before touchdown.
+	var height: float = height_above_ground(a)
+	if a.velocity.y < 0 and height/maxf(.5,-a.velocity.y) < .1:
+		var wall: bool = not a.resolver.ray(a.body_point(1.0),a.body_point(1.0)+input.move*.9,[a.get_rid()],1).is_empty()
+		if not wall: input.jump = true
+	return true
 
 static func dash_aim(direction: Vector3) -> Vector3:
 	var pitch: float = deg_to_rad(AIR_DASH_PITCH)

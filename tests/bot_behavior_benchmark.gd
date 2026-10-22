@@ -127,11 +127,16 @@ func summarise(rounds: int, wall_ms: int) -> Dictionary:
 		kills_by_team[1-actor.team] += debug.deaths
 	var hops: int = 0
 	var air_slides: int = 0
+	var bhops: int = 0
+	var bhop_peak: float = 0.0
 	var link_uses: int = 0
 	var link_failures: int = 0
 	for actor: HeroActor in session.actors:
 		hops += (actor.controller as CityBotController).hops
-		air_slides += int((actor.controller as CityBotController).brain.movement.locomotion.counters.air_dash_slides)
+		var loco_counters: Dictionary = (actor.controller as CityBotController).brain.movement.locomotion.counters
+		air_slides += int(loco_counters.air_dash_slides)
+		bhops += int(loco_counters.bhops)
+		bhop_peak = maxf(bhop_peak,float(loco_counters.bhop_peak_speed))
 		link_uses += (actor.controller as CityBotController).link_uses
 		link_failures += (actor.controller as CityBotController).link_failures
 	var minutes: float = maxf(float(totals.alive)/60.0,.001)
@@ -144,7 +149,7 @@ func summarise(rounds: int, wall_ms: int) -> Dictionary:
 		"deaths":totals.deaths,"deaths_alone_ratio":snappedf(float(totals.deaths_alone)/maxf(float(totals.deaths),1),.001),
 		"damage_per_bot_minute":snappedf(float(totals.damage)/minutes,.1),"stuck_events":totals.stuck_events,
 		"objective_share":snappedf(float(totals.objective)/maxf(float(totals.alive),.001),.001),"kills_by_team":kills_by_team,
-		"hops":hops,"air_dash_slides":air_slides,"link_uses":link_uses,"link_failures":link_failures,"links":TraversalLinks.report_for(session.arena.get_world_3d().navigation_map),"link_stats":TraversalLinks.stats()}
+		"hops":hops,"air_dash_slides":air_slides,"bhops":bhops,"bhop_peak_speed":snappedf(bhop_peak,.1),"link_uses":link_uses,"link_failures":link_failures,"links":TraversalLinks.report_for(session.arena.get_world_3d().navigation_map),"link_stats":TraversalLinks.stats()}
 	var teams: Array[Dictionary] = []
 	for team: int in 2:
 		var t: Dictionary = {"alive":0.0,"combat":0.0,"combat_idle":0.0,"tech":0,"deaths":0,"deaths_alone":0,"damage":0.0,"objective":0.0}

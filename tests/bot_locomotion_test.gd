@@ -212,6 +212,33 @@ func run() -> void:
 	check(dash_seen,"bot air-dashes from a jump")
 	check(air_slid and loco.counters.air_dash_slides == 1,"bot lands the air dash into a slide with a last-moment crouch")
 	check(top_speed > a.tuning.ground_speed+3.0,"the air dash-slide carries far more than running speed (%.1f m/s)" % top_speed)
+	# Bunny hop + air strafe on a long, open rotation.
+	await fresh(2,92)
+	Geometry.box(world,Vector3(24,1,260),Vector3(200,-.5,-100),Color.GRAY)
+	b.global_position = Vector3(0,.01,400)
+	await step(2)
+	a.global_position = Vector3(200,.01,20)
+	a.velocity = Vector3.ZERO
+	for i: int in 3:
+		a.intent = CombatIntent.new()
+		a.intent.aim = Vector3.FORWARD
+		a._physics_process(DT)
+	brain.perception.reset()
+	var hop_loco: BotLocomotion = brain.movement.locomotion
+	hop_loco.begin_bhop(brain,resolver.combat_time)
+	var peak: float = 0.0
+	var fell: bool = false
+	for i: int in 540:
+		brain.movement.selected_position = Vector3(200,0,-220)
+		var input: CombatIntent = tick_apply("contest",((Vector3(200,0,-220)-a.global_position)*Vector3(1,0,1)).normalized())
+		a.intent = input
+		a._physics_process(DT)
+		peak = maxf(peak,Vector2(a.velocity.x,a.velocity.z).length())
+		if a.global_position.y < -1: fell = true
+		if hop_loco.bhop.is_empty(): break
+	check(int(hop_loco.counters.bhops) >= 6,"bot chains bunny hops on a long rotation (%d hops)" % int(hop_loco.counters.bhops))
+	check(peak > a.tuning.ground_speed+2.5,"air strafing builds speed well past running speed (%.1f m/s vs %.1f)" % [peak,a.tuning.ground_speed])
+	check(not fell and absf(a.global_position.x-200) < 10,"hopping stays on course and on the ground strip")
 	# Consistency: Beginners miss dodges more often than Experts.
 	var success: Array[int] = [0,0]
 	for pair: int in 2:
