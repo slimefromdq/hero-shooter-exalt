@@ -133,6 +133,7 @@ static func select(brain: BotBrain, query: Dictionary, map: RID, movement: BotMo
 static func score(brain: BotBrain, query: Dictionary, point: Vector3, objective: Vector3, leash: float, others: Array[Vector3], movement: BotMovement) -> float:
 	var a: HeroActor = brain.actor
 	var mode: String = query.mode
+	var weights: BotTuning = brain.tuning()
 	var value: float = -a.global_position.distance_to(point)/20.0*.5
 	var threat_at: Vector3 = query.threat
 	var eye: Vector3 = point+Vector3.UP*1.45
@@ -142,15 +143,15 @@ static func score(brain: BotBrain, query: Dictionary, point: Vector3, objective:
 		if mode in ["fight","protect","investigate","contest"]: value += (.4 if mode == "contest" else .8)*(1.0-clampf(absf(distance-float(query.desired))/band,0,1))
 		var exposed: bool = a.resolver.attack_ray(a,eye,threat_at+Vector3.UP,[a.get_rid()],1).is_empty()
 		movement.query_count += 1
-		if bool(query.wants_los): value += .6 if exposed else -.4
-		else: value += -.6 if exposed else .9
+		if bool(query.wants_los): value += (.6 if exposed else -.4)*weights.los_weight
+		else: value += (-.6 if exposed else .9)*weights.cover_weight
 		if brain.hero_profile.maximum_range > 12: value += clampf((point.y-threat_at.y)/4.0,-.3,.4)
 	for other: Vector3 in others:
 		movement.query_count += 1
 		if a.resolver.attack_ray(a,eye,other+Vector3.UP,[a.get_rid()],1).is_empty(): value -= .25
 	if is_instance_valid(brain.director):
 		var caution: float = {"fight":.3,"contest":.15,"objective":.25}.get(mode,.5)
-		value -= brain.director.danger_at(point)*caution*(1.2-brain.hero_profile.aggression*.4)
+		value -= brain.director.danger_at(point)*caution*(1.2-brain.hero_profile.aggression*.4)*weights.danger_weight
 		if brain.director.reserved(point,a.get_instance_id()): value -= 1.2
 	var nearest_ally: float = INF
 	for ally: HeroActor in brain.allies: nearest_ally = minf(nearest_ally,ally.global_position.distance_to(point))
@@ -164,7 +165,7 @@ static func score(brain: BotBrain, query: Dictionary, point: Vector3, objective:
 	var urgency: float = float(brain.context.get("urgency",.5))
 	if mode not in ["retreat","support","gather"] and to_objective > leash: value -= (to_objective-leash)*.12
 	if mode in ["objective","contest","fight","cover"]:
-		if to_objective < radius: value += (.35+.5*urgency)*(.5 if bool(brain.context.get("secured",false)) else 1.0)
-		elif mode == "contest": value -= (to_objective-radius)*.06
+		if to_objective < radius: value += (.35+.5*urgency)*(.5 if bool(brain.context.get("secured",false)) else 1.0)*weights.objective_weight
+		elif mode == "contest": value -= (to_objective-radius)*.06*weights.objective_weight
 	if point.distance_to(movement.selected_position) < 2.0: value += .15
 	return value

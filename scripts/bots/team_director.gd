@@ -25,6 +25,8 @@ var team: int = -1
 var roster: Array = []
 var context: Dictionary = {}
 var order: String = "push"
+## Evolved team weights (BotTuning); tests and self-play may swap in other sets.
+var tuning: BotTuning = BotTuning.standard()
 var order_since: float = -99.0
 var gather_point: Vector3 = Vector3.INF
 var focus_id: int = 0
@@ -34,6 +36,19 @@ var ally_ults: Dictionary = {}
 var order_log: Array[Dictionary] = []
 var watching_events: bool = false
 static var dps_cache: Dictionary = {}
+
+## --- Team comms -------------------------------------------------------------------
+## Short callouts. The human's team sees them in TeamComms; the other team's chatter
+## stays internal. Rate-limited globally and per kind so it never becomes spam.
+signal team_comms(speaker: String, hero: String, text: String, kind: String)
+const KIND_COOLDOWN: Dictionary = {"order":6.0,"focus":8.0,"spot":6.0,"ult":10.0,"heal":10.0,"kill":5.0,"death":8.0,"flank":15.0,"ping":1.0,"ack":1.0}
+var names: Dictionary = {}
+var last_say: float = -99.0
+var said: Dictionary = {}
+var comms_log: Array[Dictionary] = []
+var help_requests: Dictionary = {}
+var announced_focus: int = 0
+var comms_checked: bool = false
 
 static func obtain(parent: Node, team: int) -> TeamDirector:
 	var node_name: String = "BotTeamDirector%d" % team
@@ -54,6 +69,11 @@ func report(actor: HeroActor, observations: Dictionary, visible: Array[int], now
 		for other: Variant in actors:
 			if is_instance_valid(other): roster.append(weakref(other))
 	if not objective.is_empty(): context = objective
+	if not comms_checked and not roster.is_empty():
+		comms_checked = true
+		for ref: WeakRef in roster:
+			var human: HeroActor = ref.get_ref() as HeroActor
+			if is_instance_valid(human) and human.team == actor.team and human.controller is PlayerController: TeamComms.attach(self,human)
 	if not watching_events and is_instance_valid(actor.resolver):
 		watching_events = true
 		actor.resolver.event_logged.connect(_on_event)
@@ -203,10 +223,10 @@ func update_strategy(now: float) -> void:
 	var gathered: int = 0
 	for ally: HeroActor in allies:
 		if ally.global_position.distance_to(objective) < radius+10 or (gather_point != Vector3.INF and ally.global_position.distance_to(gather_point) < 10): gathered += 1
-	var needed: int = maxi(2,ceili(allies.size()*.65))
+	var needed: int = maxi(2,ceili(allies.size()*tuning.push_fraction))
 	var next: String = order
 	if desperate: next = "push"
-	elif allies.size()+2 <= enemies.size(): next = "fall_back" if order in ["push","cleanup","hold"] else "group_up"
+	elif allies.size()+roundi(tuning.regroup_margin) <= enemies.size(): next = "fall_back" if order in ["push","cleanup","hold"] else "group_up"
 	elif order in ["group_up","fall_back"]:
 		if gathered >= needed or allies.size() > enemies.size() or odds > .6: next = "push"
 	elif secured: next = "hold"
@@ -214,11 +234,16 @@ func update_strategy(now: float) -> void:
 	elif odds < .26: next = "fall_back"
 	else: next = "push"
 	if next == "fall_back" and order == "fall_back" and gathered >= needed: next = "group_up"
+	# Bots follow a human teammate who commits to the objective (unless hopeless).
+	if next == "group_up" and allies.size()+roundi(tuning.regroup_margin) > enemies.size():
+		for ally: HeroActor in allies:
+			if ally.controller is PlayerController and ally.global_position.distance_to(objective) < radius+3: next = "push"
 	if next != order and (now-order_since >= ORDER_HOLD_SECONDS or desperate):
 		order_log.append({"time":snappedf(now,.1),"from":order,"to":next,"odds":snappedf(odds,.01),"allies":allies.size(),"enemies":enemies.size()})
 		if order_log.size() > 32: order_log.pop_front()
 		order = next
 		order_since = now
+		announce_order(now)
 	pick_focus(now)
 	pick_flankers(now,allies)
 
@@ -253,6 +278,9 @@ func pick_focus(now: float) -> void:
 			best = value
 			chosen = id
 	focus_id = chosen
+	if focus_id != 0 and focus_id != announced_focus and reports.has(focus_id):
+		var speaker: HeroActor = chatty_member(.1)
+		if is_instance_valid(speaker) and say(speaker,"focus","Focus the %s!" % str(reports[focus_id].hero).capitalize(),now): announced_focus = focus_id
 
 ## Flankers are chosen by mobility and health, not by slot, and keep the job a while.
 func pick_flankers(now: float, allies: Array[HeroActor]) -> void:
@@ -278,6 +306,11 @@ func pick_flankers(now: float, allies: Array[HeroActor]) -> void:
 	for entry: Array in scored:
 		if flankers.size() >= wanted: break
 		flankers[int(entry[1])] = now
+		var flanker := instance_from_id(int(entry[1])) as HeroActor
+		if is_instance_valid(flanker) and chattiness(flanker) > .3:
+			var objective: Vector3 = context.get("position",Vector3.ZERO)
+			var side: String = "left" if (flanker.global_position-objective).cross(Vector3.UP).x > 0 else "right"
+			say(flanker,"flank","I'll flank %s." % side,now)
 
 ## Ultimate economy: hold ults when the fight is already won, follow a teammate's ult.
 func ult_gate(actor: HeroActor, now: float) -> float:
@@ -288,6 +321,69 @@ func ult_gate(actor: HeroActor, now: float) -> float:
 	if order == "cleanup" and odds > .8: return .7
 	if order in ["group_up","fall_back"]: return .8
 	return 1.0
+
+const ORDER_LINES: Dictionary = {"push":["Group's here, push in!","Go go go!","With me, take the point!"],
+	"group_up":["Group up, don't trickle in.","Wait for the team.","Regroup before we go."],
+	"fall_back":["Fall back!","Back off, reset!","Too many, pull out!"],
+	"cleanup":["They're down, clean it up!","Push the advantage!"],"hold":["Hold the point.","Got it, hold here."]}
+
+static func chattiness(actor: HeroActor) -> float:
+	if actor.controller != null and actor.controller.get("brain") != null: return float(actor.controller.brain.personality.get("chattiness",.4))
+	return 0.0
+
+func chatty_member(minimum: float = .25) -> HeroActor:
+	var best: HeroActor = null
+	var value: float = minimum
+	for id: int in members:
+		var ally: HeroActor = members[id].get_ref() as HeroActor
+		if is_instance_valid(ally) and ally.alive and chattiness(ally) > value:
+			value = chattiness(ally)
+			best = ally
+	return best
+
+func announce_order(now: float) -> void:
+	var speaker: HeroActor = chatty_member()
+	if not is_instance_valid(speaker): return
+	var lines: Array = ORDER_LINES.get(order,[])
+	if not lines.is_empty(): say(speaker,"order",str(lines[int(now*7.0)%lines.size()]),now)
+
+func name_for(actor: HeroActor) -> String:
+	var id: int = actor.get_instance_id()
+	if actor.controller is PlayerController: return "You"
+	if not names.has(id):
+		var used: Array = names.values()
+		var start: int = (id/7+team*11)%BotPersonality.NAMES.size()
+		for offset: int in BotPersonality.NAMES.size():
+			var candidate: String = BotPersonality.NAMES[(start+offset)%BotPersonality.NAMES.size()]
+			if not candidate in used:
+				names[id] = candidate
+				break
+	return str(names.get(id,"Bot"))
+
+func say(actor: HeroActor, kind: String, text: String, now: float) -> bool:
+	if not is_instance_valid(actor): return false
+	if kind not in ["ping","ack"] and now-last_say < 1.8: return false
+	if now-float(said.get(kind,-99.0)) < float(KIND_COOLDOWN.get(kind,6.0)): return false
+	last_say = now
+	said[kind] = now
+	var speaker: String = name_for(actor)
+	comms_log.append({"time":snappedf(now,.1),"speaker":speaker,"hero":actor.tuning.hero_id,"kind":kind,"text":text})
+	if comms_log.size() > 48: comms_log.pop_front()
+	team_comms.emit(speaker,actor.tuning.hero_id,text,kind)
+	return true
+
+## The human pressed the help ping: supports prioritise them briefly and acknowledge.
+func player_ping(player: HeroActor) -> void:
+	help_requests[player.get_instance_id()] = last_time
+	say(player,"ping","Need healing!",last_time)
+	for id: int in members:
+		var ally: HeroActor = members[id].get_ref() as HeroActor
+		if is_instance_valid(ally) and ally.alive and HeroRoster.role_for(ally.tuning.hero_id) == "support":
+			say(ally,"ack","On my way!",last_time)
+			return
+
+func help_requested(actor: HeroActor) -> bool:
+	return last_time-float(help_requests.get(actor.get_instance_id(),-99.0)) < 5.0
 
 func assignment(actor: HeroActor) -> String:
 	return str(assignments.get(actor.get_instance_id(),"contest"))
@@ -315,6 +411,10 @@ func release(actor: HeroActor) -> void:
 	reservations.erase(id)
 
 func clear() -> void:
+	said.clear()
+	last_say = -99.0
+	help_requests.clear()
+	announced_focus = 0
 	order = "push"
 	order_since = -99.0
 	focus_id = 0

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BotPersonality" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/bots/bot_personality.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+archetype = "guardian"
+aggression = -0.2
+caution = 0.2
+teamplay = 0.4
+flank = -0.3
+patience = 0.1
+flair = 0.2
+chattiness = 0.6
+tilt_prone = 0.2

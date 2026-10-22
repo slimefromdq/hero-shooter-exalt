@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BotPersonality" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/bots/bot_personality.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+archetype = "hothead"
+aggression = 0.35
+caution = -0.2
+teamplay = -0.1
+flank = 0.1
+patience = -0.3
+flair = 0.5
+chattiness = 0.5
+tilt_prone = 0.8

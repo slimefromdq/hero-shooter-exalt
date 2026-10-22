@@ -135,6 +135,10 @@ func run() -> void:
 	healer.global_position = a.global_position+Vector3(2,0,0)
 	brain.allies = [tank,healer]
 	check(not brain.wants_health(),"with a healer nearby the same wound does not justify a detour")
+	# Self-play tuning hooks.
+	var tuned: BotTuning = BotTuning.from_dict({"objective_weight":1.7,"regroup_margin":3.0})
+	check(is_equal_approx(float(tuned.to_dict().objective_weight),1.7) and is_equal_approx(tuned.weave,BotTuning.new().weave),"tuning round-trips and keeps unspecified defaults")
+	check(director.tuning != null and is_equal_approx(director.tuning.push_fraction,BotTuning.standard().push_fraction),"each team director carries the shipped tuning")
 	brain.diagnostics.detach()
 	world.queue_free()
 	await step(3)

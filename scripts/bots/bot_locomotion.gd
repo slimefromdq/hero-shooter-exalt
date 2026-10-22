@@ -50,7 +50,7 @@ func apply(brain: BotBrain, movement: BotMovement, input: CombatIntent) -> void:
 	if ready and now >= dodge_ready_at:
 		var incoming: Vector3 = incoming_threat(brain,now)
 		if not incoming.is_zero_approx():
-			if brain.rng.randf() < lerpf(.25,.9,skill.consistency):
+			if brain.rng.randf() < lerpf(.25,.9,skill.consistency)*brain.tuning().dodge_eagerness:
 				var side: Vector3 = incoming.cross(Vector3.UP).normalized()
 				if brain.rng.randf() < .5: side = -side
 				if not movement.safe_travel(a,side,2.0): side = -side
@@ -76,20 +76,21 @@ func apply(brain: BotBrain, movement: BotMovement, input: CombatIntent) -> void:
 		if now >= strafe_until:
 			strafe_dir = -strafe_dir if brain.rng.randf() < .72 else strafe_dir
 			var slow: float = lerpf(1.25,.6,skill.consistency)
-			strafe_until = now+brain.rng.randf_range(.22,.7)*slow
+			strafe_until = now+brain.rng.randf_range(.22,.7)*slow*brain.tuning().strafe_tempo
 			var roll: float = brain.rng.randf()
+			var flair: float = float(brain.personality.get("flair",.3))
 			if roll < .12:
 				stop_until = now+brain.rng.randf_range(.12,.25)
 				counters.counter_strafes += 1
-			elif roll < .2 and brain.level >= 1:
+			elif roll < .12+.08*(.5+flair) and brain.level >= 1:
 				crouch_until = now+brain.rng.randf_range(.18,.35)
 				counters.crouch_jiggles += 1
-			elif roll < .27 and brain.level >= 2 and grounded and a.permits("jump") and movement.safe_travel(a,lateral*strafe_dir,2.0):
+			elif roll < .12+.08*(.5+flair)+.07*(.4+flair*1.2) and brain.level >= 2 and grounded and a.permits("jump") and movement.safe_travel(a,lateral*strafe_dir,2.0):
 				input.jump = true
 				counters.jump_strafes += 1
 		var weave: Vector3 = lateral*strafe_dir
 		if input.move.length() < .2: input.move = weave
-		else: input.move = (input.move.normalized()+weave*.55).normalized()
+		else: input.move = (input.move.normalized()+weave*brain.tuning().weave).normalized()
 		if not movement.safe_travel(a,input.move,1.2):
 			strafe_dir = -strafe_dir
 			var flipped: Vector3 = lateral*strafe_dir
@@ -123,7 +124,7 @@ func apply(brain: BotBrain, movement: BotMovement, input: CombatIntent) -> void:
 		input.slide_pressed = not a.intent.slide
 	# 4. Liveliness while travelling: the occasional hop, like a bored player.
 	if not engaged and ready and grounded and input.move.length() > .5 and state not in ["support","hold"]:
-		if next_flair_hop <= 0: next_flair_hop = now+brain.rng.randf_range(6,16)/maxf(.3,brain.hero_profile.mobility+.2)
+		if next_flair_hop <= 0: next_flair_hop = now+brain.rng.randf_range(6,16)/maxf(.3,brain.hero_profile.mobility+float(brain.personality.get("flair",.3)))
 		if now >= next_flair_hop:
 			next_flair_hop = 0
 			if movement.safe_travel(a,input.move,2.5) and a.permits("jump"):

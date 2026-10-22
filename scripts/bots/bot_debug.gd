@@ -26,12 +26,18 @@ var deaths_alone: int = 0
 var last_allies_near: int = 0
 var was_engaged: bool = false
 var last_position: Vector3 = Vector3.INF
+## Brain mood hook; called with (killer, victim, assistants) on every elimination.
+var elimination_listener: Callable
 
 func setup(owner: HeroActor) -> void:
 	actor = owner
 	actor.resolver.event_logged.connect(on_event)
 	actor.resolver.cast_started.connect(on_cast_started)
 	actor.movement_confirmed.connect(on_movement)
+	actor.resolver.elimination.connect(on_elimination)
+
+func on_elimination(killer: HeroActor, victim: HeroActor, assistants: Array[HeroActor], _ability: String) -> void:
+	if elimination_listener.is_valid(): elimination_listener.call(killer,victim,assistants)
 
 func on_movement(kind: String, _at: Vector3, _direction: Vector3, _normal: Vector3, _strength: float) -> void:
 	if kind == "landing": return
@@ -42,6 +48,8 @@ func detach() -> void:
 	if actor.resolver.event_logged.is_connected(on_event): actor.resolver.event_logged.disconnect(on_event)
 	if actor.resolver.cast_started.is_connected(on_cast_started): actor.resolver.cast_started.disconnect(on_cast_started)
 	if actor.movement_confirmed.is_connected(on_movement): actor.movement_confirmed.disconnect(on_movement)
+	if actor.resolver.elimination.is_connected(on_elimination): actor.resolver.elimination.disconnect(on_elimination)
+	elimination_listener = Callable()
 
 func on_cast_started(source: HeroActor, id: int) -> void:
 	if source != actor: return

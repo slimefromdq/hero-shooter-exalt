@@ -9,6 +9,8 @@ var bench_seed: int = 76
 var out_path: String = ""
 var difficulty: int = -1
 var trace_stuck: bool = false
+var tuning_paths: Array[String] = ["",""]
+var round_wins: Array[int] = [0,0]
 var session: CityMatch
 
 func _initialize() -> void:
@@ -19,6 +21,8 @@ func _initialize() -> void:
 		if argument.begins_with("--out="): out_path = argument.get_slice("=",1)
 		if argument.begins_with("--difficulty="): difficulty = int(argument.get_slice("=",1))
 		if argument == "--trace-stuck": trace_stuck = true
+		if argument.begins_with("--tuning0="): tuning_paths[0] = argument.get_slice("=",1)
+		if argument.begins_with("--tuning1="): tuning_paths[1] = argument.get_slice("=",1)
 	call_deferred("run")
 
 func frames(count: int) -> void:
@@ -55,6 +59,10 @@ func run() -> void:
 	for actor: HeroActor in session.actors:
 		if is_instance_valid(actor.presentation): actor.presentation.process_mode = Node.PROCESS_MODE_DISABLED
 		(actor.controller as CityBotController).rng.seed = bench_seed*10000+actor.team*100+actor.controller.slot
+	for team: int in 2:
+		if tuning_paths[team] == "": continue
+		var values: Variant = JSON.parse_string(FileAccess.get_file_as_string(tuning_paths[team]))
+		if values is Dictionary: TeamDirector.obtain(session,team).set("tuning",BotTuning.from_dict(values))
 	if map_name == "city": session.restart_match()
 	if session is TempleMatch: skip_temple_preparation()
 	var rounds: int = 0
@@ -73,6 +81,7 @@ func run() -> void:
 		if session is TempleMatch and (session as TempleMatch).objective.finished: finished = true
 		if finished:
 			rounds += 1
+			if session.winner in [0,1]: round_wins[session.winner] += 1
 			session.restart_match()
 			if session is TempleMatch: skip_temple_preparation()
 	var wall_ms: int = Time.get_ticks_msec()-wall_start
@@ -134,4 +143,26 @@ func summarise(rounds: int, wall_ms: int) -> Dictionary:
 		"damage_per_bot_minute":snappedf(float(totals.damage)/minutes,.1),"stuck_events":totals.stuck_events,
 		"objective_share":snappedf(float(totals.objective)/maxf(float(totals.alive),.001),.001),"kills_by_team":kills_by_team,
 		"hops":hops,"link_uses":link_uses,"link_failures":link_failures,"links":TraversalLinks.report_for(session.arena.get_world_3d().navigation_map),"link_stats":TraversalLinks.stats()}
-	return {"aggregate":aggregate,"bots":bots}
+	var teams: Array[Dictionary] = []
+	for team: int in 2:
+		var t: Dictionary = {"alive":0.0,"combat":0.0,"combat_idle":0.0,"tech":0,"deaths":0,"deaths_alone":0,"damage":0.0,"objective":0.0}
+		for actor: HeroActor in session.actors:
+			if actor.team != team: continue
+			var debug: BotDebug = (actor.controller as CityBotController).brain.diagnostics
+			t.alive += debug.alive_seconds
+			t.combat += debug.combat_seconds
+			t.combat_idle += debug.combat_idle_seconds
+			for kind: String in debug.movement_events:
+				if kind != "jump": t.tech += int(debug.movement_events[kind])
+			t.deaths += debug.deaths
+			t.deaths_alone += debug.deaths_alone
+			t.damage += debug.damage
+			t.objective += debug.objective_seconds
+		var bot_minutes: float = maxf(float(t.alive)/60.0,.001)
+		teams.append({"kills":kills_by_team[team],"deaths":t.deaths,"deaths_per_bot_minute":snappedf(float(t.deaths)/bot_minutes,.001),
+			"deaths_alone_ratio":snappedf(float(t.deaths_alone)/maxf(1,float(t.deaths)),.001),"combat_idle_ratio":snappedf(float(t.combat_idle)/maxf(float(t.combat),.001),.001),
+			"tech_per_bot_minute":snappedf(float(t.tech)/bot_minutes,.01),"damage_per_bot_minute":snappedf(float(t.damage)/bot_minutes,.1),
+			"objective_share":snappedf(float(t.objective)/maxf(float(t.alive),.001),.001)})
+	var hill_scores: Array = []
+	if map_name == "city": hill_scores = [snappedf(session.hill.scores[0],.1),snappedf(session.hill.scores[1],.1)]
+	return {"aggregate":aggregate,"bots":bots,"teams":teams,"hill_scores":hill_scores,"rounds":rounds,"round_wins":round_wins}

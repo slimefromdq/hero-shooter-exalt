@@ -23,6 +23,10 @@ const NAMES: Array[String] = ["Beginner", "Normal", "Hard", "Expert"]
 @export var fire_tolerance: float = 5.0
 ## Spread of the per-sighting reaction time (log-normal sigma).
 @export var reaction_variance: float = .25
+## Softmax temperature for picking among near-equal goals: human indecision/mistakes.
+@export var decision_noise: float = .06
+## Highest tilt this level allows (Expert players rarely tilt).
+@export var tilt_cap: float = .6
 @export_category("Human senses")
 ## Half-angle of the focused view cone and of the motion-only peripheral band.
 @export var cone_degrees: float = 50.0

@@ -22,3 +22,5 @@ flick_error = 0.3
 correction_time = 0.32
 fire_tolerance = 6.5
 reaction_variance = 0.35
+decision_noise = 0.1
+tilt_cap = 1.0

@@ -54,6 +54,9 @@ func reset(id: String = "nimbus") -> void:
 	brain = BotBrain.new()
 	brain.setup(a,director,76)
 	brain.skill = brain.skill.duplicate() as BotSkillProfile
+	# Deterministic class/hero preference checks: neutral personality, no indecision.
+	brain.personality = {}
+	brain.skill.decision_noise = 0.0
 	await step(2)
 
 func decide(acquire: bool = true, actors: Array = []) -> void:
