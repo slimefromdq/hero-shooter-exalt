@@ -12,6 +12,17 @@ const NAMES: Array[String] = ["Beginner", "Normal", "Hard", "Expert"]
 @export var tactical_interval: float = .2
 @export var path_interval: float = .5
 @export var perception_budget: int = 6
+@export_category("Human aim")
+## Seconds for smooth pursuit to adopt a target's new angular velocity.
+@export var pursuit_lag: float = .2
+## Flick landing error as a fraction of the flick's size.
+@export var flick_error: float = .18
+## Slower settling after a flick lands.
+@export var correction_time: float = .2
+## Crosshair-to-target angle (degrees) at which the bot is willing to fire.
+@export var fire_tolerance: float = 5.0
+## Spread of the per-sighting reaction time (log-normal sigma).
+@export var reaction_variance: float = .25
 @export_category("Human senses")
 ## Half-angle of the focused view cone and of the motion-only peripheral band.
 @export var cone_degrees: float = 50.0

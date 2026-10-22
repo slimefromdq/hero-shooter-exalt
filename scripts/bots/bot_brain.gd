@@ -26,6 +26,8 @@ var danger: float = 0.0
 var level: int = -1
 var rng := RandomNumberGenerator.new()
 ## Flank-check glance: a brief look away from the travel/attention direction.
+var reaction_key: String = ""
+var reaction_value: float = .38
 var glance_at: float = 0.0
 var glance_until: float = -1.0
 var glance_direction: Vector3 = Vector3.ZERO
@@ -48,6 +50,7 @@ func set_difficulty(value: int) -> void:
 	perception.skill = skill
 	acquired_at = actor.resolver.combat_time
 	combat.cancel("difficulty changed")
+	reaction_key = ""
 	combat.aim_speed = 0
 
 func target_actor() -> HeroActor:
@@ -60,7 +63,16 @@ func visible_target() -> bool:
 	return target_id in perception.visible_ids and not threat.is_empty() and now-float(threat.seen) <= .25
 
 func ready_to_attack() -> bool:
-	return visible_target() and now-maxf(acquired_at,float(threat.first_seen)) >= skill.acquisition_delay
+	return visible_target() and now-maxf(acquired_at,float(threat.first_seen)) >= reaction_time()
+
+## Each new sighting gets its own human reaction time: log-normal around the skill
+## mean, bounded so tests and play stay predictable.
+func reaction_time() -> float:
+	var key: String = "%d:%.3f" % [target_id,float(threat.get("first_seen",0.0))]
+	if key != reaction_key:
+		reaction_key = key
+		reaction_value = skill.acquisition_delay*clampf(exp(rng.randfn(0.0,skill.reaction_variance)),.7,1.5)
+	return reaction_value
 
 func decide(actors: Array, objective: Dictionary) -> void:
 	now = actor.resolver.combat_time
@@ -194,6 +206,8 @@ func look_direction(origin: Vector3, fallback: Vector3) -> Vector3:
 	return base
 
 func reset() -> void:
+	combat.motor.reset()
+	reaction_key = ""
 	glance_until = -1
 	glance_at = 0
 	perception.reset()
