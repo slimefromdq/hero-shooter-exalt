@@ -28,8 +28,9 @@ func decide() -> void:
 	var offsets: Array[Vector3] = [Vector3(-3,0,-2),Vector3(3,0,2),Vector3(-3,0,2),Vector3(3,0,-2)]
 	var hold: Vector3 = objective_at+offsets[slot%4]
 	assignment = "escort" if actor.team == 0 else "contest"
-	if slot >= 4 and not urgent and elapsed >= retry_at:
-		var kind: String = "high_ground" if slot == 4 else "flank"
+	# Flankers come from the team director's roster (mobility, health), not slot order.
+	if brain.team_intention == "flank" and not urgent and elapsed >= retry_at:
+		var kind: String = "high_ground" if brain.hero_profile.maximum_range >= 18 else "flank"
 		var entry: Dictionary = d.tactical_route(sector,kind)
 		if not entry.is_empty():
 			var key: String = str(sector)+kind

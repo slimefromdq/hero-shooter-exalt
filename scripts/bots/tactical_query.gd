@@ -19,7 +19,15 @@ static func plan(brain: BotBrain, fallback: Vector3) -> Dictionary:
 	var ammo_fraction: float = float(a.kit.ammo)/maxf(1,float(a.tuning.magazine))
 	var hurt: bool = a.health < a.effective_max_health()*.5 and a.last_hit_age < 1.5
 	var needs_cover: bool = a.kit.reloading or (ammo_fraction < .2 and a.tuning.magazine > 1) or hurt
-	if state in ["retreat","regroup"]:
+	if state == "regroup" and brain.team_order in ["group_up","fall_back"] and is_instance_valid(brain.director) and brain.director.gather_point != Vector3.INF:
+		result.mode = "gather"
+		result.center = brain.director.gather_point
+		result.inner = 0.0
+		result.outer = 5.0
+		result.wants_los = false
+		if has_threat: result.bearing = ((brain.director.gather_point-threat_at)*Vector3(1,0,1)).normalized()
+		result.arc = PI*.8
+	elif state in ["retreat","regroup"]:
 		result.mode = "retreat"
 		result.center = a.global_position
 		result.inner = 5.0
@@ -154,7 +162,7 @@ static func score(brain: BotBrain, query: Dictionary, point: Vector3, objective:
 	var to_objective: float = point.distance_to(objective)
 	var radius: float = float(brain.context.get("radius",7.0))
 	var urgency: float = float(brain.context.get("urgency",.5))
-	if mode not in ["retreat","support"] and to_objective > leash: value -= (to_objective-leash)*.12
+	if mode not in ["retreat","support","gather"] and to_objective > leash: value -= (to_objective-leash)*.12
 	if mode in ["objective","contest","fight","cover"]:
 		if to_objective < radius: value += (.35+.5*urgency)*(.5 if bool(brain.context.get("secured",false)) else 1.0)
 		elif mode == "contest": value -= (to_objective-radius)*.06

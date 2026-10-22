@@ -47,6 +47,7 @@ var link_uses: int = 0
 var link_failures: int = 0
 var hop_timer: float = 0.0
 var hops: int = 0
+var was_regrouping: bool = false
 
 func _ready() -> void:
 	rng.seed = 8407 + slot * 103 + actor.team * 1009
@@ -195,7 +196,10 @@ func decide() -> void:
 	if elapsed < detour_until:
 		return
 	seeking_health = false
-	if actor.health / actor.effective_max_health() < .4:
+	var regrouping: bool = brain.tactical_state == "regroup" and brain.team_order in ["group_up","fall_back"]
+	if was_regrouping and not regrouping: rejoin_route()
+	was_regrouping = regrouping
+	if brain.wants_health():
 		health_target = match_controller.available_health_pack(actor)
 		if is_instance_valid(health_target):
 			seeking_health = true
@@ -218,6 +222,17 @@ func decide() -> void:
 	if role == "high_ground" and match_controller.hill.owner_team == actor.team and not match_controller.hill.contested:
 		hold = Vector3(23.0 if actor.team == 0 else -23.0,6.5,10.0 if actor.team == 0 else -10.0)
 	destination = hold
+
+## After a regroup the bot is off its authored route; join it at the nearest
+## remaining waypoint instead of walking back to an old one.
+func rejoin_route() -> void:
+	if route.is_empty() or entered_hill: return
+	var best: float = INF
+	for index: int in range(route_index,route.size()):
+		var distance: float = actor.global_position.distance_to(route[index])
+		if distance < best:
+			best = distance
+			route_index = index
 
 func follow_path() -> Vector3:
 	if navagent == null or navagent.is_navigation_finished():
@@ -311,6 +326,7 @@ func reset_controller() -> void:
 	recovery_jump = false
 	link = {}
 	hop_timer = 0
+	was_regrouping = false
 	stuck_time = 0
 	movement_sample = 0
 	previous_position = actor.global_position

@@ -26,6 +26,10 @@ var danger: float = 0.0
 var level: int = -1
 var rng := RandomNumberGenerator.new()
 ## Flank-check glance: a brief look away from the travel/attention direction.
+## Current team order from the director ("push","hold","cleanup","group_up","fall_back").
+var team_order: String = "push"
+## Personality traits (filled by BotPersonality); empty means neutral.
+var personality: Dictionary = {}
 var reaction_key: String = ""
 var reaction_value: float = .38
 var glance_at: float = 0.0
@@ -85,9 +89,10 @@ func decide(actors: Array, objective: Dictionary) -> void:
 	context = objective
 	perception.sense(actor,actors,now,skill.perception_budget)
 	if is_instance_valid(director):
-		director.report(actor,perception.observations,perception.visible_ids,now)
+		director.report(actor,perception.observations,perception.visible_ids,now,actors,objective)
 		perception.merge_shared(director.reports,now)
 		team_intention = director.assignment(actor)
+		team_order = director.order
 	allies.clear()
 	follow_up = 0
 	patient = null
@@ -131,6 +136,7 @@ func decide(actors: Array, objective: Dictionary) -> void:
 		"regroup":.7 if nearby_enemies > follow_up+2 else .1,
 		"investigate":.55 if not visible_target() and not threat.is_empty() else 0.0}
 	if team_intention in scores: scores[team_intention] = float(scores[team_intention])+.12*skill.coordination
+	apply_team_order()
 	if threat.is_empty():
 		for action: String in ["pressure","flank","commit","protect","investigate"]: scores[action] = 0.0
 	if class_profile.role != "support": scores.support = float(scores.support)*.35
@@ -147,6 +153,53 @@ func decide(actors: Array, objective: Dictionary) -> void:
 			committed_until = now+.6
 			diagnostics.decision(now,best,scores)
 	combat.evaluate(self)
+
+## Team orders shift goal utilities; individual danger still overrides them.
+func apply_team_order() -> void:
+	var weight: float = .5+.5*skill.coordination
+	var seen: bool = visible_target()
+	match team_order:
+		"group_up":
+			if not seen and gather_distance() > 6: scores.regroup = maxf(float(scores.regroup),.85*weight)
+			scores.contest = float(scores.contest)*.6
+		"fall_back":
+			if seen and danger > .3: scores.retreat = float(scores.retreat)+.25*weight
+			elif not seen: scores.regroup = maxf(float(scores.regroup),.8*weight)
+			scores.commit = float(scores.commit)*.5
+		"push":
+			scores.regroup = float(scores.regroup)*.5
+			scores.contest = float(scores.contest)+.08*weight
+		"cleanup":
+			scores.commit = float(scores.commit)+.2*weight
+			scores.pressure = float(scores.pressure)+.1*weight
+			scores.investigate = float(scores.investigate)+.15*weight
+			scores.regroup = float(scores.regroup)*.4
+		"hold":
+			scores.hold = float(scores.hold)+.1*weight
+	for action: String in scores: scores[action] = clampf(float(scores[action]),0,1)
+
+func gather_distance() -> float:
+	if not is_instance_valid(director) or director.gather_point == Vector3.INF: return 0.0
+	return actor.global_position.distance_to(director.gather_point)
+
+## Whether to detour for a health pack now. Replaces a flat 40% rule: injured bots
+## without a healer nearby or out of combat go earlier; a last defender on a hot
+## objective stays.
+func wants_health() -> bool:
+	var fraction: float = actor.health/actor.effective_max_health()
+	var threshold: float = .4
+	var healer: bool = false
+	for ally: HeroActor in allies:
+		if HeroRoster.role_for(ally.tuning.hero_id) == "support" and ally.global_position.distance_to(actor.global_position) < 20: healer = true
+	if not healer: threshold += .15
+	if not visible_target(): threshold += .1
+	var on_point: bool = actor.global_position.distance_to(context.get("position",Vector3.INF)) < float(context.get("radius",7.0))+2
+	if on_point and float(context.get("urgency",.5)) >= .9 and follow_up == 0 and nearby_enemies > 0: threshold -= .2
+	threshold += float(personality.get("caution",0.0))*.1
+	return fraction < threshold
+
+func ult_gate() -> float:
+	return director.ult_gate(actor,now) if is_instance_valid(director) else 1.0
 
 func select_target() -> void:
 	var selected: int = 0
@@ -177,6 +230,7 @@ func select_target() -> void:
 		if int(entry.get("tether_source",0)) == actor.get_instance_id(): score += .25
 		if bool(entry.get("pursuing",false)) and actor.health < actor.effective_max_health()*.5: score += .15
 		if id == target_id: score += .12
+		if is_instance_valid(director) and id == director.focus_id: score += .22*skill.coordination
 		if is_instance_valid(director): score -= maxf(0,director.pressure_on(id,actor.get_instance_id())-2)*.15
 		if score > best:
 			selected = id
@@ -214,6 +268,7 @@ func look_direction(origin: Vector3, fallback: Vector3) -> Vector3:
 	return base
 
 func reset() -> void:
+	team_order = "push"
 	combat.motor.reset()
 	reaction_key = ""
 	glance_until = -1

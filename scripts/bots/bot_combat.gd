@@ -10,6 +10,8 @@ var aim_error: Vector2 = Vector2.ZERO
 var error_goal: Vector2 = Vector2.ZERO
 var next_error: float = 0.0
 var motor := BotAim.new()
+## Team ultimate economy multiplier for the current evaluation (see TeamDirector.ult_gate).
+var ult_multiplier: float = 1.0
 var pending_bomb: bool = false
 var bomb: PocketBomb
 var bomb_life: int = -1
@@ -33,6 +35,7 @@ func cancel(reason: String) -> void:
 	bomb_value = 0
 
 func offer(action: String, score: float, point: Vector3 = Vector3.INF, held: bool = false) -> void:
+	if action == "ultimate": score *= ult_multiplier
 	ability_scores[action] = clampf(score,0,1)
 	if score < .5 or score <= float(choice.get("score",0)): return
 	choice = {"action":action,"score":score,"point":point,"held":held}
@@ -40,6 +43,7 @@ func offer(action: String, score: float, point: Vector3 = Vector3.INF, held: boo
 func evaluate(brain: BotBrain) -> void:
 	var a: HeroActor = brain.actor
 	var k: HeroKit = a.kit
+	ult_multiplier = brain.ult_gate()
 	choice = {}
 	ability_scores.clear()
 	if k is SamsonKit:
